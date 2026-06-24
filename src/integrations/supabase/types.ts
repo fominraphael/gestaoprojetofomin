@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      tarefas: {
+        Row: {
+          categoria: Database["public"]["Enums"]["tarefa_categoria"]
+          codigo: string | null
+          created_at: string
+          descricao_como: string | null
+          descricao_porque: string | null
+          id: string
+          prazo_fim: string | null
+          prazo_inicio: string | null
+          prioridade: Database["public"]["Enums"]["tarefa_prioridade"] | null
+          projeto: string | null
+          responsaveis: string | null
+          status: Database["public"]["Enums"]["tarefa_status"]
+          tags: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: Database["public"]["Enums"]["tarefa_categoria"]
+          codigo?: string | null
+          created_at?: string
+          descricao_como?: string | null
+          descricao_porque?: string | null
+          id?: string
+          prazo_fim?: string | null
+          prazo_inicio?: string | null
+          prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
+          projeto?: string | null
+          responsaveis?: string | null
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          tags?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: Database["public"]["Enums"]["tarefa_categoria"]
+          codigo?: string | null
+          created_at?: string
+          descricao_como?: string | null
+          descricao_porque?: string | null
+          id?: string
+          prazo_fim?: string | null
+          prazo_inicio?: string | null
+          prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
+          projeto?: string | null
+          responsaveis?: string | null
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          tags?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +76,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      tarefa_categoria: "backlog" | "roadmap" | "historico"
+      tarefa_prioridade: "Baixa" | "Média" | "Alta"
+      tarefa_status: "Não iniciada" | "Em andamento" | "Concluído"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +205,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      tarefa_categoria: ["backlog", "roadmap", "historico"],
+      tarefa_prioridade: ["Baixa", "Média", "Alta"],
+      tarefa_status: ["Não iniciada", "Em andamento", "Concluído"],
+    },
   },
 } as const
