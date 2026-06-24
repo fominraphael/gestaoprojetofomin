@@ -1,0 +1,70 @@
+import { supabase } from "@/integrations/supabase/client";
+import { queryOptions } from "@tanstack/react-query";
+
+export type Status = "Não iniciada" | "Em andamento" | "Concluído";
+export type Prioridade = "Baixa" | "Média" | "Alta";
+export type Categoria = "backlog" | "roadmap" | "historico";
+
+export interface Tarefa {
+  id: string;
+  codigo: string | null;
+  titulo: string;
+  descricao_como: string | null;
+  descricao_porque: string | null;
+  projeto: string | null;
+  responsaveis: string | null;
+  status: Status;
+  prioridade: Prioridade | null;
+  prazo_inicio: string | null;
+  prazo_fim: string | null;
+  categoria: Categoria;
+  tags: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const STATUSES: Status[] = ["Não iniciada", "Em andamento", "Concluído"];
+export const PRIORIDADES: Prioridade[] = ["Baixa", "Média", "Alta"];
+
+export const tarefasQuery = (categoria?: Categoria) =>
+  queryOptions({
+    queryKey: ["tarefas", categoria ?? "all"],
+    queryFn: async (): Promise<Tarefa[]> => {
+      let q = supabase.from("tarefas").select("*").order("updated_at", { ascending: false });
+      if (categoria) q = q.eq("categoria", categoria);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as Tarefa[];
+    },
+  });
+
+export const todasTarefasQuery = () =>
+  queryOptions({
+    queryKey: ["tarefas", "all"],
+    queryFn: async (): Promise<Tarefa[]> => {
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Tarefa[];
+    },
+  });
+
+export const statusColor: Record<Status, string> = {
+  "Não iniciada": "bg-status-todo-bg text-status-todo",
+  "Em andamento": "bg-status-doing-bg text-status-doing",
+  Concluído: "bg-status-done-bg text-status-done",
+};
+
+export const statusDot: Record<Status, string> = {
+  "Não iniciada": "bg-status-todo",
+  "Em andamento": "bg-status-doing",
+  Concluído: "bg-status-done",
+};
+
+export const prioColor: Record<Prioridade, string> = {
+  Baixa: "bg-muted text-prio-low border border-border",
+  Média: "bg-prio-med/10 text-prio-med border border-prio-med/30",
+  Alta: "bg-prio-high/10 text-prio-high border border-prio-high/30",
+};
