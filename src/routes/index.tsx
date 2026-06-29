@@ -63,11 +63,17 @@ function Dashboard() {
   const diasTotal = diasBacklog + diasRoadmap + diasSolicitacoes;
   const dataConclusao = addBusinessDays(new Date(), diasTotal);
 
+  const { pctNoPrazo, totalAvaliadas, noPrazo, tendencia } = useMemo(
+    () => computarNoPrazo(tarefas),
+    [tarefas],
+  );
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
     { name: "Não iniciada", value: naoIniciadas, color: "oklch(0.7 0.01 260)" },
   ];
+
 
   return (
     <div className="p-8 max-w-7xl">
