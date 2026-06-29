@@ -76,11 +76,17 @@ function Dashboard() {
     [tarefas],
   );
 
+  const concluidasPorSemana = useMemo(() => computarConcluidasPorSemana(tarefas), [tarefas]);
+  const concluidasPorCategoria = useMemo(() => computarConcluidasPorCategoria(tarefas), [tarefas]);
+  const estimativaVsReal = useMemo(() => computarEstimativaVsReal(tarefas), [tarefas]);
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
     { name: "Não iniciada", value: naoIniciadas, color: "oklch(0.7 0.01 260)" },
   ];
+
+
 
 
   return (
