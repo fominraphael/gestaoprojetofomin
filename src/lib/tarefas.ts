@@ -33,6 +33,8 @@ export interface Tarefa {
   tags: string | null;
   tipo: TipoSolicitacao | null;
   solicitante: string | null;
+  categoria_origem: Categoria | null;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }
