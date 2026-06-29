@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { tarefasQuery, statusColor, statusDot, type Tarefa } from "@/lib/tarefas";
+import { tarefasQuery, statusColor, statusDot, isEmRisco, type Tarefa } from "@/lib/tarefas";
 import { useMemo, useState } from "react";
 import { TarefaModal } from "@/components/TarefaModal";
 import { Button } from "@/components/ui/button";
@@ -94,10 +94,17 @@ function RoadmapPage() {
                     <div className="text-xs text-muted-foreground mb-2">
                       {t.projeto ?? "Sem projeto"}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${statusColor[t.status]}`}>
-                        {t.status}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${statusColor[t.status]}`}>
+                          {t.status}
+                        </span>
+                        {isEmRisco(t) && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-semibold">
+                            Em risco
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-muted-foreground">
                         {new Date(t.fim_previsto! + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>

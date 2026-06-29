@@ -5,6 +5,7 @@ import {
   STATUSES,
   statusColor,
   prioColor,
+  isEmRisco,
   type Tarefa,
   type Status,
 } from "@/lib/tarefas";
@@ -206,6 +207,11 @@ function KanbanBoard({
                         {new Date(t.fim_previsto + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>
                     )}
+                    {isEmRisco(t) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-semibold">
+                        Em risco
+                      </span>
+                    )}
                   </div>
                   {t.responsaveis && (
                     <div className="text-xs text-muted-foreground mt-2 truncate">
@@ -248,7 +254,16 @@ function ListaView({
               onClick={() => onClickCard(t)}
               className="cursor-pointer hover:bg-muted/40"
             >
-              <td className="px-4 py-3 font-medium">{t.titulo}</td>
+              <td className="px-4 py-3 font-medium">
+                <div className="flex items-center gap-2">
+                  <span>{t.titulo}</span>
+                  {isEmRisco(t) && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-semibold">
+                      Em risco
+                    </span>
+                  )}
+                </div>
+              </td>
               <td className="px-4 py-3 text-muted-foreground">{t.projeto ?? "—"}</td>
               <td className="px-4 py-3">
                 <span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}>

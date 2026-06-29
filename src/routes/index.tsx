@@ -1,14 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { todasTarefasQuery, statusColor, statusDot, type Tarefa, type Categoria } from "@/lib/tarefas";
-import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer, Target } from "lucide-react";
 import {
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,11 +64,17 @@ function Dashboard() {
   const diasTotal = diasBacklog + diasRoadmap + diasSolicitacoes;
   const dataConclusao = addBusinessDays(new Date(), diasTotal);
 
+  const { pctNoPrazo, totalAvaliadas, noPrazo, tendencia } = useMemo(
+    () => computarNoPrazo(tarefas),
+    [tarefas],
+  );
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
     { name: "Não iniciada", value: naoIniciadas, color: "oklch(0.7 0.01 260)" },
   ];
+
 
   return (
     <div className="p-8 max-w-7xl">
@@ -132,6 +145,59 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+            <Target className="w-3.5 h-3.5" />
+            Entregas no prazo · últimos 30 dias
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-4xl font-semibold tracking-tight">
+              {totalAvaliadas === 0 ? "—" : `${pctNoPrazo}%`}
+            </span>
+            {totalAvaliadas > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {noPrazo}/{totalAvaliadas} no prazo
+              </span>
+            )}
+          </div>
+          {totalAvaliadas === 0 && (
+            <div className="text-xs text-muted-foreground mt-2">
+              Nenhuma entrega concluída com prazo nos últimos 30 dias.
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card rounded-lg border border-border p-6 lg:col-span-2">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Tendência mensal — % no prazo
+          </h2>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={tendencia} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
+                <Tooltip
+                  formatter={(v: number) => [`${v}%`, "No prazo"]}
+                  labelFormatter={(l) => l}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pct"
+                  stroke="oklch(0.55 0.13 155)"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
@@ -288,4 +354,61 @@ function addBusinessDays(start: Date, days: number): Date {
   }
   return d;
 }
+
+const NOMES_MES_CURTO = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+function computarNoPrazo(tarefas: Tarefa[]) {
+  // Avaliáveis: concluídas, com fim_real e fim_previsto, fora da lixeira.
+  const avaliaveis = tarefas.filter(
+    (t) =>
+      t.categoria !== "historico" &&
+      t.status === "Concluído" &&
+      !!t.fim_real &&
+      !!t.fim_previsto,
+  );
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const limite30 = new Date(hoje);
+  limite30.setDate(limite30.getDate() - 30);
+
+  const ultimas30 = avaliaveis.filter((t) => {
+    const d = new Date(t.fim_real! + "T00:00:00");
+    return d.getTime() >= limite30.getTime();
+  });
+  const noPrazo = ultimas30.filter((t) => t.fim_real! <= t.fim_previsto!).length;
+  const totalAvaliadas = ultimas30.length;
+  const pctNoPrazo = totalAvaliadas === 0 ? 0 : Math.round((noPrazo / totalAvaliadas) * 100);
+
+  // Tendência: últimos 6 meses (incluindo o atual), agrupado por mês do fim_real.
+  const buckets: { key: string; label: string; ano: number; mes: number; total: number; ok: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    buckets.push({
+      key: `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`,
+      label: `${NOMES_MES_CURTO[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
+      ano: d.getFullYear(),
+      mes: d.getMonth(),
+      total: 0,
+      ok: 0,
+    });
+  }
+  avaliaveis.forEach((t) => {
+    const d = new Date(t.fim_real! + "T00:00:00");
+    const b = buckets.find((x) => x.ano === d.getFullYear() && x.mes === d.getMonth());
+    if (!b) return;
+    b.total++;
+    if (t.fim_real! <= t.fim_previsto!) b.ok++;
+  });
+  const tendencia = buckets.map((b) => ({
+    label: b.label,
+    pct: b.total === 0 ? null : Math.round((b.ok / b.total) * 100),
+  }));
+
+  return { pctNoPrazo, totalAvaliadas, noPrazo, tendencia };
+}
+
 
