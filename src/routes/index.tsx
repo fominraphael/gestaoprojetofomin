@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { todasTarefasQuery, statusColor, statusDot, type Tarefa } from "@/lib/tarefas";
-import { CheckCircle2, Clock, Circle, ListTodo } from "lucide-react";
+import { todasTarefasQuery, statusColor, statusDot, type Tarefa, type Categoria } from "@/lib/tarefas";
+import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer } from "lucide-react";
 import {
   ResponsiveContainer,
   PieChart,
