@@ -130,7 +130,14 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         fim_real: form.fim_real || null,
         categoria: form.categoria,
         tags: form.tags || null,
+        tipo: form.categoria === "solicitacao" && form.tipo !== "nenhum" ? form.tipo : null,
+        solicitante: form.categoria === "solicitacao" ? (form.solicitante || null) : null,
       };
+      const insertExtras: { inicio_previsto?: string | null } = {};
+      if (form.categoria === "solicitacao") {
+        // Para solicitações, datas e estimativa são opcionais
+        if (form.estimativa_dias.trim() === "") basePayload.estimativa_dias = null;
+      }
       if (tarefa) {
         // inicio_previsto não é editável após criação
         const { error } = await supabase
