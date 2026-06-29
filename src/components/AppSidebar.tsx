@@ -7,7 +7,7 @@ const items = [
   { to: "/backlog", label: "Backlog", icon: KanbanSquare },
   { to: "/roadmap", label: "Roadmap", icon: Map },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
-  { to: "/historico", label: "Histórico", icon: Archive },
+  { to: "/historico", label: "Lixeira", icon: Archive },
 ] as const;
 
 export function AppSidebar() {
