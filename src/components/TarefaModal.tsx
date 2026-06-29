@@ -45,6 +45,8 @@ type FormState = {
   fim_real: string;
   categoria: Categoria;
   tags: string;
+  tipo: TipoSolicitacao | "nenhum";
+  solicitante: string;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
