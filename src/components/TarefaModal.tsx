@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -39,11 +39,15 @@ type FormState = {
   responsaveis: string;
   status: Status;
   prioridade: Prioridade | "nenhuma";
-  prazo_inicio: string;
-  prazo_fim: string;
+  inicio_previsto: string;
+  estimativa_dias: string;
+  inicio_real: string;
+  fim_real: string;
   categoria: Categoria;
   tags: string;
 };
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 const empty = (cat: Categoria): FormState => ({
   codigo: "",
@@ -54,11 +58,19 @@ const empty = (cat: Categoria): FormState => ({
   responsaveis: "",
   status: "Não iniciada",
   prioridade: "nenhuma",
-  prazo_inicio: "",
-  prazo_fim: "",
+  inicio_previsto: today(),
+  estimativa_dias: "",
+  inicio_real: "",
+  fim_real: "",
   categoria: cat,
   tags: "",
 });
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "backlog" }: Props) {
   const [form, setForm] = useState<FormState>(empty(defaultCategoria));
@@ -75,8 +87,11 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: tarefa.responsaveis ?? "",
         status: tarefa.status,
         prioridade: tarefa.prioridade ?? "nenhuma",
-        prazo_inicio: tarefa.prazo_inicio ?? "",
-        prazo_fim: tarefa.prazo_fim ?? "",
+        inicio_previsto: tarefa.inicio_previsto ?? "",
+        estimativa_dias:
+          tarefa.estimativa_dias != null ? String(tarefa.estimativa_dias) : "",
+        inicio_real: tarefa.inicio_real ?? "",
+        fim_real: tarefa.fim_real ?? "",
         categoria: tarefa.categoria,
         tags: tarefa.tags ?? "",
       });
@@ -85,9 +100,17 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
     }
   }, [tarefa, defaultCategoria, open]);
 
+  const fimPrevisto = useMemo(() => {
+    const dias = parseInt(form.estimativa_dias, 10);
+    if (!form.inicio_previsto || Number.isNaN(dias)) return "";
+    return addDays(form.inicio_previsto, dias);
+  }, [form.inicio_previsto, form.estimativa_dias]);
+
   const save = useMutation({
     mutationFn: async () => {
-      const payload = {
+      const diasNum =
+        form.estimativa_dias.trim() === "" ? null : parseInt(form.estimativa_dias, 10);
+      const basePayload = {
         codigo: form.codigo || null,
         titulo: form.titulo,
         descricao_como: form.descricao_como || null,
@@ -96,16 +119,24 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: form.responsaveis || null,
         status: form.status,
         prioridade: form.prioridade === "nenhuma" ? null : form.prioridade,
-        prazo_inicio: form.prazo_inicio || null,
-        prazo_fim: form.prazo_fim || null,
+        estimativa_dias: diasNum != null && !Number.isNaN(diasNum) ? diasNum : null,
+        inicio_real: form.inicio_real || null,
+        fim_real: form.fim_real || null,
         categoria: form.categoria,
         tags: form.tags || null,
       };
       if (tarefa) {
-        const { error } = await supabase.from("tarefas").update(payload).eq("id", tarefa.id);
+        // inicio_previsto não é editável após criação
+        const { error } = await supabase
+          .from("tarefas")
+          .update(basePayload)
+          .eq("id", tarefa.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("tarefas").insert(payload);
+        const { error } = await supabase.from("tarefas").insert({
+          ...basePayload,
+          inicio_previsto: form.inicio_previsto || today(),
+        });
         if (error) throw error;
       }
     },
@@ -130,6 +161,9 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const fmt = (d: string) =>
+    d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -247,21 +281,64 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             />
           </div>
 
-          <div>
-            <Label>Prazo início</Label>
-            <Input
-              type="date"
-              value={form.prazo_inicio}
-              onChange={(e) => setForm({ ...form, prazo_inicio: e.target.value })}
-            />
+          <div className="col-span-2 border-t pt-3 mt-1">
+            <h4 className="text-sm font-semibold mb-2">Planejamento</h4>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>
+                  Início previsto
+                  {tarefa && (
+                    <span className="ml-1 text-xs text-muted-foreground">(travado)</span>
+                  )}
+                </Label>
+                <Input
+                  type="date"
+                  value={form.inicio_previsto}
+                  disabled={!!tarefa}
+                  onChange={(e) => setForm({ ...form, inicio_previsto: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Estimativa (dias)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.estimativa_dias}
+                  onChange={(e) => setForm({ ...form, estimativa_dias: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label>Fim previsto</Label>
+                <Input
+                  value={fmt(fimPrevisto || (tarefa?.fim_previsto ?? ""))}
+                  disabled
+                  readOnly
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label>Prazo fim</Label>
-            <Input
-              type="date"
-              value={form.prazo_fim}
-              onChange={(e) => setForm({ ...form, prazo_fim: e.target.value })}
-            />
+
+          <div className="col-span-2 border-t pt-3">
+            <h4 className="text-sm font-semibold mb-2">Execução</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Início real</Label>
+                <Input
+                  type="date"
+                  value={form.inicio_real}
+                  onChange={(e) => setForm({ ...form, inicio_real: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Fim real</Label>
+                <Input
+                  type="date"
+                  value={form.fim_real}
+                  onChange={(e) => setForm({ ...form, fim_real: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

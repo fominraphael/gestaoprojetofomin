@@ -201,9 +201,9 @@ function KanbanBoard({
                         {t.prioridade}
                       </span>
                     )}
-                    {t.prazo_fim && (
+                    {t.fim_previsto && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                        {new Date(t.prazo_fim + "T00:00:00").toLocaleDateString("pt-BR")}
+                        {new Date(t.fim_previsto + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>
                     )}
                   </div>
@@ -265,8 +265,8 @@ function ListaView({
                 )}
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {t.prazo_fim
-                  ? new Date(t.prazo_fim + "T00:00:00").toLocaleDateString("pt-BR")
+                {t.fim_previsto
+                  ? new Date(t.fim_previsto + "T00:00:00").toLocaleDateString("pt-BR")
                   : "—"}
               </td>
             </tr>
