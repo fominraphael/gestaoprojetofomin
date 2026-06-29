@@ -14,6 +14,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Legend,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  ReferenceLine,
 } from "recharts";
 
 
