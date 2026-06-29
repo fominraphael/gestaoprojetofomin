@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { todasTarefasQuery, statusColor, statusDot, type Tarefa, type Categoria } from "@/lib/tarefas";
-import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer, Target } from "lucide-react";
 import {
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
