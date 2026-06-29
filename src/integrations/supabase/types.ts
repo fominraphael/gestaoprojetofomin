@@ -21,9 +21,12 @@ export type Database = {
           created_at: string
           descricao_como: string | null
           descricao_porque: string | null
+          estimativa_dias: number | null
+          fim_previsto: string | null
+          fim_real: string | null
           id: string
-          prazo_fim: string | null
-          prazo_inicio: string | null
+          inicio_previsto: string | null
+          inicio_real: string | null
           prioridade: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto: string | null
           responsaveis: string | null
@@ -38,9 +41,12 @@ export type Database = {
           created_at?: string
           descricao_como?: string | null
           descricao_porque?: string | null
+          estimativa_dias?: number | null
+          fim_previsto?: string | null
+          fim_real?: string | null
           id?: string
-          prazo_fim?: string | null
-          prazo_inicio?: string | null
+          inicio_previsto?: string | null
+          inicio_real?: string | null
           prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto?: string | null
           responsaveis?: string | null
@@ -55,9 +61,12 @@ export type Database = {
           created_at?: string
           descricao_como?: string | null
           descricao_porque?: string | null
+          estimativa_dias?: number | null
+          fim_previsto?: string | null
+          fim_real?: string | null
           id?: string
-          prazo_fim?: string | null
-          prazo_inicio?: string | null
+          inicio_previsto?: string | null
+          inicio_real?: string | null
           prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto?: string | null
           responsaveis?: string | null
