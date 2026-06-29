@@ -15,8 +15,11 @@ export interface Tarefa {
   responsaveis: string | null;
   status: Status;
   prioridade: Prioridade | null;
-  prazo_inicio: string | null;
-  prazo_fim: string | null;
+  inicio_previsto: string | null;
+  estimativa_dias: number | null;
+  fim_previsto: string | null;
+  inicio_real: string | null;
+  fim_real: string | null;
   categoria: Categoria;
   tags: string | null;
   created_at: string;
