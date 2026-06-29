@@ -355,3 +355,60 @@ function addBusinessDays(start: Date, days: number): Date {
   return d;
 }
 
+const NOMES_MES_CURTO = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+function computarNoPrazo(tarefas: Tarefa[]) {
+  // Avaliáveis: concluídas, com fim_real e fim_previsto, fora da lixeira.
+  const avaliaveis = tarefas.filter(
+    (t) =>
+      t.categoria !== "historico" &&
+      t.status === "Concluído" &&
+      !!t.fim_real &&
+      !!t.fim_previsto,
+  );
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const limite30 = new Date(hoje);
+  limite30.setDate(limite30.getDate() - 30);
+
+  const ultimas30 = avaliaveis.filter((t) => {
+    const d = new Date(t.fim_real! + "T00:00:00");
+    return d.getTime() >= limite30.getTime();
+  });
+  const noPrazo = ultimas30.filter((t) => t.fim_real! <= t.fim_previsto!).length;
+  const totalAvaliadas = ultimas30.length;
+  const pctNoPrazo = totalAvaliadas === 0 ? 0 : Math.round((noPrazo / totalAvaliadas) * 100);
+
+  // Tendência: últimos 6 meses (incluindo o atual), agrupado por mês do fim_real.
+  const buckets: { key: string; label: string; ano: number; mes: number; total: number; ok: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    buckets.push({
+      key: `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`,
+      label: `${NOMES_MES_CURTO[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`,
+      ano: d.getFullYear(),
+      mes: d.getMonth(),
+      total: 0,
+      ok: 0,
+    });
+  }
+  avaliaveis.forEach((t) => {
+    const d = new Date(t.fim_real! + "T00:00:00");
+    const b = buckets.find((x) => x.ano === d.getFullYear() && x.mes === d.getMonth());
+    if (!b) return;
+    b.total++;
+    if (t.fim_real! <= t.fim_previsto!) b.ok++;
+  });
+  const tendencia = buckets.map((b) => ({
+    label: b.label,
+    pct: b.total === 0 ? null : Math.round((b.ok / b.total) * 100),
+  }));
+
+  return { pctNoPrazo, totalAvaliadas, noPrazo, tendencia };
+}
+
+
