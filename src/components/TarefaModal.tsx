@@ -20,8 +20,8 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Tarefa, Status, Prioridade, Categoria } from "@/lib/tarefas";
-import { STATUSES, PRIORIDADES } from "@/lib/tarefas";
+import type { Tarefa, Status, Prioridade, Categoria, TipoSolicitacao } from "@/lib/tarefas";
+import { STATUSES, PRIORIDADES, TIPOS_SOLICITACAO } from "@/lib/tarefas";
 
 interface Props {
   open: boolean;
