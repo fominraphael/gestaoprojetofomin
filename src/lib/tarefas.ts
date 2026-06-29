@@ -31,6 +31,8 @@ export interface Tarefa {
   fim_real: string | null;
   categoria: Categoria;
   tags: string | null;
+  tipo: TipoSolicitacao | null;
+  solicitante: string | null;
   created_at: string;
   updated_at: string;
 }
