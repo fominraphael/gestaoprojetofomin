@@ -66,6 +66,8 @@ const empty = (cat: Categoria): FormState => ({
   fim_real: "",
   categoria: cat,
   tags: "",
+  tipo: "nenhum",
+  solicitante: "",
 });
 
 function addDays(dateStr: string, days: number): string {
