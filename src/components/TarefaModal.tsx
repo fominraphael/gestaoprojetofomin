@@ -20,8 +20,8 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Tarefa, Status, Prioridade, Categoria } from "@/lib/tarefas";
-import { STATUSES, PRIORIDADES } from "@/lib/tarefas";
+import type { Tarefa, Status, Prioridade, Categoria, TipoSolicitacao } from "@/lib/tarefas";
+import { STATUSES, PRIORIDADES, TIPOS_SOLICITACAO } from "@/lib/tarefas";
 
 interface Props {
   open: boolean;
@@ -45,6 +45,8 @@ type FormState = {
   fim_real: string;
   categoria: Categoria;
   tags: string;
+  tipo: TipoSolicitacao | "nenhum";
+  solicitante: string;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -64,6 +66,8 @@ const empty = (cat: Categoria): FormState => ({
   fim_real: "",
   categoria: cat,
   tags: "",
+  tipo: "nenhum",
+  solicitante: "",
 });
 
 function addDays(dateStr: string, days: number): string {
@@ -94,6 +98,8 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         fim_real: tarefa.fim_real ?? "",
         categoria: tarefa.categoria,
         tags: tarefa.tags ?? "",
+        tipo: tarefa.tipo ?? "nenhum",
+        solicitante: tarefa.solicitante ?? "",
       });
     } else {
       setForm(empty(defaultCategoria));
@@ -124,6 +130,8 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         fim_real: form.fim_real || null,
         categoria: form.categoria,
         tags: form.tags || null,
+        tipo: form.categoria === "solicitacao" && form.tipo !== "nenhum" ? form.tipo : null,
+        solicitante: form.categoria === "solicitacao" ? (form.solicitante || null) : null,
       };
       if (tarefa) {
         // inicio_previsto não é editável após criação
@@ -133,9 +141,15 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
           .eq("id", tarefa.id);
         if (error) throw error;
       } else {
+        const inicio =
+          form.inicio_previsto
+            ? form.inicio_previsto
+            : form.categoria === "solicitacao"
+              ? null
+              : today();
         const { error } = await supabase.from("tarefas").insert({
           ...basePayload,
-          inicio_previsto: form.inicio_previsto || today(),
+          inicio_previsto: inicio,
         });
         if (error) throw error;
       }
@@ -268,10 +282,41 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               <SelectContent>
                 <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="roadmap">Roadmap</SelectItem>
+                <SelectItem value="solicitacao">Solicitação</SelectItem>
                 <SelectItem value="historico">Histórico</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {form.categoria === "solicitacao" && (
+            <>
+              <div>
+                <Label>Tipo</Label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(v) =>
+                    setForm({ ...form, tipo: v as TipoSolicitacao | "nenhum" })
+                  }
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhum">Sem tipo</SelectItem>
+                    {TIPOS_SOLICITACAO.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Solicitante</Label>
+                <Input
+                  value={form.solicitante}
+                  onChange={(e) => setForm({ ...form, solicitante: e.target.value })}
+                  placeholder="Quem pediu"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label>Tags</Label>

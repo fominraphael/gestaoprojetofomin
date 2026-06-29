@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, KanbanSquare, Map, Archive } from "lucide-react";
+import { LayoutDashboard, KanbanSquare, Map, Inbox, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/backlog", label: "Backlog", icon: KanbanSquare },
   { to: "/roadmap", label: "Roadmap", icon: Map },
+  { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
   { to: "/historico", label: "Histórico", icon: Archive },
 ] as const;
 

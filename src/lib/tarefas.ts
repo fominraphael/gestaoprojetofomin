@@ -3,7 +3,16 @@ import { queryOptions } from "@tanstack/react-query";
 
 export type Status = "Não iniciada" | "Em andamento" | "Concluído";
 export type Prioridade = "Baixa" | "Média" | "Alta";
-export type Categoria = "backlog" | "roadmap" | "historico";
+export type Categoria = "backlog" | "roadmap" | "historico" | "solicitacao";
+export type TipoSolicitacao = "Reunião" | "Treinamento" | "Desenho" | "Estudo de caso" | "Outro";
+
+export const TIPOS_SOLICITACAO: TipoSolicitacao[] = [
+  "Reunião",
+  "Treinamento",
+  "Desenho",
+  "Estudo de caso",
+  "Outro",
+];
 
 export interface Tarefa {
   id: string;
@@ -22,6 +31,8 @@ export interface Tarefa {
   fim_real: string | null;
   categoria: Categoria;
   tags: string | null;
+  tipo: TipoSolicitacao | null;
+  solicitante: string | null;
   created_at: string;
   updated_at: string;
 }
