@@ -84,3 +84,16 @@ export const prioColor: Record<Prioridade, string> = {
   Média: "bg-prio-med/10 text-prio-med border border-prio-med/30",
   Alta: "bg-prio-high/10 text-prio-high border border-prio-high/30",
 };
+
+/**
+ * Tarefa em risco: status "Em andamento", fim_previsto no passado e sem fim_real.
+ */
+export function isEmRisco(t: Tarefa): boolean {
+  if (t.status !== "Em andamento") return false;
+  if (!t.fim_previsto) return false;
+  if (t.fim_real) return false;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const fim = new Date(t.fim_previsto + "T00:00:00");
+  return fim.getTime() < hoje.getTime();
+}
