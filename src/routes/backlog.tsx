@@ -207,6 +207,11 @@ function KanbanBoard({
                         {new Date(t.fim_previsto + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>
                     )}
+                    {isEmRisco(t) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground font-semibold">
+                        Em risco
+                      </span>
+                    )}
                   </div>
                   {t.responsaveis && (
                     <div className="text-xs text-muted-foreground mt-2 truncate">
