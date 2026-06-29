@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { todasTarefasQuery, statusColor, statusDot, type Tarefa } from "@/lib/tarefas";
-import { CheckCircle2, Clock, Circle, ListTodo } from "lucide-react";
+import { todasTarefasQuery, statusColor, statusDot, type Tarefa, type Categoria } from "@/lib/tarefas";
+import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer } from "lucide-react";
 import {
   ResponsiveContainer,
   PieChart,
@@ -44,6 +44,19 @@ function Dashboard() {
     .sort((a, b) => (a.fim_previsto ?? "").localeCompare(b.fim_previsto ?? ""))
     .slice(0, 6);
 
+  const abertas = tarefas.filter(
+    (t) => t.status !== "Concluído" && t.categoria !== "historico",
+  );
+  const somaPorCategoria = (cat: Categoria) =>
+    abertas
+      .filter((t) => t.categoria === cat)
+      .reduce((acc, t) => acc + (t.estimativa_dias ?? 0), 0);
+  const diasBacklog = somaPorCategoria("backlog");
+  const diasRoadmap = somaPorCategoria("roadmap");
+  const diasSolicitacoes = somaPorCategoria("solicitacao");
+  const diasTotal = diasBacklog + diasRoadmap + diasSolicitacoes;
+  const dataConclusao = addBusinessDays(new Date(), diasTotal);
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
@@ -82,7 +95,46 @@ function Dashboard() {
         />
       </div>
 
+      <div className="mb-8 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-6">
+        <div className="flex items-start justify-between gap-6 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <Timer className="w-3.5 h-3.5" />
+              Esforço estimado em aberto
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-4xl font-semibold tracking-tight">{diasTotal}</span>
+              <span className="text-sm text-muted-foreground">
+                {diasTotal === 1 ? "dia" : "dias"} no total
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-6 max-w-xl">
+              <EstimativaItem label="Backlog" valor={diasBacklog} />
+              <EstimativaItem label="Roadmap" valor={diasRoadmap} />
+              <EstimativaItem label="Solicitações" valor={diasSolicitacoes} />
+            </div>
+          </div>
+          <div className="rounded-md bg-background/60 border border-border p-4 min-w-[220px]">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <CalendarClock className="w-3.5 h-3.5" />
+              Conclusão projetada
+            </div>
+            <div className="mt-2 text-2xl font-semibold">
+              {dataConclusao.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              hoje + {diasTotal} {diasTotal === 1 ? "dia útil" : "dias úteis"}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
         <div className="bg-card rounded-lg border border-border p-6">
           <h2 className="text-sm font-medium text-foreground mb-4">
             Distribuição por status
@@ -210,3 +262,30 @@ function TarefaRow({
     </li>
   );
 }
+
+function EstimativaItem({ label, valor }: { label: string; valor: number }) {
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-semibold">
+        {valor}
+        <span className="text-xs text-muted-foreground font-normal ml-1">
+          {valor === 1 ? "dia" : "dias"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function addBusinessDays(start: Date, days: number): Date {
+  const d = new Date(start);
+  d.setHours(0, 0, 0, 0);
+  let restantes = Math.max(0, Math.floor(days));
+  while (restantes > 0) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) restantes--;
+  }
+  return d;
+}
+
