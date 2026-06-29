@@ -280,6 +280,147 @@ function Dashboard() {
           </ul>
         )}
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <div className="bg-card rounded-lg border border-border p-6 lg:col-span-2">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Concluídas por semana · últimas 8 semanas
+          </h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={concluidasPorSemana} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="total" fill="oklch(0.55 0.13 155)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Concluídas por categoria
+          </h2>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={concluidasPorCategoria}
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {concluidasPorCategoria.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-2">
+            {concluidasPorCategoria.map((d) => (
+              <div key={d.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: d.color }}
+                  />
+                  <span className="text-muted-foreground">{d.name}</span>
+                </div>
+                <span className="font-medium">{d.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg border border-border p-6 mt-8">
+        <div className="flex items-baseline justify-between mb-4 gap-4 flex-wrap">
+          <h2 className="text-sm font-medium text-foreground">
+            Estimativa vs. duração real
+          </h2>
+          <div className="text-xs text-muted-foreground">
+            Pontos acima da linha = subestimado · abaixo = sobrestimado
+          </div>
+        </div>
+        {estimativaVsReal.pontos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Sem dados suficientes (precisa de estimativa, início real e fim real).
+          </p>
+        ) : (
+          <>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 8, right: 16, left: 0, bottom: 16 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                  <XAxis
+                    type="number"
+                    dataKey="estimado"
+                    name="Estimado"
+                    tick={{ fontSize: 11 }}
+                    label={{ value: "Estimado (dias)", position: "insideBottom", offset: -8, fontSize: 11 }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="real"
+                    name="Real"
+                    tick={{ fontSize: 11 }}
+                    label={{ value: "Real (dias)", angle: -90, position: "insideLeft", fontSize: 11 }}
+                  />
+                  <ZAxis range={[80, 80]} />
+                  <Tooltip
+                    cursor={{ strokeDasharray: "3 3" }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const p = payload[0].payload as { titulo: string; estimado: number; real: number };
+                      return (
+                        <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-md">
+                          <div className="font-medium mb-1">{p.titulo}</div>
+                          <div className="text-muted-foreground">Estimado: {p.estimado} d</div>
+                          <div className="text-muted-foreground">Real: {p.real} d</div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine
+                    segment={[
+                      { x: 0, y: 0 },
+                      { x: estimativaVsReal.max, y: estimativaVsReal.max },
+                    ]}
+                    stroke="oklch(0.6 0.02 260)"
+                    strokeDasharray="4 4"
+                  />
+                  <Scatter data={estimativaVsReal.pontos} fill="oklch(0.5 0.13 240)" />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
+              <ResumoEstimativa
+                label="No alvo (±1d)"
+                valor={estimativaVsReal.noAlvo}
+                total={estimativaVsReal.pontos.length}
+                cor="text-status-done"
+              />
+              <ResumoEstimativa
+                label="Subestimadas"
+                valor={estimativaVsReal.sub}
+                total={estimativaVsReal.pontos.length}
+                cor="text-destructive"
+              />
+              <ResumoEstimativa
+                label="Sobrestimadas"
+                valor={estimativaVsReal.sobre}
+                total={estimativaVsReal.pontos.length}
+                cor="text-status-doing"
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
