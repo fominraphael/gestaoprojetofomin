@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { todasTarefasQuery, statusColor, statusDot, type Tarefa, type Categoria } from "@/lib/tarefas";
 import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock, Timer, Target } from "lucide-react";
