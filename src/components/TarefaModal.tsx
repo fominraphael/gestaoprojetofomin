@@ -133,11 +133,6 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         tipo: form.categoria === "solicitacao" && form.tipo !== "nenhum" ? form.tipo : null,
         solicitante: form.categoria === "solicitacao" ? (form.solicitante || null) : null,
       };
-      const insertExtras: { inicio_previsto?: string | null } = {};
-      if (form.categoria === "solicitacao") {
-        // Para solicitações, datas e estimativa são opcionais
-        if (form.estimativa_dias.trim() === "") basePayload.estimativa_dias = null;
-      }
       if (tarefa) {
         // inicio_previsto não é editável após criação
         const { error } = await supabase
@@ -146,9 +141,15 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
           .eq("id", tarefa.id);
         if (error) throw error;
       } else {
+        const inicio =
+          form.inicio_previsto
+            ? form.inicio_previsto
+            : form.categoria === "solicitacao"
+              ? null
+              : today();
         const { error } = await supabase.from("tarefas").insert({
           ...basePayload,
-          inicio_previsto: form.inicio_previsto || today(),
+          inicio_previsto: inicio,
         });
         if (error) throw error;
       }
