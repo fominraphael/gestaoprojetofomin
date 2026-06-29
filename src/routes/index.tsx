@@ -14,6 +14,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Legend,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  ReferenceLine,
 } from "recharts";
 
 
@@ -69,11 +76,17 @@ function Dashboard() {
     [tarefas],
   );
 
+  const concluidasPorSemana = useMemo(() => computarConcluidasPorSemana(tarefas), [tarefas]);
+  const concluidasPorCategoria = useMemo(() => computarConcluidasPorCategoria(tarefas), [tarefas]);
+  const estimativaVsReal = useMemo(() => computarEstimativaVsReal(tarefas), [tarefas]);
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
     { name: "Não iniciada", value: naoIniciadas, color: "oklch(0.7 0.01 260)" },
   ];
+
+
 
 
   return (
@@ -267,6 +280,147 @@ function Dashboard() {
           </ul>
         )}
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <div className="bg-card rounded-lg border border-border p-6 lg:col-span-2">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Concluídas por semana · últimas 8 semanas
+          </h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={concluidasPorSemana} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="total" fill="oklch(0.55 0.13 155)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Concluídas por categoria
+          </h2>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={concluidasPorCategoria}
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {concluidasPorCategoria.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-2">
+            {concluidasPorCategoria.map((d) => (
+              <div key={d.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: d.color }}
+                  />
+                  <span className="text-muted-foreground">{d.name}</span>
+                </div>
+                <span className="font-medium">{d.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-lg border border-border p-6 mt-8">
+        <div className="flex items-baseline justify-between mb-4 gap-4 flex-wrap">
+          <h2 className="text-sm font-medium text-foreground">
+            Estimativa vs. duração real
+          </h2>
+          <div className="text-xs text-muted-foreground">
+            Pontos acima da linha = subestimado · abaixo = sobrestimado
+          </div>
+        </div>
+        {estimativaVsReal.pontos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Sem dados suficientes (precisa de estimativa, início real e fim real).
+          </p>
+        ) : (
+          <>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 8, right: 16, left: 0, bottom: 16 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                  <XAxis
+                    type="number"
+                    dataKey="estimado"
+                    name="Estimado"
+                    tick={{ fontSize: 11 }}
+                    label={{ value: "Estimado (dias)", position: "insideBottom", offset: -8, fontSize: 11 }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="real"
+                    name="Real"
+                    tick={{ fontSize: 11 }}
+                    label={{ value: "Real (dias)", angle: -90, position: "insideLeft", fontSize: 11 }}
+                  />
+                  <ZAxis range={[80, 80]} />
+                  <Tooltip
+                    cursor={{ strokeDasharray: "3 3" }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const p = payload[0].payload as { titulo: string; estimado: number; real: number };
+                      return (
+                        <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-md">
+                          <div className="font-medium mb-1">{p.titulo}</div>
+                          <div className="text-muted-foreground">Estimado: {p.estimado} d</div>
+                          <div className="text-muted-foreground">Real: {p.real} d</div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine
+                    segment={[
+                      { x: 0, y: 0 },
+                      { x: estimativaVsReal.max, y: estimativaVsReal.max },
+                    ]}
+                    stroke="oklch(0.6 0.02 260)"
+                    strokeDasharray="4 4"
+                  />
+                  <Scatter data={estimativaVsReal.pontos} fill="oklch(0.5 0.13 240)" />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
+              <ResumoEstimativa
+                label="No alvo (±1d)"
+                valor={estimativaVsReal.noAlvo}
+                total={estimativaVsReal.pontos.length}
+                cor="text-status-done"
+              />
+              <ResumoEstimativa
+                label="Subestimadas"
+                valor={estimativaVsReal.sub}
+                total={estimativaVsReal.pontos.length}
+                cor="text-destructive"
+              />
+              <ResumoEstimativa
+                label="Sobrestimadas"
+                valor={estimativaVsReal.sobre}
+                total={estimativaVsReal.pontos.length}
+                cor="text-status-doing"
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -410,5 +564,104 @@ function computarNoPrazo(tarefas: Tarefa[]) {
 
   return { pctNoPrazo, totalAvaliadas, noPrazo, tendencia };
 }
+
+function startOfWeek(d: Date): Date {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  const dow = out.getDay(); // 0=dom
+  const diff = dow === 0 ? -6 : 1 - dow; // semana começa segunda
+  out.setDate(out.getDate() + diff);
+  return out;
+}
+
+function computarConcluidasPorSemana(tarefas: Tarefa[]) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioSemanaAtual = startOfWeek(hoje);
+
+  const buckets: { key: string; label: string; inicio: Date; total: number }[] = [];
+  for (let i = 7; i >= 0; i--) {
+    const inicio = new Date(inicioSemanaAtual);
+    inicio.setDate(inicio.getDate() - i * 7);
+    buckets.push({
+      key: inicio.toISOString().slice(0, 10),
+      label: `${String(inicio.getDate()).padStart(2, "0")}/${String(inicio.getMonth() + 1).padStart(2, "0")}`,
+      inicio,
+      total: 0,
+    });
+  }
+  tarefas.forEach((t) => {
+    if (t.categoria === "historico") return;
+    if (t.status !== "Concluído") return;
+    const ref = t.fim_real ?? t.updated_at.slice(0, 10);
+    if (!ref) return;
+    const d = new Date(ref + (ref.length === 10 ? "T00:00:00" : ""));
+    if (Number.isNaN(d.getTime())) return;
+    const ini = startOfWeek(d);
+    const b = buckets.find((x) => x.inicio.getTime() === ini.getTime());
+    if (b) b.total++;
+  });
+  return buckets.map(({ label, total }) => ({ label, total }));
+}
+
+function computarConcluidasPorCategoria(tarefas: Tarefa[]) {
+  const cores: Record<string, string> = {
+    Backlog: "oklch(0.55 0.13 240)",
+    Roadmap: "oklch(0.55 0.13 155)",
+    Solicitações: "oklch(0.65 0.13 60)",
+  };
+  const mapa: Record<string, number> = { Backlog: 0, Roadmap: 0, Solicitações: 0 };
+  tarefas.forEach((t) => {
+    if (t.status !== "Concluído") return;
+    const origem = t.categoria === "historico" ? t.categoria_origem : t.categoria;
+    if (origem === "backlog") mapa.Backlog++;
+    else if (origem === "roadmap") mapa.Roadmap++;
+    else if (origem === "solicitacao") mapa["Solicitações"]++;
+  });
+  return Object.entries(mapa).map(([name, value]) => ({ name, value, color: cores[name] }));
+}
+
+function computarEstimativaVsReal(tarefas: Tarefa[]) {
+  type Ponto = { titulo: string; estimado: number; real: number };
+  const pontos: Ponto[] = [];
+  tarefas.forEach((t) => {
+    if (t.status !== "Concluído") return;
+    if (!t.estimativa_dias || !t.inicio_real || !t.fim_real) return;
+    const ini = new Date(t.inicio_real + "T00:00:00");
+    const fim = new Date(t.fim_real + "T00:00:00");
+    const real = Math.round((fim.getTime() - ini.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (real < 0) return;
+    pontos.push({ titulo: t.titulo, estimado: t.estimativa_dias, real });
+  });
+  const max = pontos.reduce((m, p) => Math.max(m, p.estimado, p.real), 1);
+  const noAlvo = pontos.filter((p) => Math.abs(p.real - p.estimado) <= 1).length;
+  const sub = pontos.filter((p) => p.real - p.estimado > 1).length;
+  const sobre = pontos.filter((p) => p.estimado - p.real > 1).length;
+  return { pontos, max, noAlvo, sub, sobre };
+}
+
+function ResumoEstimativa({
+  label,
+  valor,
+  total,
+  cor,
+}: {
+  label: string;
+  valor: number;
+  total: number;
+  cor: string;
+}) {
+  const pct = total === 0 ? 0 : Math.round((valor / total) * 100);
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-3">
+      <div className="text-muted-foreground">{label}</div>
+      <div className="mt-1 flex items-baseline gap-2">
+        <span className={`text-lg font-semibold ${cor}`}>{valor}</span>
+        <span className="text-muted-foreground">/ {total} · {pct}%</span>
+      </div>
+    </div>
+  );
+}
+
 
 
