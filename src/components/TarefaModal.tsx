@@ -282,10 +282,41 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               <SelectContent>
                 <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="roadmap">Roadmap</SelectItem>
+                <SelectItem value="solicitacao">Solicitação</SelectItem>
                 <SelectItem value="historico">Histórico</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {form.categoria === "solicitacao" && (
+            <>
+              <div>
+                <Label>Tipo</Label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(v) =>
+                    setForm({ ...form, tipo: v as TipoSolicitacao | "nenhum" })
+                  }
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhum">Sem tipo</SelectItem>
+                    {TIPOS_SOLICITACAO.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Solicitante</Label>
+                <Input
+                  value={form.solicitante}
+                  onChange={(e) => setForm({ ...form, solicitante: e.target.value })}
+                  placeholder="Quem pediu"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label>Tags</Label>
