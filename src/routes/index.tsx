@@ -147,6 +147,59 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+            <Target className="w-3.5 h-3.5" />
+            Entregas no prazo · últimos 30 dias
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-4xl font-semibold tracking-tight">
+              {totalAvaliadas === 0 ? "—" : `${pctNoPrazo}%`}
+            </span>
+            {totalAvaliadas > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {noPrazo}/{totalAvaliadas} no prazo
+              </span>
+            )}
+          </div>
+          {totalAvaliadas === 0 && (
+            <div className="text-xs text-muted-foreground mt-2">
+              Nenhuma entrega concluída com prazo nos últimos 30 dias.
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card rounded-lg border border-border p-6 lg:col-span-2">
+          <h2 className="text-sm font-medium text-foreground mb-4">
+            Tendência mensal — % no prazo
+          </h2>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={tendencia} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
+                <Tooltip
+                  formatter={(v: number) => [`${v}%`, "No prazo"]}
+                  labelFormatter={(l) => l}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pct"
+                  stroke="oklch(0.55 0.13 155)"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
         <div className="bg-card rounded-lg border border-border p-6">
           <h2 className="text-sm font-medium text-foreground mb-4">
