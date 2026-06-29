@@ -44,6 +44,19 @@ function Dashboard() {
     .sort((a, b) => (a.fim_previsto ?? "").localeCompare(b.fim_previsto ?? ""))
     .slice(0, 6);
 
+  const abertas = tarefas.filter(
+    (t) => t.status !== "Concluído" && t.categoria !== "historico",
+  );
+  const somaPorCategoria = (cat: Categoria) =>
+    abertas
+      .filter((t) => t.categoria === cat)
+      .reduce((acc, t) => acc + (t.estimativa_dias ?? 0), 0);
+  const diasBacklog = somaPorCategoria("backlog");
+  const diasRoadmap = somaPorCategoria("roadmap");
+  const diasSolicitacoes = somaPorCategoria("solicitacao");
+  const diasTotal = diasBacklog + diasRoadmap + diasSolicitacoes;
+  const dataConclusao = addBusinessDays(new Date(), diasTotal);
+
   const chartData = [
     { name: "Concluído", value: concluidas, color: "oklch(0.55 0.13 155)" },
     { name: "Em andamento", value: andamento, color: "oklch(0.5 0.13 240)" },
