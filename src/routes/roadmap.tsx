@@ -32,13 +32,13 @@ function RoadmapPage() {
 
   const { porMes, semData } = useMemo(() => {
     const comData = tarefas
-      .filter((t) => t.prazo_fim)
-      .sort((a, b) => (a.prazo_fim ?? "").localeCompare(b.prazo_fim ?? ""));
-    const sem = tarefas.filter((t) => !t.prazo_fim);
+      .filter((t) => t.fim_previsto)
+      .sort((a, b) => (a.fim_previsto ?? "").localeCompare(b.fim_previsto ?? ""));
+    const sem = tarefas.filter((t) => !t.fim_previsto);
 
     const groups: Record<string, { label: string; tarefas: Tarefa[] }> = {};
     comData.forEach((t) => {
-      const d = new Date(t.prazo_fim! + "T00:00:00");
+      const d = new Date(t.fim_previsto! + "T00:00:00");
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
       const label = `${meses[d.getMonth()]} de ${d.getFullYear()}`;
       if (!groups[key]) groups[key] = { label, tarefas: [] };
@@ -99,7 +99,7 @@ function RoadmapPage() {
                         {t.status}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(t.prazo_fim! + "T00:00:00").toLocaleDateString("pt-BR")}
+                        {new Date(t.fim_previsto! + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>
                     </div>
                   </button>

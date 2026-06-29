@@ -40,8 +40,8 @@ function Dashboard() {
     .slice(0, 6);
 
   const proximasEntregas = tarefas
-    .filter((t) => t.categoria === "roadmap" && t.prazo_fim && t.status !== "Concluído")
-    .sort((a, b) => (a.prazo_fim ?? "").localeCompare(b.prazo_fim ?? ""))
+    .filter((t) => t.categoria === "roadmap" && t.fim_previsto && t.status !== "Concluído")
+    .sort((a, b) => (a.fim_previsto ?? "").localeCompare(b.fim_previsto ?? ""))
     .slice(0, 6);
 
   const chartData = [
@@ -202,9 +202,9 @@ function TarefaRow({
           {new Date(t.updated_at).toLocaleDateString("pt-BR")}
         </div>
       )}
-      {mostrarPrazo && t.prazo_fim && (
+      {mostrarPrazo && t.fim_previsto && (
         <div className="text-xs text-muted-foreground w-24 text-right">
-          {new Date(t.prazo_fim + "T00:00:00").toLocaleDateString("pt-BR")}
+          {new Date(t.fim_previsto + "T00:00:00").toLocaleDateString("pt-BR")}
         </div>
       )}
     </li>
