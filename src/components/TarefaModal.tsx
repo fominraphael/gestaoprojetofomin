@@ -165,12 +165,24 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
   const del = useMutation({
     mutationFn: async () => {
       if (!tarefa) return;
-      const { error } = await supabase.from("tarefas").delete().eq("id", tarefa.id);
+      // Soft-delete: move to lixeira preservando origem
+      const origem =
+        tarefa.categoria === "historico"
+          ? (tarefa.categoria_origem ?? "backlog")
+          : tarefa.categoria;
+      const { error } = await supabase
+        .from("tarefas")
+        .update({
+          categoria: "historico",
+          categoria_origem: origem,
+          deleted_at: new Date().toISOString(),
+        })
+        .eq("id", tarefa.id);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tarefas"] });
-      toast.success("Tarefa excluída");
+      toast.success("Movida para a lixeira");
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
