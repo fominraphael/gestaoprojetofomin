@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SolicitacoesRouteImport } from './routes/solicitacoes'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as BacklogRouteImport } from './routes/backlog'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SolicitacoesRoute = SolicitacoesRouteImport.update({
+  id: '/solicitacoes',
+  path: '/solicitacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoadmapRoute = RoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/backlog': typeof BacklogRoute
   '/historico': typeof HistoricoRoute
   '/roadmap': typeof RoadmapRoute
+  '/solicitacoes': typeof SolicitacoesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/backlog': typeof BacklogRoute
   '/historico': typeof HistoricoRoute
   '/roadmap': typeof RoadmapRoute
+  '/solicitacoes': typeof SolicitacoesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/backlog': typeof BacklogRoute
   '/historico': typeof HistoricoRoute
   '/roadmap': typeof RoadmapRoute
+  '/solicitacoes': typeof SolicitacoesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/backlog' | '/historico' | '/roadmap'
+  fullPaths: '/' | '/backlog' | '/historico' | '/roadmap' | '/solicitacoes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/backlog' | '/historico' | '/roadmap'
-  id: '__root__' | '/' | '/backlog' | '/historico' | '/roadmap'
+  to: '/' | '/backlog' | '/historico' | '/roadmap' | '/solicitacoes'
+  id:
+    | '__root__'
+    | '/'
+    | '/backlog'
+    | '/historico'
+    | '/roadmap'
+    | '/solicitacoes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +82,18 @@ export interface RootRouteChildren {
   BacklogRoute: typeof BacklogRoute
   HistoricoRoute: typeof HistoricoRoute
   RoadmapRoute: typeof RoadmapRoute
+  SolicitacoesRoute: typeof SolicitacoesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/solicitacoes': {
+      id: '/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes'
+      preLoaderRoute: typeof SolicitacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roadmap': {
       id: '/roadmap'
       path: '/roadmap'
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   BacklogRoute: BacklogRoute,
   HistoricoRoute: HistoricoRoute,
   RoadmapRoute: RoadmapRoute,
+  SolicitacoesRoute: SolicitacoesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
