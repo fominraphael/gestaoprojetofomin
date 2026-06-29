@@ -262,3 +262,30 @@ function TarefaRow({
     </li>
   );
 }
+
+function EstimativaItem({ label, valor }: { label: string; valor: number }) {
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-semibold">
+        {valor}
+        <span className="text-xs text-muted-foreground font-normal ml-1">
+          {valor === 1 ? "dia" : "dias"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function addBusinessDays(start: Date, days: number): Date {
+  const d = new Date(start);
+  d.setHours(0, 0, 0, 0);
+  let restantes = Math.max(0, Math.floor(days));
+  while (restantes > 0) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) restantes--;
+  }
+  return d;
+}
+
