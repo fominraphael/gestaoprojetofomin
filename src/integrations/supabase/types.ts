@@ -17,8 +17,12 @@ export type Database = {
       tarefas: {
         Row: {
           categoria: Database["public"]["Enums"]["tarefa_categoria"]
+          categoria_origem:
+            | Database["public"]["Enums"]["tarefa_categoria"]
+            | null
           codigo: string | null
           created_at: string
+          deleted_at: string | null
           descricao_como: string | null
           descricao_porque: string | null
           estimativa_dias: number | null
@@ -39,8 +43,12 @@ export type Database = {
         }
         Insert: {
           categoria?: Database["public"]["Enums"]["tarefa_categoria"]
+          categoria_origem?:
+            | Database["public"]["Enums"]["tarefa_categoria"]
+            | null
           codigo?: string | null
           created_at?: string
+          deleted_at?: string | null
           descricao_como?: string | null
           descricao_porque?: string | null
           estimativa_dias?: number | null
@@ -61,8 +69,12 @@ export type Database = {
         }
         Update: {
           categoria?: Database["public"]["Enums"]["tarefa_categoria"]
+          categoria_origem?:
+            | Database["public"]["Enums"]["tarefa_categoria"]
+            | null
           codigo?: string | null
           created_at?: string
+          deleted_at?: string | null
           descricao_como?: string | null
           descricao_porque?: string | null
           estimativa_dias?: number | null
@@ -88,7 +100,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      purge_old_trash: { Args: never; Returns: undefined }
     }
     Enums: {
       tarefa_categoria: "backlog" | "roadmap" | "historico" | "solicitacao"
