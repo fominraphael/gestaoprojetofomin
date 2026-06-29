@@ -95,7 +95,46 @@ function Dashboard() {
         />
       </div>
 
+      <div className="mb-8 rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-card p-6">
+        <div className="flex items-start justify-between gap-6 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <Timer className="w-3.5 h-3.5" />
+              Esforço estimado em aberto
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-4xl font-semibold tracking-tight">{diasTotal}</span>
+              <span className="text-sm text-muted-foreground">
+                {diasTotal === 1 ? "dia" : "dias"} no total
+              </span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-6 max-w-xl">
+              <EstimativaItem label="Backlog" valor={diasBacklog} />
+              <EstimativaItem label="Roadmap" valor={diasRoadmap} />
+              <EstimativaItem label="Solicitações" valor={diasSolicitacoes} />
+            </div>
+          </div>
+          <div className="rounded-md bg-background/60 border border-border p-4 min-w-[220px]">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <CalendarClock className="w-3.5 h-3.5" />
+              Conclusão projetada
+            </div>
+            <div className="mt-2 text-2xl font-semibold">
+              {dataConclusao.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              hoje + {diasTotal} {diasTotal === 1 ? "dia útil" : "dias úteis"}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
         <div className="bg-card rounded-lg border border-border p-6">
           <h2 className="text-sm font-medium text-foreground mb-4">
             Distribuição por status
