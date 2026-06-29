@@ -565,4 +565,103 @@ function computarNoPrazo(tarefas: Tarefa[]) {
   return { pctNoPrazo, totalAvaliadas, noPrazo, tendencia };
 }
 
+function startOfWeek(d: Date): Date {
+  const out = new Date(d);
+  out.setHours(0, 0, 0, 0);
+  const dow = out.getDay(); // 0=dom
+  const diff = dow === 0 ? -6 : 1 - dow; // semana começa segunda
+  out.setDate(out.getDate() + diff);
+  return out;
+}
+
+function computarConcluidasPorSemana(tarefas: Tarefa[]) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioSemanaAtual = startOfWeek(hoje);
+
+  const buckets: { key: string; label: string; inicio: Date; total: number }[] = [];
+  for (let i = 7; i >= 0; i--) {
+    const inicio = new Date(inicioSemanaAtual);
+    inicio.setDate(inicio.getDate() - i * 7);
+    buckets.push({
+      key: inicio.toISOString().slice(0, 10),
+      label: `${String(inicio.getDate()).padStart(2, "0")}/${String(inicio.getMonth() + 1).padStart(2, "0")}`,
+      inicio,
+      total: 0,
+    });
+  }
+  tarefas.forEach((t) => {
+    if (t.categoria === "historico") return;
+    if (t.status !== "Concluído") return;
+    const ref = t.fim_real ?? t.updated_at.slice(0, 10);
+    if (!ref) return;
+    const d = new Date(ref + (ref.length === 10 ? "T00:00:00" : ""));
+    if (Number.isNaN(d.getTime())) return;
+    const ini = startOfWeek(d);
+    const b = buckets.find((x) => x.inicio.getTime() === ini.getTime());
+    if (b) b.total++;
+  });
+  return buckets.map(({ label, total }) => ({ label, total }));
+}
+
+function computarConcluidasPorCategoria(tarefas: Tarefa[]) {
+  const cores: Record<string, string> = {
+    Backlog: "oklch(0.55 0.13 240)",
+    Roadmap: "oklch(0.55 0.13 155)",
+    Solicitações: "oklch(0.65 0.13 60)",
+  };
+  const mapa: Record<string, number> = { Backlog: 0, Roadmap: 0, Solicitações: 0 };
+  tarefas.forEach((t) => {
+    if (t.status !== "Concluído") return;
+    const origem = t.categoria === "historico" ? t.categoria_origem : t.categoria;
+    if (origem === "backlog") mapa.Backlog++;
+    else if (origem === "roadmap") mapa.Roadmap++;
+    else if (origem === "solicitacao") mapa["Solicitações"]++;
+  });
+  return Object.entries(mapa).map(([name, value]) => ({ name, value, color: cores[name] }));
+}
+
+function computarEstimativaVsReal(tarefas: Tarefa[]) {
+  type Ponto = { titulo: string; estimado: number; real: number };
+  const pontos: Ponto[] = [];
+  tarefas.forEach((t) => {
+    if (t.status !== "Concluído") return;
+    if (!t.estimativa_dias || !t.inicio_real || !t.fim_real) return;
+    const ini = new Date(t.inicio_real + "T00:00:00");
+    const fim = new Date(t.fim_real + "T00:00:00");
+    const real = Math.round((fim.getTime() - ini.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (real < 0) return;
+    pontos.push({ titulo: t.titulo, estimado: t.estimativa_dias, real });
+  });
+  const max = pontos.reduce((m, p) => Math.max(m, p.estimado, p.real), 1);
+  const noAlvo = pontos.filter((p) => Math.abs(p.real - p.estimado) <= 1).length;
+  const sub = pontos.filter((p) => p.real - p.estimado > 1).length;
+  const sobre = pontos.filter((p) => p.estimado - p.real > 1).length;
+  return { pontos, max, noAlvo, sub, sobre };
+}
+
+function ResumoEstimativa({
+  label,
+  valor,
+  total,
+  cor,
+}: {
+  label: string;
+  valor: number;
+  total: number;
+  cor: string;
+}) {
+  const pct = total === 0 ? 0 : Math.round((valor / total) * 100);
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-3">
+      <div className="text-muted-foreground">{label}</div>
+      <div className="mt-1 flex items-baseline gap-2">
+        <span className={`text-lg font-semibold ${cor}`}>{valor}</span>
+        <span className="text-muted-foreground">/ {total} · {pct}%</span>
+      </div>
+    </div>
+  );
+}
+
+
 
