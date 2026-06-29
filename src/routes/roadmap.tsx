@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { tarefasQuery, statusColor, statusDot, type Tarefa } from "@/lib/tarefas";
+import { tarefasQuery, statusColor, statusDot, isEmRisco, type Tarefa } from "@/lib/tarefas";
 import { useMemo, useState } from "react";
 import { TarefaModal } from "@/components/TarefaModal";
 import { Button } from "@/components/ui/button";
