@@ -30,8 +30,10 @@ export type Database = {
           prioridade: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto: string | null
           responsaveis: string | null
+          solicitante: string | null
           status: Database["public"]["Enums"]["tarefa_status"]
           tags: string | null
+          tipo: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
           updated_at: string
         }
@@ -50,8 +52,10 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto?: string | null
           responsaveis?: string | null
+          solicitante?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           tags?: string | null
+          tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
           updated_at?: string
         }
@@ -70,8 +74,10 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["tarefa_prioridade"] | null
           projeto?: string | null
           responsaveis?: string | null
+          solicitante?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
           tags?: string | null
+          tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo?: string
           updated_at?: string
         }
@@ -85,9 +91,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      tarefa_categoria: "backlog" | "roadmap" | "historico"
+      tarefa_categoria: "backlog" | "roadmap" | "historico" | "solicitacao"
       tarefa_prioridade: "Baixa" | "Média" | "Alta"
       tarefa_status: "Não iniciada" | "Em andamento" | "Concluído"
+      tarefa_tipo:
+        | "Reunião"
+        | "Treinamento"
+        | "Desenho"
+        | "Estudo de caso"
+        | "Outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -215,9 +227,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      tarefa_categoria: ["backlog", "roadmap", "historico"],
+      tarefa_categoria: ["backlog", "roadmap", "historico", "solicitacao"],
       tarefa_prioridade: ["Baixa", "Média", "Alta"],
       tarefa_status: ["Não iniciada", "Em andamento", "Concluído"],
+      tarefa_tipo: [
+        "Reunião",
+        "Treinamento",
+        "Desenho",
+        "Estudo de caso",
+        "Outro",
+      ],
     },
   },
 } as const
