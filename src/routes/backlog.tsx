@@ -5,6 +5,7 @@ import {
   STATUSES,
   statusColor,
   prioColor,
+  isEmRisco,
   type Tarefa,
   type Status,
 } from "@/lib/tarefas";
