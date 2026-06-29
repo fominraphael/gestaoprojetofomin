@@ -98,6 +98,8 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         fim_real: tarefa.fim_real ?? "",
         categoria: tarefa.categoria,
         tags: tarefa.tags ?? "",
+        tipo: tarefa.tipo ?? "nenhum",
+        solicitante: tarefa.solicitante ?? "",
       });
     } else {
       setForm(empty(defaultCategoria));
