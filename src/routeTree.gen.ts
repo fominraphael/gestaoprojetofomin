@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
 import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
@@ -32,24 +33,28 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/_authenticated/',
-  path: '/',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
-  id: '/_authenticated/_gestao',
-  getParentRoute: () => rootRouteImport,
+  id: '/_gestao',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
-  id: '/_authenticated/_documentos',
-  getParentRoute: () => rootRouteImport,
+  id: '/_documentos',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminUsuariosRoute =
   AuthenticatedAdminUsuariosRouteImport.update({
-    id: '/_authenticated/admin/usuarios',
+    id: '/admin/usuarios',
     path: '/admin/usuarios',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedGestaoSolicitacoesRoute =
   AuthenticatedGestaoSolicitacoesRouteImport.update({
@@ -89,9 +94,9 @@ const AuthenticatedDocumentosDocumentosRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/': typeof AuthenticatedIndexRoute
   '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/dashboard': typeof AuthenticatedGestaoDashboardRoute
@@ -114,6 +119,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
   '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
@@ -130,9 +136,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/login'
     | '/registrar'
-    | '/'
     | '/documentos'
     | '/backlog'
     | '/dashboard'
@@ -154,6 +160,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
   id:
     | '__root__'
+    | '/_authenticated'
     | '/login'
     | '/registrar'
     | '/_authenticated/_documentos'
@@ -169,12 +176,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
-  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
-  AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -193,33 +197,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_gestao': {
       id: '/_authenticated/_gestao'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedGestaoRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_documentos': {
       id: '/_authenticated/_documentos'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
       path: '/admin/usuarios'
       fullPath: '/admin/usuarios'
       preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_gestao/solicitacoes': {
       id: '/_authenticated/_gestao/solicitacoes'
@@ -300,13 +311,28 @@ const AuthenticatedGestaoRouteChildren: AuthenticatedGestaoRouteChildren = {
 const AuthenticatedGestaoRouteWithChildren =
   AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
-const rootRouteChildren: RootRouteChildren = {
-  LoginRoute: LoginRoute,
-  RegistrarRoute: RegistrarRoute,
+interface AuthenticatedRouteChildren {
+  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
+  AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegistrarRoute: RegistrarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
