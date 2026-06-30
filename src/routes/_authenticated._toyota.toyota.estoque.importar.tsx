@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Upload,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
+  Save,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute(
   "/_authenticated/_toyota/toyota/estoque/importar",
@@ -31,6 +40,14 @@ export const Route = createFileRoute(
   errorComponent: ModuleErrorBoundary,
   component: ImportarEstoque,
 });
+
+interface Filial {
+  id: string;
+  nome: string;
+  dealer_number: string | null;
+  status: string;
+}
+
 
 // ============================================================================
 // Tipos e regras de elegibilidade
