@@ -97,8 +97,14 @@ function PainelCertificacao() {
   const [search, setSearch] = useState("");
   const [aba, setAba] = useState<AbaId>("loja");
 
-  // Modal reprovação / reiniciar
+  // Modais
   const [reiniciar, setReiniciar] = useState<Veiculo | null>(null);
+  const [pendenciar, setPendenciar] = useState<Veiculo | null>(null);
+  const [motivoPendencia, setMotivoPendencia] = useState("");
+  const [confirmarToyota, setConfirmarToyota] = useState<Veiculo | null>(null);
+  const [reenviarReprovado, setReenviarReprovado] = useState<Veiculo | null>(null);
+  const [arquivarVeiculo, setArquivarVeiculo] = useState<Veiculo | null>(null);
+  const [revisar, setRevisar] = useState<Veiculo | null>(null);
 
   const carregar = async () => {
     setLoading(true);
