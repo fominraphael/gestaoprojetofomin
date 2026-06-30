@@ -9,27 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SolicitacoesRouteImport } from './routes/solicitacoes'
-import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as HistoricoRouteImport } from './routes/historico'
-import { Route as DocumentosRouteImport } from './routes/documentos'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as BacklogRouteImport } from './routes/backlog'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
+import { Route as GestaoSolicitacoesRouteImport } from './routes/_gestao.solicitacoes'
+import { Route as GestaoRoadmapRouteImport } from './routes/_gestao.roadmap'
+import { Route as GestaoHistoricoRouteImport } from './routes/_gestao.historico'
+import { Route as GestaoDashboardRouteImport } from './routes/_gestao.dashboard'
+import { Route as GestaoBacklogRouteImport } from './routes/_gestao.backlog'
+import { Route as DocumentosDocumentosRouteImport } from './routes/_documentos.documentos'
 
-const SolicitacoesRoute = SolicitacoesRouteImport.update({
-  id: '/solicitacoes',
-  path: '/solicitacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RoadmapRoute = RoadmapRouteImport.update({
-  id: '/roadmap',
-  path: '/roadmap',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RegistrarRoute = RegistrarRouteImport.update({
   id: '/registrar',
   path: '/registrar',
@@ -38,26 +28,6 @@ const RegistrarRoute = RegistrarRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoricoRoute = HistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentosRoute = DocumentosRouteImport.update({
-  id: '/documentos',
-  path: '/documentos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BacklogRoute = BacklogRouteImport.update({
-  id: '/backlog',
-  path: '/backlog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -70,112 +40,128 @@ const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   path: '/admin/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GestaoSolicitacoesRoute = GestaoSolicitacoesRouteImport.update({
+  id: '/_gestao/solicitacoes',
+  path: '/solicitacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestaoRoadmapRoute = GestaoRoadmapRouteImport.update({
+  id: '/_gestao/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestaoHistoricoRoute = GestaoHistoricoRouteImport.update({
+  id: '/_gestao/historico',
+  path: '/historico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestaoDashboardRoute = GestaoDashboardRouteImport.update({
+  id: '/_gestao/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestaoBacklogRoute = GestaoBacklogRouteImport.update({
+  id: '/_gestao/backlog',
+  path: '/backlog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentosDocumentosRoute = DocumentosDocumentosRouteImport.update({
+  id: '/_documentos/documentos',
+  path: '/documentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/backlog': typeof BacklogRoute
-  '/dashboard': typeof DashboardRoute
-  '/documentos': typeof DocumentosRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/roadmap': typeof RoadmapRoute
-  '/solicitacoes': typeof SolicitacoesRoute
+  '/documentos': typeof DocumentosDocumentosRoute
+  '/backlog': typeof GestaoBacklogRoute
+  '/dashboard': typeof GestaoDashboardRoute
+  '/historico': typeof GestaoHistoricoRoute
+  '/roadmap': typeof GestaoRoadmapRoute
+  '/solicitacoes': typeof GestaoSolicitacoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/backlog': typeof BacklogRoute
-  '/dashboard': typeof DashboardRoute
-  '/documentos': typeof DocumentosRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/roadmap': typeof RoadmapRoute
-  '/solicitacoes': typeof SolicitacoesRoute
+  '/documentos': typeof DocumentosDocumentosRoute
+  '/backlog': typeof GestaoBacklogRoute
+  '/dashboard': typeof GestaoDashboardRoute
+  '/historico': typeof GestaoHistoricoRoute
+  '/roadmap': typeof GestaoRoadmapRoute
+  '/solicitacoes': typeof GestaoSolicitacoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/backlog': typeof BacklogRoute
-  '/dashboard': typeof DashboardRoute
-  '/documentos': typeof DocumentosRoute
-  '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/roadmap': typeof RoadmapRoute
-  '/solicitacoes': typeof SolicitacoesRoute
+  '/_documentos/documentos': typeof DocumentosDocumentosRoute
+  '/_gestao/backlog': typeof GestaoBacklogRoute
+  '/_gestao/dashboard': typeof GestaoDashboardRoute
+  '/_gestao/historico': typeof GestaoHistoricoRoute
+  '/_gestao/roadmap': typeof GestaoRoadmapRoute
+  '/_gestao/solicitacoes': typeof GestaoSolicitacoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/backlog'
-    | '/dashboard'
-    | '/documentos'
-    | '/historico'
     | '/login'
     | '/registrar'
+    | '/documentos'
+    | '/backlog'
+    | '/dashboard'
+    | '/historico'
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/backlog'
-    | '/dashboard'
-    | '/documentos'
-    | '/historico'
     | '/login'
     | '/registrar'
+    | '/documentos'
+    | '/backlog'
+    | '/dashboard'
+    | '/historico'
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
   id:
     | '__root__'
     | '/'
-    | '/backlog'
-    | '/dashboard'
-    | '/documentos'
-    | '/historico'
     | '/login'
     | '/registrar'
-    | '/roadmap'
-    | '/solicitacoes'
+    | '/_documentos/documentos'
+    | '/_gestao/backlog'
+    | '/_gestao/dashboard'
+    | '/_gestao/historico'
+    | '/_gestao/roadmap'
+    | '/_gestao/solicitacoes'
     | '/admin/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BacklogRoute: typeof BacklogRoute
-  DashboardRoute: typeof DashboardRoute
-  DocumentosRoute: typeof DocumentosRoute
-  HistoricoRoute: typeof HistoricoRoute
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
-  RoadmapRoute: typeof RoadmapRoute
-  SolicitacoesRoute: typeof SolicitacoesRoute
+  DocumentosDocumentosRoute: typeof DocumentosDocumentosRoute
+  GestaoBacklogRoute: typeof GestaoBacklogRoute
+  GestaoDashboardRoute: typeof GestaoDashboardRoute
+  GestaoHistoricoRoute: typeof GestaoHistoricoRoute
+  GestaoRoadmapRoute: typeof GestaoRoadmapRoute
+  GestaoSolicitacoesRoute: typeof GestaoSolicitacoesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/solicitacoes': {
-      id: '/solicitacoes'
-      path: '/solicitacoes'
-      fullPath: '/solicitacoes'
-      preLoaderRoute: typeof SolicitacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/roadmap': {
-      id: '/roadmap'
-      path: '/roadmap'
-      fullPath: '/roadmap'
-      preLoaderRoute: typeof RoadmapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/registrar': {
       id: '/registrar'
       path: '/registrar'
@@ -188,34 +174,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/historico': {
-      id: '/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof HistoricoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/documentos': {
-      id: '/documentos'
-      path: '/documentos'
-      fullPath: '/documentos'
-      preLoaderRoute: typeof DocumentosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/backlog': {
-      id: '/backlog'
-      path: '/backlog'
-      fullPath: '/backlog'
-      preLoaderRoute: typeof BacklogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -232,19 +190,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_gestao/solicitacoes': {
+      id: '/_gestao/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes'
+      preLoaderRoute: typeof GestaoSolicitacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_gestao/roadmap': {
+      id: '/_gestao/roadmap'
+      path: '/roadmap'
+      fullPath: '/roadmap'
+      preLoaderRoute: typeof GestaoRoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_gestao/historico': {
+      id: '/_gestao/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof GestaoHistoricoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_gestao/dashboard': {
+      id: '/_gestao/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof GestaoDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_gestao/backlog': {
+      id: '/_gestao/backlog'
+      path: '/backlog'
+      fullPath: '/backlog'
+      preLoaderRoute: typeof GestaoBacklogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_documentos/documentos': {
+      id: '/_documentos/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof DocumentosDocumentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BacklogRoute: BacklogRoute,
-  DashboardRoute: DashboardRoute,
-  DocumentosRoute: DocumentosRoute,
-  HistoricoRoute: HistoricoRoute,
   LoginRoute: LoginRoute,
   RegistrarRoute: RegistrarRoute,
-  RoadmapRoute: RoadmapRoute,
-  SolicitacoesRoute: SolicitacoesRoute,
+  DocumentosDocumentosRoute: DocumentosDocumentosRoute,
+  GestaoBacklogRoute: GestaoBacklogRoute,
+  GestaoDashboardRoute: GestaoDashboardRoute,
+  GestaoHistoricoRoute: GestaoHistoricoRoute,
+  GestaoRoadmapRoute: GestaoRoadmapRoute,
+  GestaoSolicitacoesRoute: GestaoSolicitacoesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
 }
 export const routeTree = rootRouteImport

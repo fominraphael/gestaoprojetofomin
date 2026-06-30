@@ -24,7 +24,7 @@ import {
 } from "recharts";
 
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_gestao/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Gestão de Projetos" },

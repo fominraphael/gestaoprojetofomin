@@ -23,7 +23,7 @@ import { TarefaModal } from "@/components/TarefaModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/solicitacoes")({
+export const Route = createFileRoute("/_gestao/solicitacoes")({
   head: () => ({
     meta: [{ title: "Solicitações — Gestão de Projetos" }],
   }),
