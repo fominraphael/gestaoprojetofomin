@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { tarefasQuery, statusColor, statusDot, isEmRisco, type Tarefa } from "@/lib/tarefas";
 import { useMemo, useState } from "react";
@@ -12,9 +13,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/roadmap")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tarefasQuery("roadmap")),
   component: RoadmapPage,
-  errorComponent: ({ error }) => (
-    <div className="p-8 text-sm text-destructive">{error.message}</div>
-  ),
+  errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Roadmap vazio.</div>,
 });
 
