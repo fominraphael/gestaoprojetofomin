@@ -18,6 +18,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { VersionWatcher } from "@/components/VersionWatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { findModuleByPath, isKnownRoute, userCanAccess } from "@/lib/modules";
 
 function NotFoundComponent() {
   return (
