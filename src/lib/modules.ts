@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ClipboardCheck,
   ListChecks,
+  GitBranch,
   type LucideIcon,
 } from "lucide-react";
 
