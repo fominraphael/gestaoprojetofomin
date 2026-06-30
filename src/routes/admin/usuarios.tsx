@@ -19,14 +19,17 @@ import {
   type DocumentoArquivo,
   obterEmpresas,
   criarEmpresa,
+  atualizarEmpresa,
   excluirEmpresa,
   obterDocumentosTipo,
   criarDocumentoTipo,
+  atualizarDocumentoTipo,
   excluirDocumentoTipo,
   obterArquivos,
   uploadArquivo,
   excluirArquivo,
 } from "@/lib/empresas";
+import { Search, Edit3 } from "lucide-react";
 import { ModuleBadge } from "@/components/ModuleBadge";
 import {
   Users,
@@ -133,6 +136,9 @@ export function AdminUsuariosPage() {
   const [selectedUserTypeImportId, setSelectedUserTypeImportId] = useState("Lojista");
   const [importRows, setImportRows] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
+
+  // Search state for users
+  const [userSearch, setUserSearch] = useState("");
 
   // Load all system data
   const loadAllData = useCallback(async () => {
@@ -418,6 +424,70 @@ export function AdminUsuariosPage() {
     }
   };
 
+  const handleEditCompany = async (c: Empresa) => {
+    const nome = window.prompt("Nome da empresa:", c.nome);
+    if (nome === null) return;
+    const cnpj = window.prompt("CNPJ (apenas números):", c.cnpj);
+    if (cnpj === null) return;
+    setActionLoading(c.id);
+    try {
+      await atualizarEmpresa(c.id, { nome: nome.trim(), cnpj: cnpj.trim() });
+      showToast("success", "Empresa atualizada.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar empresa.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEditDocType = async (t: DocumentoTipo) => {
+    const nome = window.prompt("Nome do tipo:", t.nome);
+    if (nome === null) return;
+    const descricao = window.prompt("Descrição:", t.descricao ?? "");
+    if (descricao === null) return;
+    setActionLoading(t.id);
+    try {
+      await atualizarDocumentoTipo(t.id, { nome: nome.trim(), descricao: descricao.trim() });
+      showToast("success", "Tipo de documento atualizado.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar tipo de documento.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEditUserType = async (t: TipoUsuarioConfig) => {
+    const nome = window.prompt("Nome do perfil:", t.nome);
+    if (nome === null) return;
+    setActionLoading(t.id);
+    try {
+      await atualizarTipoUsuarioConfig(t.id, { nome: nome.trim() });
+      showToast("success", "Perfil atualizado.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar perfil.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleUserTypeAtivo = async (t: TipoUsuarioConfig) => {
+    setActionLoading(t.id);
+    try {
+      await atualizarTipoUsuarioConfig(t.id, { ativo: !(t.ativo ?? true) });
+      showToast("success", `Perfil ${t.ativo === false ? "ativado" : "inativado"}.`);
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao alterar status do perfil.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+
+
   // File Upload Actions
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
@@ -697,7 +767,7 @@ export function AdminUsuariosPage() {
             }`}
           >
             <Users className="w-4 h-4" />
-            Gerenciar Lojistas
+            Usuários
           </button>
           <button
             onClick={() => setActiveTab("import")}
@@ -1159,6 +1229,18 @@ export function AdminUsuariosPage() {
               </div>
             )}
 
+            {/* Search Bar */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Buscar por login, tipo, CNPJ..."
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              />
+            </div>
+
             {/* Users Table */}
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm shadow-xl">
               <table className="w-full text-sm text-left">
@@ -1172,7 +1254,19 @@ export function AdminUsuariosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map((u, i) => (
+                  {usuarios
+                    .filter((u) => {
+                      if (!userSearch.trim()) return true;
+                      const q = userSearch.toLowerCase();
+                      return (
+                        u.username?.toLowerCase().includes(q) ||
+                        u.tipo_usuario?.toLowerCase().includes(q) ||
+                        u.cnpj?.toLowerCase().includes(q) ||
+                        u.status?.toLowerCase().includes(q) ||
+                        JSON.stringify(u.campos_customizados || {}).toLowerCase().includes(q)
+                      );
+                    })
+                    .map((u, i) => (
                     <tr
                       key={u.id}
                       className={`border-b border-slate-800/40 hover:bg-slate-800/20 transition-all ${
@@ -1535,9 +1629,20 @@ export function AdminUsuariosPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleEditCompany(c);
+                        }}
+                        className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                        title="Editar empresa"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDeleteCompany(c.id, c.nome);
                         }}
                         className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                        title="Excluir empresa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1769,13 +1874,22 @@ export function AdminUsuariosPage() {
                       <div className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                         Documento
                       </div>
-                      <button
-                        onClick={() => handleDeleteDocType(t.id, t.nome)}
-                        className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
-                        title="Excluir tipo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditDocType(t)}
+                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          title="Editar tipo"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDocType(t.id, t.nome)}
+                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                          title="Excluir tipo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <h3 className="text-white font-semibold text-sm truncate uppercase">{t.nome}</h3>
                     <p className="text-xs text-slate-400 mt-2 leading-relaxed">
@@ -1966,15 +2080,35 @@ export function AdminUsuariosPage() {
                       }`}>
                         {t.role === "admin" ? "Administrador" : "Usuário Comum"}
                       </div>
-                      {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
+                      <div className="flex items-center gap-1">
                         <button
-                          onClick={() => handleDeleteUserType(t.id, t.nome)}
-                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
-                          title="Excluir perfil"
+                          onClick={() => handleEditUserType(t)}
+                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          title="Editar perfil"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                        <button
+                          onClick={() => handleToggleUserTypeAtivo(t)}
+                          className={`p-1 rounded transition-colors ${
+                            t.ativo === false
+                              ? "text-emerald-400 hover:text-emerald-300"
+                              : "text-slate-500 hover:text-amber-400"
+                          }`}
+                          title={t.ativo === false ? "Ativar perfil" : "Inativar perfil"}
+                        >
+                          {t.ativo === false ? <ToggleLeft className="w-3.5 h-3.5" /> : <ToggleRight className="w-3.5 h-3.5" />}
+                        </button>
+                        {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
+                          <button
+                            onClick={() => handleDeleteUserType(t.id, t.nome)}
+                            className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                            title="Excluir perfil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <h3 className="text-white font-semibold text-sm uppercase">{t.nome}</h3>
                     

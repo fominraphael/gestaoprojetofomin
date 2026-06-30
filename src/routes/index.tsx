@@ -71,7 +71,7 @@ export function PortalPage() {
   // Load all companies and document types
   useEffect(() => {
     async function loadInitialData() {
-      if (!user || user.role === "admin") return;
+      if (!user) return;
       setLoadingDocs(true);
       try {
         const [allEmps, allTipos] = await Promise.all([
@@ -316,7 +316,7 @@ export function PortalPage() {
         </div>
 
         {/* -------------------- LOJISTA SECTION: DOCUMENTS -------------------- */}
-        {!isAdmin && (
+        {(isAdmin || userModules.includes("documentos")) && (
           <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm space-y-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
