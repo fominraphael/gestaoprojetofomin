@@ -49,7 +49,7 @@ function RegistrarPage() {
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 shadow-lg mb-4">
             <Layers className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Solicitar Acesso</h1>
@@ -68,7 +68,7 @@ function RegistrarPage() {
               </p>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground font-semibold transition-all"
+                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-foreground font-semibold transition-all"
               >
                 Voltar ao Login
               </Link>

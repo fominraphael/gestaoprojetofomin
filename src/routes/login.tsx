@@ -46,7 +46,7 @@ function LoginPage() {
       <div className="relative w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 shadow-lg mb-4">
             <Layers className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Portal de Aplicações</h1>
