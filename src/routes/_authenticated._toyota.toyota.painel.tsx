@@ -49,6 +49,8 @@ export const Route = createFileRoute("/_authenticated/_toyota/toyota/painel")({
 type Status =
   | "analise"
   | "pendente_preparacao"
+  | "em_posvendas"
+  | "devolvido_preparador"
   | "aguardando_analise_central"
   | "enviado_toyota"
   | "aprovado_toyota"
@@ -67,9 +69,13 @@ interface Veiculo {
   filial_id: string | null;
   filial_destino_id: string | null;
   motivo_reprovacao: string | null;
+  observacao_toyota: string | null;
   enviado_toyota_em: string | null;
   retorno_toyota_em: string | null;
   aprovado_em: string | null;
+  hsv_observacoes_preparador: string | null;
+  checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  health_check_pdf_path: string | null;
 }
 
 interface Filial {
