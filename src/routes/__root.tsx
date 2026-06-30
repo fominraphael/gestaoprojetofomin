@@ -18,6 +18,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { VersionWatcher } from "@/components/VersionWatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { findModuleByPath, isKnownRoute, userCanAccess } from "@/lib/modules";
 
 function NotFoundComponent() {
   return (
@@ -108,30 +109,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-// Routes that do NOT show the sidebar (public pages + portal + standalone modules)
-const PUBLIC_ROUTES = ["/login", "/registrar", "/"];
-// Sidebar of "Gestão de Projetos" is only shown on its own module routes
-const GESTAO_SIDEBAR_ROUTES = ["/dashboard", "/backlog", "/roadmap", "/solicitacoes", "/historico"];
 
-// All valid app routes. Anything outside this list returns 404.
-const KNOWN_ROUTES = [
-  "/",
-  "/login",
-  "/registrar",
-  "/dashboard",
-  "/backlog",
-  "/roadmap",
-  "/solicitacoes",
-  "/historico",
-  "/documentos",
-  "/admin/usuarios",
-];
-
-function isKnownRoute(pathname: string) {
-  return KNOWN_ROUTES.some(
-    (r) => pathname === r || pathname.startsWith(r + "/")
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -232,21 +210,18 @@ function AppLayout() {
     return <AccessDenied reason="Você não possui credenciais de administrador para acessar este painel." />;
   }
 
-  // Protect Project Management Module ("gestao")
-  const isGestaoRoute = ["/dashboard", "/backlog", "/roadmap", "/solicitacoes", "/historico"].some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
-
-  if (isGestaoRoute && !isAdmin && !userModules.includes("gestao")) {
-    return <AccessDenied reason="Você não possui permissão para acessar o módulo de Gestão de Projetos." />;
+  // Protect registered modules via the central registry
+  const activeModule = findModuleByPath(pathname);
+  if (activeModule && !userCanAccess(activeModule, isAdmin, userModules)) {
+    return (
+      <AccessDenied
+        reason={`Você não possui permissão para acessar o módulo de ${activeModule.label}.`}
+      />
+    );
   }
 
-  // Protect Documents Module
-  if (pathname.startsWith("/documentos") && !isAdmin && !userModules.includes("documentos")) {
-    return <AccessDenied reason="Você não possui permissão para acessar o módulo de Documentos." />;
-  }
-
-  const showSidebar = GESTAO_SIDEBAR_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  // Show sidebar only when inside a module that declares nav items
+  const showSidebar = !!activeModule?.navItems?.length;
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -257,4 +232,5 @@ function AppLayout() {
     </div>
   );
 }
+
 

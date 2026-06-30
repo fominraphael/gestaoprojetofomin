@@ -1,40 +1,26 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard,
-  KanbanSquare,
-  Map,
-  Inbox,
-  Archive,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Layers,
-  FileText,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-
-const items = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/backlog", label: "Backlog", icon: KanbanSquare },
-  { to: "/roadmap", label: "Roadmap", icon: Map },
-  { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
-  { to: "/historico", label: "Lixeira", icon: Archive },
-  { to: "/documentos", label: "Documentos", icon: FileText },
-] as const;
+import { findModuleByPath, userCanAccess } from "@/lib/modules";
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { logout, isAdmin, user } = useAuth();
   const userModules = user?.modulos || [];
-  const visibleItems = items.filter((it) => {
-    if (isAdmin) return true;
-    if (it.to === "/documentos") return userModules.includes("documentos");
-    return userModules.includes("gestao");
-  });
+  const activeModule = findModuleByPath(pathname);
+  const visibleItems =
+    activeModule && userCanAccess(activeModule, isAdmin, userModules)
+      ? activeModule.navItems ?? []
+      : [];
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
@@ -98,7 +84,7 @@ export function AppSidebar() {
           return (
             <Link
               key={item.to}
-              to={item.to}
+              to={item.to as any}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 isCollapsed ? "justify-center px-2" : "",
