@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/_toyota/toyota/painel")({
@@ -163,10 +164,8 @@ function PainelCertificacao() {
   }, [veiculos, filiais, minhasFiliais, search, isAdmin]);
 
   /** Ações */
-  const atualizarStatus = async (
-    id: string,
-    patch: Record<string, unknown>,
-  ) => {
+  type VeiculoUpdate = Database["public"]["Tables"]["toyota_estoque_veiculos"]["Update"];
+  const atualizarStatus = async (id: string, patch: VeiculoUpdate) => {
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update(patch)
@@ -614,8 +613,8 @@ function SecaoTabela({
   const [, body] = Array.isArray(children) ? children : [null, null];
   const bodyEmpty =
     !loading &&
-    // @ts-expect-error — runtime inspection of TableBody children
-    (!body?.props?.children || body.props.children.length === 0);
+    (!(body as any)?.props?.children ||
+      (body as any).props.children.length === 0);
 
   return (
     <Card>
