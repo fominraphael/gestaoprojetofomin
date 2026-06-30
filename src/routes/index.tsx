@@ -154,9 +154,7 @@ export function PortalPage() {
 
   // Filter modules/apps shown to user
   const userModules = user?.modulos || [];
-  const activeApps = isAdmin
-    ? allApps
-    : allApps.filter((app) => userModules.includes(app.id));
+  const activeApps = MODULES.filter((m) => userCanAccess(m, isAdmin, userModules));
 
   // Documents listing filter: "so deve aparecer para o usuário os tipos que tiverem arquivos anexados na empresa para não poluir a visão dele"
   const docTypesWithFiles = docTipos.filter((type) =>
