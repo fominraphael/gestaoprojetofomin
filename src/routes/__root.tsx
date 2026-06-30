@@ -132,10 +132,10 @@ function RedirectToLogin() {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm text-slate-400 font-medium">Redirecionando para o login...</p>
+        <p className="text-sm text-muted-foreground font-medium">Redirecionando para o login...</p>
       </div>
     </div>
   );
@@ -144,8 +144,8 @@ function RedirectToLogin() {
 function AccessDenied({ reason }: { reason: string }) {
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 px-4">
-      <div className="max-w-md w-full text-center bg-slate-900/60 border border-slate-800/80 p-8 rounded-2xl shadow-xl shadow-red-950/5 backdrop-blur-md relative overflow-hidden">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground px-4">
+      <div className="max-w-md w-full text-center bg-card border border-border p-8 rounded-2xl shadow-xl shadow-red-950/5 backdrop-blur-md relative overflow-hidden">
         {/* Glowing background light */}
         <div className="absolute -top-12 -left-12 w-24 h-24 bg-red-500/10 rounded-full blur-2xl" />
         <div className="absolute -bottom-12 -right-12 w-24 h-24 bg-red-600/5 rounded-full blur-2xl" />
@@ -157,7 +157,7 @@ function AccessDenied({ reason }: { reason: string }) {
         <h1 className="text-3xl font-extrabold tracking-tight text-white mb-3">
           403 - Acesso Negado
         </h1>
-        <p className="text-slate-400 text-sm leading-relaxed mb-8">
+        <p className="text-muted-foreground text-sm leading-relaxed mb-8">
           {reason}
         </p>
 
@@ -180,7 +180,7 @@ function AppLayout() {
   // 1. loading state
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );

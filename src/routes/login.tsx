@@ -36,7 +36,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       {/* Background decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
@@ -50,14 +50,14 @@ function LoginPage() {
             <Layers className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Portal de Aplicações</h1>
-          <p className="text-slate-400 text-sm mt-1">Faça login para acessar suas ferramentas</p>
+          <p className="text-muted-foreground text-sm mt-1">Faça login para acessar suas ferramentas</p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
                 Usuário
               </label>
               <input
@@ -68,12 +68,12 @@ function LoginPage() {
                 placeholder="Seu nome de usuário"
                 required
                 autoComplete="username"
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                className="w-full px-4 py-2.5 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
                 Senha
               </label>
               <div className="relative">
@@ -85,12 +85,12 @@ function LoginPage() {
                   placeholder="Sua senha"
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -118,8 +118,8 @@ function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
-            <p className="text-slate-400 text-sm">
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-muted-foreground text-sm">
               Não tem uma conta?{" "}
               <Link
                 to="/registrar"
