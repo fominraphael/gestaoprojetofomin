@@ -19,22 +19,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      // Try v3 first, then fall back to v2 (old sessions)
+      // Try v4 first, then fall back to v3/v2
+      const storedV4 = localStorage.getItem("sessao_usuario_v4");
       const storedV3 = localStorage.getItem("sessao_usuario_v3");
-      const storedV2 = localStorage.getItem("sessao_usuario_v2");
-      const stored = storedV3 || storedV2;
+      const stored = storedV4 || storedV3;
       if (stored) setUser(JSON.parse(stored));
     } catch {
+      localStorage.removeItem("sessao_usuario_v4");
       localStorage.removeItem("sessao_usuario_v3");
-      localStorage.removeItem("sessao_usuario_v2");
     }
     setLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
     const u = await autenticar(username, password);
-    // Save all fields including empresa_id and modulos so the portal
-    // can conditionally render the correct modules and documents
     const session: UsuarioSistema = {
       id: u.id,
       username: u.username,
@@ -44,15 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       empresa_id: u.empresa_id ?? null,
       modulos: u.modulos ?? [],
       active: u.active ?? true,
+      tipo_usuario: u.tipo_usuario ?? "Lojista",
+      pode_criar_admin: u.pode_criar_admin ?? false,
+      campos_customizados: u.campos_customizados ?? {},
     };
     setUser(session);
-    // Persist under v3 key; remove old v2 to avoid stale data
-    localStorage.setItem("sessao_usuario_v3", JSON.stringify(session));
+    localStorage.setItem("sessao_usuario_v4", JSON.stringify(session));
+    localStorage.removeItem("sessao_usuario_v3");
     localStorage.removeItem("sessao_usuario_v2");
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("sessao_usuario_v4");
     localStorage.removeItem("sessao_usuario_v3");
     localStorage.removeItem("sessao_usuario_v2");
   };

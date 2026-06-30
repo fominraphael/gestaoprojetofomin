@@ -47,26 +47,6 @@ const allApps: AppCard[] = [
     gradient: "from-blue-500/20 to-indigo-500/20",
     iconBg: "from-blue-500 to-indigo-600",
   },
-  {
-    id: "financeiro",
-    title: "Módulo Financeiro",
-    description: "Controle de faturamento, pagamentos, recebimentos e conciliação bancária.",
-    icon: Lock,
-    href: "#",
-    status: "coming_soon",
-    gradient: "from-emerald-500/10 to-emerald-600/10",
-    iconBg: "from-emerald-500 to-emerald-600",
-  },
-  {
-    id: "estoque",
-    title: "Controle de Estoque",
-    description: "Gestão de entradas, saídas, inventário e alertas de reposição.",
-    icon: Lock,
-    href: "#",
-    status: "coming_soon",
-    gradient: "from-amber-500/10 to-amber-600/10",
-    iconBg: "from-amber-500 to-amber-600",
-  },
 ];
 
 export function PortalPage() {
@@ -74,7 +54,8 @@ export function PortalPage() {
   const navigate = useNavigate();
 
   // Documents state for merchants
-  const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [todasEmpresas, setTodasEmpresas] = useState<Empresa[]>([]);
+  const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null);
   const [arquivos, setArquivos] = useState<DocumentoArquivo[]>([]);
   const [docTipos, setDocTipos] = useState<DocumentoTipo[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -87,9 +68,9 @@ export function PortalPage() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  // Load documents for logged-in merchant
+  // Load all companies and document types
   useEffect(() => {
-    async function loadMerchantData() {
+    async function loadInitialData() {
       if (!user || user.role === "admin") return;
       setLoadingDocs(true);
       try {
@@ -97,40 +78,47 @@ export function PortalPage() {
           obterEmpresas(),
           obterDocumentosTipo(),
         ]);
-
+        setTodasEmpresas(allEmps);
         setDocTipos(allTipos);
 
-        // Try to find the company associated to this user:
-        // 1. By empresa_id if set, 2. By CNPJ if set, 3. Fallback to all files
-        let targetEmpresaId: string | undefined = user.empresa_id || undefined;
-
-        if (!targetEmpresaId && user.cnpj) {
-          const cleanedCnpj = user.cnpj.replace(/\D/g, "");
-          const empByCnpj = allEmps.find(
-            (e) => e.cnpj.replace(/\D/g, "") === cleanedCnpj
-          );
-          if (empByCnpj) targetEmpresaId = empByCnpj.id;
+        // Select default company: first in the list
+        if (allEmps.length > 0) {
+          setSelectedEmpresa(allEmps[0]);
         }
-
-        if (targetEmpresaId) {
-          const empObj = allEmps.find((e) => e.id === targetEmpresaId);
-          if (empObj) setEmpresa(empObj);
-        }
-
-        const allFiles = await obterArquivos(targetEmpresaId);
-        setArquivos(allFiles);
       } catch (err) {
-        console.error("Erro ao carregar documentos do lojista:", err);
+        console.error("Erro ao carregar dados iniciais:", err);
       } finally {
         setLoadingDocs(false);
       }
     }
 
     if (isAuthenticated && !loading) {
-      loadMerchantData();
+      loadInitialData();
     }
   }, [isAuthenticated, loading, user]);
 
+  // Fetch documents whenever the selected company changes
+  useEffect(() => {
+    async function loadDocumentsForCompany() {
+      if (!selectedEmpresa) {
+        setArquivos([]);
+        return;
+      }
+      setLoadingDocs(true);
+      try {
+        const files = await obterArquivos(selectedEmpresa.id);
+        setArquivos(files);
+      } catch (err) {
+        console.error("Erro ao carregar arquivos da empresa:", err);
+      } finally {
+        setLoadingDocs(false);
+      }
+    }
+
+    if (selectedEmpresa) {
+      loadDocumentsForCompany();
+    }
+  }, [selectedEmpresa]);
 
   const handleDownloadAll = async () => {
     if (arquivos.length === 0) return;
@@ -165,7 +153,7 @@ export function PortalPage() {
       // Trigger download
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
-      link.download = `KIT_DOCUMENTOS_${empresa?.nome || "LOJISTA"}.zip`.replace(/\s+/g, "_");
+      link.download = `KIT_DOCUMENTOS_${selectedEmpresa?.nome || "LOJISTA"}.zip`.replace(/\s+/g, "_");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -330,104 +318,128 @@ export function PortalPage() {
         {/* -------------------- LOJISTA SECTION: DOCUMENTS -------------------- */}
         {!isAdmin && (
           <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-5 flex-wrap gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-400" />
-                  Meus Documentos
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Empresa: <strong className="text-slate-200">{empresa?.nome || "Sincronizando..."}</strong> (CNPJ: {empresa ? empresa.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : ""})
-                </p>
-              </div>
-
-              {arquivos.length > 0 && (
-                <button
-                  onClick={handleDownloadAll}
-                  disabled={zipProgress}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border border-transparent rounded-xl text-xs font-semibold text-white transition-all shadow-lg shadow-blue-500/20 disabled:opacity-55"
-                >
-                  <Download className="w-4 h-4" />
-                  {zipProgress ? zipPercent : "Baixar Kit Completo (ZIP)"}
-                </button>
-              )}
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-400" />
+                Módulo de Documentos
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Selecione uma empresa na barra lateral para visualizar e baixar os arquivos correspondentes.
+              </p>
             </div>
 
-            {loadingDocs ? (
-              <div className="text-center py-12 text-slate-500">
-                <span className="w-8 h-8 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin inline-block" />
-              </div>
-            ) : docTypesWithFiles.length === 0 ? (
+            {todasEmpresas.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-sm border border-dashed border-slate-800 rounded-xl">
-                Ainda não há nenhum arquivo disponibilizado para a sua empresa pelo administrador.
+                Nenhuma empresa foi cadastrada no banco de dados ainda.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {docTypesWithFiles.map((type) => {
-                  const typeFiles = arquivos.filter((f) => f.tipo_id === type.id);
-                  return (
-                    <div
-                      key={type.id}
-                      className="bg-slate-950/40 border border-slate-850 rounded-xl p-5 hover:border-slate-800 transition-all flex flex-col justify-between"
-                    >
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Internal Sidebar for Companies */}
+                <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-800/80 pb-6 md:pb-0 md:pr-6 space-y-3">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5" />
+                    Empresas Cadastradas
+                  </div>
+                  <div className="space-y-1.5 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    {todasEmpresas.map((emp) => {
+                      const isSelected = selectedEmpresa?.id === emp.id;
+                      return (
+                        <button
+                          key={emp.id}
+                          onClick={() => setSelectedEmpresa(emp)}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all flex flex-col gap-1 border border-transparent ${
+                            isSelected
+                              ? "bg-blue-600/10 border-blue-500/30 text-white font-medium shadow-inner shadow-blue-500/5"
+                              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                          }`}
+                        >
+                          <span className="truncate block font-semibold">{emp.nome}</span>
+                          <span className="text-[10px] text-slate-500 block">
+                            CNPJ: {emp.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Company Documents panel */}
+                <div className="flex-1 min-w-0 space-y-6">
+                  {selectedEmpresa && (
+                    <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 flex-wrap gap-3">
                       <div>
-                        <span className="text-[10px] bg-blue-500/10 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                          {type.nome}
-                        </span>
-                        <h3 className="text-white font-semibold text-sm mt-3">{type.descricao || "Documentação Oficial"}</h3>
+                        <h3 className="text-base font-bold text-white truncate max-w-[320px]" title={selectedEmpresa.nome}>
+                          {selectedEmpresa.nome}
+                        </h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          CNPJ: {selectedEmpresa.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
+                        </p>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-slate-900/60 space-y-2">
-                        {typeFiles.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between gap-4 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">
-                            <span className="text-xs text-slate-300 truncate max-w-[200px]" title={file.arquivo_nome}>
-                              {file.arquivo_nome}
-                            </span>
-                            <a
-                              href={file.arquivo_url}
-                              download={file.arquivo_nome}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-blue-300 transition-all flex items-center justify-center shrink-0"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </a>
-                          </div>
-                        ))}
-                      </div>
+                      {arquivos.length > 0 && (
+                        <button
+                          onClick={handleDownloadAll}
+                          disabled={zipProgress}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border border-transparent rounded-lg text-[10px] font-semibold text-white transition-all shadow-md shadow-blue-500/10 disabled:opacity-55"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          {zipProgress ? zipPercent : "Baixar Kit Completo (ZIP)"}
+                        </button>
+                      )}
                     </div>
-                  );
-                })}
+                  )}
+
+                  {loadingDocs ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <span className="w-6 h-6 border-2 border-slate-700 border-t-slate-300 rounded-full animate-spin inline-block" />
+                    </div>
+                  ) : docTypesWithFiles.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-850 rounded-xl">
+                      Ainda não há nenhum arquivo disponibilizado para esta empresa.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {docTypesWithFiles.map((type) => {
+                        const typeFiles = arquivos.filter((f) => f.tipo_id === type.id);
+                        return (
+                          <div
+                            key={type.id}
+                            className="bg-slate-950/40 border border-slate-850 rounded-xl p-4.5 hover:border-slate-800 transition-all flex flex-col justify-between"
+                          >
+                            <div>
+                              <span className="text-[9px] bg-blue-500/10 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                {type.nome}
+                              </span>
+                              <h4 className="text-white font-semibold text-xs mt-2.5">{type.descricao || "Documentação Oficial"}</h4>
+                            </div>
+
+                            <div className="mt-3.5 pt-3.5 border-t border-slate-900/60 space-y-1.5">
+                              {typeFiles.map((file) => (
+                                <div key={file.id} className="flex items-center justify-between gap-3 bg-slate-900/30 p-2 rounded-lg border border-slate-850">
+                                  <span className="text-[11px] text-slate-300 truncate max-w-[170px]" title={file.arquivo_nome}>
+                                    {file.arquivo_nome}
+                                  </span>
+                                  <a
+                                    href={file.arquivo_url}
+                                    download={file.arquivo_nome}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-blue-300 transition-all flex items-center justify-center shrink-0"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </section>
-        )}
-
-        {/* Admin quick access panel */}
-        {isAdmin && (
-          <div className="p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30">
-                  <Settings className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-amber-300">Área de Administração do Portal</div>
-                  <div className="text-xs text-amber-400/70">
-                    Gerencie lojistas, importe planilhas, crie empresas e defina tipos de documentos.
-                  </div>
-                </div>
-              </div>
-              <Link
-                to="/admin/usuarios"
-                id="btn-admin-panel"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-semibold transition-all"
-              >
-                <Users className="w-4 h-4" />
-                Acessar Painel Admin
-              </Link>
-            </div>
-          </div>
         )}
       </main>
     </div>

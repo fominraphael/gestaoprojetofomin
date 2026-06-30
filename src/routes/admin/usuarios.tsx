@@ -7,6 +7,11 @@ import {
   criarUsuario,
   atualizarUsuario,
   excluirUsuario,
+  type TipoUsuarioConfig,
+  obterTiposUsuarioConfig,
+  criarTipoUsuarioConfig,
+  atualizarTipoUsuarioConfig,
+  excluirTipoUsuarioConfig,
 } from "@/lib/usuarios";
 import {
   type Empresa,
@@ -47,6 +52,8 @@ import {
   Download,
   AlertTriangle,
   Info,
+  Settings,
+  Shield,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -66,18 +73,19 @@ function formatCnpj(val: string) {
 }
 
 export function AdminUsuariosPage() {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { user: currentUser, isAuthenticated, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sub-tabs
-  const [activeTab, setActiveTab] = useState<"users" | "import" | "companies" | "doctypes">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "import" | "companies" | "doctypes" | "usertypes">("users");
 
   // General state
   const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [docTipos, setDocTipos] = useState<DocumentoTipo[]>([]);
   const [arquivos, setArquivos] = useState<DocumentoArquivo[]>([]);
+  const [userTypes, setUserTypes] = useState<TipoUsuarioConfig[]>([]);
   
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -89,10 +97,11 @@ export function AdminUsuariosPage() {
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
-    cnpj: "",
-    empresa_id: "",
+    tipo_usuario: "Lojista",
+    pode_criar_admin: false,
     modulos: [] as string[],
     active: true,
+    campos_customizados: {} as Record<string, any>,
   });
   
   const [editPassword, setEditPassword] = useState("");
@@ -103,12 +112,25 @@ export function AdminUsuariosPage() {
   const [showCreateDocType, setShowCreateDocType] = useState(false);
   const [newDocType, setNewDocType] = useState({ nome: "", descricao: "" });
 
+  // User Types form state
+  const [showCreateUserType, setShowCreateUserType] = useState(false);
+  const [newUserType, setNewUserType] = useState({
+    nome: "",
+    role: "user" as "admin" | "user",
+    campos_schema: [] as { nome: string; label: string; tipo: "text" | "number" | "boolean"; obrigatorio: boolean }[],
+  });
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldType, setNewFieldType] = useState<"text" | "number" | "boolean">("text");
+  const [newFieldRequired, setNewFieldRequired] = useState(false);
+
   // Company management view states
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [selectedDocTypeId, setSelectedDocTypeId] = useState("");
 
   // Import states
+  const [selectedUserTypeImportId, setSelectedUserTypeImportId] = useState("Lojista");
   const [importRows, setImportRows] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
 
@@ -116,16 +138,18 @@ export function AdminUsuariosPage() {
   const loadAllData = useCallback(async () => {
     setLoadingData(true);
     try {
-      const [u, emp, dt, arr] = await Promise.all([
+      const [u, emp, dt, arr, ut] = await Promise.all([
         obterUsuarios(),
         obterEmpresas(),
         obterDocumentosTipo(),
         obterArquivos(),
+        obterTiposUsuarioConfig(),
       ]);
       setUsuarios(u);
       setEmpresas(emp);
       setDocTipos(dt);
       setArquivos(arr);
+      setUserTypes(ut);
     } catch {
       setFeedback({ type: "error", msg: "Erro ao sincronizar dados com o banco." });
     } finally {
@@ -149,24 +173,44 @@ export function AdminUsuariosPage() {
   // User Actions
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUser.username) return showToast("error", "Nome de usuário é obrigatório.");
+    if (!newUser.username) return showToast("error", "Login de acesso é obrigatório.");
     if (!newUser.password) return showToast("error", "Senha inicial é obrigatória.");
+
+    // Dynamic field validation
+    const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
+    if (selectedType) {
+      // Security Check: if this type is admin but currentUser has no pode_criar_admin permissions (and isn't root)
+      const isRoot = currentUser?.username === "root";
+      const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+      if (selectedType.role === "admin" && !canCreateAdmin) {
+        return showToast("error", "Você não tem permissão para cadastrar usuários do tipo Administrador.");
+      }
+
+      for (const field of selectedType.campos_schema) {
+        if (field.obrigatorio && !newUser.campos_customizados[field.nome]) {
+          return showToast("error", `O campo "${field.label}" é obrigatório.`);
+        }
+      }
+    }
 
     setActionLoading("create-user");
     try {
       await criarUsuario({
         username: newUser.username,
         password: newUser.password,
-        role: "user",
+        role: selectedType?.role || "user",
         status: "approved",
-        cnpj: cleanCnpj(newUser.cnpj),
-        empresa_id: newUser.empresa_id || null,
+        cnpj: newUser.campos_customizados.cnpj ? cleanCnpj(newUser.campos_customizados.cnpj) : null,
+        empresa_id: null,
         modulos: newUser.modulos,
         active: newUser.active,
+        tipo_usuario: newUser.tipo_usuario,
+        pode_criar_admin: newUser.pode_criar_admin,
+        campos_customizados: newUser.campos_customizados,
       });
       showToast("success", `Usuário "${newUser.username}" criado com sucesso.`);
       setShowCreateUser(false);
-      setNewUser({ username: "", password: "", cnpj: "", empresa_id: "", modulos: [], active: true });
+      setNewUser({ username: "", password: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar usuário.");
@@ -178,12 +222,34 @@ export function AdminUsuariosPage() {
   const handleUpdateUser = async (userObj: UsuarioSistema) => {
     setActionLoading(userObj.id);
     try {
+      const selectedType = userTypes.find((t) => t.nome === userObj.tipo_usuario);
+      
+      // Security Check: if changing/saving type admin but has no permissions
+      const isRoot = currentUser?.username === "root";
+      const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+      if (selectedType?.role === "admin" && !canCreateAdmin) {
+        return showToast("error", "Você não tem permissão para cadastrar ou editar usuários Administradores.");
+      }
+
+      // Dynamic field validation
+      if (selectedType) {
+        for (const field of selectedType.campos_schema) {
+          if (field.obrigatorio && !userObj.campos_customizados?.[field.nome]) {
+            return showToast("error", `O campo "${field.label}" é obrigatório.`);
+          }
+        }
+      }
+
       const updates: any = {
-        cnpj: userObj.cnpj ? cleanCnpj(userObj.cnpj) : null,
-        empresa_id: userObj.empresa_id || null,
+        role: selectedType?.role || "user",
+        cnpj: userObj.campos_customizados?.cnpj ? cleanCnpj(userObj.campos_customizados.cnpj) : null,
+        empresa_id: null,
         modulos: userObj.modulos || [],
         active: userObj.active,
         status: userObj.status,
+        tipo_usuario: userObj.tipo_usuario,
+        pode_criar_admin: userObj.pode_criar_admin || false,
+        campos_customizados: userObj.campos_customizados || {},
       };
       if (editPassword) {
         updates.password = editPassword;
@@ -212,6 +278,79 @@ export function AdminUsuariosPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // User Type Config Actions
+  const handleCreateUserType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserType.nome) return showToast("error", "Nome do tipo é obrigatório.");
+    setActionLoading("create-usertype");
+    try {
+      await criarTipoUsuarioConfig({
+        nome: newUserType.nome,
+        role: newUserType.role,
+        campos_schema: newUserType.campos_schema,
+      });
+      showToast("success", `Tipo de usuário "${newUserType.nome}" criado.`);
+      setShowCreateUserType(false);
+      setNewUserType({ nome: "", role: "user", campos_schema: [] });
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao criar tipo de usuário.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteUserType = async (id: string, name: string) => {
+    if (["Administrador", "Lojista", "ADM de loja"].includes(name)) {
+      return showToast("error", "Não é permitido excluir os tipos de usuário padrão.");
+    }
+    if (!confirm(`Deseja realmente excluir o tipo de usuário "${name}"?`)) return;
+    setActionLoading(id);
+    try {
+      await excluirTipoUsuarioConfig(id);
+      showToast("success", `Tipo de usuário "${name}" excluído.`);
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao excluir tipo de usuário.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAddFieldToNewType = () => {
+    if (!newFieldName || !newFieldLabel) return showToast("error", "Nome do campo e Rótulo são obrigatórios.");
+    const fieldNameClean = newFieldName.toLowerCase().replace(/\s+/g, "_").replace(/\W/g, "");
+    
+    if (newUserType.campos_schema.some(f => f.nome === fieldNameClean)) {
+      return showToast("error", "Já existe um campo com este nome técnico.");
+    }
+
+    setNewUserType(prev => ({
+      ...prev,
+      campos_schema: [
+        ...prev.campos_schema,
+        {
+          nome: fieldNameClean,
+          label: newFieldLabel,
+          tipo: newFieldType,
+          obrigatorio: newFieldRequired,
+        }
+      ]
+    }));
+
+    setNewFieldName("");
+    setNewFieldLabel("");
+    setNewFieldType("text");
+    setNewFieldRequired(false);
+  };
+
+  const handleRemoveFieldFromNewType = (index: number) => {
+    setNewUserType(prev => ({
+      ...prev,
+      campos_schema: prev.campos_schema.filter((_, i) => i !== index)
+    }));
   };
 
   // Company Actions
@@ -316,6 +455,12 @@ export function AdminUsuariosPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
+    if (!selectedType) {
+      showToast("error", "Selecione um tipo de usuário válido primeiro.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -330,19 +475,39 @@ export function AdminUsuariosPage() {
           return;
         }
 
-        // Validate structure (must have CNPJ, Nome, Senha)
+        // Validate structure (must have "Login de acesso" or "Username" and "Senha" or "Password")
         const first = rows[0];
-        const hasCnpj = Object.keys(first).some(k => k.toLowerCase() === "cnpj");
-        const hasNome = Object.keys(first).some(k => k.toLowerCase() === "nome");
-        const hasSenha = Object.keys(first).some(k => k.toLowerCase() === "senha");
+        const keys = Object.keys(first);
+        
+        const hasLogin = keys.some(k => ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()));
+        const hasSenha = keys.some(k => ["senha", "password", "key"].includes(k.toLowerCase().trim()));
 
-        if (!hasCnpj || !hasNome || !hasSenha) {
-          showToast("error", "Planilha inválida. As colunas obrigatórias são: CNPJ, Nome, Senha");
+        if (!hasLogin || !hasSenha) {
+          showToast("error", 'Planilha inválida. As colunas obrigatórias são: "Login de acesso" e "Senha"');
+          return;
+        }
+
+        // Validate required custom fields for the selected user type
+        const missingFields: string[] = [];
+        selectedType.campos_schema.forEach((field) => {
+          if (field.obrigatorio) {
+            const hasField = keys.some(k => 
+              k.toLowerCase().trim() === field.label.toLowerCase().trim() || 
+              k.toLowerCase().trim() === field.nome.toLowerCase().trim()
+            );
+            if (!hasField) {
+              missingFields.push(field.label);
+            }
+          }
+        });
+
+        if (missingFields.length > 0) {
+          showToast("error", `Planilha inválida. Faltam as seguintes colunas obrigatórias para o tipo ${selectedType.nome}: ${missingFields.join(", ")}`);
           return;
         }
 
         setImportRows(rows);
-        showToast("success", `${rows.length} registros prontos para importação.`);
+        showToast("success", `${rows.length} registros do tipo "${selectedType.nome}" prontos para importação.`);
       } catch {
         showToast("error", "Erro ao processar planilha Excel.");
       }
@@ -356,44 +521,74 @@ export function AdminUsuariosPage() {
     let successCount = 0;
     let failCount = 0;
 
+    const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
+    if (!selectedType) {
+      showToast("error", "Erro ao recuperar as configurações do tipo de usuário.");
+      setImportLoading(false);
+      return;
+    }
+
     for (const row of importRows) {
-      const normalizedRow: any = {};
-      Object.keys(row).forEach(k => {
-        normalizedRow[k.toLowerCase()] = row[k];
-      });
+      // Find Login de acesso (username)
+      const usernameKey = Object.keys(row).find(k => ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()));
+      // Find password
+      const passwordKey = Object.keys(row).find(k => ["senha", "password", "key"].includes(k.toLowerCase().trim()));
 
-      const cnpj = cleanCnpj(String(normalizedRow.cnpj || ""));
-      const nome = String(normalizedRow.nome || "").trim();
-      const senha = String(normalizedRow.senha || "").trim();
-      const rawModulos = String(normalizedRow.modulos || "").toLowerCase();
-      
-      const modulos = rawModulos
-        ? rawModulos.split(",").map(m => m.trim()).filter(Boolean)
-        : ["documentos", "gestao"];
+      const username = usernameKey ? String(row[usernameKey]).trim() : "";
+      const password = passwordKey ? String(row[passwordKey]).trim() : "";
 
-      if (cnpj.length < 11 || !nome || !senha) {
+      if (!username || !password) {
         failCount++;
         continue;
       }
 
+      // Map dynamic fields from row columns
+      const campos_customizados: Record<string, any> = {};
+      selectedType.campos_schema.forEach((field) => {
+        const colKey = Object.keys(row).find(k => 
+          k.toLowerCase().trim() === field.label.toLowerCase().trim() || 
+          k.toLowerCase().trim() === field.nome.toLowerCase().trim()
+        );
+        
+        if (colKey !== undefined) {
+          const val = row[colKey];
+          if (field.tipo === "number") {
+            campos_customizados[field.nome] = Number(val);
+          } else if (field.tipo === "boolean") {
+            campos_customizados[field.nome] = String(val).toLowerCase() === "true" || val === true || String(val).toLowerCase() === "sim";
+          } else {
+            campos_customizados[field.nome] = String(val).trim();
+          }
+        }
+      });
+
+      // Special action: if CNPJ is a field, create/find the company automatically
+      const cnpj = campos_customizados.cnpj ? cleanCnpj(String(campos_customizados.cnpj)) : "";
+      
       try {
-        // Find if company exists for this CNPJ, otherwise create company first
-        let companyObj = empresas.find(e => e.cnpj === cnpj);
-        if (!companyObj) {
-          companyObj = await criarEmpresa(cnpj, nome);
-          // Add to local list to prevent repeated creations
-          empresas.push(companyObj);
+        if (cnpj) {
+          let companyObj = empresas.find(e => cleanCnpj(e.cnpj) === cleanCnpj(cnpj));
+          if (!companyObj) {
+            // Find a name for the company or use username
+            const razaoSocialKey = Object.keys(row).find(k => ["razão social", "razao social", "empresa", "nome da empresa"].includes(k.toLowerCase().trim()));
+            const companyName = razaoSocialKey ? String(row[razaoSocialKey]).trim() : `Empresa de ${username}`;
+            companyObj = await criarEmpresa(cnpj, companyName);
+            empresas.push(companyObj);
+          }
         }
 
         await criarUsuario({
-          username: nome,
-          password: senha,
-          role: "user",
+          username,
+          password,
+          role: selectedType.role,
           status: "approved",
-          cnpj,
-          empresa_id: companyObj.id,
-          modulos,
+          cnpj: cnpj || null,
+          empresa_id: null,
+          modulos: ["gestao", "documentos"], // default active modules
           active: true,
+          tipo_usuario: selectedType.nome,
+          pode_criar_admin: false,
+          campos_customizados,
         });
         successCount++;
       } catch (err) {
@@ -537,6 +732,17 @@ export function AdminUsuariosPage() {
             <FileText className="w-4 h-4" />
             Tipos de Documento
           </button>
+          <button
+            onClick={() => setActiveTab("usertypes")}
+            className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
+              activeTab === "usertypes"
+                ? "text-blue-400 border-blue-400"
+                : "text-slate-400 border-transparent hover:text-slate-200"
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Configuração de Perfis
+          </button>
         </div>
 
         {/* -------------------- TAB: USERS -------------------- */}
@@ -568,60 +774,133 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">Adicionar Novo Lojista</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">Adicionar Novo Usuário</h3>
                 <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome / Nome de Exibição</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Login de acesso</label>
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Loja do João"
+                      placeholder="Identificador do usuário para login"
                       value={newUser.username}
                       onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">CNPJ (Será usado para login)</label>
-                    <input
-                      type="text"
-                      placeholder="Somente números (14 dígitos)"
-                      maxLength={18}
-                      value={newUser.cnpj}
-                      onChange={(e) => setNewUser({ ...newUser, cnpj: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Senha Inicial</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Senha Inicial</label>
                     <input
                       type="password"
                       required
-                      placeholder="Defina a senha do lojista"
+                      placeholder="Defina a senha inicial"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Empresa Associada (Opcional)</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Tipo de Usuário</label>
                     <select
-                      value={newUser.empresa_id}
-                      onChange={(e) => setNewUser({ ...newUser, empresa_id: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={newUser.tipo_usuario}
+                      onChange={(e) => {
+                        const selectedType = userTypes.find((t) => t.nome === e.target.value);
+                        setNewUser({
+                          ...newUser,
+                          tipo_usuario: e.target.value,
+                          pode_criar_admin: false,
+                          campos_customizados: {},
+                        });
+                      }}
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     >
-                      <option value="">Nenhuma</option>
-                      {empresas.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.nome} ({formatCnpj(emp.cnpj)})
-                        </option>
-                      ))}
+                      {userTypes.map((t) => {
+                        // Security check: only users with pode_criar_admin (or root) can choose admin user types
+                        const isRoot = currentUser?.username === "root";
+                        const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+                        if (t.role === "admin" && !canCreateAdmin) return null;
+                        return (
+                          <option key={t.id} value={t.nome}>
+                            {t.nome}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
+
+                  {/* Render Dynamic Fields */}
+                  {(() => {
+                    const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
+                    return selectedType?.campos_schema.map((field) => (
+                      <div key={field.nome}>
+                        <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
+                          {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                        </label>
+                        {field.tipo === "boolean" ? (
+                          <select
+                            value={newUser.campos_customizados[field.nome] ? "true" : "false"}
+                            onChange={(e) => setNewUser({
+                              ...newUser,
+                              campos_customizados: {
+                                ...newUser.campos_customizados,
+                                [field.nome]: e.target.value === "true",
+                              }
+                            })}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          >
+                            <option value="false">Não</option>
+                            <option value="true">Sim</option>
+                          </select>
+                        ) : (
+                          <input
+                            type={field.tipo === "number" ? "number" : "text"}
+                            required={field.obrigatorio}
+                            placeholder={`Preencha o campo ${field.label}`}
+                            value={newUser.campos_customizados[field.nome] || ""}
+                            onChange={(e) => setNewUser({
+                              ...newUser,
+                              campos_customizados: {
+                                ...newUser.campos_customizados,
+                                [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
+                              }
+                            })}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          />
+                        )}
+                      </div>
+                    ));
+                  })()}
+
+                  {/* pode_criar_admin Flag check */}
+                  {(() => {
+                    const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
+                    const isRoot = currentUser?.username === "root";
+                    const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+                    
+                    if (selectedType?.role === "admin" && canCreateAdmin) {
+                      return (
+                        <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setNewUser({ ...newUser, pode_criar_admin: !newUser.pode_criar_admin })}
+                            className="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition-all"
+                          >
+                            {newUser.pode_criar_admin ? (
+                              <ToggleRight className="w-8 h-5 text-blue-500" />
+                            ) : (
+                              <ToggleLeft className="w-8 h-5 text-slate-600" />
+                            )}
+                            Permitir que este administrador cadastre outros administradores
+                          </button>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-2">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
-                      {["documentos", "gestao", "financeiro", "estoque"].map((mod) => (
+                      {["documentos", "gestao"].map((mod) => (
                         <label key={mod} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                           <input
                             type="checkbox"
@@ -629,7 +908,7 @@ export function AdminUsuariosPage() {
                             onChange={() => toggleModuleInNewUser(mod)}
                             className="rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-0 w-4 h-4"
                           />
-                          {mod.charAt(0).toUpperCase() + mod.slice(1)}
+                          {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
                       ))}
                     </div>
@@ -666,49 +945,105 @@ export function AdminUsuariosPage() {
                   </button>
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-4">
-                  Editar Lojista: {showEditUser.username}
+                  Editar Usuário: {showEditUser.username}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">CNPJ</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Login de acesso</label>
                     <input
                       type="text"
-                      placeholder="Somente números (14 dígitos)"
-                      maxLength={18}
-                      value={showEditUser.cnpj || ""}
-                      onChange={(e) => setShowEditUser({ ...showEditUser, cnpj: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      disabled
+                      value={showEditUser.username}
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950/50 border border-slate-850 text-slate-500 cursor-not-allowed text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Empresa Associada</label>
-                    <select
-                      value={showEditUser.empresa_id || ""}
-                      onChange={(e) => setShowEditUser({ ...showEditUser, empresa_id: e.target.value || null })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="">Nenhuma</option>
-                      {empresas.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.nome} ({formatCnpj(emp.cnpj)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                      Nova Senha <span className="text-slate-500">(Preencha apenas para alterar)</span>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
+                      Alterar Senha <span className="text-slate-500">(Opcional)</span>
                     </label>
                     <input
                       type="password"
-                      placeholder="Defina uma nova senha"
+                      placeholder="Preencha apenas para alterar"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Tipo de Usuário</label>
+                    <select
+                      value={showEditUser.tipo_usuario || "Lojista"}
+                      onChange={(e) => {
+                        const selectedType = userTypes.find((t) => t.nome === e.target.value);
+                        setShowEditUser({
+                          ...showEditUser,
+                          tipo_usuario: e.target.value,
+                          role: selectedType?.role || "user",
+                          pode_criar_admin: false,
+                          campos_customizados: {},
+                        });
+                      }}
+                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    >
+                      {userTypes.map((t) => {
+                        const isRoot = currentUser?.username === "root";
+                        const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+                        if (t.role === "admin" && !canCreateAdmin) return null;
+                        return (
+                          <option key={t.id} value={t.nome}>
+                            {t.nome}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Render Dynamic Fields for Edit */}
+                  {(() => {
+                    const selectedType = userTypes.find((t) => t.nome === (showEditUser.tipo_usuario || "Lojista"));
+                    const customFields = showEditUser.campos_customizados || {};
+                    return selectedType?.campos_schema.map((field) => (
+                      <div key={field.nome}>
+                        <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
+                          {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                        </label>
+                        {field.tipo === "boolean" ? (
+                          <select
+                            value={customFields[field.nome] ? "true" : "false"}
+                            onChange={(e) => setShowEditUser({
+                              ...showEditUser,
+                              campos_customizados: {
+                                ...customFields,
+                                [field.nome]: e.target.value === "true",
+                              }
+                            })}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          >
+                            <option value="false">Não</option>
+                            <option value="true">Sim</option>
+                          </select>
+                        ) : (
+                          <input
+                            type={field.tipo === "number" ? "number" : "text"}
+                            required={field.obrigatorio}
+                            placeholder={`Preencha o campo ${field.label}`}
+                            value={customFields[field.nome] || ""}
+                            onChange={(e) => setShowEditUser({
+                              ...showEditUser,
+                              campos_customizados: {
+                                ...customFields,
+                                [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
+                              }
+                            })}
+                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                          />
+                        )}
+                      </div>
+                    ));
+                  })()}
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Status de Aprovação</label>
                     <div className="flex gap-4 mt-2">
                       <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                         <input
@@ -744,7 +1079,7 @@ export function AdminUsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Disponibilidade da Conta</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Status da Conta</label>
                     <button
                       type="button"
                       onClick={() => setShowEditUser({ ...showEditUser, active: !showEditUser.active })}
@@ -759,10 +1094,37 @@ export function AdminUsuariosPage() {
                     </button>
                   </div>
 
+                  {/* pode_criar_admin Flag check for edit */}
+                  {(() => {
+                    const selectedType = userTypes.find((t) => t.nome === (showEditUser.tipo_usuario || "Lojista"));
+                    const isRoot = currentUser?.username === "root";
+                    const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+                    
+                    if (selectedType?.role === "admin" && canCreateAdmin) {
+                      return (
+                        <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowEditUser({ ...showEditUser, pode_criar_admin: !showEditUser.pode_criar_admin })}
+                            className="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition-all"
+                          >
+                            {showEditUser.pode_criar_admin ? (
+                              <ToggleRight className="w-8 h-5 text-blue-500" />
+                            ) : (
+                              <ToggleLeft className="w-8 h-5 text-slate-600" />
+                            )}
+                            Permitir que este administrador cadastre outros administradores
+                          </button>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-2">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-slate-400 mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
-                      {["documentos", "gestao", "financeiro", "estoque"].map((mod) => (
+                      {["documentos", "gestao"].map((mod) => (
                         <label key={mod} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                           <input
                             type="checkbox"
@@ -770,7 +1132,7 @@ export function AdminUsuariosPage() {
                             onChange={() => toggleModuleInEditUser(mod)}
                             className="rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-0 w-4 h-4"
                           />
-                          {mod.charAt(0).toUpperCase() + mod.slice(1)}
+                          {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
                       ))}
                     </div>
@@ -802,10 +1164,10 @@ export function AdminUsuariosPage() {
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 font-medium">
-                    <th className="px-6 py-4">Lojista / CNPJ</th>
-                    <th className="px-6 py-4 hidden md:table-cell">Empresa Associada</th>
+                    <th className="px-6 py-4">Login de acesso</th>
+                    <th className="px-6 py-4">Tipo de Usuário</th>
                     <th className="px-6 py-4">Módulos</th>
-                    <th className="px-6 py-4 text-center">Acesso</th>
+                    <th className="px-6 py-4 text-center">Status</th>
                     <th className="px-6 py-4 text-right">Ações</th>
                   </tr>
                 </thead>
@@ -821,38 +1183,50 @@ export function AdminUsuariosPage() {
                         <div>
                           <div className="text-white font-medium flex items-center gap-2">
                             {u.username}
-                            {u.role === "admin" && (
-                              <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded-full">
-                                Admin
+                            {u.pode_criar_admin && (
+                              <span className="text-[9px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.2 rounded-full font-semibold">
+                                Criador de Admin
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-400 mt-0.5">
-                            {u.cnpj ? formatCnpj(u.cnpj) : "Nenhum CNPJ informado"}
-                          </div>
+                          {/* Render dynamic metadata summary */}
+                          {u.campos_customizados && Object.keys(u.campos_customizados).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {Object.keys(u.campos_customizados).map((k) => {
+                                const val = u.campos_customizados?.[k];
+                                if (val === undefined || val === null || val === "") return null;
+                                return (
+                                  <span key={k} className="text-[10px] text-slate-400 bg-slate-950/60 px-2 py-0.5 rounded border border-slate-850">
+                                    <strong className="text-slate-500 font-medium uppercase text-[9px] mr-1">{k}:</strong>
+                                    {typeof val === "boolean" ? (val ? "Sim" : "Não") : String(val)}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        {u.empresa_id ? (
-                          <div className="text-slate-300">
-                            {empresas.find((e) => e.id === u.empresa_id)?.nome || "Carregando..."}
-                          </div>
-                        ) : (
-                          <span className="text-slate-600">—</span>
-                        )}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          u.role === "admin"
+                            ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                            : "bg-slate-800 border border-slate-700/50 text-slate-300"
+                        }`}>
+                          {u.tipo_usuario || (u.role === "admin" ? "Administrador" : "Lojista")}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
                           {u.modulos && u.modulos.length > 0 ? (
                             u.modulos.map((m) => <ModuleBadge key={m} moduleKey={m} />)
                           ) : (
-                            <span className="text-xs text-slate-600">Nenhum</span>
+                            <span className="text-xs text-slate-600 font-medium">Nenhum</span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                             u.active
                               ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
                               : "bg-red-500/10 border border-red-500/20 text-red-400"
@@ -870,7 +1244,7 @@ export function AdminUsuariosPage() {
                           >
                             <Key className="w-4 h-4" />
                           </button>
-                          {u.role !== "admin" && (
+                          {u.username !== "root" && u.id !== currentUser?.id && (
                             <button
                               onClick={() => handleDeleteUser(u.id, u.username)}
                               disabled={actionLoading === u.id}
@@ -886,8 +1260,8 @@ export function AdminUsuariosPage() {
                   ))}
                   {usuarios.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-slate-500">
-                        Nenhum usuário lojista cadastrado.
+                      <td colSpan={5} className="text-center py-12 text-slate-500 text-sm">
+                        Nenhum usuário cadastrado.
                       </td>
                     </tr>
                   )}
@@ -903,23 +1277,66 @@ export function AdminUsuariosPage() {
             <div>
               <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
               <p className="text-sm text-slate-400 mt-1">
-                Suba um arquivo Excel (.xlsx) para cadastrar lojistas e criar suas empresas em segundos.
+                Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
               </p>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto mb-4 border border-indigo-500/20">
-                <Upload className="w-8 h-8" />
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
+              {/* User Type Selection for Import */}
+              <div className="max-w-xs mx-auto text-left">
+                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                  Tipo de Usuário para Importar
+                </label>
+                <select
+                  value={selectedUserTypeImportId}
+                  onChange={(e) => {
+                    setSelectedUserTypeImportId(e.target.value);
+                    setImportRows([]); // reset preview when type changes
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
+                >
+                  {userTypes.map((t) => (
+                    <option key={t.id} value={t.nome}>
+                      {t.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Selecione sua planilha Excel</h3>
-              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                Certifique-se de que a planilha contenha as colunas: <strong className="text-slate-200">CNPJ</strong>, <strong className="text-slate-200">Nome</strong>, <strong className="text-slate-200">Senha</strong> e a coluna opcional <strong className="text-slate-200">Modulos</strong> (separados por vírgula).
-              </p>
 
-              <div className="flex flex-col items-center gap-4">
-                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto border border-indigo-500/20">
+                <Upload className="w-6 h-6" />
+              </div>
+              
+              <h3 className="text-base font-semibold text-white">Selecione sua planilha Excel</h3>
+              
+              {/* Dynamic instruction text based on selected user type */}
+              {(() => {
+                const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
+                const reqFields = selectedType ? selectedType.campos_schema.filter(f => f.obrigatorio).map(f => f.label) : [];
+                const optFields = selectedType ? selectedType.campos_schema.filter(f => !f.obrigatorio).map(f => f.label) : [];
+                return (
+                  <p className="text-slate-400 text-xs leading-relaxed max-w-md mx-auto">
+                    A planilha para importar <strong className="text-blue-400 font-semibold">{selectedUserTypeImportId}</strong> deve conter as colunas:{" "}
+                    <strong className="text-slate-200">Login de acesso</strong> e <strong className="text-slate-200">Senha</strong>.
+                    {reqFields.length > 0 && (
+                      <>
+                        {" "}Mais os campos obrigatórios:{" "}
+                        <span className="text-red-400 font-semibold">{reqFields.map(f => `"${f}"`).join(", ")}</span>.
+                      </>
+                    )}
+                    {optFields.length > 0 && (
+                      <>
+                        {" "}E campos opcionais: <span className="text-slate-300">{optFields.map(f => `"${f}"`).join(", ")}</span>.
+                      </>
+                    )}
+                  </p>
+                );
+              })()}
+
+              <div className="flex flex-col items-center gap-4 pt-2">
+                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
                   <Plus className="w-4 h-4 inline-block mr-2" />
-                  Procurar Arquivo
+                  Procurar Planilha
                   <input
                     type="file"
                     accept=".xlsx, .xls"
@@ -930,30 +1347,36 @@ export function AdminUsuariosPage() {
               </div>
 
               {/* Import instructions preview */}
-              <div className="mt-8 pt-6 border-t border-slate-800 text-left">
-                <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3">Exemplo de Formato da Planilha:</h4>
+              <div className="mt-8 pt-6 border-t border-slate-800/80 text-left">
+                <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-3">Exemplo de Estrutura da Planilha:</h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-slate-400 border border-slate-800 rounded-lg">
+                  <table className="w-full text-[10px] text-slate-400 border border-slate-800 rounded-lg">
                     <thead>
                       <tr className="bg-slate-950 text-slate-300">
-                        <th className="px-3 py-1.5 border border-slate-800">CNPJ</th>
-                        <th className="px-3 py-1.5 border border-slate-800">Nome</th>
+                        <th className="px-3 py-1.5 border border-slate-800">Login de acesso</th>
                         <th className="px-3 py-1.5 border border-slate-800">Senha</th>
-                        <th className="px-3 py-1.5 border border-slate-800">Modulos</th>
+                        {(() => {
+                          const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
+                          return selectedType?.campos_schema.map(f => (
+                            <th key={f.nome} className="px-3 py-1.5 border border-slate-800">
+                              {f.label} {f.obrigatorio && <span className="text-red-400 font-bold">*</span>}
+                            </th>
+                          ));
+                        })()}
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-3 py-1 border border-slate-800">12345678000199</td>
-                        <td className="px-3 py-1 border border-slate-800">Supermercado Silva</td>
-                        <td className="px-3 py-1 border border-slate-800">silva123</td>
-                        <td className="px-3 py-1 border border-slate-800">documentos,gestao</td>
-                      </tr>
-                      <tr className="bg-slate-900/30">
-                        <td className="px-3 py-1 border border-slate-800">98765432000100</td>
-                        <td className="px-3 py-1 border border-slate-800">Padaria Pão de Mel</td>
-                        <td className="px-3 py-1 border border-slate-800">temp9876</td>
-                        <td className="px-3 py-1 border border-slate-800">documentos</td>
+                        <td className="px-3 py-1 border border-slate-800 font-medium text-slate-300">usuario123</td>
+                        <td className="px-3 py-1 border border-slate-800">senhaSegura123</td>
+                        {(() => {
+                          const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
+                          return selectedType?.campos_schema.map(f => (
+                            <td key={f.nome} className="px-3 py-1 border border-slate-800 italic text-slate-500">
+                              {f.tipo === "number" ? "123" : f.tipo === "boolean" ? "Sim / Não" : `Exemplo ${f.label}`}
+                            </td>
+                          ));
+                        })()}
                       </tr>
                     </tbody>
                   </table>
@@ -964,11 +1387,11 @@ export function AdminUsuariosPage() {
             {/* Imported Rows Preview */}
             {importRows.length > 0 && (
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl animate-scale-up max-w-4xl mx-auto">
-                <h3 className="text-md font-semibold text-white mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-between">
                   <span>Visualizando Registros da Planilha ({importRows.length})</span>
                   <button
                     onClick={() => setImportRows([])}
-                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1"
+                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 font-semibold"
                   >
                     Limpar
                   </button>
@@ -977,27 +1400,22 @@ export function AdminUsuariosPage() {
                   <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="border-b border-slate-800 bg-slate-950 text-slate-400">
-                        <th className="px-4 py-2">CNPJ</th>
-                        <th className="px-4 py-2">Nome</th>
-                        <th className="px-4 py-2">Senha</th>
-                        <th className="px-4 py-2">Módulos</th>
+                        {/* Dynamic headers list based on spreadsheet keys */}
+                        {Object.keys(importRows[0]).map((key) => (
+                          <th key={key} className="px-4 py-2 uppercase text-[10px] font-bold">
+                            {key}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {importRows.map((r, idx) => (
-                        <tr key={idx} className="border-b border-slate-800/40">
-                          <td className="px-4 py-2 text-slate-300 font-mono">
-                            {r.CNPJ || r.cnpj || "—"}
-                          </td>
-                          <td className="px-4 py-2 text-slate-300">
-                            {r.Nome || r.nome || "—"}
-                          </td>
-                          <td className="px-4 py-2 text-slate-300 font-mono">
-                            {r.Senha || r.senha || "—"}
-                          </td>
-                          <td className="px-4 py-2 text-slate-300">
-                            {r.Modulos || r.modulos || "documentos,gestao"}
-                          </td>
+                      {importRows.map((row, idx) => (
+                        <tr key={idx} className="border-b border-slate-800/40 hover:bg-slate-800/10">
+                          {Object.keys(row).map((key) => (
+                            <td key={key} className="px-4 py-2 text-slate-300">
+                              {typeof row[key] === "boolean" ? (row[key] ? "Sim" : "Não") : String(row[key])}
+                            </td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
@@ -1363,6 +1781,217 @@ export function AdminUsuariosPage() {
                     <p className="text-xs text-slate-400 mt-2 leading-relaxed">
                       {t.descricao || "Sem descrição informada."}
                     </p>
+                  </div>
+                  <div className="text-[10px] text-slate-600 mt-4 border-t border-slate-850 pt-3">
+                    ID: {t.id}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {/* -------------------- TAB: USERTYPES -------------------- */}
+        {activeTab === "usertypes" && (
+          <section className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Configuração de Perfis (Tipos de Usuários)</h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Gerencie perfis personalizados de usuários e configure campos dinâmicos obrigatórios ou opcionais.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateUserType(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+              >
+                <Plus className="w-4 h-4" /> Novo Perfil
+              </button>
+            </div>
+
+            {/* Create UserType Form */}
+            {showCreateUserType && (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-2xl mx-auto animate-scale-up">
+                <div className="absolute top-4 right-4">
+                  <button onClick={() => setShowCreateUserType(false)} className="text-slate-400 hover:text-white">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <h3 className="text-md font-semibold text-white mb-4">Novo Tipo de Usuário</h3>
+                
+                <form onSubmit={handleCreateUserType} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Nome do Tipo / Perfil</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: Fornecedor, ADM de loja"
+                        value={newUserType.nome}
+                        onChange={(e) => setNewUserType({ ...newUserType, nome: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Nível de Permissão Padrão</label>
+                      <select
+                        value={newUserType.role}
+                        onChange={(e) => setNewUserType({ ...newUserType, role: e.target.value as "admin" | "user" })}
+                        className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="user">Usuário Comum (Lojistas, etc.)</option>
+                        <option value="admin">Administrador (Gestão Geral)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Fields Creator Section */}
+                  <div className="border-t border-slate-800 pt-4">
+                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
+                    
+                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-4 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Identificador Técnico</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: razao_social, cnpj"
+                            value={newFieldName}
+                            onChange={(e) => setNewFieldName(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Rótulo (Label de Exibição)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Razão Social, CNPJ"
+                            value={newFieldLabel}
+                            onChange={(e) => setNewFieldLabel(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Tipo de Dado</label>
+                          <select
+                            value={newFieldType}
+                            onChange={(e) => setNewFieldType(e.target.value as any)}
+                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                          >
+                            <option value="text">Texto</option>
+                            <option value="number">Número</option>
+                            <option value="boolean">Sim/Não (Booleano)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={newFieldRequired}
+                            onChange={(e) => setNewFieldRequired(e.target.checked)}
+                            className="rounded border-slate-800 bg-slate-900 text-blue-500 focus:ring-0 w-3.5 h-3.5"
+                          />
+                          Este campo é obrigatório no cadastro
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={handleAddFieldToNewType}
+                          className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-all border border-slate-700/50"
+                        >
+                          Adicionar Campo
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Added fields list */}
+                    {newUserType.campos_schema.length > 0 ? (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-400">Campos adicionados:</label>
+                        <div className="flex flex-wrap gap-2">
+                          {newUserType.campos_schema.map((f, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800/80 px-2.5 py-1 rounded-lg text-xs text-slate-300">
+                              <span className="font-semibold text-white">{f.label}</span>
+                              <span className="text-[10px] text-slate-500">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFieldFromNewType(idx)}
+                                className="text-slate-500 hover:text-red-400 ml-1 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic">Nenhum campo personalizado adicionado a este perfil ainda.</p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6 border-t border-slate-850 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateUserType(false)}
+                      className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={actionLoading === "create-usertype"}
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
+                    >
+                      {actionLoading === "create-usertype" ? "Salvando..." : "Salvar Perfil"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* UserTypes Profiles List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userTypes.map((t) => (
+                <div
+                  key={t.id}
+                  className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`text-[10px] border px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                        t.role === "admin"
+                          ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
+                          : "bg-indigo-500/15 text-indigo-400 border-indigo-500/20"
+                      }`}>
+                        {t.role === "admin" ? "Administrador" : "Usuário Comum"}
+                      </div>
+                      {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
+                        <button
+                          onClick={() => handleDeleteUserType(t.id, t.nome)}
+                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                          title="Excluir perfil"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <h3 className="text-white font-semibold text-sm uppercase">{t.nome}</h3>
+                    
+                    <div className="mt-3 space-y-2">
+                      <span className="text-[10px] text-slate-500 uppercase font-semibold">Campos do Perfil:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {t.campos_schema && t.campos_schema.length > 0 ? (
+                          t.campos_schema.map((f, idx) => (
+                            <span key={idx} className="text-[10px] bg-slate-950/80 text-slate-400 px-2 py-0.5 rounded border border-slate-850">
+                              {f.label} {f.obrigatorio && <span className="text-red-500">*</span>}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-600 italic">Apenas Login e Senha</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="text-[10px] text-slate-600 mt-4 border-t border-slate-850 pt-3">
                     ID: {t.id}
