@@ -9,6 +9,7 @@ import {
   Settings,
   Upload,
   ShieldCheck,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -84,6 +85,7 @@ export const MODULES: ModuleDef[] = [
     navItems: [
       { to: "/toyota/estoque/importar", label: "Importar Estoque", icon: Upload },
       { to: "/toyota/elegiveis", label: "Análise de Elegíveis", icon: ShieldCheck },
+      { to: "/toyota/validacao", label: "Validação Técnica", icon: ClipboardCheck },
       { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
     ],
   },
