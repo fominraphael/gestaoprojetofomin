@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GestaoRouteImport } from './routes/_gestao'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
 import { Route as GestaoSolicitacoesRouteImport } from './routes/_gestao.solicitacoes'
@@ -30,6 +31,10 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GestaoRoute = GestaoRouteImport.update({
+  id: '/_gestao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -41,29 +46,29 @@ const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const GestaoSolicitacoesRoute = GestaoSolicitacoesRouteImport.update({
-  id: '/_gestao/solicitacoes',
+  id: '/solicitacoes',
   path: '/solicitacoes',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoRoadmapRoute = GestaoRoadmapRouteImport.update({
-  id: '/_gestao/roadmap',
+  id: '/roadmap',
   path: '/roadmap',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoHistoricoRoute = GestaoHistoricoRouteImport.update({
-  id: '/_gestao/historico',
+  id: '/historico',
   path: '/historico',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoDashboardRoute = GestaoDashboardRouteImport.update({
-  id: '/_gestao/dashboard',
+  id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoBacklogRoute = GestaoBacklogRouteImport.update({
-  id: '/_gestao/backlog',
+  id: '/backlog',
   path: '/backlog',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => GestaoRoute,
 } as any)
 const DocumentosDocumentosRoute = DocumentosDocumentosRouteImport.update({
   id: '/_documentos/documentos',
@@ -98,6 +103,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_gestao': typeof GestaoRouteWithChildren
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
   '/_documentos/documentos': typeof DocumentosDocumentosRoute
@@ -136,6 +142,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_gestao'
     | '/login'
     | '/registrar'
     | '/_documentos/documentos'
@@ -149,14 +156,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GestaoRoute: typeof GestaoRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
   DocumentosDocumentosRoute: typeof DocumentosDocumentosRoute
-  GestaoBacklogRoute: typeof GestaoBacklogRoute
-  GestaoDashboardRoute: typeof GestaoDashboardRoute
-  GestaoHistoricoRoute: typeof GestaoHistoricoRoute
-  GestaoRoadmapRoute: typeof GestaoRoadmapRoute
-  GestaoSolicitacoesRoute: typeof GestaoSolicitacoesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
 }
 
@@ -174,6 +177,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_gestao': {
+      id: '/_gestao'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof GestaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -195,35 +205,35 @@ declare module '@tanstack/react-router' {
       path: '/solicitacoes'
       fullPath: '/solicitacoes'
       preLoaderRoute: typeof GestaoSolicitacoesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/_gestao/roadmap': {
       id: '/_gestao/roadmap'
       path: '/roadmap'
       fullPath: '/roadmap'
       preLoaderRoute: typeof GestaoRoadmapRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/_gestao/historico': {
       id: '/_gestao/historico'
       path: '/historico'
       fullPath: '/historico'
       preLoaderRoute: typeof GestaoHistoricoRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/_gestao/dashboard': {
       id: '/_gestao/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof GestaoDashboardRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/_gestao/backlog': {
       id: '/_gestao/backlog'
       path: '/backlog'
       fullPath: '/backlog'
       preLoaderRoute: typeof GestaoBacklogRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GestaoRoute
     }
     '/_documentos/documentos': {
       id: '/_documentos/documentos'
@@ -235,16 +245,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  LoginRoute: LoginRoute,
-  RegistrarRoute: RegistrarRoute,
-  DocumentosDocumentosRoute: DocumentosDocumentosRoute,
+interface GestaoRouteChildren {
+  GestaoBacklogRoute: typeof GestaoBacklogRoute
+  GestaoDashboardRoute: typeof GestaoDashboardRoute
+  GestaoHistoricoRoute: typeof GestaoHistoricoRoute
+  GestaoRoadmapRoute: typeof GestaoRoadmapRoute
+  GestaoSolicitacoesRoute: typeof GestaoSolicitacoesRoute
+}
+
+const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoBacklogRoute: GestaoBacklogRoute,
   GestaoDashboardRoute: GestaoDashboardRoute,
   GestaoHistoricoRoute: GestaoHistoricoRoute,
   GestaoRoadmapRoute: GestaoRoadmapRoute,
   GestaoSolicitacoesRoute: GestaoSolicitacoesRoute,
+}
+
+const GestaoRouteWithChildren =
+  GestaoRoute._addFileChildren(GestaoRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  GestaoRoute: GestaoRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegistrarRoute: RegistrarRoute,
+  DocumentosDocumentosRoute: DocumentosDocumentosRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
 }
 export const routeTree = rootRouteImport
