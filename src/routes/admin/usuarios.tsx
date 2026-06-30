@@ -137,6 +137,9 @@ export function AdminUsuariosPage() {
   const [importRows, setImportRows] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
 
+  // Search state for users
+  const [userSearch, setUserSearch] = useState("");
+
   // Load all system data
   const loadAllData = useCallback(async () => {
     setLoadingData(true);
