@@ -1,48 +1,46 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Polls /version.json (gerado no build) e força reload quando o hash muda.
- * Combinado com os hashes que o Vite já adiciona aos assets, garante que o
- * usuário nunca fique preso a uma versão antiga após um novo deploy.
+ * Cache busting client-side:
+ * 1) O Vite já gera assets com hash (main.[hash].js) → mudanças de código
+ *    invalidam o cache automaticamente.
+ * 2) Quando o navegador tem um index.html antigo em cache apontando para um
+ *    chunk que não existe mais (deploy novo), o dynamic import falha com
+ *    "Failed to fetch dynamically imported module". Capturamos esse erro e
+ *    forçamos um reload limpo — o usuário nunca precisa limpar cache manualmente.
  */
 export function VersionWatcher() {
-  const currentVersion = useRef<string | null>(null);
+  const reloaded = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const isChunkLoadError = (msg: string) =>
+      /Failed to fetch dynamically imported module/i.test(msg) ||
+      /Loading chunk \d+ failed/i.test(msg) ||
+      /Importing a module script failed/i.test(msg) ||
+      /ChunkLoadError/i.test(msg);
 
-    const check = async () => {
-      try {
-        const res = await fetch(`/version.json?t=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as { version?: string };
-        if (!data.version || cancelled) return;
-
-        if (currentVersion.current === null) {
-          currentVersion.current = data.version;
-          return;
-        }
-
-        if (data.version !== currentVersion.current) {
-          // Nova versão publicada — força reload limpo.
-          window.location.reload();
-        }
-      } catch {
-        // silencioso: em dev o arquivo pode não existir
-      }
+    const forceReload = () => {
+      if (reloaded.current) return;
+      reloaded.current = true;
+      // ?v= quebra cache do index.html em CDNs intermediários
+      const url = new URL(window.location.href);
+      url.searchParams.set("v", Date.now().toString());
+      window.location.replace(url.toString());
     };
 
-    check();
-    const id = window.setInterval(check, 60_000); // 1min
-    const onFocus = () => check();
-    window.addEventListener("focus", onFocus);
+    const onError = (e: ErrorEvent) => {
+      if (isChunkLoadError(e.message || "")) forceReload();
+    };
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const msg = e.reason?.message || String(e.reason || "");
+      if (isChunkLoadError(msg)) forceReload();
+    };
 
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
     return () => {
-      cancelled = true;
-      window.clearInterval(id);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
     };
   }, []);
 
