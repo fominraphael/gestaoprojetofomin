@@ -303,55 +303,191 @@ function PainelCertificacao() {
         </div>
       </header>
 
-      {/* Funil */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <FunilCard
-          label="Fila da Loja"
-          count={porAba.loja.length}
-          icon={ClipboardList}
-          active={aba === "loja"}
-          onClick={() => setAba("loja")}
-        />
-        <FunilCard
-          label="Análise Central"
-          count={porAba.central.length}
-          icon={ShieldCheck}
-          active={aba === "central"}
-          onClick={() => setAba("central")}
-          disabled={!isAdmin}
-        />
-        <FunilCard
-          label="Enviados Toyota"
-          count={porAba.toyota.length}
-          icon={Send}
-          active={aba === "toyota"}
-          onClick={() => setAba("toyota")}
-          disabled={!isAdmin}
-        />
-        <FunilCard
-          label="Revisão Reprovados"
-          count={porAba.reprovados.length}
-          icon={XCircle}
-          active={aba === "reprovados"}
-          onClick={() => setAba("reprovados")}
-          disabled={!isAdmin}
-        />
-        <FunilCard
-          label="Histórico"
-          count={porAba.historico.length}
-          icon={History}
-          active={aba === "historico"}
-          onClick={() => setAba("historico")}
-        />
-      </div>
+      {/* Funil de Status */}
+      {(() => {
+        const totalEstoque = veiculos.length;
+        const elegiveisCount = veiculos.filter((v) =>
+          (v.elegibilidade ?? "").toLowerCase().startsWith("elegível"),
+        ).length;
+        const posVendasCount = veiculos.filter(
+          (v) => v.status_aprovacao === "em_posvendas",
+        ).length;
+        const centralCount = veiculos.filter(
+          (v) => v.status_aprovacao === "aguardando_analise_central",
+        ).length;
+        const enviadosAtivos = veiculos.filter(
+          (v) => v.status_aprovacao === "enviado_toyota",
+        ).length;
+        const aprovadosCount = veiculos.filter(
+          (v) => v.status_aprovacao === "aprovado_toyota",
+        ).length;
+        const reprovadosCount = veiculos.filter(
+          (v) => v.status_aprovacao === "reprovado_toyota",
+        ).length;
+        const totalEnviados = enviadosAtivos + aprovadosCount + reprovadosCount;
+        const totalRetornados = aprovadosCount + reprovadosCount;
+        const pctAprovados = totalRetornados
+          ? Math.round((aprovadosCount / totalRetornados) * 100)
+          : 0;
+        const pctReprovados = totalRetornados
+          ? 100 - pctAprovados
+          : 0;
+
+        return (
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 lg:col-span-2 lg:grid-cols-4">
+              <FunilCard
+                label="Estoque Importado"
+                count={totalEstoque}
+                icon={ClipboardList}
+                active={false}
+                onClick={() => undefined}
+              />
+              <FunilCard
+                label="Elegíveis"
+                count={elegiveisCount}
+                icon={CheckCircle2}
+                active={false}
+                onClick={() => undefined}
+              />
+              <FunilCard
+                label="Pós-Vendas"
+                count={posVendasCount}
+                icon={Building2}
+                active={false}
+                onClick={() => undefined}
+              />
+              <FunilCard
+                label="Análise Central"
+                count={centralCount}
+                icon={ShieldCheck}
+                active={aba === "central"}
+                onClick={() => isAdmin && setAba("central")}
+                disabled={!isAdmin}
+              />
+            </div>
+
+            {/* Caixa principal: Enviados Toyota com sub-caixas Aprovados/Reprovados */}
+            <button
+              type="button"
+              onClick={() => isAdmin && setAba("toyota")}
+              disabled={!isAdmin}
+              className={`rounded-lg border p-4 text-left transition ${
+                aba === "toyota"
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-300 bg-white hover:border-slate-400"
+              } ${!isAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Send className="h-5 w-5" />
+                  <span className="text-sm font-medium">Enviados Toyota</span>
+                </div>
+                <span className="text-3xl font-semibold tabular-nums">
+                  {totalEnviados}
+                </span>
+              </div>
+              <p
+                className={`mt-1 text-xs ${
+                  aba === "toyota" ? "text-slate-300" : "text-muted-foreground"
+                }`}
+              >
+                {enviadosAtivos} aguardando retorno · {totalRetornados} com retorno
+              </p>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {/* Aprovados */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAba("historico");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setAba("historico");
+                    }
+                  }}
+                  className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-emerald-900 hover:bg-emerald-100"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-medium">Aprovados</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-xl font-semibold tabular-nums">
+                      {aprovadosCount}
+                    </span>
+                    <span className="text-xs text-emerald-700">
+                      ({pctAprovados}%)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Reprovados */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isAdmin) setAba("reprovados");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isAdmin) setAba("reprovados");
+                    }
+                  }}
+                  className={`rounded-md border border-rose-200 bg-rose-50 p-2 text-rose-900 hover:bg-rose-100 ${
+                    !isAdmin ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <XCircle className="h-4 w-4 text-rose-600" />
+                    <span className="text-xs font-medium">Reprovados</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-xl font-semibold tabular-nums">
+                      {reprovadosCount}
+                    </span>
+                    <span className="text-xs text-rose-700">
+                      ({pctReprovados}%)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        );
+      })()}
 
       <Tabs value={aba} onValueChange={(v) => setAba(v as AbaId)}>
-        <TabsList className="hidden">
-          <TabsTrigger value="loja">Loja</TabsTrigger>
-          <TabsTrigger value="central">Central</TabsTrigger>
-          <TabsTrigger value="toyota">Toyota</TabsTrigger>
-          <TabsTrigger value="reprovados">Reprovados</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="loja">
+            Fila da Loja ({porAba.loja.length})
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="central">
+              Análise Central ({porAba.central.length})
+            </TabsTrigger>
+          )}
+          {isAdmin && (
+            <TabsTrigger value="toyota">
+              Enviados Toyota ({porAba.toyota.length})
+            </TabsTrigger>
+          )}
+          {isAdmin && (
+            <TabsTrigger value="reprovados">
+              Reprovados ({porAba.reprovados.length})
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="historico">
+            Histórico ({porAba.historico.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* 1. Fila Pendentes da Loja */}
