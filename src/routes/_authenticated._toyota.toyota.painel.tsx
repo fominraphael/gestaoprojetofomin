@@ -630,7 +630,193 @@ function PainelCertificacao() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal reiniciar */}
+      {/* Modal Pendenciar */}
+      <Dialog
+        open={!!pendenciar}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendenciar(null);
+            setMotivoPendencia("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pendenciar veículo</DialogTitle>
+            <DialogDescription>
+              O veículo voltará ao <strong>Preparador</strong> com o motivo
+              abaixo, para ser remetido novamente ao Pós-Vendas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>
+              Motivo da Pendência <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              autoFocus
+              value={motivoPendencia}
+              onChange={(e) => setMotivoPendencia(e.target.value)}
+              rows={4}
+              placeholder="Descreva a pendência que o Preparador precisa resolver..."
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendenciar(null);
+                setMotivoPendencia("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmarPendenciar}
+              disabled={!motivoPendencia.trim()}
+            >
+              Pendenciar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Confirmar Envio Toyota */}
+      <Dialog
+        open={!!confirmarToyota}
+        onOpenChange={(o) => !o && setConfirmarToyota(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar envio para a Toyota</DialogTitle>
+            <DialogDescription>
+              O veículo <strong className="font-mono">{confirmarToyota?.chassi}</strong>{" "}
+              será marcado como <strong>Enviado para Toyota</strong> e ficará
+              aguardando o retorno via importação do BI.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmarToyota(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarSubmeterToyota}>
+              <Send className="mr-2 h-4 w-4" />
+              Enviado para Toyota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Reenviar Reprovado */}
+      <Dialog
+        open={!!reenviarReprovado}
+        onOpenChange={(o) => !o && setReenviarReprovado(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reenviar para a Toyota</DialogTitle>
+            <DialogDescription>
+              O retorno atual será limpo e o veículo voltará ao status{" "}
+              <strong>Enviado para Toyota</strong>, aguardando uma nova
+              importação da planilha BI para ser reavaliado.
+            </DialogDescription>
+          </DialogHeader>
+          {reenviarReprovado?.motivo_reprovacao && (
+            <div className="space-y-2">
+              <Label>Motivo de reprovação anterior</Label>
+              <Textarea readOnly rows={3} value={reenviarReprovado.motivo_reprovacao} />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReenviarReprovado(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarReenviarToyota}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reenviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Arquivar */}
+      <Dialog
+        open={!!arquivarVeiculo}
+        onOpenChange={(o) => !o && setArquivarVeiculo(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Arquivar veículo</DialogTitle>
+            <DialogDescription>
+              Esta ação encerra o fluxo de certificação do veículo{" "}
+              <strong className="font-mono">{arquivarVeiculo?.chassi}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArquivarVeiculo(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmarArquivar}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Arquivar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Revisar (detalhes da submissão da oficina) */}
+      <Dialog open={!!revisar} onOpenChange={(o) => !o && setRevisar(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-mono">{revisar?.chassi}</DialogTitle>
+            <DialogDescription>
+              {revisar?.modelo ?? "—"} · {revisar?.placa ?? "—"} ·{" "}
+              {filialNome(revisar?.filial_destino_id ?? revisar?.filial_id ?? null)}
+            </DialogDescription>
+          </DialogHeader>
+          {revisar && (
+            <div className="space-y-3 text-sm">
+              {revisar.hsv_observacoes_preparador && (
+                <div>
+                  <Label className="text-xs">Observações ao Preparador (ADM)</Label>
+                  <p className="rounded-md bg-muted p-2 text-xs">
+                    {revisar.hsv_observacoes_preparador}
+                  </p>
+                </div>
+              )}
+              <div>
+                <Label className="text-xs">Checklist da oficina</Label>
+                <p className="rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
+                  {revisar.checklist_data?.observacoes || "—"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {revisar.checklist_data?.preenchido_em
+                    ? `Preenchido em ${new Date(revisar.checklist_data.preenchido_em).toLocaleString("pt-BR")}`
+                    : "Sem registro"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs">Health Check (PDF)</Label>
+                <p className="text-xs">
+                  {revisar.health_check_pdf_path ? (
+                    <span className="font-mono break-all">
+                      {revisar.health_check_pdf_path}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Não anexado</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevisar(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal reiniciar (legado — devolução simples) */}
       <Dialog open={!!reiniciar} onOpenChange={(o) => !o && setReiniciar(null)}>
         <DialogContent>
           <DialogHeader>
@@ -643,11 +829,7 @@ function PainelCertificacao() {
           {reiniciar?.motivo_reprovacao && (
             <div className="space-y-2">
               <Label>Motivo da reprovação</Label>
-              <Textarea
-                readOnly
-                value={reiniciar.motivo_reprovacao}
-                rows={4}
-              />
+              <Textarea readOnly value={reiniciar.motivo_reprovacao} rows={4} />
             </div>
           )}
           <DialogFooter>
