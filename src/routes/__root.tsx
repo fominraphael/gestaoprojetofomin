@@ -212,7 +212,10 @@ function AppLayout() {
     return <AccessDenied reason="Você não possui permissão para acessar o módulo de Gestão de Projetos." />;
   }
 
-  const showSidebar = !PUBLIC_ROUTES.includes(pathname) && pathname !== "/admin/usuarios";
+  const NO_SIDEBAR_ROUTES = ["/admin/usuarios", "/documentos"];
+  const showSidebar =
+    !PUBLIC_ROUTES.includes(pathname) &&
+    !NO_SIDEBAR_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   return (
     <div className="flex min-h-screen w-full bg-background">
