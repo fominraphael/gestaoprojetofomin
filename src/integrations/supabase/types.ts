@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      documentos_arquivo: {
+        Row: {
+          arquivo_nome: string
+          arquivo_tamanho: number | null
+          arquivo_url: string
+          empresa_id: string
+          id: string
+          storage_path: string | null
+          tipo_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_tamanho?: number | null
+          arquivo_url: string
+          empresa_id: string
+          id?: string
+          storage_path?: string | null
+          tipo_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_tamanho?: number | null
+          arquivo_url?: string
+          empresa_id?: string
+          id?: string
+          storage_path?: string | null
+          tipo_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_arquivo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_arquivo_tipo_id_fkey"
+            columns: ["tipo_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_tipo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_tipo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      empresas: {
+        Row: {
+          ativo: boolean
+          cnpj: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tarefas: {
         Row: {
           categoria: Database["public"]["Enums"]["tarefa_categoria"]
@@ -95,9 +197,153 @@ export type Database = {
         }
         Relationships: []
       }
+      tipos_usuario_config: {
+        Row: {
+          ativo: boolean
+          campos_schema: Json
+          created_at: string
+          id: string
+          nome: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          campos_schema?: Json
+          created_at?: string
+          id?: string
+          nome: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          campos_schema?: Json
+          created_at?: string
+          id?: string
+          nome?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuarios_sistema: {
+        Row: {
+          ativo: boolean
+          campos_customizados: Json
+          cnpj: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          modulos: string[]
+          password_hash: string
+          pode_criar_admin: boolean
+          role: string
+          status: string
+          tipo_usuario: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          ativo?: boolean
+          campos_customizados?: Json
+          cnpj?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          modulos?: string[]
+          password_hash: string
+          pode_criar_admin?: boolean
+          role?: string
+          status?: string
+          tipo_usuario?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          ativo?: boolean
+          campos_customizados?: Json
+          cnpj?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          modulos?: string[]
+          password_hash?: string
+          pode_criar_admin?: boolean
+          role?: string
+          status?: string
+          tipo_usuario?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_sistema_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      usuarios_sistema_public: {
+        Row: {
+          ativo: boolean | null
+          campos_customizados: Json | null
+          cnpj: string | null
+          created_at: string | null
+          empresa_id: string | null
+          id: string | null
+          modulos: string[] | null
+          pode_criar_admin: boolean | null
+          role: string | null
+          status: string | null
+          tipo_usuario: string | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          campos_customizados?: Json | null
+          cnpj?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          id?: string | null
+          modulos?: string[] | null
+          pode_criar_admin?: boolean | null
+          role?: string | null
+          status?: string | null
+          tipo_usuario?: string | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          campos_customizados?: Json | null
+          cnpj?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          id?: string | null
+          modulos?: string[] | null
+          pode_criar_admin?: boolean | null
+          role?: string | null
+          status?: string | null
+          tipo_usuario?: string | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_sistema_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       purge_old_trash: { Args: never; Returns: undefined }
