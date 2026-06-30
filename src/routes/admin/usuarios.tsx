@@ -1629,9 +1629,20 @@ export function AdminUsuariosPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleEditCompany(c);
+                        }}
+                        className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                        title="Editar empresa"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDeleteCompany(c.id, c.nome);
                         }}
                         className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                        title="Excluir empresa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
