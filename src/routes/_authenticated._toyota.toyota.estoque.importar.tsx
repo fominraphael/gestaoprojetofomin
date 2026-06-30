@@ -415,19 +415,43 @@ function ImportarEstoque() {
       {/* Preview */}
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-lg">Pré-visualização</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={filialId} onValueChange={setFilialId}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Selecione a filial..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {filiais.length === 0 ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Nenhuma filial ativa
+                    </div>
+                  ) : (
+                    filiais.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                        {f.dealer_number ? ` (${f.dealer_number})` : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder="Filtrar por chassi, placa, modelo..."
                 value={filtro}
                 onChange={(e) => setFiltro(e.target.value)}
-                className="w-72"
+                className="w-64"
               />
               <Button variant="outline" onClick={exportarCsv}>
                 <Download className="w-4 h-4" />
                 Exportar
               </Button>
+              <Button onClick={salvarEstoque} disabled={saving || !filialId}>
+                <Save className="w-4 h-4" />
+                {saving ? "Salvando..." : "Salvar no estoque"}
+              </Button>
+
             </div>
           </CardHeader>
           <CardContent>
