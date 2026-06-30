@@ -110,7 +110,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 // Routes that do NOT show the sidebar (public pages + portal + standalone modules)
 const PUBLIC_ROUTES = ["/login", "/registrar", "/"];
-const NO_SIDEBAR_ROUTES = ["/login", "/registrar", "/", "/documentos"];
+// Sidebar of "Gestão de Projetos" is only shown on its own module routes
+const GESTAO_SIDEBAR_ROUTES = ["/dashboard", "/backlog", "/roadmap", "/solicitacoes", "/historico"];
 
 // All valid app routes. Anything outside this list returns 404.
 const KNOWN_ROUTES = [
@@ -245,7 +246,7 @@ function AppLayout() {
     return <AccessDenied reason="Você não possui permissão para acessar o módulo de Documentos." />;
   }
 
-  const showSidebar = !NO_SIDEBAR_ROUTES.includes(pathname);
+  const showSidebar = GESTAO_SIDEBAR_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   return (
     <div className="flex min-h-screen w-full bg-background">
