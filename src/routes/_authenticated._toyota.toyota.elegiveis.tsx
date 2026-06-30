@@ -139,12 +139,16 @@ function AnaliseElegiveis() {
   function iniciarAprovacao(v: Veiculo) {
     setConfirmandoVeiculo(v);
     setFilialDestinoId(v.filial_destino_id ?? v.filial_id);
+    setHsvRevisoes([]);
+    setHsvOS([""]);
+    setHsvObservacoes("");
   }
 
   async function confirmarAprovacao() {
     if (!confirmandoVeiculo || !filialDestinoId) return;
     setSalvando(true);
     const { data: userData } = await supabase.auth.getUser();
+    const osLimpas = hsvOS.map((s) => s.trim()).filter(Boolean);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
@@ -152,6 +156,9 @@ function AnaliseElegiveis() {
         filial_destino_id: filialDestinoId,
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
+        hsv_revisoes_pendentes: hsvRevisoes,
+        hsv_os_ajustes: osLimpas,
+        hsv_observacoes_preparador: hsvObservacoes.trim() || null,
       })
       .eq("id", confirmandoVeiculo.id);
     setSalvando(false);
@@ -167,6 +174,7 @@ function AnaliseElegiveis() {
       prev.filter((v) => v.id !== confirmandoVeiculo.id),
     );
   }
+
 
   if (!isAdmin) {
     return (
