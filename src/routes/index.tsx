@@ -44,8 +44,8 @@ const allApps: AppCard[] = [
     icon: LayoutDashboard,
     href: "/dashboard",
     status: "active",
-    gradient: "from-slate-700/20 to-slate-900/20",
-    iconBg: "from-slate-700 to-slate-900",
+    gradient: "from-slate-500/15 to-slate-700/15",
+    iconBg: "from-slate-500 to-slate-700",
   },
   {
     id: "documentos",
@@ -54,8 +54,8 @@ const allApps: AppCard[] = [
     icon: FileText,
     href: "/documentos",
     status: "active",
-    gradient: "from-slate-700/20 to-slate-900/20",
-    iconBg: "from-slate-700 to-slate-900",
+    gradient: "from-slate-500/15 to-slate-700/15",
+    iconBg: "from-slate-500 to-slate-700",
   },
 ];
 
@@ -207,7 +207,7 @@ export function PortalPage() {
       <header className="relative border-b border-border bg-card backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-md shadow-primary/20">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 shadow-md shadow-primary/20">
               <Layers className="w-5 h-5 text-foreground" />
             </div>
             <div>
@@ -231,7 +231,7 @@ export function PortalPage() {
             )}
 
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
                 {user?.username?.[0]?.toUpperCase()}
               </div>
               <span className="text-sm text-foreground hidden sm:inline">{user?.username}</span>
@@ -260,7 +260,7 @@ export function PortalPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             Bem-vindo,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 via-slate-500 to-purple-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-foreground via-slate-600 to-foreground">
               {user?.username}
             </span>
           </h1>
