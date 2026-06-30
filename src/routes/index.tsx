@@ -179,7 +179,7 @@ export function PortalPage() {
   if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-card flex items-center justify-center">
-        <span className="w-8 h-8 border-2 border-primary/30 border-t-blue-500 rounded-full animate-spin" />
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -260,7 +260,7 @@ export function PortalPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             Bem-vindo,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 via-indigo-400 to-purple-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 via-slate-500 to-purple-400">
               {user?.username}
             </span>
           </h1>
@@ -318,7 +318,7 @@ export function PortalPage() {
                   )}
                 </div>
                 {isActive && (
-                  <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
             );
