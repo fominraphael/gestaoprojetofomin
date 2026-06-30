@@ -11,16 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as GestaoRouteImport } from './routes/_gestao'
-import { Route as DocumentosRouteImport } from './routes/_documentos'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
-import { Route as GestaoSolicitacoesRouteImport } from './routes/_gestao.solicitacoes'
-import { Route as GestaoRoadmapRouteImport } from './routes/_gestao.roadmap'
-import { Route as GestaoHistoricoRouteImport } from './routes/_gestao.historico'
-import { Route as GestaoDashboardRouteImport } from './routes/_gestao.dashboard'
-import { Route as GestaoBacklogRouteImport } from './routes/_gestao.backlog'
-import { Route as DocumentosDocumentosRouteImport } from './routes/_documentos.documentos'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
+import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
+import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated.admin.usuarios'
+import { Route as AuthenticatedGestaoSolicitacoesRouteImport } from './routes/_authenticated._gestao.solicitacoes'
+import { Route as AuthenticatedGestaoRoadmapRouteImport } from './routes/_authenticated._gestao.roadmap'
+import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_authenticated._gestao.historico'
+import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
+import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
+import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 
 const RegistrarRoute = RegistrarRouteImport.update({
   id: '/registrar',
@@ -32,100 +32,107 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GestaoRoute = GestaoRouteImport.update({
-  id: '/_gestao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentosRoute = DocumentosRouteImport.update({
-  id: '/_documentos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
-  id: '/admin/usuarios',
-  path: '/admin/usuarios',
+const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
+  id: '/_authenticated/_gestao',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GestaoSolicitacoesRoute = GestaoSolicitacoesRouteImport.update({
-  id: '/solicitacoes',
-  path: '/solicitacoes',
-  getParentRoute: () => GestaoRoute,
+const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
+  id: '/_authenticated/_documentos',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const GestaoRoadmapRoute = GestaoRoadmapRouteImport.update({
-  id: '/roadmap',
-  path: '/roadmap',
-  getParentRoute: () => GestaoRoute,
-} as any)
-const GestaoHistoricoRoute = GestaoHistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
-  getParentRoute: () => GestaoRoute,
-} as any)
-const GestaoDashboardRoute = GestaoDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => GestaoRoute,
-} as any)
-const GestaoBacklogRoute = GestaoBacklogRouteImport.update({
-  id: '/backlog',
-  path: '/backlog',
-  getParentRoute: () => GestaoRoute,
-} as any)
-const DocumentosDocumentosRoute = DocumentosDocumentosRouteImport.update({
-  id: '/documentos',
-  path: '/documentos',
-  getParentRoute: () => DocumentosRoute,
-} as any)
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/_authenticated/admin/usuarios',
+    path: '/admin/usuarios',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedGestaoSolicitacoesRoute =
+  AuthenticatedGestaoSolicitacoesRouteImport.update({
+    id: '/solicitacoes',
+    path: '/solicitacoes',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedGestaoRoadmapRoute =
+  AuthenticatedGestaoRoadmapRouteImport.update({
+    id: '/roadmap',
+    path: '/roadmap',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedGestaoHistoricoRoute =
+  AuthenticatedGestaoHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedGestaoDashboardRoute =
+  AuthenticatedGestaoDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedGestaoBacklogRoute =
+  AuthenticatedGestaoBacklogRouteImport.update({
+    id: '/backlog',
+    path: '/backlog',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedDocumentosDocumentosRoute =
+  AuthenticatedDocumentosDocumentosRouteImport.update({
+    id: '/documentos',
+    path: '/documentos',
+    getParentRoute: () => AuthenticatedDocumentosRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/documentos': typeof DocumentosDocumentosRoute
-  '/backlog': typeof GestaoBacklogRoute
-  '/dashboard': typeof GestaoDashboardRoute
-  '/historico': typeof GestaoHistoricoRoute
-  '/roadmap': typeof GestaoRoadmapRoute
-  '/solicitacoes': typeof GestaoSolicitacoesRoute
-  '/admin/usuarios': typeof AdminUsuariosRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
+  '/backlog': typeof AuthenticatedGestaoBacklogRoute
+  '/dashboard': typeof AuthenticatedGestaoDashboardRoute
+  '/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
+  '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/documentos': typeof DocumentosDocumentosRoute
-  '/backlog': typeof GestaoBacklogRoute
-  '/dashboard': typeof GestaoDashboardRoute
-  '/historico': typeof GestaoHistoricoRoute
-  '/roadmap': typeof GestaoRoadmapRoute
-  '/solicitacoes': typeof GestaoSolicitacoesRoute
-  '/admin/usuarios': typeof AdminUsuariosRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
+  '/backlog': typeof AuthenticatedGestaoBacklogRoute
+  '/dashboard': typeof AuthenticatedGestaoDashboardRoute
+  '/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
+  '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/_documentos': typeof DocumentosRouteWithChildren
-  '/_gestao': typeof GestaoRouteWithChildren
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
-  '/_documentos/documentos': typeof DocumentosDocumentosRoute
-  '/_gestao/backlog': typeof GestaoBacklogRoute
-  '/_gestao/dashboard': typeof GestaoDashboardRoute
-  '/_gestao/historico': typeof GestaoHistoricoRoute
-  '/_gestao/roadmap': typeof GestaoRoadmapRoute
-  '/_gestao/solicitacoes': typeof GestaoSolicitacoesRoute
-  '/admin/usuarios': typeof AdminUsuariosRoute
+  '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
+  '/_authenticated/_gestao': typeof AuthenticatedGestaoRouteWithChildren
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/_documentos/documentos': typeof AuthenticatedDocumentosDocumentosRoute
+  '/_authenticated/_gestao/backlog': typeof AuthenticatedGestaoBacklogRoute
+  '/_authenticated/_gestao/dashboard': typeof AuthenticatedGestaoDashboardRoute
+  '/_authenticated/_gestao/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
+  '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
+  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/login'
     | '/registrar'
+    | '/'
     | '/documentos'
     | '/backlog'
     | '/dashboard'
@@ -135,9 +142,9 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/login'
     | '/registrar'
+    | '/'
     | '/documentos'
     | '/backlog'
     | '/dashboard'
@@ -147,27 +154,27 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
   id:
     | '__root__'
-    | '/'
-    | '/_documentos'
-    | '/_gestao'
     | '/login'
     | '/registrar'
-    | '/_documentos/documentos'
-    | '/_gestao/backlog'
-    | '/_gestao/dashboard'
-    | '/_gestao/historico'
-    | '/_gestao/roadmap'
-    | '/_gestao/solicitacoes'
-    | '/admin/usuarios'
+    | '/_authenticated/_documentos'
+    | '/_authenticated/_gestao'
+    | '/_authenticated/'
+    | '/_authenticated/_documentos/documentos'
+    | '/_authenticated/_gestao/backlog'
+    | '/_authenticated/_gestao/dashboard'
+    | '/_authenticated/_gestao/historico'
+    | '/_authenticated/_gestao/roadmap'
+    | '/_authenticated/_gestao/solicitacoes'
+    | '/_authenticated/admin/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  DocumentosRoute: typeof DocumentosRouteWithChildren
-  GestaoRoute: typeof GestaoRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
-  AdminUsuariosRoute: typeof AdminUsuariosRoute
+  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
+  AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -186,117 +193,120 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_gestao': {
-      id: '/_gestao'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof GestaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_documentos': {
-      id: '/_documentos'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof DocumentosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/usuarios': {
-      id: '/admin/usuarios'
+    '/_authenticated/_gestao': {
+      id: '/_authenticated/_gestao'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedGestaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_documentos': {
+      id: '/_authenticated/_documentos'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
       path: '/admin/usuarios'
       fullPath: '/admin/usuarios'
-      preLoaderRoute: typeof AdminUsuariosRouteImport
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_gestao/solicitacoes': {
-      id: '/_gestao/solicitacoes'
+    '/_authenticated/_gestao/solicitacoes': {
+      id: '/_authenticated/_gestao/solicitacoes'
       path: '/solicitacoes'
       fullPath: '/solicitacoes'
-      preLoaderRoute: typeof GestaoSolicitacoesRouteImport
-      parentRoute: typeof GestaoRoute
+      preLoaderRoute: typeof AuthenticatedGestaoSolicitacoesRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_gestao/roadmap': {
-      id: '/_gestao/roadmap'
+    '/_authenticated/_gestao/roadmap': {
+      id: '/_authenticated/_gestao/roadmap'
       path: '/roadmap'
       fullPath: '/roadmap'
-      preLoaderRoute: typeof GestaoRoadmapRouteImport
-      parentRoute: typeof GestaoRoute
+      preLoaderRoute: typeof AuthenticatedGestaoRoadmapRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_gestao/historico': {
-      id: '/_gestao/historico'
+    '/_authenticated/_gestao/historico': {
+      id: '/_authenticated/_gestao/historico'
       path: '/historico'
       fullPath: '/historico'
-      preLoaderRoute: typeof GestaoHistoricoRouteImport
-      parentRoute: typeof GestaoRoute
+      preLoaderRoute: typeof AuthenticatedGestaoHistoricoRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_gestao/dashboard': {
-      id: '/_gestao/dashboard'
+    '/_authenticated/_gestao/dashboard': {
+      id: '/_authenticated/_gestao/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof GestaoDashboardRouteImport
-      parentRoute: typeof GestaoRoute
+      preLoaderRoute: typeof AuthenticatedGestaoDashboardRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_gestao/backlog': {
-      id: '/_gestao/backlog'
+    '/_authenticated/_gestao/backlog': {
+      id: '/_authenticated/_gestao/backlog'
       path: '/backlog'
       fullPath: '/backlog'
-      preLoaderRoute: typeof GestaoBacklogRouteImport
-      parentRoute: typeof GestaoRoute
+      preLoaderRoute: typeof AuthenticatedGestaoBacklogRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_documentos/documentos': {
-      id: '/_documentos/documentos'
+    '/_authenticated/_documentos/documentos': {
+      id: '/_authenticated/_documentos/documentos'
       path: '/documentos'
       fullPath: '/documentos'
-      preLoaderRoute: typeof DocumentosDocumentosRouteImport
-      parentRoute: typeof DocumentosRoute
+      preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
+      parentRoute: typeof AuthenticatedDocumentosRoute
     }
   }
 }
 
-interface DocumentosRouteChildren {
-  DocumentosDocumentosRoute: typeof DocumentosDocumentosRoute
+interface AuthenticatedDocumentosRouteChildren {
+  AuthenticatedDocumentosDocumentosRoute: typeof AuthenticatedDocumentosDocumentosRoute
 }
 
-const DocumentosRouteChildren: DocumentosRouteChildren = {
-  DocumentosDocumentosRoute: DocumentosDocumentosRoute,
+const AuthenticatedDocumentosRouteChildren: AuthenticatedDocumentosRouteChildren =
+  {
+    AuthenticatedDocumentosDocumentosRoute:
+      AuthenticatedDocumentosDocumentosRoute,
+  }
+
+const AuthenticatedDocumentosRouteWithChildren =
+  AuthenticatedDocumentosRoute._addFileChildren(
+    AuthenticatedDocumentosRouteChildren,
+  )
+
+interface AuthenticatedGestaoRouteChildren {
+  AuthenticatedGestaoBacklogRoute: typeof AuthenticatedGestaoBacklogRoute
+  AuthenticatedGestaoDashboardRoute: typeof AuthenticatedGestaoDashboardRoute
+  AuthenticatedGestaoHistoricoRoute: typeof AuthenticatedGestaoHistoricoRoute
+  AuthenticatedGestaoRoadmapRoute: typeof AuthenticatedGestaoRoadmapRoute
+  AuthenticatedGestaoSolicitacoesRoute: typeof AuthenticatedGestaoSolicitacoesRoute
 }
 
-const DocumentosRouteWithChildren = DocumentosRoute._addFileChildren(
-  DocumentosRouteChildren,
-)
-
-interface GestaoRouteChildren {
-  GestaoBacklogRoute: typeof GestaoBacklogRoute
-  GestaoDashboardRoute: typeof GestaoDashboardRoute
-  GestaoHistoricoRoute: typeof GestaoHistoricoRoute
-  GestaoRoadmapRoute: typeof GestaoRoadmapRoute
-  GestaoSolicitacoesRoute: typeof GestaoSolicitacoesRoute
+const AuthenticatedGestaoRouteChildren: AuthenticatedGestaoRouteChildren = {
+  AuthenticatedGestaoBacklogRoute: AuthenticatedGestaoBacklogRoute,
+  AuthenticatedGestaoDashboardRoute: AuthenticatedGestaoDashboardRoute,
+  AuthenticatedGestaoHistoricoRoute: AuthenticatedGestaoHistoricoRoute,
+  AuthenticatedGestaoRoadmapRoute: AuthenticatedGestaoRoadmapRoute,
+  AuthenticatedGestaoSolicitacoesRoute: AuthenticatedGestaoSolicitacoesRoute,
 }
 
-const GestaoRouteChildren: GestaoRouteChildren = {
-  GestaoBacklogRoute: GestaoBacklogRoute,
-  GestaoDashboardRoute: GestaoDashboardRoute,
-  GestaoHistoricoRoute: GestaoHistoricoRoute,
-  GestaoRoadmapRoute: GestaoRoadmapRoute,
-  GestaoSolicitacoesRoute: GestaoSolicitacoesRoute,
-}
-
-const GestaoRouteWithChildren =
-  GestaoRoute._addFileChildren(GestaoRouteChildren)
+const AuthenticatedGestaoRouteWithChildren =
+  AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  DocumentosRoute: DocumentosRouteWithChildren,
-  GestaoRoute: GestaoRouteWithChildren,
   LoginRoute: LoginRoute,
   RegistrarRoute: RegistrarRoute,
-  AdminUsuariosRoute: AdminUsuariosRoute,
+  AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
+  AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
