@@ -109,7 +109,7 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-import { MODULES, KNOWN_ROUTES, isKnownRoute, findModuleByPath, userCanAccess } from "@/lib/modules";
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
