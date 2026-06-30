@@ -25,39 +25,7 @@ export const Route = createFileRoute("/")({
   component: PortalPage,
 });
 
-interface AppCard {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  status: "active" | "coming_soon";
-  gradient: string;
-  iconBg: string;
-}
-
-const allApps: AppCard[] = [
-  {
-    id: "gestao",
-    title: "Gestão de Projetos",
-    description: "Dashboard, backlog, roadmap e acompanhamento de tarefas e atividades.",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-    status: "active",
-    gradient: "from-slate-500/15 to-slate-700/15",
-    iconBg: "from-slate-500 to-slate-700",
-  },
-  {
-    id: "documentos",
-    title: "Documentos",
-    description: "Gestão de empresas, tipos de documentos e arquivos anexados por lojista.",
-    icon: FileText,
-    href: "/documentos",
-    status: "active",
-    gradient: "from-slate-500/15 to-slate-700/15",
-    iconBg: "from-slate-500 to-slate-700",
-  },
-];
+import { MODULES, userCanAccess } from "@/lib/modules";
 
 export function PortalPage() {
   const { user, isAuthenticated, isAdmin, logout, loading } = useAuth();
