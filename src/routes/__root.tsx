@@ -173,10 +173,11 @@ function AccessDenied({ reason }: { reason: string }) {
 }
 
 function AppLayout() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // 1. loading state
+  // While AuthProvider hydrates the profile, show a spinner so role-based
+  // UI (e.g. admin links in the portal) doesn't flicker.
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
@@ -185,23 +186,13 @@ function AppLayout() {
     );
   }
 
-  // 0. Unknown route → always show 404 (no auth leak, no redirect loop)
+  // Unknown route → 404 (no auth leak, no redirect loop)
   if (!isKnownRoute(pathname)) {
     return <NotFoundComponent />;
   }
 
-  const isPublicRoute = ["/login", "/registrar"].includes(pathname);
-
-  // 2. Unauthenticated user
-  if (!isAuthenticated) {
-    if (isPublicRoute) {
-      return <Outlet />;
-    }
-    return <RedirectToLogin />;
-  }
-
-  // 3. Authenticated — admin protection only; module access is enforced by
-  // each module's pathless layout route (_gestao.tsx, _documentos.tsx).
+  // Cosmetic admin guard. The real defense is RLS + the `_authenticated`
+  // route gate; admin pages should also verify role server-side.
   const isAdmin = user?.role === "admin";
   if (pathname.startsWith("/admin") && !isAdmin) {
     return <AccessDenied reason="Você não possui credenciais de administrador para acessar este painel." />;
@@ -209,6 +200,7 @@ function AppLayout() {
 
   return <Outlet />;
 }
+
 
 
 

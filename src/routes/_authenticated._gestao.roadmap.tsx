@@ -6,7 +6,7 @@ import { TarefaModal } from "@/components/TarefaModal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-export const Route = createFileRoute("/_gestao/roadmap")({
+export const Route = createFileRoute("/_authenticated/_gestao/roadmap")({
   head: () => ({
     meta: [{ title: "Roadmap — Gestão de Projetos" }],
   }),

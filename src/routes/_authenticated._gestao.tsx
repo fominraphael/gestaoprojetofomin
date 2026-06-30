@@ -6,7 +6,7 @@ import { MODULES, userCanAccess } from "@/lib/modules";
 
 const gestaoModule = MODULES.find((m) => m.id === "gestao")!;
 
-export const Route = createFileRoute("/_gestao")({
+export const Route = createFileRoute("/_authenticated/_gestao")({
   component: GestaoLayout,
 });
 

@@ -19,7 +19,7 @@ import {
   type Empresa,
 } from "@/lib/empresas";
 
-export const Route = createFileRoute("/_documentos/documentos")({
+export const Route = createFileRoute("/_authenticated/_documentos/documentos")({
   head: () => ({ meta: [{ title: "Documentos — Portal" }] }),
   component: DocumentosPage,
 });
