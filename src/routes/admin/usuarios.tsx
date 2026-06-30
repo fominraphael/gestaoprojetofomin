@@ -1430,11 +1430,19 @@ export function AdminUsuariosPage() {
         {/* -------------------- TAB: IMPORT -------------------- */}
         {activeTab === "import" && (
           <section className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
-              <p className="text-sm text-slate-400 mt-1">
-                Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
-              </p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("users")}
+                className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Usuários
+              </button>
             </div>
 
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
