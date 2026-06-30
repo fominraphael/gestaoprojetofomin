@@ -2080,15 +2080,35 @@ export function AdminUsuariosPage() {
                       }`}>
                         {t.role === "admin" ? "Administrador" : "Usuário Comum"}
                       </div>
-                      {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
+                      <div className="flex items-center gap-1">
                         <button
-                          onClick={() => handleDeleteUserType(t.id, t.nome)}
-                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
-                          title="Excluir perfil"
+                          onClick={() => handleEditUserType(t)}
+                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          title="Editar perfil"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                        <button
+                          onClick={() => handleToggleUserTypeAtivo(t)}
+                          className={`p-1 rounded transition-colors ${
+                            t.ativo === false
+                              ? "text-emerald-400 hover:text-emerald-300"
+                              : "text-slate-500 hover:text-amber-400"
+                          }`}
+                          title={t.ativo === false ? "Ativar perfil" : "Inativar perfil"}
+                        >
+                          {t.ativo === false ? <ToggleLeft className="w-3.5 h-3.5" /> : <ToggleRight className="w-3.5 h-3.5" />}
+                        </button>
+                        {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
+                          <button
+                            onClick={() => handleDeleteUserType(t.id, t.nome)}
+                            className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                            title="Excluir perfil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <h3 className="text-white font-semibold text-sm uppercase">{t.nome}</h3>
                     
