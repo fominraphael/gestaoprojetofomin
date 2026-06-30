@@ -18,7 +18,7 @@ import {
 import { obterArquivos, obterDocumentosTipo, obterEmpresas, type DocumentoArquivo, type DocumentoTipo, type Empresa } from "@/lib/empresas";
 import JSZip from "jszip";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [{ title: "Portal — Aplicações" }],
   }),

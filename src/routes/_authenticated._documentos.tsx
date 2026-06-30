@@ -5,7 +5,7 @@ import { MODULES, userCanAccess } from "@/lib/modules";
 
 const docsModule = MODULES.find((m) => m.id === "documentos")!;
 
-export const Route = createFileRoute("/_documentos")({
+export const Route = createFileRoute("/_authenticated/_documentos")({
   component: DocumentosLayout,
 });
 

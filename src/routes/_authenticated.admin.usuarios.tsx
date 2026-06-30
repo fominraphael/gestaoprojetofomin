@@ -60,7 +60,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
-export const Route = createFileRoute("/admin/usuarios")({
+export const Route = createFileRoute("/_authenticated/admin/usuarios")({
   head: () => ({ meta: [{ title: "Painel Administrativo" }] }),
   component: AdminUsuariosPage,
 });
