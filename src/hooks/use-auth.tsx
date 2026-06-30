@@ -1,76 +1,155 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { type UsuarioSistema, autenticar, solicitarCriacaoConta } from "@/lib/usuarios";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  role: "admin" | "user";
+  status: "pending" | "approved" | "rejected";
+  active: boolean;
+  tipo_usuario: string;
+  modulos: string[];
+  empresa_id: string | null;
+  cnpj: string | null;
+  pode_criar_admin: boolean;
+  campos_customizados: Record<string, any>;
+}
 
 interface AuthContextType {
-  user: UsuarioSistema | null;
+  user: AuthUser | null;
+  session: Session | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (username: string, password: string) => Promise<UsuarioSistema>;
+  logout: () => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const EMAIL_DOMAIN = "gestao.local";
+const usernameToEmail = (u: string) =>
+  u.includes("@") ? u.toLowerCase() : `${u.toLowerCase()}@${EMAIL_DOMAIN}`;
+
+async function loadProfile(userId: string): Promise<AuthUser | null> {
+  const [{ data: profile, error: pErr }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+  ]);
+  if (pErr || !profile) return null;
+  const role: "admin" | "user" =
+    roles?.some((r: any) => r.role === "admin") ? "admin" : "user";
+  const { data: au } = await supabase.auth.getUser();
+  return {
+    id: profile.id,
+    username: profile.username ?? "",
+    email: au.user?.email ?? "",
+    role,
+    status: (profile.status ?? "approved") as any,
+    active: profile.ativo ?? true,
+    tipo_usuario: profile.tipo_usuario ?? "Lojista",
+    modulos: profile.modulos ?? [],
+    empresa_id: profile.empresa_id ?? null,
+    cnpj: profile.cnpj ?? null,
+    pode_criar_admin: profile.pode_criar_admin ?? false,
+    campos_customizados: (profile.campos_customizados ?? {}) as any,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UsuarioSistema | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    try {
-      // Try v4 first, then fall back to v3/v2
-      const storedV4 = localStorage.getItem("sessao_usuario_v4");
-      const storedV3 = localStorage.getItem("sessao_usuario_v3");
-      const stored = storedV4 || storedV3;
-      if (stored) setUser(JSON.parse(stored));
-    } catch {
-      localStorage.removeItem("sessao_usuario_v4");
-      localStorage.removeItem("sessao_usuario_v3");
+  const hydrate = async (s: Session | null) => {
+    setSession(s);
+    if (s?.user) {
+      const p = await loadProfile(s.user.id);
+      setUser(p);
+    } else {
+      setUser(null);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    // Listen first
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      // Defer DB calls outside the listener
+      setSession(s);
+      if (s?.user) {
+        setTimeout(() => {
+          loadProfile(s.user.id).then(setUser);
+        }, 0);
+      } else {
+        setUser(null);
+      }
+    });
+    // Then check existing session
+    supabase.auth.getSession().then(({ data }) => {
+      hydrate(data.session).finally(() => setLoading(false));
+    });
+    return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (username: string, password: string) => {
-    const u = await autenticar(username, password);
-    const session: UsuarioSistema = {
-      id: u.id,
-      username: u.username,
-      role: u.role,
-      status: u.status,
-      cnpj: u.cnpj ?? null,
-      empresa_id: u.empresa_id ?? null,
-      modulos: u.modulos ?? [],
-      active: u.active ?? true,
-      tipo_usuario: u.tipo_usuario ?? "Lojista",
-      pode_criar_admin: u.pode_criar_admin ?? false,
-      campos_customizados: u.campos_customizados ?? {},
-    };
-    setUser(session);
-    localStorage.setItem("sessao_usuario_v4", JSON.stringify(session));
-    localStorage.removeItem("sessao_usuario_v3");
-    localStorage.removeItem("sessao_usuario_v2");
+    const email = usernameToEmail(username);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message.toLowerCase().includes("invalid"))
+        throw new Error("Usuário ou senha incorretos.");
+      throw error;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("sessao_usuario_v4");
-    localStorage.removeItem("sessao_usuario_v3");
-    localStorage.removeItem("sessao_usuario_v2");
+    setSession(null);
   };
 
-  const register = (username: string, password: string) =>
-    solicitarCriacaoConta(username, password);
+  const register = async (username: string, password: string) => {
+    const email = usernameToEmail(username);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          username,
+          tipo_usuario: "Lojista",
+          modulos: ["gestao"],
+          status: "pending",
+          ativo: true,
+          role: "user",
+        },
+      },
+    });
+    if (error) throw error;
+  };
+
+  const refreshProfile = async () => {
+    if (session?.user) {
+      const p = await loadProfile(session.user.id);
+      setUser(p);
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         loading,
         login,
         logout,
         register,
-        isAuthenticated: !!user,
+        refreshProfile,
+        isAuthenticated: !!session && !!user,
         isAdmin: user?.role === "admin",
       }}
     >

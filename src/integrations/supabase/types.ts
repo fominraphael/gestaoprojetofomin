@@ -118,31 +118,43 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean
           campos_customizados: Json
+          cnpj: string | null
           created_at: string
           empresa_id: string | null
           id: string
           modulos: string[]
+          pode_criar_admin: boolean
+          status: string
           tipo_usuario: string | null
           updated_at: string
           username: string | null
         }
         Insert: {
+          ativo?: boolean
           campos_customizados?: Json
+          cnpj?: string | null
           created_at?: string
           empresa_id?: string | null
           id: string
           modulos?: string[]
+          pode_criar_admin?: boolean
+          status?: string
           tipo_usuario?: string | null
           updated_at?: string
           username?: string | null
         }
         Update: {
+          ativo?: boolean
           campos_customizados?: Json
+          cnpj?: string | null
           created_at?: string
           empresa_id?: string | null
           id?: string
           modulos?: string[]
+          pode_criar_admin?: boolean
+          status?: string
           tipo_usuario?: string | null
           updated_at?: string
           username?: string | null
@@ -183,6 +195,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           categoria?: Database["public"]["Enums"]["tarefa_categoria"]
@@ -209,6 +222,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           categoria?: Database["public"]["Enums"]["tarefa_categoria"]
@@ -235,6 +249,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -20,6 +20,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import type { Tarefa, Status, Prioridade, Categoria, TipoSolicitacao } from "@/lib/tarefas";
 import { STATUSES, PRIORIDADES, TIPOS_SOLICITACAO } from "@/lib/tarefas";
 
@@ -77,8 +78,9 @@ function addDays(dateStr: string, days: number): string {
 }
 
 export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "backlog" }: Props) {
-  const [form, setForm] = useState<FormState>(empty(defaultCategoria));
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const [form, setForm] = useState<FormState>(empty(defaultCategoria));
 
   useEffect(() => {
     if (tarefa) {
@@ -147,9 +149,11 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             : form.categoria === "solicitacao"
               ? null
               : today();
+        if (!user) throw new Error("Sessão expirada. Faça login novamente.");
         const { error } = await supabase.from("tarefas").insert({
           ...basePayload,
           inicio_previsto: inicio,
+          user_id: user.id,
         });
         if (error) throw error;
       }

@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { hashPassword } from "@/lib/crypto";
+
+const EMAIL_DOMAIN = "gestao.local";
+const usernameToEmail = (u: string) =>
+  u.includes("@") ? u.toLowerCase() : `${u.toLowerCase()}@${EMAIL_DOMAIN}`;
 
 export interface TipoUsuarioConfig {
   id: string;
@@ -24,7 +27,6 @@ export interface UsuarioSistema {
   cnpj?: string | null;
   empresa_id?: string | null;
   modulos?: string[];
-  /** UI keeps the English name; DB column is `ativo`. Mapped at lib layer. */
   active?: boolean;
   tipo_usuario?: string;
   pode_criar_admin?: boolean;
@@ -32,81 +34,140 @@ export interface UsuarioSistema {
   created_at?: string;
 }
 
-// ---------- helpers ----------
-function fromRow(row: any): UsuarioSistema {
-  const { ativo, campos_schema, ...rest } = row;
+function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
   return {
-    ...rest,
-    active: ativo,
-    modulos: row.modulos ?? [],
-    campos_customizados: row.campos_customizados ?? {},
+    id: p.id,
+    username: p.username ?? "",
+    role,
+    status: (p.status ?? "approved") as any,
+    cnpj: p.cnpj ?? null,
+    empresa_id: p.empresa_id ?? null,
+    modulos: p.modulos ?? [],
+    active: p.ativo ?? true,
+    tipo_usuario: p.tipo_usuario ?? "Lojista",
+    pode_criar_admin: p.pode_criar_admin ?? false,
+    campos_customizados: p.campos_customizados ?? {},
+    created_at: p.created_at,
   };
 }
 
-function toRow<T extends Partial<UsuarioSistema>>(u: T) {
-  const { active, password_hash, ...rest } = u as any;
-  const out: any = { ...rest };
-  if (active !== undefined) out.ativo = active;
-  return out;
-}
-
 // ============================================================
-// USUÁRIOS
+// USUÁRIOS — agora ancorado em profiles + user_roles + auth
 // ============================================================
 export async function obterUsuarios(): Promise<UsuarioSistema[]> {
-  const { data, error } = await supabase
-    .from("usuarios_sistema_public" as any)
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return ((data as any[]) || []).map(fromRow);
+  const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
+    supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+    supabase.from("user_roles").select("user_id, role"),
+  ]);
+  if (pErr) throw pErr;
+  if (rErr) throw rErr;
+  const adminSet = new Set((roles ?? []).filter((r: any) => r.role === "admin").map((r: any) => r.user_id));
+  return ((profiles as any[]) ?? []).map((p) =>
+    profileToUsuario(p, adminSet.has(p.id) ? "admin" : "user")
+  );
 }
 
 export async function criarUsuario(
   usuario: Omit<UsuarioSistema, "id" | "created_at"> & { password?: string }
 ): Promise<UsuarioSistema> {
-  const password_hash = usuario.password
-    ? await hashPassword(usuario.password)
-    : "4813494d137e1631bba301d5acab6e7bb7aa74ce1185d456565ef51d737677b2"; // sha256("root")
+  const password = usuario.password || "Trocar@2026!";
+  const email = usernameToEmail(usuario.username);
 
-  const payload: any = {
-    username: usuario.username,
-    password_hash,
-    role: usuario.role,
-    status: usuario.status,
-    cnpj: usuario.cnpj || null,
-    empresa_id: usuario.empresa_id || null,
-    modulos: usuario.modulos || [],
-    ativo: usuario.active !== undefined ? usuario.active : true,
-    tipo_usuario: usuario.tipo_usuario || "Lojista",
-    pode_criar_admin: usuario.pode_criar_admin || false,
-    campos_customizados: usuario.campos_customizados || {},
-  };
-
-  const { data, error } = await supabase
-    .from("usuarios_sistema")
-    .insert([payload])
-    .select("id, username, role, status, cnpj, empresa_id, modulos, ativo, tipo_usuario, pode_criar_admin, campos_customizados, created_at")
-    .single();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/`,
+      data: {
+        username: usuario.username,
+        tipo_usuario: usuario.tipo_usuario ?? "Lojista",
+        modulos: usuario.modulos ?? ["gestao"],
+        empresa_id: usuario.empresa_id ?? null,
+        cnpj: usuario.cnpj ?? null,
+        pode_criar_admin: usuario.pode_criar_admin ?? false,
+        campos_customizados: usuario.campos_customizados ?? {},
+        ativo: usuario.active ?? true,
+        status: usuario.status ?? "approved",
+        role: usuario.role ?? "user",
+      },
+    },
+  });
 
   if (error) {
-    if (error.code === "23505") throw new Error("Login de acesso já cadastrado.");
+    if (error.message.toLowerCase().includes("already") || (error as any).code === "user_already_exists")
+      throw new Error("Login de acesso já cadastrado.");
     throw error;
   }
-  return fromRow(data);
+  if (!data.user) throw new Error("Falha ao criar usuário.");
+
+  return {
+    id: data.user.id,
+    username: usuario.username,
+    role: usuario.role ?? "user",
+    status: usuario.status ?? "approved",
+    cnpj: usuario.cnpj ?? null,
+    empresa_id: usuario.empresa_id ?? null,
+    modulos: usuario.modulos ?? [],
+    active: usuario.active ?? true,
+    tipo_usuario: usuario.tipo_usuario ?? "Lojista",
+    pode_criar_admin: usuario.pode_criar_admin ?? false,
+    campos_customizados: usuario.campos_customizados ?? {},
+  };
 }
 
 export async function atualizarUsuario(
   id: string,
   updates: Partial<UsuarioSistema> & { password?: string }
 ): Promise<void> {
-  const payload: any = toRow(updates);
-  if (updates.password) {
-    payload.password_hash = await hashPassword(updates.password);
-    delete payload.password;
+  const payload: any = {};
+  if (updates.username !== undefined) payload.username = updates.username;
+  if (updates.tipo_usuario !== undefined) payload.tipo_usuario = updates.tipo_usuario;
+  if (updates.modulos !== undefined) payload.modulos = updates.modulos;
+  if (updates.empresa_id !== undefined) payload.empresa_id = updates.empresa_id;
+  if (updates.cnpj !== undefined) payload.cnpj = updates.cnpj;
+  if (updates.pode_criar_admin !== undefined) payload.pode_criar_admin = updates.pode_criar_admin;
+  if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
+  if (updates.active !== undefined) payload.ativo = updates.active;
+  if (updates.status !== undefined) payload.status = updates.status;
+
+  if (Object.keys(payload).length > 0) {
+    const { error } = await supabase.from("profiles").update(payload).eq("id", id);
+    if (error) throw error;
   }
-  const { error } = await supabase.from("usuarios_sistema").update(payload).eq("id", id);
-  if (error) throw error;
+
+  // Atualizar role (somente admin pode — RLS bloqueia caso contrário)
+  if (updates.role !== undefined) {
+    const { data: existing } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", id);
+    const hasAdmin = (existing ?? []).some((r: any) => r.role === "admin");
+    if (updates.role === "admin" && !hasAdmin) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: id, role: "admin" });
+      if (error) throw error;
+    } else if (updates.role === "user" && hasAdmin) {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", id)
+        .eq("role", "admin");
+      if (error) throw error;
+    }
+  }
+
+  if (updates.password) {
+    // Senha só pode ser alterada via fluxo de reset/atualização do próprio usuário.
+    // Para o próprio usuário logado, usamos supabase.auth.updateUser.
+    const { data: au } = await supabase.auth.getUser();
+    if (au.user?.id === id) {
+      const { error } = await supabase.auth.updateUser({ password: updates.password });
+      if (error) throw error;
+    } else {
+      throw new Error(
+        "Alteração de senha de outro usuário requer redefinição via e-mail (não suportado nesta interface)."
+      );
+    }
+  }
 }
 
 export async function solicitarCriacaoConta(
@@ -128,40 +189,23 @@ export async function solicitarCriacaoConta(
   });
 }
 
+/**
+ * @deprecated A autenticação agora é feita pelo Supabase Auth via useAuth().login.
+ */
 export async function autenticar(username: string, password: string): Promise<UsuarioSistema> {
-  const password_hash = await hashPassword(password);
-
-  function checkStatus(u: UsuarioSistema): UsuarioSistema {
-    if (u.active === false) throw new Error("Sua conta está inativa. Entre em contato com o administrador.");
-    if (u.status === "pending") throw new Error("Sua solicitação de conta está pendente de aprovação pelo administrador.");
-    if (u.status === "rejected") throw new Error("Sua solicitação de conta foi rejeitada pelo administrador.");
-    return u;
-  }
-
-  // Direct match by username
-  const { data: direct, error: directErr } = await supabase
-    .from("usuarios_sistema")
-    .select("id, username, role, status, cnpj, empresa_id, modulos, ativo, tipo_usuario, pode_criar_admin, campos_customizados, created_at")
-    .eq("username", username)
-    .eq("password_hash", password_hash)
-    .maybeSingle();
-  if (directErr) throw directErr;
-  if (direct) return checkStatus(fromRow(direct));
-
-  // Try CNPJ inside campos_customizados
-  const cleanUsername = username.replace(/\D/g, "");
-  if (cleanUsername.length === 14) {
-    const { data: byCnpj, error: cnpjErr } = await supabase
-      .from("usuarios_sistema")
-      .select("id, username, role, status, cnpj, empresa_id, modulos, ativo, tipo_usuario, pode_criar_admin, campos_customizados, created_at")
-      .eq("password_hash", password_hash)
-      .filter("campos_customizados->>cnpj", "eq", cleanUsername)
-      .maybeSingle();
-    if (cnpjErr) throw cnpjErr;
-    if (byCnpj) return checkStatus(fromRow(byCnpj));
-  }
-
-  throw new Error("Usuário ou senha incorretos.");
+  const email = usernameToEmail(username);
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error("Usuário ou senha incorretos.");
+  const { data: au } = await supabase.auth.getUser();
+  if (!au.user) throw new Error("Falha ao autenticar.");
+  const [{ data: profile }, { data: roles }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", au.user.id).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", au.user.id),
+  ]);
+  const role: "admin" | "user" =
+    (roles ?? []).some((r: any) => r.role === "admin") ? "admin" : "user";
+  if (!profile) throw new Error("Perfil não encontrado.");
+  return profileToUsuario(profile, role);
 }
 
 export async function atualizarStatusUsuario(
@@ -172,12 +216,13 @@ export async function atualizarStatusUsuario(
 }
 
 export async function excluirUsuario(id: string): Promise<void> {
-  const { error } = await supabase.from("usuarios_sistema").delete().eq("id", id);
+  // Soft delete: marca como inativo. Exclusão real exige service_role.
+  const { error } = await supabase.from("profiles").update({ ativo: false }).eq("id", id);
   if (error) throw error;
 }
 
 // ============================================================
-// TIPOS DE USUÁRIO (perfis)
+// TIPOS DE USUÁRIO (perfis) — sem mudanças estruturais
 // ============================================================
 function fromTipoRow(row: any): TipoUsuarioConfig {
   return {
@@ -237,7 +282,6 @@ export async function excluirTipoUsuarioConfig(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// Compatibility shim for older imports
 export function getLocalTypes(): TipoUsuarioConfig[] {
   return [];
 }
