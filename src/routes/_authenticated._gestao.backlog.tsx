@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   tarefasQuery,
@@ -31,9 +32,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/backlog")({
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(tarefasQuery("backlog")),
   component: BacklogPage,
-  errorComponent: ({ error }) => (
-    <div className="p-8 text-sm text-destructive">{error.message}</div>
-  ),
+  errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Sem tarefas no backlog.</div>,
 });
 

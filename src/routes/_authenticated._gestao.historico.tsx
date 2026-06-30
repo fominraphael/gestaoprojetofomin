@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { tarefasQuery, STATUSES, statusColor, type Tarefa, type Status, type Categoria } from "@/lib/tarefas";
 import { useMemo, useState } from "react";
@@ -23,9 +24,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/historico")({
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(tarefasQuery("historico")),
   component: LixeiraPage,
-  errorComponent: ({ error }) => (
-    <div className="p-8 text-sm text-destructive">{error.message}</div>
-  ),
+  errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Lixeira vazia.</div>,
 });
 

@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleAccessDenied } from "@/components/ModuleAccessDenied";
 import { MODULES, userCanAccess } from "@/lib/modules";
@@ -6,6 +7,7 @@ import { MODULES, userCanAccess } from "@/lib/modules";
 const docsModule = MODULES.find((m) => m.id === "documentos")!;
 
 export const Route = createFileRoute("/_authenticated/_documentos")({
+  errorComponent: ModuleErrorBoundary,
   component: DocumentosLayout,
 });
 
