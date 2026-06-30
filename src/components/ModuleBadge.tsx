@@ -4,12 +4,12 @@ const MODULE_CONFIGS: Record<string, { label: string; icon: any; color: string }
   documentos: {
     label: "Documentos",
     icon: FileText,
-    color: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+    color: "bg-primary/10 border-primary/30 text-foreground",
   },
   gestao: {
     label: "Gestão",
     icon: Layers,
-    color: "bg-indigo-500/10 border-indigo-500/30 text-indigo-400",
+    color: "bg-primary/10 border-border/30 text-muted-foreground",
   },
   financeiro: {
     label: "Financeiro",

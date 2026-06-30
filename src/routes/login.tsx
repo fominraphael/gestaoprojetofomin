@@ -39,14 +39,14 @@ function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       {/* Background decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-lg mb-4">
             <Layers className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Portal de Aplicações</h1>
@@ -68,7 +68,7 @@ function LoginPage() {
                 placeholder="Seu nome de usuário"
                 required
                 autoComplete="username"
-                className="w-full px-4 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                className="w-full px-4 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
               />
             </div>
 
@@ -85,7 +85,7 @@ function LoginPage() {
                   placeholder="Sua senha"
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
                 <button
                   type="button"
@@ -123,7 +123,7 @@ function LoginPage() {
               Não tem uma conta?{" "}
               <Link
                 to="/registrar"
-                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                className="text-foreground hover:text-foreground font-medium transition-colors"
               >
                 Solicitar acesso
               </Link>

@@ -117,7 +117,7 @@ function DocumentosPage() {
   if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-card flex items-center justify-center">
-        <span className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -143,7 +143,7 @@ function DocumentosPage() {
             </Link>
             <span className="text-muted-foreground">/</span>
             <span className="text-foreground text-sm font-semibold flex items-center gap-2">
-              <FileText className="w-4 h-4 text-blue-400" /> Documentos
+              <FileText className="w-4 h-4 text-foreground" /> Documentos
             </span>
           </div>
           {isAdmin && (
@@ -151,7 +151,7 @@ function DocumentosPage() {
               to="/admin/usuarios"
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-foreground hover:text-foreground hover:bg-accent text-sm transition-all border border-border"
             >
-              <Layers className="w-4 h-4 text-indigo-400" />
+              <Layers className="w-4 h-4 text-muted-foreground" />
               <span className="hidden sm:inline">Gerenciar</span>
             </Link>
           )}
@@ -233,7 +233,7 @@ function DocumentosPage() {
                     const typeFiles = arquivos.filter((f) => f.tipo_id === type.id);
                     return (
                       <div key={type.id} className="bg-card border border-border rounded-xl p-4 hover:border-border transition-all">
-                        <span className="text-[10px] bg-blue-500/10 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        <span className="text-[10px] bg-primary/10 border border-primary/25 text-foreground px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                           {type.nome}
                         </span>
                         <h4 className="text-foreground font-semibold text-sm mt-2.5">{type.descricao || "Documentação"}</h4>
@@ -244,7 +244,7 @@ function DocumentosPage() {
                               href={f.arquivo_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center justify-between gap-2 text-xs text-foreground hover:text-blue-400 px-2 py-1.5 rounded-lg bg-muted/50 hover:bg-background border border-border transition-all"
+                              className="flex items-center justify-between gap-2 text-xs text-foreground hover:text-foreground px-2 py-1.5 rounded-lg bg-muted/50 hover:bg-background border border-border transition-all"
                             >
                               <span className="truncate">{f.arquivo_nome}</span>
                               <ExternalLink className="w-3 h-3 shrink-0" />

@@ -156,7 +156,7 @@ function RedirectToLogin() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         <p className="text-sm text-muted-foreground font-medium">Redirecionando para o login...</p>
       </div>
     </div>

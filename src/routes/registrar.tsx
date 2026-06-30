@@ -43,13 +43,13 @@ function RegistrarPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-lg mb-4">
             <Layers className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Solicitar Acesso</h1>
@@ -68,7 +68,7 @@ function RegistrarPage() {
               </p>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground font-semibold transition-all"
+                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground font-semibold transition-all"
               >
                 Voltar ao Login
               </Link>
@@ -87,7 +87,7 @@ function RegistrarPage() {
                   placeholder="Escolha um nome de usuário"
                   required
                   autoComplete="username"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
 
@@ -104,7 +104,7 @@ function RegistrarPage() {
                     placeholder="Crie uma senha"
                     required
                     autoComplete="new-password"
-                    className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                   />
                   <button
                     type="button"
@@ -128,7 +128,7 @@ function RegistrarPage() {
                   placeholder="Repita a senha"
                   required
                   autoComplete="new-password"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
 
@@ -158,7 +158,7 @@ function RegistrarPage() {
             <div className="mt-6 pt-6 border-t border-border text-center">
               <p className="text-muted-foreground text-sm">
                 Já tem uma conta?{" "}
-                <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                <Link to="/login" className="text-foreground hover:text-foreground font-medium transition-colors">
                   Fazer login
                 </Link>
               </p>
