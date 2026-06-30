@@ -78,6 +78,8 @@ function addDays(dateStr: string, days: number): string {
 }
 
 export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "backlog" }: Props) {
+  const qc = useQueryClient();
+  const { user } = useAuth();
   const [form, setForm] = useState<FormState>(empty(defaultCategoria));
   const qc = useQueryClient();
 
