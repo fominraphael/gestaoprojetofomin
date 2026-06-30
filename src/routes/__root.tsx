@@ -108,8 +108,29 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-// Routes that do NOT show the sidebar (public pages + portal)
+// Routes that do NOT show the sidebar (public pages + portal + standalone modules)
 const PUBLIC_ROUTES = ["/login", "/registrar", "/"];
+const NO_SIDEBAR_ROUTES = ["/login", "/registrar", "/", "/documentos"];
+
+// All valid app routes. Anything outside this list returns 404.
+const KNOWN_ROUTES = [
+  "/",
+  "/login",
+  "/registrar",
+  "/dashboard",
+  "/backlog",
+  "/roadmap",
+  "/solicitacoes",
+  "/historico",
+  "/documentos",
+  "/admin/usuarios",
+];
+
+function isKnownRoute(pathname: string) {
+  return KNOWN_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + "/")
+  );
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -181,9 +202,14 @@ function AppLayout() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  // 0. Unknown route → always show 404 (no auth leak, no redirect loop)
+  if (!isKnownRoute(pathname)) {
+    return <NotFoundComponent />;
   }
 
   const isPublicRoute = ["/login", "/registrar"].includes(pathname);
@@ -214,7 +240,12 @@ function AppLayout() {
     return <AccessDenied reason="Você não possui permissão para acessar o módulo de Gestão de Projetos." />;
   }
 
-  const showSidebar = !PUBLIC_ROUTES.includes(pathname);
+  // Protect Documents Module
+  if (pathname.startsWith("/documentos") && !isAdmin && !userModules.includes("documentos")) {
+    return <AccessDenied reason="Você não possui permissão para acessar o módulo de Documentos." />;
+  }
+
+  const showSidebar = !NO_SIDEBAR_ROUTES.includes(pathname);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
