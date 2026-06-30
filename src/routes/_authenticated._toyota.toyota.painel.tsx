@@ -147,7 +147,7 @@ function PainelCertificacao() {
     const minha = filialAlvo ? minhasFiliais.has(filialAlvo) : false;
     if (abaId === "loja") return minha;
     if (abaId === "historico") return minha;
-    // Análise Central / Enviados Toyota → somente Admin
+    // Análise Central / Enviados Toyota / Reprovados → somente Admin
     return false;
   };
 
@@ -170,7 +170,8 @@ function PainelCertificacao() {
       loja: filtrar(["pendente_preparacao"], "loja"),
       central: filtrar(["aguardando_analise_central"], "central"),
       toyota: filtrar(["enviado_toyota"], "toyota"),
-      historico: filtrar(["aprovado_toyota", "reprovado_toyota"], "historico"),
+      reprovados: filtrar(["reprovado_toyota"], "reprovados"),
+      historico: filtrar(["aprovado_toyota", "rejeitado"], "historico"),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veiculos, filiais, minhasFiliais, search, isAdmin]);
