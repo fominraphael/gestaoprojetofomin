@@ -15,6 +15,7 @@ import { ShieldAlert, Lock, ArrowLeft } from "lucide-react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/AppSidebar";
+import { VersionWatcher } from "@/components/VersionWatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
@@ -116,6 +117,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <VersionWatcher />
         <AppLayout />
         <Toaster />
       </AuthProvider>
