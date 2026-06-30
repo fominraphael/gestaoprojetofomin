@@ -246,7 +246,7 @@ function AppLayout() {
     return <AccessDenied reason="Você não possui permissão para acessar o módulo de Documentos." />;
   }
 
-  const showSidebar = !NO_SIDEBAR_ROUTES.includes(pathname);
+  const showSidebar = GESTAO_SIDEBAR_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   return (
     <div className="flex min-h-screen w-full bg-background">
