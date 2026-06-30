@@ -365,7 +365,7 @@ export function PortalPage() {
                         >
                           <span className="truncate block font-semibold">{emp.nome}</span>
                           <span className="text-[10px] text-slate-500 block">
-                            CNPJ: {emp.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
+                            CNPJ: {emp.cnpj}
                           </span>
                         </button>
                       );
@@ -382,7 +382,7 @@ export function PortalPage() {
                           {selectedEmpresa.nome}
                         </h3>
                         <p className="text-[10px] text-slate-400 mt-0.5">
-                          CNPJ: {selectedEmpresa.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
+                          CNPJ: {selectedEmpresa.cnpj}
                         </p>
                       </div>
 
