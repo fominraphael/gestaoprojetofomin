@@ -610,7 +610,8 @@ function BiToyotaImporter() {
           .update({
             status_aprovacao: "reprovado_toyota",
             retorno_toyota_em: now,
-            motivo_reprovacao: r.motivoReprovacao || r.observacao || null,
+            motivo_reprovacao: r.motivoReprovacao || null,
+            observacao_toyota: r.observacao || null,
           })
           .eq("chassi", r.chassi)
           .eq("status_aprovacao", "enviado_toyota");

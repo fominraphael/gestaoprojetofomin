@@ -310,6 +310,7 @@ export type Database = {
           marca: string | null
           modelo: string | null
           motivo_reprovacao: string | null
+          observacao_toyota: string | null
           origem: string | null
           placa: string | null
           quilometragem: number | null
@@ -346,6 +347,7 @@ export type Database = {
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
+          observacao_toyota?: string | null
           origem?: string | null
           placa?: string | null
           quilometragem?: number | null
@@ -382,6 +384,7 @@ export type Database = {
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
+          observacao_toyota?: string | null
           origem?: string | null
           placa?: string | null
           quilometragem?: number | null

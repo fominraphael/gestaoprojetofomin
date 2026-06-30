@@ -49,6 +49,8 @@ export const Route = createFileRoute("/_authenticated/_toyota/toyota/painel")({
 type Status =
   | "analise"
   | "pendente_preparacao"
+  | "em_posvendas"
+  | "devolvido_preparador"
   | "aguardando_analise_central"
   | "enviado_toyota"
   | "aprovado_toyota"
@@ -67,9 +69,13 @@ interface Veiculo {
   filial_id: string | null;
   filial_destino_id: string | null;
   motivo_reprovacao: string | null;
+  observacao_toyota: string | null;
   enviado_toyota_em: string | null;
   retorno_toyota_em: string | null;
   aprovado_em: string | null;
+  hsv_observacoes_preparador: string | null;
+  checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  health_check_pdf_path: string | null;
 }
 
 interface Filial {
@@ -78,7 +84,7 @@ interface Filial {
   dealer_number: string | null;
 }
 
-type AbaId = "loja" | "central" | "toyota" | "historico";
+type AbaId = "loja" | "central" | "toyota" | "reprovados" | "historico";
 
 function PainelCertificacao() {
   const { isAdmin, user } = useAuth();
@@ -91,8 +97,14 @@ function PainelCertificacao() {
   const [search, setSearch] = useState("");
   const [aba, setAba] = useState<AbaId>("loja");
 
-  // Modal reprovação / reiniciar
+  // Modais
   const [reiniciar, setReiniciar] = useState<Veiculo | null>(null);
+  const [pendenciar, setPendenciar] = useState<Veiculo | null>(null);
+  const [motivoPendencia, setMotivoPendencia] = useState("");
+  const [confirmarToyota, setConfirmarToyota] = useState<Veiculo | null>(null);
+  const [reenviarReprovado, setReenviarReprovado] = useState<Veiculo | null>(null);
+  const [arquivarVeiculo, setArquivarVeiculo] = useState<Veiculo | null>(null);
+  const [revisar, setRevisar] = useState<Veiculo | null>(null);
 
   const carregar = async () => {
     setLoading(true);
@@ -100,7 +112,7 @@ function PainelCertificacao() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,filial_id,filial_destino_id,motivo_reprovacao,enviado_toyota_em,retorno_toyota_em,aprovado_em",
+          "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,filial_id,filial_destino_id,motivo_reprovacao,observacao_toyota,enviado_toyota_em,retorno_toyota_em,aprovado_em,hsv_observacoes_preparador,checklist_data,health_check_pdf_path",
         )
         .order("updated_at", { ascending: false }),
       supabase.from("toyota_filiais").select("id,nome,dealer_number"),
@@ -135,7 +147,7 @@ function PainelCertificacao() {
     const minha = filialAlvo ? minhasFiliais.has(filialAlvo) : false;
     if (abaId === "loja") return minha;
     if (abaId === "historico") return minha;
-    // Análise Central / Enviados Toyota → somente Admin
+    // Análise Central / Enviados Toyota / Reprovados → somente Admin
     return false;
   };
 
@@ -158,7 +170,8 @@ function PainelCertificacao() {
       loja: filtrar(["pendente_preparacao"], "loja"),
       central: filtrar(["aguardando_analise_central"], "central"),
       toyota: filtrar(["enviado_toyota"], "toyota"),
-      historico: filtrar(["aprovado_toyota", "reprovado_toyota"], "historico"),
+      reprovados: filtrar(["reprovado_toyota"], "reprovados"),
+      historico: filtrar(["aprovado_toyota", "rejeitado"], "historico"),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [veiculos, filiais, minhasFiliais, search, isAdmin]);
@@ -196,19 +209,58 @@ function PainelCertificacao() {
     }
   };
 
-  const registrarRetornoToyota = async (v: Veiculo, aprovado: boolean) => {
-    const motivo = aprovado
-      ? null
-      : window.prompt("Motivo da reprovação pela Toyota:") ?? "";
-    if (!aprovado && !motivo) return;
+  const confirmarSubmeterToyota = async () => {
+    if (!confirmarToyota) return;
+    await submeterToyota(confirmarToyota);
+    setConfirmarToyota(null);
+  };
+
+  const confirmarPendenciar = async () => {
+    if (!pendenciar) return;
+    const motivo = motivoPendencia.trim();
+    if (!motivo) {
+      toast.error("Informe o motivo da pendência.");
+      return;
+    }
     if (
-      await atualizarStatus(v.id, {
-        status_aprovacao: aprovado ? "aprovado_toyota" : "reprovado_toyota",
+      await atualizarStatus(pendenciar.id, {
+        status_aprovacao: "devolvido_preparador",
         motivo_reprovacao: motivo,
-        retorno_toyota_em: new Date().toISOString(),
       })
     ) {
-      toast.success(`Veículo marcado como ${aprovado ? "aprovado" : "reprovado"}`);
+      toast.success("Veículo devolvido ao Preparador com pendência.");
+      setPendenciar(null);
+      setMotivoPendencia("");
+      carregar();
+    }
+  };
+
+  const confirmarReenviarToyota = async () => {
+    if (!reenviarReprovado) return;
+    if (
+      await atualizarStatus(reenviarReprovado.id, {
+        status_aprovacao: "enviado_toyota",
+        retorno_toyota_em: null,
+        motivo_reprovacao: null,
+        observacao_toyota: null,
+        enviado_toyota_em: new Date().toISOString(),
+      })
+    ) {
+      toast.success("Veículo reenviado. Aguarde nova importação da Toyota.");
+      setReenviarReprovado(null);
+      carregar();
+    }
+  };
+
+  const confirmarArquivar = async () => {
+    if (!arquivarVeiculo) return;
+    if (
+      await atualizarStatus(arquivarVeiculo.id, {
+        status_aprovacao: "rejeitado",
+      })
+    ) {
+      toast.success("Veículo arquivado.");
+      setArquivarVeiculo(null);
       carregar();
     }
   };
@@ -252,7 +304,7 @@ function PainelCertificacao() {
       </header>
 
       {/* Funil */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <FunilCard
           label="Fila da Loja"
           count={porAba.loja.length}
@@ -277,6 +329,14 @@ function PainelCertificacao() {
           disabled={!isAdmin}
         />
         <FunilCard
+          label="Revisão Reprovados"
+          count={porAba.reprovados.length}
+          icon={XCircle}
+          active={aba === "reprovados"}
+          onClick={() => setAba("reprovados")}
+          disabled={!isAdmin}
+        />
+        <FunilCard
           label="Histórico"
           count={porAba.historico.length}
           icon={History}
@@ -290,6 +350,7 @@ function PainelCertificacao() {
           <TabsTrigger value="loja">Loja</TabsTrigger>
           <TabsTrigger value="central">Central</TabsTrigger>
           <TabsTrigger value="toyota">Toyota</TabsTrigger>
+          <TabsTrigger value="reprovados">Reprovados</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
@@ -368,7 +429,7 @@ function PainelCertificacao() {
           ) : (
             <SecaoTabela
               titulo="Análise Central — Administrador"
-              descricao="Revise os preenchimentos das lojas antes de submeter à montadora."
+              descricao="Revise o que o Pós-Vendas preencheu/anexou. Pendencie ou submeta à montadora."
               loading={loading}
               vazio="Sem submissões aguardando revisão."
             >
@@ -378,6 +439,7 @@ function PainelCertificacao() {
                   <TableHead>Modelo</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Programa</TableHead>
+                  <TableHead>Anexos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -388,17 +450,34 @@ function PainelCertificacao() {
                     <TableCell>{v.modelo ?? "—"}</TableCell>
                     <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
                     <TableCell><ElegBadge value={v.elegibilidade} /></TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex gap-1.5">
+                        <Badge variant={v.checklist_data?.preenchido_em ? "default" : "outline"}>
+                          Checklist
+                        </Badge>
+                        <Badge variant={v.health_check_pdf_path ? "default" : "outline"}>
+                          Health Check
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="space-x-2 text-right">
+                      <Button size="sm" variant="ghost" onClick={() => setRevisar(v)}>
+                        Revisar
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setReiniciar(v)}
+                        className="text-amber-700"
+                        onClick={() => {
+                          setPendenciar(v);
+                          setMotivoPendencia("");
+                        }}
                       >
-                        Devolver à loja
+                        Pendenciar
                       </Button>
-                      <Button size="sm" onClick={() => submeterToyota(v)}>
+                      <Button size="sm" onClick={() => setConfirmarToyota(v)}>
                         <Send className="mr-1 h-3 w-3" />
-                        Submeter Toyota
+                        Enviado para Toyota
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -415,7 +494,7 @@ function PainelCertificacao() {
           ) : (
             <SecaoTabela
               titulo="Enviados para a Toyota"
-              descricao="Submissões enviadas ao portal da montadora aguardando o prazo de análise."
+              descricao="Submissões aguardando retorno. O status muda automaticamente via importação do BI Toyota."
               loading={loading}
               vazio="Nenhum veículo aguardando retorno da Toyota."
             >
@@ -425,7 +504,7 @@ function PainelCertificacao() {
                   <TableHead>Modelo</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Enviado em</TableHead>
-                  <TableHead className="text-right">Retorno</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -439,24 +518,62 @@ function PainelCertificacao() {
                         ? new Date(v.enviado_toyota_em).toLocaleDateString("pt-BR")
                         : "—"}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline">Aguardando retorno BI</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </SecaoTabela>
+          )}
+        </TabsContent>
+
+        {/* 4. Revisão de Reprovados (Admin) */}
+        <TabsContent value="reprovados">
+          {!isAdmin ? (
+            <SemAcesso />
+          ) : (
+            <SecaoTabela
+              titulo="Revisão de Reprovados pela Toyota"
+              descricao="Decida entre arquivar definitivamente ou reenviar para uma nova rodada de avaliação."
+              loading={loading}
+              vazio="Nenhuma reprovação a revisar."
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Chassi</TableHead>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead>Filial</TableHead>
+                  <TableHead>Motivo de reprovação</TableHead>
+                  <TableHead>Observação</TableHead>
+                  <TableHead className="text-right">Decisão</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porAba.reprovados.map((v) => (
+                  <TableRow key={v.id}>
+                    <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                    <TableCell>{v.modelo ?? "—"}</TableCell>
+                    <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
+                    <TableCell className="max-w-[220px] text-xs text-muted-foreground">
+                      {v.motivo_reprovacao ?? "—"}
+                    </TableCell>
+                    <TableCell className="max-w-[220px] text-xs text-muted-foreground">
+                      {v.observacao_toyota ?? "—"}
+                    </TableCell>
                     <TableCell className="space-x-2 text-right">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-emerald-700"
-                        onClick={() => registrarRetornoToyota(v, true)}
-                      >
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Aprovado
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
                         className="text-red-700"
-                        onClick={() => registrarRetornoToyota(v, false)}
+                        onClick={() => setArquivarVeiculo(v)}
                       >
                         <XCircle className="mr-1 h-3 w-3" />
-                        Reprovado
+                        Arquivar
+                      </Button>
+                      <Button size="sm" onClick={() => setReenviarReprovado(v)}>
+                        <RefreshCw className="mr-1 h-3 w-3" />
+                        Reenviar para Toyota
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -486,15 +603,15 @@ function PainelCertificacao() {
             </TableHeader>
             <TableBody>
               {porAba.historico.map((v) => {
-                const reprovado = v.status_aprovacao === "reprovado_toyota";
+                const arquivado = v.status_aprovacao === "rejeitado";
                 return (
                   <TableRow key={v.id}>
                     <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
                     <TableCell>{v.modelo ?? "—"}</TableCell>
                     <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
                     <TableCell>
-                      {reprovado ? (
-                        <Badge variant="destructive">Reprovado</Badge>
+                      {arquivado ? (
+                        <Badge variant="destructive">Arquivado</Badge>
                       ) : (
                         <Badge className="bg-emerald-100 text-emerald-800">
                           Aprovado
@@ -502,20 +619,9 @@ function PainelCertificacao() {
                       )}
                     </TableCell>
                     <TableCell className="max-w-[260px] truncate text-sm text-muted-foreground">
-                      {reprovado ? v.motivo_reprovacao ?? "—" : "—"}
+                      {arquivado ? v.motivo_reprovacao ?? "—" : "—"}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {reprovado && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setReiniciar(v)}
-                        >
-                          <RefreshCw className="mr-1 h-3 w-3" />
-                          Reiniciar Fluxo
-                        </Button>
-                      )}
-                    </TableCell>
+                    <TableCell className="text-right">—</TableCell>
                   </TableRow>
                 );
               })}
@@ -524,7 +630,193 @@ function PainelCertificacao() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal reiniciar */}
+      {/* Modal Pendenciar */}
+      <Dialog
+        open={!!pendenciar}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendenciar(null);
+            setMotivoPendencia("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pendenciar veículo</DialogTitle>
+            <DialogDescription>
+              O veículo voltará ao <strong>Preparador</strong> com o motivo
+              abaixo, para ser remetido novamente ao Pós-Vendas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>
+              Motivo da Pendência <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              autoFocus
+              value={motivoPendencia}
+              onChange={(e) => setMotivoPendencia(e.target.value)}
+              rows={4}
+              placeholder="Descreva a pendência que o Preparador precisa resolver..."
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendenciar(null);
+                setMotivoPendencia("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmarPendenciar}
+              disabled={!motivoPendencia.trim()}
+            >
+              Pendenciar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Confirmar Envio Toyota */}
+      <Dialog
+        open={!!confirmarToyota}
+        onOpenChange={(o) => !o && setConfirmarToyota(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar envio para a Toyota</DialogTitle>
+            <DialogDescription>
+              O veículo <strong className="font-mono">{confirmarToyota?.chassi}</strong>{" "}
+              será marcado como <strong>Enviado para Toyota</strong> e ficará
+              aguardando o retorno via importação do BI.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmarToyota(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarSubmeterToyota}>
+              <Send className="mr-2 h-4 w-4" />
+              Enviado para Toyota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Reenviar Reprovado */}
+      <Dialog
+        open={!!reenviarReprovado}
+        onOpenChange={(o) => !o && setReenviarReprovado(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reenviar para a Toyota</DialogTitle>
+            <DialogDescription>
+              O retorno atual será limpo e o veículo voltará ao status{" "}
+              <strong>Enviado para Toyota</strong>, aguardando uma nova
+              importação da planilha BI para ser reavaliado.
+            </DialogDescription>
+          </DialogHeader>
+          {reenviarReprovado?.motivo_reprovacao && (
+            <div className="space-y-2">
+              <Label>Motivo de reprovação anterior</Label>
+              <Textarea readOnly rows={3} value={reenviarReprovado.motivo_reprovacao} />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReenviarReprovado(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarReenviarToyota}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reenviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Arquivar */}
+      <Dialog
+        open={!!arquivarVeiculo}
+        onOpenChange={(o) => !o && setArquivarVeiculo(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Arquivar veículo</DialogTitle>
+            <DialogDescription>
+              Esta ação encerra o fluxo de certificação do veículo{" "}
+              <strong className="font-mono">{arquivarVeiculo?.chassi}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArquivarVeiculo(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmarArquivar}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Arquivar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Revisar (detalhes da submissão da oficina) */}
+      <Dialog open={!!revisar} onOpenChange={(o) => !o && setRevisar(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-mono">{revisar?.chassi}</DialogTitle>
+            <DialogDescription>
+              {revisar?.modelo ?? "—"} · {revisar?.placa ?? "—"} ·{" "}
+              {filialNome(revisar?.filial_destino_id ?? revisar?.filial_id ?? null)}
+            </DialogDescription>
+          </DialogHeader>
+          {revisar && (
+            <div className="space-y-3 text-sm">
+              {revisar.hsv_observacoes_preparador && (
+                <div>
+                  <Label className="text-xs">Observações ao Preparador (ADM)</Label>
+                  <p className="rounded-md bg-muted p-2 text-xs">
+                    {revisar.hsv_observacoes_preparador}
+                  </p>
+                </div>
+              )}
+              <div>
+                <Label className="text-xs">Checklist da oficina</Label>
+                <p className="rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
+                  {revisar.checklist_data?.observacoes || "—"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {revisar.checklist_data?.preenchido_em
+                    ? `Preenchido em ${new Date(revisar.checklist_data.preenchido_em).toLocaleString("pt-BR")}`
+                    : "Sem registro"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs">Health Check (PDF)</Label>
+                <p className="text-xs">
+                  {revisar.health_check_pdf_path ? (
+                    <span className="font-mono break-all">
+                      {revisar.health_check_pdf_path}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Não anexado</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevisar(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal reiniciar (legado — devolução simples) */}
       <Dialog open={!!reiniciar} onOpenChange={(o) => !o && setReiniciar(null)}>
         <DialogContent>
           <DialogHeader>
@@ -537,11 +829,7 @@ function PainelCertificacao() {
           {reiniciar?.motivo_reprovacao && (
             <div className="space-y-2">
               <Label>Motivo da reprovação</Label>
-              <Textarea
-                readOnly
-                value={reiniciar.motivo_reprovacao}
-                rows={4}
-              />
+              <Textarea readOnly value={reiniciar.motivo_reprovacao} rows={4} />
             </div>
           )}
           <DialogFooter>
