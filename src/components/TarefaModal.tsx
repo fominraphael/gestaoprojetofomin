@@ -149,9 +149,11 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             : form.categoria === "solicitacao"
               ? null
               : today();
+        if (!user) throw new Error("Sessão expirada. Faça login novamente.");
         const { error } = await supabase.from("tarefas").insert({
           ...basePayload,
           inicio_previsto: inicio,
+          user_id: user.id,
         });
         if (error) throw error;
       }
