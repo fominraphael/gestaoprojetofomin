@@ -85,6 +85,7 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
+      { to: "/toyota/painel", label: "Painel de Certificação", icon: GitBranch },
       { to: "/toyota/estoque/importar", label: "Importar Estoque", icon: Upload },
       { to: "/toyota/elegiveis", label: "Análise de Elegíveis", icon: ShieldCheck },
       { to: "/toyota/validacao", label: "Validação Técnica", icon: ClipboardCheck },
