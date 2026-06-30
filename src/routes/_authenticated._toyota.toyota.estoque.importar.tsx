@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   Upload,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
+  Save,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute(
   "/_authenticated/_toyota/toyota/estoque/importar",
@@ -31,6 +40,15 @@ export const Route = createFileRoute(
   errorComponent: ModuleErrorBoundary,
   component: ImportarEstoque,
 });
+
+interface Filial {
+  id: string;
+  nome: string;
+  dealer_number: string | null;
+  ativo: boolean;
+}
+
+
 
 // ============================================================================
 // Tipos e regras de elegibilidade
@@ -124,8 +142,73 @@ function ImportarEstoque() {
   const [fileName, setFileName] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [filtro, setFiltro] = useState("");
+  const [filiais, setFiliais] = useState<Filial[]>([]);
+  const [filialId, setFilialId] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("toyota_filiais")
+        .select("id, nome, dealer_number, ativo")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) {
+        toast.error("Falha ao carregar filiais.");
+        return;
+      }
+      setFiliais((data ?? []) as Filial[]);
+    })();
+  }, []);
+
+  const salvarEstoque = useCallback(async () => {
+    if (!filialId) {
+      toast.error("Selecione uma filial antes de salvar.");
+      return;
+    }
+    if (rows.length === 0) return;
+    const validRows = rows.filter((r) => r.chassi.trim().length > 0);
+    if (validRows.length === 0) {
+      toast.error("Nenhum veículo com chassi válido para salvar.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
+      const elegMap: Record<string, "TCUV" | "TSIM" | "NAO_ELEGIVEL"> = {
+        "Elegível TCUV": "TCUV",
+        "Elegível TSIM": "TSIM",
+        "Não Elegível": "NAO_ELEGIVEL",
+      };
+      const payload = validRows.map((r) => ({
+        filial_id: filialId,
+        user_id: userId,
+        chassi: r.chassi,
+        placa: r.placa || null,
+        modelo: r.modelo || null,
+        marca: r.marca || null,
+        ano_fabricacao: r.anoFabricacao,
+        ano_modelo: r.anoModelo,
+        quilometragem: r.quilometragem,
+        status_cautelar: r.statusCautelar,
+        elegibilidade: elegMap[r.elegibilidade],
+        dados_originais: { laudo_cautelar_raw: r.laudoCautelarRaw },
+      }));
+      const { error } = await supabase
+        .from("toyota_estoque_veiculos")
+        .upsert(payload, { onConflict: "filial_id,chassi" });
+      if (error) throw error;
+      toast.success(`${payload.length} veículo(s) salvos no estoque.`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar no estoque.");
+    } finally {
+      setSaving(false);
+    }
+  }, [filialId, rows]);
+
 
   const processFile = useCallback(async (file: File) => {
     setLoading(true);
@@ -332,19 +415,43 @@ function ImportarEstoque() {
       {/* Preview */}
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-lg">Pré-visualização</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={filialId} onValueChange={setFilialId}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Selecione a filial..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {filiais.length === 0 ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Nenhuma filial ativa
+                    </div>
+                  ) : (
+                    filiais.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                        {f.dealer_number ? ` (${f.dealer_number})` : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder="Filtrar por chassi, placa, modelo..."
                 value={filtro}
                 onChange={(e) => setFiltro(e.target.value)}
-                className="w-72"
+                className="w-64"
               />
               <Button variant="outline" onClick={exportarCsv}>
                 <Download className="w-4 h-4" />
                 Exportar
               </Button>
+              <Button onClick={salvarEstoque} disabled={saving || !filialId}>
+                <Save className="w-4 h-4" />
+                {saving ? "Salvando..." : "Salvar no estoque"}
+              </Button>
+
             </div>
           </CardHeader>
           <CardContent>
