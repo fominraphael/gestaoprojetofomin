@@ -56,7 +56,7 @@ export async function atualizarEmpresa(
   updates: { cnpj?: string; nome?: string; ativo?: boolean }
 ): Promise<void> {
   const payload: any = { ...updates };
-  if (payload.cnpj) payload.cnpj = String(payload.cnpj).replace(/\D/g, "");
+  if (payload.cnpj !== undefined) payload.cnpj = String(payload.cnpj).trim();
   const { error } = await supabase.from("empresas").update(payload).eq("id", id);
   if (error) {
     if (error.code === "23505") throw new Error("Uma empresa com este CNPJ já está cadastrada.");
