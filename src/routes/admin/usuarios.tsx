@@ -65,14 +65,9 @@ export const Route = createFileRoute("/admin/usuarios")({
   component: AdminUsuariosPage,
 });
 
-function cleanCnpj(val: string) {
-  return val.replace(/\D/g, "");
-}
-
 function formatCnpj(val: string) {
-  const clean = cleanCnpj(val);
-  if (clean.length !== 14) return val;
-  return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  // Display CNPJ as-is (no formatting/validation).
+  return val;
 }
 
 export function AdminUsuariosPage() {
