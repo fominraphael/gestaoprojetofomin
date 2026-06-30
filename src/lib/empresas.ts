@@ -39,10 +39,9 @@ export async function obterEmpresas(): Promise<Empresa[]> {
 }
 
 export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa> {
-  const cleanCnpj = cnpj.replace(/\D/g, "");
   const { data, error } = await supabase
     .from("empresas")
-    .insert([{ cnpj: cleanCnpj, nome }])
+    .insert([{ cnpj: cnpj.trim(), nome }])
     .select("*")
     .single();
   if (error) {
