@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArchiveRestore, Search, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/historico")({
+export const Route = createFileRoute("/_gestao/historico")({
   head: () => ({
     meta: [{ title: "Lixeira — Gestão de Projetos" }],
   }),
