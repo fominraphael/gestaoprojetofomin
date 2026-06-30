@@ -14,6 +14,7 @@ import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistoricoRouteImport } from './routes/historico'
+import { Route as DocumentosRouteImport } from './routes/documentos'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BacklogRouteImport } from './routes/backlog'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +45,11 @@ const HistoricoRoute = HistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentosRoute = DocumentosRouteImport.update({
+  id: '/documentos',
+  path: '/documentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/backlog': typeof BacklogRoute
   '/dashboard': typeof DashboardRoute
+  '/documentos': typeof DocumentosRoute
   '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/backlog': typeof BacklogRoute
   '/dashboard': typeof DashboardRoute
+  '/documentos': typeof DocumentosRoute
   '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/backlog': typeof BacklogRoute
   '/dashboard': typeof DashboardRoute
+  '/documentos': typeof DocumentosRoute
   '/historico': typeof HistoricoRoute
   '/login': typeof LoginRoute
   '/registrar': typeof RegistrarRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backlog'
     | '/dashboard'
+    | '/documentos'
     | '/historico'
     | '/login'
     | '/registrar'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backlog'
     | '/dashboard'
+    | '/documentos'
     | '/historico'
     | '/login'
     | '/registrar'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backlog'
     | '/dashboard'
+    | '/documentos'
     | '/historico'
     | '/login'
     | '/registrar'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BacklogRoute: typeof BacklogRoute
   DashboardRoute: typeof DashboardRoute
+  DocumentosRoute: typeof DocumentosRoute
   HistoricoRoute: typeof HistoricoRoute
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documentos': {
+      id: '/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof DocumentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BacklogRoute: BacklogRoute,
   DashboardRoute: DashboardRoute,
+  DocumentosRoute: DocumentosRoute,
   HistoricoRoute: HistoricoRoute,
   LoginRoute: LoginRoute,
   RegistrarRoute: RegistrarRoute,
