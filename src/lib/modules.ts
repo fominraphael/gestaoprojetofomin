@@ -5,8 +5,11 @@ import {
   Inbox,
   Archive,
   FileText,
+  Car,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
+
 
 export interface ModuleNavItem {
   to: string;
@@ -63,6 +66,20 @@ export const MODULES: ModuleDef[] = [
     requiredModule: "documentos",
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
+  },
+  {
+    id: "toyota",
+    label: "Certificação Toyota",
+    description:
+      "Gestão de filiais, vínculos de usuários e configurações do programa de certificação.",
+    icon: Car,
+    href: "/toyota/configuracoes",
+    requiredModule: "toyota",
+    gradient: "from-slate-500/15 to-slate-700/15",
+    iconBg: "from-slate-500 to-slate-700",
+    navItems: [
+      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
+    ],
   },
 ];
 

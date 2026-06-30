@@ -13,6 +13,7 @@ import { Route as RegistrarRouteImport } from './routes/registrar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedToyotaRouteImport } from './routes/_authenticated._toyota'
 import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated.admin.usuarios'
@@ -22,6 +23,7 @@ import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
+import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
 
 const RegistrarRoute = RegistrarRouteImport.update({
   id: '/registrar',
@@ -40,6 +42,10 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedToyotaRoute = AuthenticatedToyotaRouteImport.update({
+  id: '/_toyota',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
@@ -92,6 +98,12 @@ const AuthenticatedDocumentosDocumentosRoute =
     path: '/documentos',
     getParentRoute: () => AuthenticatedDocumentosRoute,
   } as any)
+const AuthenticatedToyotaToyotaConfiguracoesRoute =
+  AuthenticatedToyotaToyotaConfiguracoesRouteImport.update({
+    id: '/toyota/configuracoes',
+    path: '/toyota/configuracoes',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -104,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -116,6 +129,7 @@ export interface FileRoutesByTo {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +138,7 @@ export interface FileRoutesById {
   '/registrar': typeof RegistrarRoute
   '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/_gestao': typeof AuthenticatedGestaoRouteWithChildren
+  '/_authenticated/_toyota': typeof AuthenticatedToyotaRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/_documentos/documentos': typeof AuthenticatedDocumentosDocumentosRoute
   '/_authenticated/_gestao/backlog': typeof AuthenticatedGestaoBacklogRoute
@@ -132,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,6 +162,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/toyota/configuracoes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -158,6 +175,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/toyota/configuracoes'
   id:
     | '__root__'
     | '/_authenticated'
@@ -165,6 +183,7 @@ export interface FileRouteTypes {
     | '/registrar'
     | '/_authenticated/_documentos'
     | '/_authenticated/_gestao'
+    | '/_authenticated/_toyota'
     | '/_authenticated/'
     | '/_authenticated/_documentos/documentos'
     | '/_authenticated/_gestao/backlog'
@@ -173,6 +192,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/roadmap'
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
+    | '/_authenticated/_toyota/toyota/configuracoes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -209,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_toyota': {
+      id: '/_authenticated/_toyota'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedToyotaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_gestao': {
@@ -274,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
       parentRoute: typeof AuthenticatedDocumentosRoute
     }
+    '/_authenticated/_toyota/toyota/configuracoes': {
+      id: '/_authenticated/_toyota/toyota/configuracoes'
+      path: '/toyota/configuracoes'
+      fullPath: '/toyota/configuracoes'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
   }
 }
 
@@ -311,9 +345,22 @@ const AuthenticatedGestaoRouteChildren: AuthenticatedGestaoRouteChildren = {
 const AuthenticatedGestaoRouteWithChildren =
   AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
+interface AuthenticatedToyotaRouteChildren {
+  AuthenticatedToyotaToyotaConfiguracoesRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRoute
+}
+
+const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
+  AuthenticatedToyotaToyotaConfiguracoesRoute:
+    AuthenticatedToyotaToyotaConfiguracoesRoute,
+}
+
+const AuthenticatedToyotaRouteWithChildren =
+  AuthenticatedToyotaRoute._addFileChildren(AuthenticatedToyotaRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
+  AuthenticatedToyotaRoute: typeof AuthenticatedToyotaRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
 }
@@ -321,6 +368,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
+  AuthenticatedToyotaRoute: AuthenticatedToyotaRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
 }
