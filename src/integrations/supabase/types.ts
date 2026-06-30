@@ -293,14 +293,17 @@ export type Database = {
           created_at: string
           dados_originais: Json | null
           elegibilidade: string | null
+          enviado_toyota_em: string | null
           filial_destino_id: string | null
           filial_id: string
           id: string
           importado_em: string
           marca: string | null
           modelo: string | null
+          motivo_reprovacao: string | null
           placa: string | null
           quilometragem: number | null
+          retorno_toyota_em: string | null
           status_aprovacao: string
           status_cautelar: string | null
           updated_at: string
@@ -315,14 +318,17 @@ export type Database = {
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
+          enviado_toyota_em?: string | null
           filial_destino_id?: string | null
           filial_id: string
           id?: string
           importado_em?: string
           marca?: string | null
           modelo?: string | null
+          motivo_reprovacao?: string | null
           placa?: string | null
           quilometragem?: number | null
+          retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
           updated_at?: string
@@ -337,14 +343,17 @@ export type Database = {
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
+          enviado_toyota_em?: string | null
           filial_destino_id?: string | null
           filial_id?: string
           id?: string
           importado_em?: string
           marca?: string | null
           modelo?: string | null
+          motivo_reprovacao?: string | null
           placa?: string | null
           quilometragem?: number | null
+          retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
           updated_at?: string
