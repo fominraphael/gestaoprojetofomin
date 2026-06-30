@@ -9,7 +9,7 @@ import {
   XCircle,
   RefreshCw,
   Loader2,
-  History,
+  Building2,
   Building2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
