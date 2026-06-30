@@ -47,6 +47,16 @@ const allApps: AppCard[] = [
     gradient: "from-blue-500/20 to-indigo-500/20",
     iconBg: "from-blue-500 to-indigo-600",
   },
+  {
+    id: "documentos",
+    title: "Documentos",
+    description: "Gestão de empresas, tipos de documentos e arquivos anexados por lojista.",
+    icon: FileText,
+    href: "/documentos",
+    status: "active",
+    gradient: "from-emerald-500/20 to-teal-500/20",
+    iconBg: "from-emerald-500 to-teal-600",
+  },
 ];
 
 export function PortalPage() {
