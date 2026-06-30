@@ -135,6 +135,15 @@ export function AdminUsuariosPage() {
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
 
+  // Edit modal states
+  const [editingCompany, setEditingCompany] = useState<Empresa | null>(null);
+  const [editingDocType, setEditingDocType] = useState<DocumentoTipo | null>(null);
+  const [editingUserType, setEditingUserType] = useState<TipoUsuarioConfig | null>(null);
+  const [editFieldName, setEditFieldName] = useState("");
+  const [editFieldLabel, setEditFieldLabel] = useState("");
+  const [editFieldType, setEditFieldType] = useState<"text" | "number" | "boolean">("text");
+  const [editFieldRequired, setEditFieldRequired] = useState(false);
+
   // Load all system data
   const loadAllData = useCallback(async () => {
     setLoadingData(true);
