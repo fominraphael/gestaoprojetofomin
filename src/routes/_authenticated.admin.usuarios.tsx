@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
@@ -61,6 +62,7 @@ import {
 import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
+  errorComponent: ModuleErrorBoundary,
   head: () => ({ meta: [{ title: "Painel Administrativo" }] }),
   component: AdminUsuariosPage,
 });

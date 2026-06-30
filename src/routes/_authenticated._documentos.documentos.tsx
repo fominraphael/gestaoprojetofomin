@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/empresas";
 
 export const Route = createFileRoute("/_authenticated/_documentos/documentos")({
+  errorComponent: ModuleErrorBoundary,
   head: () => ({ meta: [{ title: "Documentos — Portal" }] }),
   component: DocumentosPage,
 });

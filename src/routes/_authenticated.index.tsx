@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import {
@@ -19,6 +20,7 @@ import { obterArquivos, obterDocumentosTipo, obterEmpresas, type DocumentoArquiv
 import JSZip from "jszip";
 
 export const Route = createFileRoute("/_authenticated/")({
+  errorComponent: ModuleErrorBoundary,
   head: () => ({
     meta: [{ title: "Portal — Aplicações" }],
   }),

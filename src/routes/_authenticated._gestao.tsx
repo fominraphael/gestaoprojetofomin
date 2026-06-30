@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleAccessDenied } from "@/components/ModuleAccessDenied";
@@ -7,6 +8,7 @@ import { MODULES, userCanAccess } from "@/lib/modules";
 const gestaoModule = MODULES.find((m) => m.id === "gestao")!;
 
 export const Route = createFileRoute("/_authenticated/_gestao")({
+  errorComponent: ModuleErrorBoundary,
   component: GestaoLayout,
 });
 
