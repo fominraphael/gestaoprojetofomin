@@ -209,19 +209,58 @@ function PainelCertificacao() {
     }
   };
 
-  const registrarRetornoToyota = async (v: Veiculo, aprovado: boolean) => {
-    const motivo = aprovado
-      ? null
-      : window.prompt("Motivo da reprovação pela Toyota:") ?? "";
-    if (!aprovado && !motivo) return;
+  const confirmarSubmeterToyota = async () => {
+    if (!confirmarToyota) return;
+    await submeterToyota(confirmarToyota);
+    setConfirmarToyota(null);
+  };
+
+  const confirmarPendenciar = async () => {
+    if (!pendenciar) return;
+    const motivo = motivoPendencia.trim();
+    if (!motivo) {
+      toast.error("Informe o motivo da pendência.");
+      return;
+    }
     if (
-      await atualizarStatus(v.id, {
-        status_aprovacao: aprovado ? "aprovado_toyota" : "reprovado_toyota",
+      await atualizarStatus(pendenciar.id, {
+        status_aprovacao: "devolvido_preparador",
         motivo_reprovacao: motivo,
-        retorno_toyota_em: new Date().toISOString(),
       })
     ) {
-      toast.success(`Veículo marcado como ${aprovado ? "aprovado" : "reprovado"}`);
+      toast.success("Veículo devolvido ao Preparador com pendência.");
+      setPendenciar(null);
+      setMotivoPendencia("");
+      carregar();
+    }
+  };
+
+  const confirmarReenviarToyota = async () => {
+    if (!reenviarReprovado) return;
+    if (
+      await atualizarStatus(reenviarReprovado.id, {
+        status_aprovacao: "enviado_toyota",
+        retorno_toyota_em: null,
+        motivo_reprovacao: null,
+        observacao_toyota: null,
+        enviado_toyota_em: new Date().toISOString(),
+      })
+    ) {
+      toast.success("Veículo reenviado. Aguarde nova importação da Toyota.");
+      setReenviarReprovado(null);
+      carregar();
+    }
+  };
+
+  const confirmarArquivar = async () => {
+    if (!arquivarVeiculo) return;
+    if (
+      await atualizarStatus(arquivarVeiculo.id, {
+        status_aprovacao: "rejeitado",
+      })
+    ) {
+      toast.success("Veículo arquivado.");
+      setArquivarVeiculo(null);
       carregar();
     }
   };
