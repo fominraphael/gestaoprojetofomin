@@ -24,6 +24,7 @@ import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 import { Route as AuthenticatedToyotaToyotaValidacaoRouteImport } from './routes/_authenticated._toyota.toyota.validacao'
+import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
 import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
 import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
 import { Route as AuthenticatedToyotaToyotaChecklistRouteImport } from './routes/_authenticated._toyota.toyota.checklist'
@@ -108,6 +109,12 @@ const AuthenticatedToyotaToyotaValidacaoRoute =
     path: '/toyota/validacao',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
+const AuthenticatedToyotaToyotaPainelRoute =
+  AuthenticatedToyotaToyotaPainelRouteImport.update({
+    id: '/toyota/painel',
+    path: '/toyota/painel',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
 const AuthenticatedToyotaToyotaElegiveisRoute =
   AuthenticatedToyotaToyotaElegiveisRouteImport.update({
     id: '/toyota/elegiveis',
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
+  '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
+  '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -186,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/_authenticated/_toyota/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
+  '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/_authenticated/_toyota/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/toyota/checklist'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
+    | '/toyota/painel'
     | '/toyota/validacao'
     | '/toyota/estoque/importar'
   fileRoutesByTo: FileRoutesByTo
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/toyota/checklist'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
+    | '/toyota/painel'
     | '/toyota/validacao'
     | '/toyota/estoque/importar'
   id:
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/checklist'
     | '/_authenticated/_toyota/toyota/configuracoes'
     | '/_authenticated/_toyota/toyota/elegiveis'
+    | '/_authenticated/_toyota/toyota/painel'
     | '/_authenticated/_toyota/toyota/validacao'
     | '/_authenticated/_toyota/toyota/estoque/importar'
   fileRoutesById: FileRoutesById
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToyotaToyotaValidacaoRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
+    '/_authenticated/_toyota/toyota/painel': {
+      id: '/_authenticated/_toyota/toyota/painel'
+      path: '/toyota/painel'
+      fullPath: '/toyota/painel'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
     '/_authenticated/_toyota/toyota/elegiveis': {
       id: '/_authenticated/_toyota/toyota/elegiveis'
       path: '/toyota/elegiveis'
@@ -429,6 +449,7 @@ interface AuthenticatedToyotaRouteChildren {
   AuthenticatedToyotaToyotaChecklistRoute: typeof AuthenticatedToyotaToyotaChecklistRoute
   AuthenticatedToyotaToyotaConfiguracoesRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   AuthenticatedToyotaToyotaElegiveisRoute: typeof AuthenticatedToyotaToyotaElegiveisRoute
+  AuthenticatedToyotaToyotaPainelRoute: typeof AuthenticatedToyotaToyotaPainelRoute
   AuthenticatedToyotaToyotaValidacaoRoute: typeof AuthenticatedToyotaToyotaValidacaoRoute
   AuthenticatedToyotaToyotaEstoqueImportarRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -440,6 +461,7 @@ const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
     AuthenticatedToyotaToyotaConfiguracoesRoute,
   AuthenticatedToyotaToyotaElegiveisRoute:
     AuthenticatedToyotaToyotaElegiveisRoute,
+  AuthenticatedToyotaToyotaPainelRoute: AuthenticatedToyotaToyotaPainelRoute,
   AuthenticatedToyotaToyotaValidacaoRoute:
     AuthenticatedToyotaToyotaValidacaoRoute,
   AuthenticatedToyotaToyotaEstoqueImportarRoute:

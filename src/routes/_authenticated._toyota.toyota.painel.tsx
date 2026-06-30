@@ -163,7 +163,10 @@ function PainelCertificacao() {
   }, [veiculos, filiais, minhasFiliais, search, isAdmin]);
 
   /** Ações */
-  const atualizarStatus = async (id: string, patch: Partial<Veiculo>) => {
+  const atualizarStatus = async (
+    id: string,
+    patch: Record<string, unknown>,
+  ) => {
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update(patch)
