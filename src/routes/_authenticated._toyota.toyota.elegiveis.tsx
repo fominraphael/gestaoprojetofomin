@@ -95,7 +95,9 @@ function AnaliseElegiveis() {
     );
   }
 
+  async function carregar() {
     setLoading(true);
+
     const [vRes, fRes] = await Promise.all([
       supabase
         .from("toyota_estoque_veiculos")
