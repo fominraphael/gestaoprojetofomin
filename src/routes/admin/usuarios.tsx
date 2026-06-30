@@ -768,7 +768,7 @@ export function AdminUsuariosPage() {
   if (loading || !isAdmin) {
     return (
       <div className="min-h-screen bg-card flex items-center justify-center">
-        <span className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -788,7 +788,7 @@ export function AdminUsuariosPage() {
             </Link>
             <span className="text-muted-foreground">/</span>
             <span className="text-foreground text-sm font-semibold flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-indigo-400" />
+              <Briefcase className="w-4 h-4 text-muted-foreground" />
               Painel Administrativo
             </span>
           </div>
@@ -827,7 +827,7 @@ export function AdminUsuariosPage() {
             onClick={() => setActiveTab("users")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "users"
-                ? "text-blue-400 border-blue-400"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
@@ -838,7 +838,7 @@ export function AdminUsuariosPage() {
             onClick={() => setActiveTab("companies")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "companies"
-                ? "text-blue-400 border-blue-400"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
@@ -849,7 +849,7 @@ export function AdminUsuariosPage() {
             onClick={() => setActiveTab("doctypes")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "doctypes"
-                ? "text-blue-400 border-blue-400"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
@@ -860,7 +860,7 @@ export function AdminUsuariosPage() {
             onClick={() => setActiveTab("usertypes")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "usertypes"
-                ? "text-blue-400 border-blue-400"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
@@ -916,7 +916,7 @@ export function AdminUsuariosPage() {
                       placeholder="Identificador do usuário para login"
                       value={newUser.username}
                       onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
                   <div>
@@ -927,7 +927,7 @@ export function AdminUsuariosPage() {
                       placeholder="Defina a senha inicial"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
                   <div>
@@ -943,7 +943,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     >
                       {userTypes.map((t) => {
                         // Security check: only users with pode_criar_admin (or root) can choose admin user types
@@ -977,7 +977,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -995,7 +995,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           />
                         )}
                       </div>
@@ -1017,7 +1017,7 @@ export function AdminUsuariosPage() {
                             className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {newUser.pode_criar_admin ? (
-                              <ToggleRight className="w-8 h-5 text-blue-500" />
+                              <ToggleRight className="w-8 h-5 text-primary" />
                             ) : (
                               <ToggleLeft className="w-8 h-5 text-muted-foreground" />
                             )}
@@ -1038,7 +1038,7 @@ export function AdminUsuariosPage() {
                             type="checkbox"
                             checked={newUser.modulos.includes(mod)}
                             onChange={() => toggleModuleInNewUser(mod)}
-                            className="rounded border-border bg-background text-blue-500 focus:ring-0 w-4 h-4"
+                            className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
                           />
                           {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
@@ -1098,7 +1098,7 @@ export function AdminUsuariosPage() {
                       placeholder="Preencha apenas para alterar"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
                   <div>
@@ -1115,7 +1115,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     >
                       {userTypes.map((t) => {
                         const isRoot = currentUser?.username === "root";
@@ -1149,7 +1149,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -1167,7 +1167,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           />
                         )}
                       </div>
@@ -1183,7 +1183,7 @@ export function AdminUsuariosPage() {
                           name="edit-status"
                           checked={showEditUser.status === "approved"}
                           onChange={() => setShowEditUser({ ...showEditUser, status: "approved" })}
-                          className="text-blue-500 focus:ring-0"
+                          className="text-primary focus:ring-0"
                         />
                         Aprovado
                       </label>
@@ -1193,7 +1193,7 @@ export function AdminUsuariosPage() {
                           name="edit-status"
                           checked={showEditUser.status === "pending"}
                           onChange={() => setShowEditUser({ ...showEditUser, status: "pending" })}
-                          className="text-blue-500 focus:ring-0"
+                          className="text-primary focus:ring-0"
                         />
                         Pendente
                       </label>
@@ -1203,7 +1203,7 @@ export function AdminUsuariosPage() {
                           name="edit-status"
                           checked={showEditUser.status === "rejected"}
                           onChange={() => setShowEditUser({ ...showEditUser, status: "rejected" })}
-                          className="text-blue-500 focus:ring-0"
+                          className="text-primary focus:ring-0"
                         />
                         Rejeitado
                       </label>
@@ -1218,7 +1218,7 @@ export function AdminUsuariosPage() {
                       className="flex items-center gap-2 text-sm text-foreground hover:text-foreground mt-2 transition-all"
                     >
                       {showEditUser.active ? (
-                        <ToggleRight className="w-9 h-6 text-blue-500" />
+                        <ToggleRight className="w-9 h-6 text-primary" />
                       ) : (
                         <ToggleLeft className="w-9 h-6 text-muted-foreground" />
                       )}
@@ -1241,7 +1241,7 @@ export function AdminUsuariosPage() {
                             className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {showEditUser.pode_criar_admin ? (
-                              <ToggleRight className="w-8 h-5 text-blue-500" />
+                              <ToggleRight className="w-8 h-5 text-primary" />
                             ) : (
                               <ToggleLeft className="w-8 h-5 text-muted-foreground" />
                             )}
@@ -1262,7 +1262,7 @@ export function AdminUsuariosPage() {
                             type="checkbox"
                             checked={(showEditUser.modulos || []).includes(mod)}
                             onChange={() => toggleModuleInEditUser(mod)}
-                            className="rounded border-border bg-background text-blue-500 focus:ring-0 w-4 h-4"
+                            className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
                           />
                           {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
@@ -1282,7 +1282,7 @@ export function AdminUsuariosPage() {
                       type="button"
                       onClick={() => handleUpdateUser(showEditUser)}
                       disabled={actionLoading === showEditUser.id}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all shadow-md shadow-primary/10"
                     >
                       {actionLoading === showEditUser.id ? "Salvando..." : "Salvar Alterações"}
                     </button>
@@ -1299,7 +1299,7 @@ export function AdminUsuariosPage() {
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 placeholder="Buscar por login, tipo, CNPJ..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
               />
             </div>
 
@@ -1340,7 +1340,7 @@ export function AdminUsuariosPage() {
                           <div className="text-foreground font-medium flex items-center gap-2">
                             {u.username}
                             {u.pode_criar_admin && (
-                              <span className="text-[9px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.2 rounded-full font-semibold">
+                              <span className="text-[9px] bg-primary/20 text-muted-foreground border border-border/30 px-1.5 py-0.2 rounded-full font-semibold">
                                 Criador de Admin
                               </span>
                             )}
@@ -1457,7 +1457,7 @@ export function AdminUsuariosPage() {
                     setSelectedUserTypeImportId(e.target.value);
                     setImportRows([]); // reset preview when type changes
                   }}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs font-semibold"
                 >
                   {userTypes.map((t) => (
                     <option key={t.id} value={t.nome}>
@@ -1467,7 +1467,7 @@ export function AdminUsuariosPage() {
                 </select>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mx-auto border border-indigo-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-muted-foreground mx-auto border border-border/20">
                 <Upload className="w-6 h-6" />
               </div>
               
@@ -1480,7 +1480,7 @@ export function AdminUsuariosPage() {
                 const optFields = selectedType ? selectedType.campos_schema.filter(f => !f.obrigatorio).map(f => f.label) : [];
                 return (
                   <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
-                    A planilha para importar <strong className="text-blue-400 font-semibold">{selectedUserTypeImportId}</strong> deve conter as colunas:{" "}
+                    A planilha para importar <strong className="text-foreground font-semibold">{selectedUserTypeImportId}</strong> deve conter as colunas:{" "}
                     <strong className="text-foreground">Login de acesso</strong> e <strong className="text-foreground">Senha</strong>.
                     {reqFields.length > 0 && (
                       <>
@@ -1498,7 +1498,7 @@ export function AdminUsuariosPage() {
               })()}
 
               <div className="flex flex-col items-center gap-4 pt-2">
-                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
+                <label className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-muted/20">
                   <Plus className="w-4 h-4 inline-block mr-2" />
                   Procurar Planilha
                   <input
@@ -1512,7 +1512,7 @@ export function AdminUsuariosPage() {
 
               {/* Import instructions preview */}
               <div className="mt-8 pt-6 border-t border-border text-left">
-                <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-3">Exemplo de Estrutura da Planilha:</h4>
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Exemplo de Estrutura da Planilha:</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-[10px] text-muted-foreground border border-border rounded-lg">
                     <thead>
@@ -1621,7 +1621,7 @@ export function AdminUsuariosPage() {
                 <h2 className="text-xl font-semibold text-foreground">Empresas</h2>
                 <button
                   onClick={() => setShowCreateCompany(true)}
-                  className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-blue-400 border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
+                  className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" /> Adicionar
                 </button>
@@ -1644,7 +1644,7 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.nome}
                         onChange={(e) => setNewCompany({ ...newCompany, nome: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -1654,7 +1654,7 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.cnpj}
                         onChange={(e) => setNewCompany({ ...newCompany, cnpj: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
@@ -1667,7 +1667,7 @@ export function AdminUsuariosPage() {
                       </button>
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-md bg-blue-500 hover:bg-blue-600 text-foreground"
+                        className="px-3 py-1 text-xs rounded-md bg-primary hover:bg-primary text-foreground"
                       >
                         Cadastrar
                       </button>
@@ -1684,7 +1684,7 @@ export function AdminUsuariosPage() {
                     onClick={() => setSelectedCompanyId(c.id)}
                     className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
                       selectedCompanyId === c.id
-                        ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5 text-foreground"
+                        ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/5 text-foreground"
                         : "bg-card border-border hover:bg-accent text-foreground"
                     }`}
                   >
@@ -1701,7 +1701,7 @@ export function AdminUsuariosPage() {
                           e.stopPropagation();
                           handleEditCompany(c);
                         }}
-                        className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
                         title="Editar empresa"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -1743,7 +1743,7 @@ export function AdminUsuariosPage() {
                             CNPJ: {company ? formatCnpj(company.cnpj) : ""}
                           </p>
                         </div>
-                        <span className="text-xs bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 px-3 py-1 rounded-full font-medium">
+                        <span className="text-xs bg-primary/10 border border-border/30 text-muted-foreground px-3 py-1 rounded-full font-medium">
                           {companyFiles.length} Documentos Anexados
                         </span>
                       </div>
@@ -1751,7 +1751,7 @@ export function AdminUsuariosPage() {
                       {/* Upload Box */}
                       <div className="bg-muted/60 border border-border rounded-xl p-4 space-y-4">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                          <Upload className="w-4 h-4 text-blue-400" />
+                          <Upload className="w-4 h-4 text-foreground" />
                           Anexar Novo Arquivo
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1810,7 +1810,7 @@ export function AdminUsuariosPage() {
                                 className="flex items-center justify-between p-3.5 rounded-xl bg-background/40 border border-border hover:border-border transition-all flex-wrap sm:flex-nowrap gap-3"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-foreground shrink-0">
                                     <FileText className="w-4 h-4" />
                                   </div>
                                   <div className="min-w-0">
@@ -1876,7 +1876,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateDocType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Tipo
               </button>
@@ -1900,7 +1900,7 @@ export function AdminUsuariosPage() {
                       placeholder="Ex: CERTIDÃO NEGATIVA SIMPLIFICADA"
                       value={newDocType.nome}
                       onChange={(e) => setNewDocType({ ...newDocType, nome: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -1910,7 +1910,7 @@ export function AdminUsuariosPage() {
                       value={newDocType.descricao}
                       onChange={(e) => setNewDocType({ ...newDocType, descricao: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
                   <div className="flex justify-end gap-3 mt-4">
@@ -1923,7 +1923,7 @@ export function AdminUsuariosPage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all"
                     >
                       Criar Tipo
                     </button>
@@ -1941,13 +1941,13 @@ export function AdminUsuariosPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      <div className="text-xs bg-primary/15 text-muted-foreground border border-border/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                         Documento
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEditDocType(t)}
-                          className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
+                          className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
                           title="Editar tipo"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -1986,7 +1986,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateUserType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Perfil
               </button>
@@ -2012,7 +2012,7 @@ export function AdminUsuariosPage() {
                         placeholder="Ex: Fornecedor, ADM de loja"
                         value={newUserType.nome}
                         onChange={(e) => setNewUserType({ ...newUserType, nome: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                       />
                     </div>
                     <div>
@@ -2020,7 +2020,7 @@ export function AdminUsuariosPage() {
                       <select
                         value={newUserType.role}
                         onChange={(e) => setNewUserType({ ...newUserType, role: e.target.value as "admin" | "user" })}
-                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                       >
                         <option value="user">Usuário Comum (Lojistas, etc.)</option>
                         <option value="admin">Administrador (Gestão Geral)</option>
@@ -2030,7 +2030,7 @@ export function AdminUsuariosPage() {
 
                   {/* Fields Creator Section */}
                   <div className="border-t border-border pt-4">
-                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
                     
                     <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2041,7 +2041,7 @@ export function AdminUsuariosPage() {
                             placeholder="Ex: razao_social, cnpj"
                             value={newFieldName}
                             onChange={(e) => setNewFieldName(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs"
                           />
                         </div>
                         <div>
@@ -2051,7 +2051,7 @@ export function AdminUsuariosPage() {
                             placeholder="Ex: Razão Social, CNPJ"
                             value={newFieldLabel}
                             onChange={(e) => setNewFieldLabel(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs"
                           />
                         </div>
                         <div>
@@ -2059,7 +2059,7 @@ export function AdminUsuariosPage() {
                           <select
                             value={newFieldType}
                             onChange={(e) => setNewFieldType(e.target.value as any)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs"
                           >
                             <option value="text">Texto</option>
                             <option value="number">Número</option>
@@ -2074,7 +2074,7 @@ export function AdminUsuariosPage() {
                             type="checkbox"
                             checked={newFieldRequired}
                             onChange={(e) => setNewFieldRequired(e.target.checked)}
-                            className="rounded border-border bg-card text-blue-500 focus:ring-0 w-3.5 h-3.5"
+                            className="rounded border-border bg-card text-primary focus:ring-0 w-3.5 h-3.5"
                           />
                           Este campo é obrigatório no cadastro
                         </label>
@@ -2125,7 +2125,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="submit"
                       disabled={actionLoading === "create-usertype"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all"
                     >
                       {actionLoading === "create-usertype" ? "Salvando..." : "Salvar Perfil"}
                     </button>
@@ -2146,14 +2146,14 @@ export function AdminUsuariosPage() {
                       <div className={`text-[10px] border px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                         t.role === "admin"
                           ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
-                          : "bg-indigo-500/15 text-indigo-400 border-indigo-500/20"
+                          : "bg-primary/15 text-muted-foreground border-border/20"
                       }`}>
                         {t.role === "admin" ? "Administrador" : "Usuário Comum"}
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEditUserType(t)}
-                          className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
+                          className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
                           title="Editar perfil"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -2223,7 +2223,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingCompany.nome}
                   onChange={(e) => setEditingCompany({ ...editingCompany, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
               <div>
@@ -2233,7 +2233,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingCompany.cnpj}
                   onChange={(e) => setEditingCompany({ ...editingCompany, cnpj: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -2241,13 +2241,13 @@ export function AdminUsuariosPage() {
                   type="checkbox"
                   checked={editingCompany.ativo ?? true}
                   onChange={(e) => setEditingCompany({ ...editingCompany, ativo: e.target.checked })}
-                  className="rounded border-border bg-card text-blue-500"
+                  className="rounded border-border bg-card text-primary"
                 />
                 Empresa ativa
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2272,7 +2272,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingDocType.nome}
                   onChange={(e) => setEditingDocType({ ...editingDocType, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
               <div>
@@ -2281,7 +2281,7 @@ export function AdminUsuariosPage() {
                   rows={3}
                   value={editingDocType.descricao ?? ""}
                   onChange={(e) => setEditingDocType({ ...editingDocType, descricao: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -2289,13 +2289,13 @@ export function AdminUsuariosPage() {
                   type="checkbox"
                   checked={editingDocType.ativo ?? true}
                   onChange={(e) => setEditingDocType({ ...editingDocType, ativo: e.target.checked })}
-                  className="rounded border-border bg-card text-blue-500"
+                  className="rounded border-border bg-card text-primary"
                 />
                 Tipo ativo
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2321,7 +2321,7 @@ export function AdminUsuariosPage() {
                     required
                     value={editingUserType.nome}
                     onChange={(e) => setEditingUserType({ ...editingUserType, nome: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                   />
                 </div>
                 <div>
@@ -2329,7 +2329,7 @@ export function AdminUsuariosPage() {
                   <select
                     value={editingUserType.role}
                     onChange={(e) => setEditingUserType({ ...editingUserType, role: e.target.value as "admin" | "user" })}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                   >
                     <option value="user">Usuário Comum</option>
                     <option value="admin">Administrador</option>
@@ -2342,13 +2342,13 @@ export function AdminUsuariosPage() {
                   type="checkbox"
                   checked={editingUserType.ativo ?? true}
                   onChange={(e) => setEditingUserType({ ...editingUserType, ativo: e.target.checked })}
-                  className="rounded border-border bg-card text-blue-500"
+                  className="rounded border-border bg-card text-primary"
                 />
                 Perfil ativo
               </label>
 
               <div className="border-t border-border pt-4">
-                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campos Personalizados</h4>
 
                 <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2382,7 +2382,7 @@ export function AdminUsuariosPage() {
                         type="checkbox"
                         checked={editFieldRequired}
                         onChange={(e) => setEditFieldRequired(e.target.checked)}
-                        className="rounded border-border bg-card text-blue-500 w-3.5 h-3.5"
+                        className="rounded border-border bg-card text-primary w-3.5 h-3.5"
                       />
                       Obrigatório
                     </label>
@@ -2415,7 +2415,7 @@ export function AdminUsuariosPage() {
 
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
                 </button>
               </div>

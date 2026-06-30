@@ -44,8 +44,8 @@ const allApps: AppCard[] = [
     icon: LayoutDashboard,
     href: "/dashboard",
     status: "active",
-    gradient: "from-blue-500/20 to-indigo-500/20",
-    iconBg: "from-blue-500 to-indigo-600",
+    gradient: "from-slate-700/20 to-slate-900/20",
+    iconBg: "from-slate-700 to-slate-900",
   },
   {
     id: "documentos",
@@ -54,8 +54,8 @@ const allApps: AppCard[] = [
     icon: FileText,
     href: "/documentos",
     status: "active",
-    gradient: "from-blue-500/20 to-indigo-500/20",
-    iconBg: "from-blue-500 to-indigo-600",
+    gradient: "from-slate-700/20 to-slate-900/20",
+    iconBg: "from-slate-700 to-slate-900",
   },
 ];
 
@@ -179,7 +179,7 @@ export function PortalPage() {
   if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-card flex items-center justify-center">
-        <span className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <span className="w-8 h-8 border-2 border-primary/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -199,15 +199,15 @@ export function PortalPage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
       <header className="relative border-b border-border bg-card backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 shadow-md shadow-primary/20">
               <Layers className="w-5 h-5 text-foreground" />
             </div>
             <div>
@@ -225,13 +225,13 @@ export function PortalPage() {
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-foreground hover:text-foreground hover:bg-accent text-sm transition-all border border-transparent hover:border-border"
                 title="Acessar Painel Admin"
               >
-                <Users className="w-4 h-4 text-indigo-400" />
+                <Users className="w-4 h-4 text-muted-foreground" />
                 <span className="hidden sm:inline">Painel Admin</span>
               </Link>
             )}
 
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
                 {user?.username?.[0]?.toUpperCase()}
               </div>
               <span className="text-sm text-foreground hidden sm:inline">{user?.username}</span>
@@ -260,7 +260,7 @@ export function PortalPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             Bem-vindo,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-700 via-indigo-400 to-purple-400">
               {user?.username}
             </span>
           </h1>
@@ -280,7 +280,7 @@ export function PortalPage() {
                 key={app.id}
                 className={`group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden ${
                   isActive
-                    ? "border-border hover:border-blue-500/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
+                    ? "border-border hover:border-primary/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
                     : "border-border opacity-60 cursor-not-allowed"
                 }`}
               >
@@ -305,7 +305,7 @@ export function PortalPage() {
                     <Link
                       to={app.href as any}
                       id={`btn-app-${app.id}`}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-300 group-hover:gap-2.5 transition-all"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground group-hover:gap-2.5 transition-all"
                     >
                       Acessar Módulo
                       <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
