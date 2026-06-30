@@ -89,7 +89,7 @@ export function AppSidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const active =
             item.to === "/dashboard"
               ? pathname === "/dashboard"
