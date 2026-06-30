@@ -1165,6 +1165,18 @@ export function AdminUsuariosPage() {
               </div>
             )}
 
+            {/* Search Bar */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Buscar por login, tipo, CNPJ..."
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              />
+            </div>
+
             {/* Users Table */}
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm shadow-xl">
               <table className="w-full text-sm text-left">
@@ -1178,7 +1190,19 @@ export function AdminUsuariosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map((u, i) => (
+                  {usuarios
+                    .filter((u) => {
+                      if (!userSearch.trim()) return true;
+                      const q = userSearch.toLowerCase();
+                      return (
+                        u.username?.toLowerCase().includes(q) ||
+                        u.tipo_usuario?.toLowerCase().includes(q) ||
+                        u.cnpj?.toLowerCase().includes(q) ||
+                        u.status?.toLowerCase().includes(q) ||
+                        JSON.stringify(u.campos_customizados || {}).toLowerCase().includes(q)
+                      );
+                    })
+                    .map((u, i) => (
                     <tr
                       key={u.id}
                       className={`border-b border-slate-800/40 hover:bg-slate-800/20 transition-all ${
