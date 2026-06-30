@@ -142,8 +142,73 @@ function ImportarEstoque() {
   const [fileName, setFileName] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [filtro, setFiltro] = useState("");
+  const [filiais, setFiliais] = useState<Filial[]>([]);
+  const [filialId, setFilialId] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("toyota_filiais")
+        .select("id, nome, dealer_number, ativo")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) {
+        toast.error("Falha ao carregar filiais.");
+        return;
+      }
+      setFiliais((data ?? []) as Filial[]);
+    })();
+  }, []);
+
+  const salvarEstoque = useCallback(async () => {
+    if (!filialId) {
+      toast.error("Selecione uma filial antes de salvar.");
+      return;
+    }
+    if (rows.length === 0) return;
+    const validRows = rows.filter((r) => r.chassi.trim().length > 0);
+    if (validRows.length === 0) {
+      toast.error("Nenhum veículo com chassi válido para salvar.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
+      const elegMap: Record<string, "TCUV" | "TSIM" | "NAO_ELEGIVEL"> = {
+        "Elegível TCUV": "TCUV",
+        "Elegível TSIM": "TSIM",
+        "Não Elegível": "NAO_ELEGIVEL",
+      };
+      const payload = validRows.map((r) => ({
+        filial_id: filialId,
+        user_id: userId,
+        chassi: r.chassi,
+        placa: r.placa || null,
+        modelo: r.modelo || null,
+        marca: r.marca || null,
+        ano_fabricacao: r.anoFabricacao,
+        ano_modelo: r.anoModelo,
+        quilometragem: r.quilometragem,
+        status_cautelar: r.statusCautelar,
+        elegibilidade: elegMap[r.elegibilidade],
+        dados_originais: { laudo_cautelar_raw: r.laudoCautelarRaw },
+      }));
+      const { error } = await supabase
+        .from("toyota_estoque_veiculos")
+        .upsert(payload, { onConflict: "filial_id,chassi" });
+      if (error) throw error;
+      toast.success(`${payload.length} veículo(s) salvos no estoque.`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar no estoque.");
+    } finally {
+      setSaving(false);
+    }
+  }, [filialId, rows]);
+
 
   const processFile = useCallback(async (file: File) => {
     setLoading(true);
