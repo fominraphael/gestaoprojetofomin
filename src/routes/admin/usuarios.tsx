@@ -424,6 +424,77 @@ export function AdminUsuariosPage() {
     }
   };
 
+  const handleEditCompany = async (c: Empresa) => {
+    const nome = window.prompt("Nome da empresa:", c.nome);
+    if (nome === null) return;
+    const cnpj = window.prompt("CNPJ (apenas números):", c.cnpj);
+    if (cnpj === null) return;
+    setActionLoading(c.id);
+    try {
+      await atualizarEmpresa(c.id, { nome: nome.trim(), cnpj: cnpj.trim() });
+      showToast("success", "Empresa atualizada.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar empresa.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEditDocType = async (t: DocumentoTipo) => {
+    const nome = window.prompt("Nome do tipo:", t.nome);
+    if (nome === null) return;
+    const descricao = window.prompt("Descrição:", t.descricao ?? "");
+    if (descricao === null) return;
+    setActionLoading(t.id);
+    try {
+      await atualizarDocumentoTipo(t.id, { nome: nome.trim(), descricao: descricao.trim() });
+      showToast("success", "Tipo de documento atualizado.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar tipo de documento.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEditUserType = async (t: TipoUsuarioConfig) => {
+    const nome = window.prompt("Nome do perfil:", t.nome);
+    if (nome === null) return;
+    setActionLoading(t.id);
+    try {
+      await atualizarTipoUsuarioConfig(t.id, { nome: nome.trim() });
+      showToast("success", "Perfil atualizado.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar perfil.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleUserTypeAtivo = async (t: TipoUsuarioConfig) => {
+    setActionLoading(t.id);
+    try {
+      await atualizarTipoUsuarioConfig(t.id, { ativo: !(t.ativo ?? true) });
+      showToast("success", `Perfil ${t.ativo === false ? "ativado" : "inativado"}.`);
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao alterar status do perfil.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+      showToast("success", "Tipo de documento excluído.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao excluir tipo de documento.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // File Upload Actions
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
