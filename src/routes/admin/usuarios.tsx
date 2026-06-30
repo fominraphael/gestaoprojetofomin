@@ -1650,7 +1650,7 @@ export function AdminUsuariosPage() {
                     <div>
                       <input
                         type="text"
-                        placeholder="CNPJ (14 dígitos)"
+                        placeholder="CNPJ"
                         required
                         value={newCompany.cnpj}
                         onChange={(e) => setNewCompany({ ...newCompany, cnpj: e.target.value })}
