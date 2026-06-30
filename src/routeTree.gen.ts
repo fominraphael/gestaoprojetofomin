@@ -23,6 +23,7 @@ import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
+import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
 import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
 import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
 
@@ -99,6 +100,12 @@ const AuthenticatedDocumentosDocumentosRoute =
     path: '/documentos',
     getParentRoute: () => AuthenticatedDocumentosRoute,
   } as any)
+const AuthenticatedToyotaToyotaElegiveisRoute =
+  AuthenticatedToyotaToyotaElegiveisRouteImport.update({
+    id: '/toyota/elegiveis',
+    path: '/toyota/elegiveis',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
 const AuthenticatedToyotaToyotaConfiguracoesRoute =
   AuthenticatedToyotaToyotaConfiguracoesRouteImport.update({
     id: '/toyota/configuracoes',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
+  '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesByTo {
@@ -138,6 +146,7 @@ export interface FileRoutesByTo {
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
+  '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesById {
@@ -157,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
+  '/_authenticated/_toyota/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRouteTypes {
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/admin/usuarios'
     | '/toyota/configuracoes'
+    | '/toyota/elegiveis'
     | '/toyota/estoque/importar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/solicitacoes'
     | '/admin/usuarios'
     | '/toyota/configuracoes'
+    | '/toyota/elegiveis'
     | '/toyota/estoque/importar'
   id:
     | '__root__'
@@ -205,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/_toyota/toyota/configuracoes'
+    | '/_authenticated/_toyota/toyota/elegiveis'
     | '/_authenticated/_toyota/toyota/estoque/importar'
   fileRoutesById: FileRoutesById
 }
@@ -314,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
       parentRoute: typeof AuthenticatedDocumentosRoute
     }
+    '/_authenticated/_toyota/toyota/elegiveis': {
+      id: '/_authenticated/_toyota/toyota/elegiveis'
+      path: '/toyota/elegiveis'
+      fullPath: '/toyota/elegiveis'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaElegiveisRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
     '/_authenticated/_toyota/toyota/configuracoes': {
       id: '/_authenticated/_toyota/toyota/configuracoes'
       path: '/toyota/configuracoes'
@@ -367,12 +387,15 @@ const AuthenticatedGestaoRouteWithChildren =
 
 interface AuthenticatedToyotaRouteChildren {
   AuthenticatedToyotaToyotaConfiguracoesRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRoute
+  AuthenticatedToyotaToyotaElegiveisRoute: typeof AuthenticatedToyotaToyotaElegiveisRoute
   AuthenticatedToyotaToyotaEstoqueImportarRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 
 const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
   AuthenticatedToyotaToyotaConfiguracoesRoute:
     AuthenticatedToyotaToyotaConfiguracoesRoute,
+  AuthenticatedToyotaToyotaElegiveisRoute:
+    AuthenticatedToyotaToyotaElegiveisRoute,
   AuthenticatedToyotaToyotaEstoqueImportarRoute:
     AuthenticatedToyotaToyotaEstoqueImportarRoute,
 }
