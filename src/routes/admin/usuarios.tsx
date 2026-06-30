@@ -1876,7 +1876,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateDocType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Tipo
               </button>
@@ -1986,7 +1986,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateUserType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-700 hover:to-slate-900 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Perfil
               </button>
