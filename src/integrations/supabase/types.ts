@@ -287,10 +287,13 @@ export type Database = {
         Row: {
           ano_fabricacao: number | null
           ano_modelo: number | null
+          aprovado_em: string | null
+          aprovado_por: string | null
           chassi: string
           created_at: string
           dados_originais: Json | null
           elegibilidade: string | null
+          filial_destino_id: string | null
           filial_id: string
           id: string
           importado_em: string
@@ -298,6 +301,7 @@ export type Database = {
           modelo: string | null
           placa: string | null
           quilometragem: number | null
+          status_aprovacao: string
           status_cautelar: string | null
           updated_at: string
           user_id: string | null
@@ -305,10 +309,13 @@ export type Database = {
         Insert: {
           ano_fabricacao?: number | null
           ano_modelo?: number | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           chassi: string
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
+          filial_destino_id?: string | null
           filial_id: string
           id?: string
           importado_em?: string
@@ -316,6 +323,7 @@ export type Database = {
           modelo?: string | null
           placa?: string | null
           quilometragem?: number | null
+          status_aprovacao?: string
           status_cautelar?: string | null
           updated_at?: string
           user_id?: string | null
@@ -323,10 +331,13 @@ export type Database = {
         Update: {
           ano_fabricacao?: number | null
           ano_modelo?: number | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           chassi?: string
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
+          filial_destino_id?: string | null
           filial_id?: string
           id?: string
           importado_em?: string
@@ -334,11 +345,19 @@ export type Database = {
           modelo?: string | null
           placa?: string | null
           quilometragem?: number | null
+          status_aprovacao?: string
           status_cautelar?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "toyota_estoque_veiculos_filial_destino_id_fkey"
+            columns: ["filial_destino_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "toyota_estoque_veiculos_filial_id_fkey"
             columns: ["filial_id"]
