@@ -283,6 +283,68 @@ export type Database = {
         }
         Relationships: []
       }
+      toyota_filiais: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          created_at: string
+          dealer_number: string
+          id: string
+          nome: string
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          dealer_number: string
+          id?: string
+          nome: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          dealer_number?: string
+          id?: string
+          nome?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      toyota_usuario_filial: {
+        Row: {
+          created_at: string
+          filial_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filial_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filial_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toyota_usuario_filial_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
