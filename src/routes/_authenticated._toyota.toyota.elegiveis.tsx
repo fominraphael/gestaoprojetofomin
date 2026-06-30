@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, ShieldCheck, Loader2, Search } from "lucide-react";
+import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +48,8 @@ export const Route = createFileRoute(
   errorComponent: ModuleErrorBoundary,
   component: AnaliseElegiveis,
 });
+
+const REVISOES_DISPONIVEIS = ["10k", "20k", "30k", "40k", "50k", "60k", "70k", "80k", "100k"];
 
 interface Filial {
   id: string;
@@ -80,10 +85,19 @@ function AnaliseElegiveis() {
   );
   const [filialDestinoId, setFilialDestinoId] = useState<string>("");
   const [salvando, setSalvando] = useState(false);
+  const [hsvRevisoes, setHsvRevisoes] = useState<string[]>([]);
+  const [hsvOS, setHsvOS] = useState<string[]>([""]);
+  const [hsvObservacoes, setHsvObservacoes] = useState("");
 
+  function toggleRevisao(r: string) {
+    setHsvRevisoes((prev) =>
+      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r],
+    );
+  }
 
   async function carregar() {
     setLoading(true);
+
     const [vRes, fRes] = await Promise.all([
       supabase
         .from("toyota_estoque_veiculos")
@@ -125,12 +139,16 @@ function AnaliseElegiveis() {
   function iniciarAprovacao(v: Veiculo) {
     setConfirmandoVeiculo(v);
     setFilialDestinoId(v.filial_destino_id ?? v.filial_id);
+    setHsvRevisoes([]);
+    setHsvOS([""]);
+    setHsvObservacoes("");
   }
 
   async function confirmarAprovacao() {
     if (!confirmandoVeiculo || !filialDestinoId) return;
     setSalvando(true);
     const { data: userData } = await supabase.auth.getUser();
+    const osLimpas = hsvOS.map((s) => s.trim()).filter(Boolean);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
@@ -138,6 +156,9 @@ function AnaliseElegiveis() {
         filial_destino_id: filialDestinoId,
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
+        hsv_revisoes_pendentes: hsvRevisoes,
+        hsv_os_ajustes: osLimpas,
+        hsv_observacoes_preparador: hsvObservacoes.trim() || null,
       })
       .eq("id", confirmandoVeiculo.id);
     setSalvando(false);
@@ -153,6 +174,7 @@ function AnaliseElegiveis() {
       prev.filter((v) => v.id !== confirmandoVeiculo.id),
     );
   }
+
 
   if (!isAdmin) {
     return (
@@ -301,17 +323,17 @@ function AnaliseElegiveis() {
         open={!!confirmandoVeiculo}
         onOpenChange={(o) => !o && setConfirmandoVeiculo(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Aprovar para Preparação</DialogTitle>
             <DialogDescription>
-              Confirme o envio do veículo para a fila de pendências da loja.
-              Você pode alterar a filial de destino antes de confirmar.
+              Confirme o envio do veículo para a fila da loja. Preencha a
+              Validação Técnica (HSV) com as pendências identificadas.
             </DialogDescription>
           </DialogHeader>
 
           {confirmandoVeiculo && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
                 <div>
                   <span className="text-muted-foreground">Chassi: </span>
@@ -328,7 +350,7 @@ function AnaliseElegiveis() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Filial de destino</label>
+                <Label className="text-sm font-medium">Filial de destino</Label>
                 <Select
                   value={filialDestinoId}
                   onValueChange={setFilialDestinoId}
@@ -346,12 +368,102 @@ function AnaliseElegiveis() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Pré-selecionada com a filial de origem do veículo. Altere se
-                  desejar enviar para outra loja ativa.
+                  Pré-selecionada com a filial de origem. Altere se desejar.
                 </p>
+              </div>
+
+              {/* ============ Validação Técnica (HSV) ============ */}
+              <div className="rounded-lg border bg-card p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">
+                    Validação Técnica (HSV)
+                  </h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Revisões pendentes
+                  </Label>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    {REVISOES_DISPONIVEIS.map((r) => (
+                      <label
+                        key={r}
+                        className="flex items-center gap-2 text-sm cursor-pointer rounded-md border px-2 py-1.5 hover:bg-accent/40"
+                      >
+                        <Checkbox
+                          checked={hsvRevisoes.includes(r)}
+                          onCheckedChange={() => toggleRevisao(r)}
+                        />
+                        {r}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Marque todas as revisões que precisam ser feitas antes da
+                    certificação.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">
+                      Ordens de Serviço (OS) para ajuste
+                    </Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setHsvOS((p) => [...p, ""])}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Adicionar OS
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {hsvOS.map((os, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <Input
+                          placeholder={`Nº da OS ${idx + 1}`}
+                          value={os}
+                          onChange={(e) =>
+                            setHsvOS((p) =>
+                              p.map((v, i) => (i === idx ? e.target.value : v)),
+                            )
+                          }
+                        />
+                        {hsvOS.length > 1 && (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() =>
+                              setHsvOS((p) => p.filter((_, i) => i !== idx))
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Observações para o Preparador
+                  </Label>
+                  <Textarea
+                    rows={4}
+                    placeholder="Oriente o preparador sobre os ajustes necessários nas OSs, prioridade, contato responsável, etc."
+                    value={hsvObservacoes}
+                    onChange={(e) => setHsvObservacoes(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}
+
 
           <DialogFooter>
             <Button

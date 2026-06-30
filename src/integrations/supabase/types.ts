@@ -299,6 +299,9 @@ export type Database = {
           filial_destino_id: string | null
           filial_id: string
           fonte_importacao: string
+          hsv_observacoes_preparador: string | null
+          hsv_os_ajustes: string[]
+          hsv_revisoes_pendentes: string[]
           id: string
           importado_em: string
           marca: string | null
@@ -329,6 +332,9 @@ export type Database = {
           filial_destino_id?: string | null
           filial_id: string
           fonte_importacao?: string
+          hsv_observacoes_preparador?: string | null
+          hsv_os_ajustes?: string[]
+          hsv_revisoes_pendentes?: string[]
           id?: string
           importado_em?: string
           marca?: string | null
@@ -359,6 +365,9 @@ export type Database = {
           filial_destino_id?: string | null
           filial_id?: string
           fonte_importacao?: string
+          hsv_observacoes_preparador?: string | null
+          hsv_os_ajustes?: string[]
+          hsv_revisoes_pendentes?: string[]
           id?: string
           importado_em?: string
           marca?: string | null
