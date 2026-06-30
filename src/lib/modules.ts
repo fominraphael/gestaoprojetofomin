@@ -5,8 +5,11 @@ import {
   Inbox,
   Archive,
   FileText,
+  Car,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
+
 
 export interface ModuleNavItem {
   to: string;
