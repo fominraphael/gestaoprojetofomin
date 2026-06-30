@@ -203,6 +203,7 @@ const TCUV_SECOES: ChecklistSecao[] = [
       "Resposta dos freios",
       "Estabilidade em curva",
       "Ruídos durante condução",
+      "Resposta da direção em velocidade",
       "Funcionamento do cruise control (se equipado)",
       "Sistema de tração 4x4 (se equipado)",
     ],
