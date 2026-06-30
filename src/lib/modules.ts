@@ -67,6 +67,20 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
   },
+  {
+    id: "toyota",
+    label: "Certificação Toyota",
+    description:
+      "Gestão de filiais, vínculos de usuários e configurações do programa de certificação.",
+    icon: Car,
+    href: "/toyota/configuracoes",
+    requiredModule: "toyota",
+    gradient: "from-slate-500/15 to-slate-700/15",
+    iconBg: "from-slate-500 to-slate-700",
+    navItems: [
+      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
+    ],
+  },
 ];
 
 /** All routes owned by registered modules (entry + sidebar nav items). */
