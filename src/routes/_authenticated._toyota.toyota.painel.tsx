@@ -304,7 +304,7 @@ function PainelCertificacao() {
       </header>
 
       {/* Funil */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <FunilCard
           label="Fila da Loja"
           count={porAba.loja.length}
@@ -329,6 +329,14 @@ function PainelCertificacao() {
           disabled={!isAdmin}
         />
         <FunilCard
+          label="Revisão Reprovados"
+          count={porAba.reprovados.length}
+          icon={XCircle}
+          active={aba === "reprovados"}
+          onClick={() => setAba("reprovados")}
+          disabled={!isAdmin}
+        />
+        <FunilCard
           label="Histórico"
           count={porAba.historico.length}
           icon={History}
@@ -342,6 +350,7 @@ function PainelCertificacao() {
           <TabsTrigger value="loja">Loja</TabsTrigger>
           <TabsTrigger value="central">Central</TabsTrigger>
           <TabsTrigger value="toyota">Toyota</TabsTrigger>
+          <TabsTrigger value="reprovados">Reprovados</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
