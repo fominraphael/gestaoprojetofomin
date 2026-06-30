@@ -429,7 +429,7 @@ function PainelCertificacao() {
           ) : (
             <SecaoTabela
               titulo="Análise Central — Administrador"
-              descricao="Revise os preenchimentos das lojas antes de submeter à montadora."
+              descricao="Revise o que o Pós-Vendas preencheu/anexou. Pendencie ou submeta à montadora."
               loading={loading}
               vazio="Sem submissões aguardando revisão."
             >
@@ -439,6 +439,7 @@ function PainelCertificacao() {
                   <TableHead>Modelo</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Programa</TableHead>
+                  <TableHead>Anexos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -449,17 +450,34 @@ function PainelCertificacao() {
                     <TableCell>{v.modelo ?? "—"}</TableCell>
                     <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
                     <TableCell><ElegBadge value={v.elegibilidade} /></TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex gap-1.5">
+                        <Badge variant={v.checklist_data?.preenchido_em ? "default" : "outline"}>
+                          Checklist
+                        </Badge>
+                        <Badge variant={v.health_check_pdf_path ? "default" : "outline"}>
+                          Health Check
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="space-x-2 text-right">
+                      <Button size="sm" variant="ghost" onClick={() => setRevisar(v)}>
+                        Revisar
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setReiniciar(v)}
+                        className="text-amber-700"
+                        onClick={() => {
+                          setPendenciar(v);
+                          setMotivoPendencia("");
+                        }}
                       >
-                        Devolver à loja
+                        Pendenciar
                       </Button>
-                      <Button size="sm" onClick={() => submeterToyota(v)}>
+                      <Button size="sm" onClick={() => setConfirmarToyota(v)}>
                         <Send className="mr-1 h-3 w-3" />
-                        Submeter Toyota
+                        Enviado para Toyota
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -476,7 +494,7 @@ function PainelCertificacao() {
           ) : (
             <SecaoTabela
               titulo="Enviados para a Toyota"
-              descricao="Submissões enviadas ao portal da montadora aguardando o prazo de análise."
+              descricao="Submissões aguardando retorno. O status muda automaticamente via importação do BI Toyota."
               loading={loading}
               vazio="Nenhum veículo aguardando retorno da Toyota."
             >
@@ -486,7 +504,7 @@ function PainelCertificacao() {
                   <TableHead>Modelo</TableHead>
                   <TableHead>Filial</TableHead>
                   <TableHead>Enviado em</TableHead>
-                  <TableHead className="text-right">Retorno</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -500,24 +518,62 @@ function PainelCertificacao() {
                         ? new Date(v.enviado_toyota_em).toLocaleDateString("pt-BR")
                         : "—"}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline">Aguardando retorno BI</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </SecaoTabela>
+          )}
+        </TabsContent>
+
+        {/* 4. Revisão de Reprovados (Admin) */}
+        <TabsContent value="reprovados">
+          {!isAdmin ? (
+            <SemAcesso />
+          ) : (
+            <SecaoTabela
+              titulo="Revisão de Reprovados pela Toyota"
+              descricao="Decida entre arquivar definitivamente ou reenviar para uma nova rodada de avaliação."
+              loading={loading}
+              vazio="Nenhuma reprovação a revisar."
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Chassi</TableHead>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead>Filial</TableHead>
+                  <TableHead>Motivo de reprovação</TableHead>
+                  <TableHead>Observação</TableHead>
+                  <TableHead className="text-right">Decisão</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porAba.reprovados.map((v) => (
+                  <TableRow key={v.id}>
+                    <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                    <TableCell>{v.modelo ?? "—"}</TableCell>
+                    <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
+                    <TableCell className="max-w-[220px] text-xs text-muted-foreground">
+                      {v.motivo_reprovacao ?? "—"}
+                    </TableCell>
+                    <TableCell className="max-w-[220px] text-xs text-muted-foreground">
+                      {v.observacao_toyota ?? "—"}
+                    </TableCell>
                     <TableCell className="space-x-2 text-right">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-emerald-700"
-                        onClick={() => registrarRetornoToyota(v, true)}
-                      >
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Aprovado
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
                         className="text-red-700"
-                        onClick={() => registrarRetornoToyota(v, false)}
+                        onClick={() => setArquivarVeiculo(v)}
                       >
                         <XCircle className="mr-1 h-3 w-3" />
-                        Reprovado
+                        Arquivar
+                      </Button>
+                      <Button size="sm" onClick={() => setReenviarReprovado(v)}>
+                        <RefreshCw className="mr-1 h-3 w-3" />
+                        Reenviar para Toyota
                       </Button>
                     </TableCell>
                   </TableRow>
