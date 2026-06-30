@@ -19,14 +19,17 @@ import {
   type DocumentoArquivo,
   obterEmpresas,
   criarEmpresa,
+  atualizarEmpresa,
   excluirEmpresa,
   obterDocumentosTipo,
   criarDocumentoTipo,
+  atualizarDocumentoTipo,
   excluirDocumentoTipo,
   obterArquivos,
   uploadArquivo,
   excluirArquivo,
 } from "@/lib/empresas";
+import { Search, Edit3 } from "lucide-react";
 import { ModuleBadge } from "@/components/ModuleBadge";
 import {
   Users,
