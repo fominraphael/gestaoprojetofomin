@@ -93,17 +93,31 @@ export function PortalPage() {
       if (!user || user.role === "admin") return;
       setLoadingDocs(true);
       try {
-        const [allEmps, allTipos, allFiles] = await Promise.all([
+        const [allEmps, allTipos] = await Promise.all([
           obterEmpresas(),
           obterDocumentosTipo(),
-          obterArquivos(user.empresa_id || undefined),
         ]);
 
-        if (user.empresa_id) {
-          const empObj = allEmps.find((e) => e.id === user.empresa_id);
+        setDocTipos(allTipos);
+
+        // Try to find the company associated to this user:
+        // 1. By empresa_id if set, 2. By CNPJ if set, 3. Fallback to all files
+        let targetEmpresaId: string | undefined = user.empresa_id || undefined;
+
+        if (!targetEmpresaId && user.cnpj) {
+          const cleanedCnpj = user.cnpj.replace(/\D/g, "");
+          const empByCnpj = allEmps.find(
+            (e) => e.cnpj.replace(/\D/g, "") === cleanedCnpj
+          );
+          if (empByCnpj) targetEmpresaId = empByCnpj.id;
+        }
+
+        if (targetEmpresaId) {
+          const empObj = allEmps.find((e) => e.id === targetEmpresaId);
           if (empObj) setEmpresa(empObj);
         }
-        setDocTipos(allTipos);
+
+        const allFiles = await obterArquivos(targetEmpresaId);
         setArquivos(allFiles);
       } catch (err) {
         console.error("Erro ao carregar documentos do lojista:", err);
@@ -116,6 +130,7 @@ export function PortalPage() {
       loadMerchantData();
     }
   }, [isAuthenticated, loading, user]);
+
 
   const handleDownloadAll = async () => {
     if (arquivos.length === 0) return;
@@ -313,7 +328,7 @@ export function PortalPage() {
         </div>
 
         {/* -------------------- LOJISTA SECTION: DOCUMENTS -------------------- */}
-        {!isAdmin && userModules.includes("documentos") && (
+        {!isAdmin && (
           <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm space-y-6">
             <div className="flex items-center justify-between border-b border-slate-800 pb-5 flex-wrap gap-4">
               <div>
