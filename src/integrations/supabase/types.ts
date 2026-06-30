@@ -290,19 +290,24 @@ export type Database = {
           aprovado_em: string | null
           aprovado_por: string | null
           chassi: string
+          chassi_resumido: string | null
           created_at: string
           dados_originais: Json | null
           elegibilidade: string | null
           enviado_toyota_em: string | null
+          external_id: string | null
           filial_destino_id: string | null
           filial_id: string
+          fonte_importacao: string
           id: string
           importado_em: string
           marca: string | null
           modelo: string | null
           motivo_reprovacao: string | null
+          origem: string | null
           placa: string | null
           quilometragem: number | null
+          resultado_laudo: string | null
           retorno_toyota_em: string | null
           status_aprovacao: string
           status_cautelar: string | null
@@ -315,19 +320,24 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           chassi: string
+          chassi_resumido?: string | null
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
           enviado_toyota_em?: string | null
+          external_id?: string | null
           filial_destino_id?: string | null
           filial_id: string
+          fonte_importacao?: string
           id?: string
           importado_em?: string
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
+          origem?: string | null
           placa?: string | null
           quilometragem?: number | null
+          resultado_laudo?: string | null
           retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
@@ -340,19 +350,24 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           chassi?: string
+          chassi_resumido?: string | null
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
           enviado_toyota_em?: string | null
+          external_id?: string | null
           filial_destino_id?: string | null
           filial_id?: string
+          fonte_importacao?: string
           id?: string
           importado_em?: string
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
+          origem?: string | null
           placa?: string | null
           quilometragem?: number | null
+          resultado_laudo?: string | null
           retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
