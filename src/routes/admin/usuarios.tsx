@@ -428,15 +428,22 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditCompany = async (c: Empresa) => {
-    const nome = window.prompt("Nome da empresa:", c.nome);
-    if (nome === null) return;
-    const cnpj = window.prompt("CNPJ (apenas números):", c.cnpj);
-    if (cnpj === null) return;
-    setActionLoading(c.id);
+  const handleEditCompany = (c: Empresa) => {
+    setEditingCompany({ ...c });
+  };
+
+  const handleSaveEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+    setActionLoading(editingCompany.id);
     try {
-      await atualizarEmpresa(c.id, { nome: nome.trim(), cnpj: cnpj.trim() });
+      await atualizarEmpresa(editingCompany.id, {
+        nome: editingCompany.nome.trim(),
+        cnpj: editingCompany.cnpj.trim(),
+        ativo: editingCompany.ativo,
+      });
       showToast("success", "Empresa atualizada.");
+      setEditingCompany(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar empresa.");
@@ -445,15 +452,22 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditDocType = async (t: DocumentoTipo) => {
-    const nome = window.prompt("Nome do tipo:", t.nome);
-    if (nome === null) return;
-    const descricao = window.prompt("Descrição:", t.descricao ?? "");
-    if (descricao === null) return;
-    setActionLoading(t.id);
+  const handleEditDocType = (t: DocumentoTipo) => {
+    setEditingDocType({ ...t });
+  };
+
+  const handleSaveEditDocType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocType) return;
+    setActionLoading(editingDocType.id);
     try {
-      await atualizarDocumentoTipo(t.id, { nome: nome.trim(), descricao: descricao.trim() });
+      await atualizarDocumentoTipo(editingDocType.id, {
+        nome: editingDocType.nome.trim(),
+        descricao: (editingDocType.descricao ?? "").trim(),
+        ativo: editingDocType.ativo,
+      });
       showToast("success", "Tipo de documento atualizado.");
+      setEditingDocType(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar tipo de documento.");
@@ -462,13 +476,59 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditUserType = async (t: TipoUsuarioConfig) => {
-    const nome = window.prompt("Nome do perfil:", t.nome);
-    if (nome === null) return;
-    setActionLoading(t.id);
+  const handleEditUserType = (t: TipoUsuarioConfig) => {
+    setEditingUserType({ ...t, campos_schema: [...(t.campos_schema || [])] });
+    setEditFieldName("");
+    setEditFieldLabel("");
+    setEditFieldType("text");
+    setEditFieldRequired(false);
+  };
+
+  const handleAddFieldToEditType = () => {
+    if (!editingUserType) return;
+    if (!editFieldName.trim() || !editFieldLabel.trim()) {
+      showToast("error", "Identificador e rótulo são obrigatórios.");
+      return;
+    }
+    setEditingUserType({
+      ...editingUserType,
+      campos_schema: [
+        ...editingUserType.campos_schema,
+        {
+          nome: editFieldName.trim(),
+          label: editFieldLabel.trim(),
+          tipo: editFieldType,
+          obrigatorio: editFieldRequired,
+        },
+      ],
+    });
+    setEditFieldName("");
+    setEditFieldLabel("");
+    setEditFieldType("text");
+    setEditFieldRequired(false);
+  };
+
+  const handleRemoveFieldFromEditType = (idx: number) => {
+    if (!editingUserType) return;
+    setEditingUserType({
+      ...editingUserType,
+      campos_schema: editingUserType.campos_schema.filter((_, i) => i !== idx),
+    });
+  };
+
+  const handleSaveEditUserType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUserType) return;
+    setActionLoading(editingUserType.id);
     try {
-      await atualizarTipoUsuarioConfig(t.id, { nome: nome.trim() });
+      await atualizarTipoUsuarioConfig(editingUserType.id, {
+        nome: editingUserType.nome.trim(),
+        role: editingUserType.role,
+        campos_schema: editingUserType.campos_schema,
+        ativo: editingUserType.ativo,
+      });
       showToast("success", "Perfil atualizado.");
+      setEditingUserType(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar perfil.");
@@ -476,6 +536,7 @@ export function AdminUsuariosPage() {
       setActionLoading(null);
     }
   };
+
 
   const handleToggleUserTypeAtivo = async (t: TipoUsuarioConfig) => {
     setActionLoading(t.id);
