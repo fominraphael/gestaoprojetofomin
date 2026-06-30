@@ -603,15 +603,15 @@ function PainelCertificacao() {
             </TableHeader>
             <TableBody>
               {porAba.historico.map((v) => {
-                const reprovado = v.status_aprovacao === "reprovado_toyota";
+                const arquivado = v.status_aprovacao === "rejeitado";
                 return (
                   <TableRow key={v.id}>
                     <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
                     <TableCell>{v.modelo ?? "—"}</TableCell>
                     <TableCell>{filialNome(v.filial_destino_id ?? v.filial_id)}</TableCell>
                     <TableCell>
-                      {reprovado ? (
-                        <Badge variant="destructive">Reprovado</Badge>
+                      {arquivado ? (
+                        <Badge variant="destructive">Arquivado</Badge>
                       ) : (
                         <Badge className="bg-emerald-100 text-emerald-800">
                           Aprovado
@@ -619,20 +619,9 @@ function PainelCertificacao() {
                       )}
                     </TableCell>
                     <TableCell className="max-w-[260px] truncate text-sm text-muted-foreground">
-                      {reprovado ? v.motivo_reprovacao ?? "—" : "—"}
+                      {arquivado ? v.motivo_reprovacao ?? "—" : "—"}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {reprovado && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setReiniciar(v)}
-                        >
-                          <RefreshCw className="mr-1 h-3 w-3" />
-                          Reiniciar Fluxo
-                        </Button>
-                      )}
-                    </TableCell>
+                    <TableCell className="text-right">—</TableCell>
                   </TableRow>
                 );
               })}
