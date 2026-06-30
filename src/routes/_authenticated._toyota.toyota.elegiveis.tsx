@@ -85,9 +85,16 @@ function AnaliseElegiveis() {
   );
   const [filialDestinoId, setFilialDestinoId] = useState<string>("");
   const [salvando, setSalvando] = useState(false);
+  const [hsvRevisoes, setHsvRevisoes] = useState<string[]>([]);
+  const [hsvOS, setHsvOS] = useState<string[]>([""]);
+  const [hsvObservacoes, setHsvObservacoes] = useState("");
 
+  function toggleRevisao(r: string) {
+    setHsvRevisoes((prev) =>
+      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r],
+    );
+  }
 
-  async function carregar() {
     setLoading(true);
     const [vRes, fRes] = await Promise.all([
       supabase
