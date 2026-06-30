@@ -879,12 +879,20 @@ export function AdminUsuariosPage() {
                   Cadastre novos lojistas, configure permissões e defina senhas.
                 </p>
               </div>
-              <button
-                onClick={() => setShowCreateUser(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
-              >
-                <Plus className="w-4 h-4" /> Novo Usuário
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab("import")}
+                  className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4" /> Importação em Massa
+                </button>
+                <button
+                  onClick={() => setShowCreateUser(true)}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                >
+                  <Plus className="w-4 h-4" /> Novo Usuário
+                </button>
+              </div>
             </div>
 
             {/* Create User Form Box */}
