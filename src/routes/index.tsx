@@ -71,7 +71,7 @@ export function PortalPage() {
   // Load all companies and document types
   useEffect(() => {
     async function loadInitialData() {
-      if (!user || user.role === "admin") return;
+      if (!user) return;
       setLoadingDocs(true);
       try {
         const [allEmps, allTipos] = await Promise.all([
