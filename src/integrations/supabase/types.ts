@@ -283,6 +283,71 @@ export type Database = {
         }
         Relationships: []
       }
+      toyota_estoque_veiculos: {
+        Row: {
+          ano_fabricacao: number | null
+          ano_modelo: number | null
+          chassi: string
+          created_at: string
+          dados_originais: Json | null
+          elegibilidade: string | null
+          filial_id: string
+          id: string
+          importado_em: string
+          marca: string | null
+          modelo: string | null
+          placa: string | null
+          quilometragem: number | null
+          status_cautelar: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ano_fabricacao?: number | null
+          ano_modelo?: number | null
+          chassi: string
+          created_at?: string
+          dados_originais?: Json | null
+          elegibilidade?: string | null
+          filial_id: string
+          id?: string
+          importado_em?: string
+          marca?: string | null
+          modelo?: string | null
+          placa?: string | null
+          quilometragem?: number | null
+          status_cautelar?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ano_fabricacao?: number | null
+          ano_modelo?: number | null
+          chassi?: string
+          created_at?: string
+          dados_originais?: Json | null
+          elegibilidade?: string | null
+          filial_id?: string
+          id?: string
+          importado_em?: string
+          marca?: string | null
+          modelo?: string | null
+          placa?: string | null
+          quilometragem?: number | null
+          status_cautelar?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toyota_estoque_veiculos_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       toyota_filiais: {
         Row: {
           ativo: boolean
