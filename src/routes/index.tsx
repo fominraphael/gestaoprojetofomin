@@ -54,8 +54,8 @@ const allApps: AppCard[] = [
     icon: FileText,
     href: "/documentos",
     status: "active",
-    gradient: "from-emerald-500/20 to-teal-500/20",
-    iconBg: "from-emerald-500 to-teal-600",
+    gradient: "from-blue-500/20 to-indigo-500/20",
+    iconBg: "from-blue-500 to-indigo-600",
   },
 ];
 

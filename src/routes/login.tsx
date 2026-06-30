@@ -36,7 +36,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
       {/* Background decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
@@ -54,7 +54,7 @@ function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -68,7 +68,7 @@ function LoginPage() {
                 placeholder="Seu nome de usuário"
                 required
                 autoComplete="username"
-                className="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                className="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
               />
             </div>
 
@@ -85,7 +85,7 @@ function LoginPage() {
                   placeholder="Sua senha"
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-slate-900/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 pr-11 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
                 <button
                   type="button"
@@ -118,7 +118,7 @@ function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
+          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
             <p className="text-slate-400 text-sm">
               Não tem uma conta?{" "}
               <Link
