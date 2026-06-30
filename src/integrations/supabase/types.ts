@@ -116,6 +116,47 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          campos_customizados: Json
+          created_at: string
+          empresa_id: string | null
+          id: string
+          modulos: string[]
+          tipo_usuario: string | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          campos_customizados?: Json
+          created_at?: string
+          empresa_id?: string | null
+          id: string
+          modulos?: string[]
+          tipo_usuario?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          campos_customizados?: Json
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          modulos?: string[]
+          tipo_usuario?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           categoria: Database["public"]["Enums"]["tarefa_categoria"]
@@ -224,6 +265,27 @@ export type Database = {
           nome?: string
           role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -346,9 +408,17 @@ export type Database = {
       }
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       purge_old_trash: { Args: never; Returns: undefined }
     }
     Enums: {
+      app_role: "admin" | "user"
       tarefa_categoria: "backlog" | "roadmap" | "historico" | "solicitacao"
       tarefa_prioridade: "Baixa" | "Média" | "Alta"
       tarefa_status: "Não iniciada" | "Em andamento" | "Concluído"
@@ -485,6 +555,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       tarefa_categoria: ["backlog", "roadmap", "historico", "solicitacao"],
       tarefa_prioridade: ["Baixa", "Média", "Alta"],
       tarefa_status: ["Não iniciada", "Em andamento", "Concluído"],
