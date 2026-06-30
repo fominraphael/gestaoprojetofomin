@@ -45,8 +45,9 @@ interface Filial {
   id: string;
   nome: string;
   dealer_number: string | null;
-  status: string;
+  ativo: boolean;
 }
+
 
 
 // ============================================================================
