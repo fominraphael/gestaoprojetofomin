@@ -486,14 +486,7 @@ export function AdminUsuariosPage() {
     }
   };
 
-      showToast("success", "Tipo de documento excluído.");
-      await loadAllData();
-    } catch (err: any) {
-      showToast("error", err.message || "Erro ao excluir tipo de documento.");
-    } finally {
-      setActionLoading(null);
-    }
-  };
+
 
   // File Upload Actions
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
