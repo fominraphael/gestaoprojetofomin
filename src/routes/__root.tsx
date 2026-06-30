@@ -201,36 +201,15 @@ function AppLayout() {
     return <RedirectToLogin />;
   }
 
-  // 3. Authenticated user logic
+  // 3. Authenticated — admin protection only; module access is enforced by
+  // each module's pathless layout route (_gestao.tsx, _documentos.tsx).
   const isAdmin = user?.role === "admin";
-  const userModules = user?.modulos || [];
-
-  // Protect Admin Area
   if (pathname.startsWith("/admin") && !isAdmin) {
     return <AccessDenied reason="Você não possui credenciais de administrador para acessar este painel." />;
   }
 
-  // Protect registered modules via the central registry
-  const activeModule = findModuleByPath(pathname);
-  if (activeModule && !userCanAccess(activeModule, isAdmin, userModules)) {
-    return (
-      <AccessDenied
-        reason={`Você não possui permissão para acessar o módulo de ${activeModule.label}.`}
-      />
-    );
-  }
-
-  // Show sidebar only when inside a module that declares nav items
-  const showSidebar = !!activeModule?.navItems?.length;
-
-  return (
-    <div className="flex min-h-screen w-full bg-background">
-      {showSidebar && <AppSidebar />}
-      <main className={showSidebar ? "flex-1 min-w-0 overflow-x-hidden" : "w-full"}>
-        <Outlet />
-      </main>
-    </div>
-  );
+  return <Outlet />;
 }
+
 
 
