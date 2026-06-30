@@ -84,7 +84,7 @@ interface Filial {
   dealer_number: string | null;
 }
 
-type AbaId = "loja" | "central" | "toyota" | "historico";
+type AbaId = "loja" | "central" | "toyota" | "reprovados" | "historico";
 
 function PainelCertificacao() {
   const { isAdmin, user } = useAuth();
