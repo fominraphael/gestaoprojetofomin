@@ -291,6 +291,7 @@ export type Database = {
           aprovado_por: string | null
           chassi: string
           chassi_resumido: string | null
+          checklist_data: Json | null
           created_at: string
           dados_originais: Json | null
           elegibilidade: string | null
@@ -299,6 +300,8 @@ export type Database = {
           filial_destino_id: string | null
           filial_id: string
           fonte_importacao: string
+          health_check_pdf_path: string | null
+          health_check_uploaded_at: string | null
           hsv_observacoes_preparador: string | null
           hsv_os_ajustes: string[]
           hsv_revisoes_pendentes: string[]
@@ -324,6 +327,7 @@ export type Database = {
           aprovado_por?: string | null
           chassi: string
           chassi_resumido?: string | null
+          checklist_data?: Json | null
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
@@ -332,6 +336,8 @@ export type Database = {
           filial_destino_id?: string | null
           filial_id: string
           fonte_importacao?: string
+          health_check_pdf_path?: string | null
+          health_check_uploaded_at?: string | null
           hsv_observacoes_preparador?: string | null
           hsv_os_ajustes?: string[]
           hsv_revisoes_pendentes?: string[]
@@ -357,6 +363,7 @@ export type Database = {
           aprovado_por?: string | null
           chassi?: string
           chassi_resumido?: string | null
+          checklist_data?: Json | null
           created_at?: string
           dados_originais?: Json | null
           elegibilidade?: string | null
@@ -365,6 +372,8 @@ export type Database = {
           filial_destino_id?: string | null
           filial_id?: string
           fonte_importacao?: string
+          health_check_pdf_path?: string | null
+          health_check_uploaded_at?: string | null
           hsv_observacoes_preparador?: string | null
           hsv_os_ajustes?: string[]
           hsv_revisoes_pendentes?: string[]
