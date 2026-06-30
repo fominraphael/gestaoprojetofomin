@@ -112,7 +112,7 @@ function PainelCertificacao() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,filial_id,filial_destino_id,motivo_reprovacao,enviado_toyota_em,retorno_toyota_em,aprovado_em",
+          "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,filial_id,filial_destino_id,motivo_reprovacao,observacao_toyota,enviado_toyota_em,retorno_toyota_em,aprovado_em,hsv_observacoes_preparador,checklist_data,health_check_pdf_path",
         )
         .order("updated_at", { ascending: false }),
       supabase.from("toyota_filiais").select("id,nome,dealer_number"),
