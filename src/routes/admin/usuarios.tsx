@@ -835,17 +835,6 @@ export function AdminUsuariosPage() {
             Usuários
           </button>
           <button
-            onClick={() => setActiveTab("import")}
-            className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
-              activeTab === "import"
-                ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Importação em Massa
-          </button>
-          <button
             onClick={() => setActiveTab("companies")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "companies"
