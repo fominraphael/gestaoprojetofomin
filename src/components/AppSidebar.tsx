@@ -9,6 +9,8 @@ import {
   ChevronRight,
   LogOut,
   Layers,
+  FileText,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,12 +22,19 @@ const items = [
   { to: "/roadmap", label: "Roadmap", icon: Map },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
   { to: "/historico", label: "Lixeira", icon: Archive },
+  { to: "/documentos", label: "Documentos", icon: FileText },
 ] as const;
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin, user } = useAuth();
+  const userModules = user?.modulos || [];
+  const visibleItems = items.filter((it) => {
+    if (isAdmin) return true;
+    if (it.to === "/documentos") return userModules.includes("documentos");
+    return userModules.includes("gestao");
+  });
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
@@ -80,7 +89,7 @@ export function AppSidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const active =
             item.to === "/dashboard"
               ? pathname === "/dashboard"
@@ -125,6 +134,20 @@ export function AppSidebar() {
           <Layers className="w-4 h-4 shrink-0" />
           {!isCollapsed && <span className="truncate">Portal</span>}
         </Link>
+
+        {isAdmin && (
+          <Link
+            to="/admin/usuarios"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors",
+              isCollapsed && "justify-center px-2"
+            )}
+            title={isCollapsed ? "Painel Admin" : undefined}
+          >
+            <Users className="w-4 h-4 shrink-0" />
+            {!isCollapsed && <span className="truncate">Painel Admin</span>}
+          </Link>
+        )}
 
         {/* Logout */}
         <button

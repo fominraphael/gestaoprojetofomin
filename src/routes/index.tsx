@@ -178,7 +178,7 @@ export function PortalPage() {
 
   if (loading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-card flex items-center justify-center">
         <span className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
@@ -196,7 +196,7 @@ export function PortalPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 pb-16">
+    <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
@@ -204,15 +204,15 @@ export function PortalPage() {
       </div>
 
       {/* Header */}
-      <header className="relative border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+      <header className="relative border-b border-border bg-card backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20">
-              <Layers className="w-5 h-5 text-white" />
+              <Layers className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white leading-tight">Portal de Aplicações</div>
-              <div className="text-xs text-slate-400">Painel Principal</div>
+              <div className="text-sm font-semibold text-foreground leading-tight">Portal de Aplicações</div>
+              <div className="text-xs text-muted-foreground">Painel Principal</div>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ export function PortalPage() {
               <Link
                 to="/admin/usuarios"
                 id="link-admin-usuarios"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/60 text-sm transition-all border border-transparent hover:border-slate-800"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-foreground hover:text-foreground hover:bg-accent text-sm transition-all border border-transparent hover:border-border"
                 title="Acessar Painel Admin"
               >
                 <Users className="w-4 h-4 text-indigo-400" />
@@ -230,11 +230,11 @@ export function PortalPage() {
               </Link>
             )}
 
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
                 {user?.username?.[0]?.toUpperCase()}
               </div>
-              <span className="text-sm text-slate-300 hidden sm:inline">{user?.username}</span>
+              <span className="text-sm text-foreground hidden sm:inline">{user?.username}</span>
               {isAdmin && (
                 <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded-full font-semibold">
                   Admin
@@ -245,7 +245,7 @@ export function PortalPage() {
             <button
               onClick={logout}
               id="btn-logout"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 text-sm transition-all"
               title="Sair"
             >
               <LogOut className="w-4 h-4" />
@@ -258,13 +258,13 @@ export function PortalPage() {
       {/* Main Content */}
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             Bem-vindo,{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
               {user?.username}
             </span>
           </h1>
-          <p className="text-slate-400 text-sm mt-2">
+          <p className="text-muted-foreground text-sm mt-2">
             {isAdmin ? "Gerencie os lojistas ou acesse os módulos." : "Acesse os módulos disponíveis abaixo."}
           </p>
         </div>
@@ -278,10 +278,10 @@ export function PortalPage() {
             return (
               <div
                 key={app.id}
-                className={`group relative rounded-2xl border transition-all duration-300 bg-slate-900/40 backdrop-blur-sm overflow-hidden ${
+                className={`group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden ${
                   isActive
-                    ? "border-slate-800 hover:border-blue-500/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
-                    : "border-slate-900/30 opacity-60 cursor-not-allowed"
+                    ? "border-border hover:border-blue-500/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10"
+                    : "border-border opacity-60 cursor-not-allowed"
                 }`}
               >
                 <div className="p-6">
@@ -289,17 +289,17 @@ export function PortalPage() {
                   <div
                     className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${app.iconBg} mb-4 shadow-lg`}
                   >
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-foreground" />
                   </div>
 
                   {!isActive && (
-                    <span className="absolute top-4 right-4 text-[10px] bg-slate-800 text-slate-400 border border-slate-700/50 px-2 py-0.5 rounded-full font-medium">
+                    <span className="absolute top-4 right-4 text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
                       Em breve
                     </span>
                   )}
 
-                  <h2 className="text-lg font-semibold text-white mb-2">{app.title}</h2>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-5">{app.description}</p>
+                  <h2 className="text-lg font-semibold text-foreground mb-2">{app.title}</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-5">{app.description}</p>
 
                   {isActive ? (
                     <Link
@@ -311,7 +311,7 @@ export function PortalPage() {
                       <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Lock className="w-3.5 h-3.5" />
                       Indisponível
                     </span>

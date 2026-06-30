@@ -41,7 +41,7 @@ function RegistrarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
@@ -50,25 +50,25 @@ function RegistrarPage() {
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg mb-4">
-            <Layers className="w-8 h-8 text-white" />
+            <Layers className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Solicitar Acesso</h1>
-          <p className="text-slate-400 text-sm mt-1">Sua conta será revisada pelo administrador</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Solicitar Acesso</h1>
+          <p className="text-muted-foreground text-sm mt-1">Sua conta será revisada pelo administrador</p>
         </div>
 
-        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-accent backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
           {success ? (
             <div className="text-center py-4">
               <div className="flex justify-center mb-4">
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </div>
-              <h2 className="text-xl font-semibold text-white mb-2">Solicitação enviada!</h2>
-              <p className="text-slate-400 text-sm mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Solicitação enviada!</h2>
+              <p className="text-muted-foreground text-sm mb-6">
                 Sua solicitação foi recebida. Aguarde a aprovação do administrador para acessar o sistema.
               </p>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold transition-all"
+                className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground font-semibold transition-all"
               >
                 Voltar ao Login
               </Link>
@@ -76,7 +76,7 @@ function RegistrarPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="reg-username" className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label htmlFor="reg-username" className="block text-sm font-medium text-foreground mb-1.5">
                   Nome de usuário
                 </label>
                 <input
@@ -87,12 +87,12 @@ function RegistrarPage() {
                   placeholder="Escolha um nome de usuário"
                   required
                   autoComplete="username"
-                  className="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
               </div>
 
               <div>
-                <label htmlFor="reg-password" className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
                   Senha
                 </label>
                 <div className="relative">
@@ -104,12 +104,12 @@ function RegistrarPage() {
                     placeholder="Crie uma senha"
                     required
                     autoComplete="new-password"
-                    className="w-full px-4 py-2.5 pr-11 rounded-lg bg-slate-900/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -117,7 +117,7 @@ function RegistrarPage() {
               </div>
 
               <div>
-                <label htmlFor="reg-confirm" className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label htmlFor="reg-confirm" className="block text-sm font-medium text-foreground mb-1.5">
                   Confirmar senha
                 </label>
                 <input
@@ -128,7 +128,7 @@ function RegistrarPage() {
                   placeholder="Repita a senha"
                   required
                   autoComplete="new-password"
-                  className="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
               </div>
 
@@ -142,7 +142,7 @@ function RegistrarPage() {
                 type="submit"
                 disabled={loading}
                 id="btn-registrar"
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground font-semibold transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -155,8 +155,8 @@ function RegistrarPage() {
           )}
 
           {!success && (
-            <div className="mt-6 pt-6 border-t border-slate-700/50 text-center">
-              <p className="text-slate-400 text-sm">
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-muted-foreground text-sm">
                 Já tem uma conta?{" "}
                 <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                   Fazer login

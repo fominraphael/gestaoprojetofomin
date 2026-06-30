@@ -767,27 +767,27 @@ export function AdminUsuariosPage() {
 
   if (loading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-card flex items-center justify-center">
         <span className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 pb-16">
+    <div className="min-h-screen bg-background text-foreground pb-16">
       {/* Top Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-border bg-card backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Portal
             </Link>
-            <span className="text-slate-700">/</span>
-            <span className="text-white text-sm font-semibold flex items-center gap-2">
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground text-sm font-semibold flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-indigo-400" />
               Painel Administrativo
             </span>
@@ -797,7 +797,7 @@ export function AdminUsuariosPage() {
             <button
               onClick={loadAllData}
               disabled={loadingData}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 text-slate-300 hover:text-white text-sm transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent hover:bg-muted border border-border text-foreground hover:text-foreground text-sm transition-all"
             >
               <RefreshCw className={`w-4 h-4 ${loadingData ? "animate-spin" : ""}`} />
               Sincronizar
@@ -822,13 +822,13 @@ export function AdminUsuariosPage() {
         )}
 
         {/* Custom Tab Selectors */}
-        <div className="flex border-b border-slate-800/80 mb-8 gap-4 overflow-x-auto scrollbar-none">
+        <div className="flex border-b border-border mb-8 gap-4 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab("users")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "users"
                 ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             <Users className="w-4 h-4" />
@@ -839,7 +839,7 @@ export function AdminUsuariosPage() {
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "companies"
                 ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             <Building className="w-4 h-4" />
@@ -850,7 +850,7 @@ export function AdminUsuariosPage() {
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "doctypes"
                 ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -861,7 +861,7 @@ export function AdminUsuariosPage() {
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "usertypes"
                 ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -874,21 +874,21 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Usuários do Sistema</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-xl font-semibold text-foreground">Usuários do Sistema</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Cadastre novos lojistas, configure permissões e defina senhas.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveTab("import")}
-                  className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                  className="flex items-center gap-2 bg-muted/70 hover:bg-muted text-foreground border border-border px-4 py-2 rounded-xl text-sm font-semibold transition-all"
                 >
                   <FileSpreadsheet className="w-4 h-4" /> Importação em Massa
                 </button>
                 <button
                   onClick={() => setShowCreateUser(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
                 >
                   <Plus className="w-4 h-4" /> Novo Usuário
                 </button>
@@ -897,41 +897,41 @@ export function AdminUsuariosPage() {
 
             {/* Create User Form Box */}
             {showCreateUser && (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
+              <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={() => setShowCreateUser(false)}
-                    className="text-slate-400 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">Adicionar Novo Usuário</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Adicionar Novo Usuário</h3>
                 <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Login de acesso</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Login de acesso</label>
                     <input
                       type="text"
                       required
                       placeholder="Identificador do usuário para login"
                       value={newUser.username}
                       onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Senha Inicial</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Senha Inicial</label>
                     <input
                       type="password"
                       required
                       placeholder="Defina a senha inicial"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Tipo de Usuário</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
                     <select
                       value={newUser.tipo_usuario}
                       onChange={(e) => {
@@ -943,7 +943,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     >
                       {userTypes.map((t) => {
                         // Security check: only users with pode_criar_admin (or root) can choose admin user types
@@ -964,7 +964,7 @@ export function AdminUsuariosPage() {
                     const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
                     return selectedType?.campos_schema.map((field) => (
                       <div key={field.nome}>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
                           {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
                         </label>
                         {field.tipo === "boolean" ? (
@@ -977,7 +977,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -995,7 +995,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           />
                         )}
                       </div>
@@ -1014,12 +1014,12 @@ export function AdminUsuariosPage() {
                           <button
                             type="button"
                             onClick={() => setNewUser({ ...newUser, pode_criar_admin: !newUser.pode_criar_admin })}
-                            className="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition-all"
+                            className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {newUser.pode_criar_admin ? (
                               <ToggleRight className="w-8 h-5 text-blue-500" />
                             ) : (
-                              <ToggleLeft className="w-8 h-5 text-slate-600" />
+                              <ToggleLeft className="w-8 h-5 text-muted-foreground" />
                             )}
                             Permitir que este administrador cadastre outros administradores
                           </button>
@@ -1030,15 +1030,15 @@ export function AdminUsuariosPage() {
                   })()}
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-2 font-semibold">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
                       {["documentos", "gestao"].map((mod) => (
-                        <label key={mod} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                        <label key={mod} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                           <input
                             type="checkbox"
                             checked={newUser.modulos.includes(mod)}
                             onChange={() => toggleModuleInNewUser(mod)}
-                            className="rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-0 w-4 h-4"
+                            className="rounded border-border bg-background text-blue-500 focus:ring-0 w-4 h-4"
                           />
                           {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
@@ -1049,14 +1049,14 @@ export function AdminUsuariosPage() {
                     <button
                       type="button"
                       onClick={() => setShowCreateUser(false)}
-                      className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                      className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={actionLoading === "create-user"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
                     >
                       {actionLoading === "create-user" ? "Criando..." : "Salvar Usuário"}
                     </button>
@@ -1067,42 +1067,42 @@ export function AdminUsuariosPage() {
 
             {/* Edit User Form Box */}
             {showEditUser && (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
+              <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
                 <div className="absolute top-4 right-4">
                   <button
                     onClick={() => { setShowEditUser(null); setEditPassword(""); }}
-                    className="text-slate-400 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
                   Editar Usuário: {showEditUser.username}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Login de acesso</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Login de acesso</label>
                     <input
                       type="text"
                       disabled
                       value={showEditUser.username}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950/50 border border-slate-850 text-slate-500 cursor-not-allowed text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-muted/50 border border-border text-muted-foreground cursor-not-allowed text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
-                      Alterar Senha <span className="text-slate-500">(Opcional)</span>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Alterar Senha <span className="text-muted-foreground">(Opcional)</span>
                     </label>
                     <input
                       type="password"
                       placeholder="Preencha apenas para alterar"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Tipo de Usuário</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
                     <select
                       value={showEditUser.tipo_usuario || "Lojista"}
                       onChange={(e) => {
@@ -1115,7 +1115,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     >
                       {userTypes.map((t) => {
                         const isRoot = currentUser?.username === "root";
@@ -1136,7 +1136,7 @@ export function AdminUsuariosPage() {
                     const customFields = showEditUser.campos_customizados || {};
                     return selectedType?.campos_schema.map((field) => (
                       <div key={field.nome}>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
                           {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
                         </label>
                         {field.tipo === "boolean" ? (
@@ -1149,7 +1149,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -1167,7 +1167,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           />
                         )}
                       </div>
@@ -1175,9 +1175,9 @@ export function AdminUsuariosPage() {
                   })()}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Status de Aprovação</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Status de Aprovação</label>
                     <div className="flex gap-4 mt-2">
-                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="radio"
                           name="edit-status"
@@ -1187,7 +1187,7 @@ export function AdminUsuariosPage() {
                         />
                         Aprovado
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="radio"
                           name="edit-status"
@@ -1197,7 +1197,7 @@ export function AdminUsuariosPage() {
                         />
                         Pendente
                       </label>
-                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="radio"
                           name="edit-status"
@@ -1211,16 +1211,16 @@ export function AdminUsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Status da Conta</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Status da Conta</label>
                     <button
                       type="button"
                       onClick={() => setShowEditUser({ ...showEditUser, active: !showEditUser.active })}
-                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-white mt-2 transition-all"
+                      className="flex items-center gap-2 text-sm text-foreground hover:text-foreground mt-2 transition-all"
                     >
                       {showEditUser.active ? (
                         <ToggleRight className="w-9 h-6 text-blue-500" />
                       ) : (
-                        <ToggleLeft className="w-9 h-6 text-slate-600" />
+                        <ToggleLeft className="w-9 h-6 text-muted-foreground" />
                       )}
                       {showEditUser.active ? "Conta Ativa" : "Conta Inativa"}
                     </button>
@@ -1238,12 +1238,12 @@ export function AdminUsuariosPage() {
                           <button
                             type="button"
                             onClick={() => setShowEditUser({ ...showEditUser, pode_criar_admin: !showEditUser.pode_criar_admin })}
-                            className="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition-all"
+                            className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {showEditUser.pode_criar_admin ? (
                               <ToggleRight className="w-8 h-5 text-blue-500" />
                             ) : (
-                              <ToggleLeft className="w-8 h-5 text-slate-600" />
+                              <ToggleLeft className="w-8 h-5 text-muted-foreground" />
                             )}
                             Permitir que este administrador cadastre outros administradores
                           </button>
@@ -1254,15 +1254,15 @@ export function AdminUsuariosPage() {
                   })()}
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-2 font-semibold">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
                       {["documentos", "gestao"].map((mod) => (
-                        <label key={mod} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                        <label key={mod} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                           <input
                             type="checkbox"
                             checked={(showEditUser.modulos || []).includes(mod)}
                             onChange={() => toggleModuleInEditUser(mod)}
-                            className="rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-0 w-4 h-4"
+                            className="rounded border-border bg-background text-blue-500 focus:ring-0 w-4 h-4"
                           />
                           {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
                         </label>
@@ -1274,7 +1274,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="button"
                       onClick={() => { setShowEditUser(null); setEditPassword(""); }}
-                      className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                      className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
                       Cancelar
                     </button>
@@ -1282,7 +1282,7 @@ export function AdminUsuariosPage() {
                       type="button"
                       onClick={() => handleUpdateUser(showEditUser)}
                       disabled={actionLoading === showEditUser.id}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all shadow-md shadow-blue-500/10"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10"
                     >
                       {actionLoading === showEditUser.id ? "Salvando..." : "Salvar Alterações"}
                     </button>
@@ -1293,21 +1293,21 @@ export function AdminUsuariosPage() {
 
             {/* Search Bar */}
             <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 placeholder="Buscar por login, tipo, CNPJ..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
               />
             </div>
 
             {/* Users Table */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm shadow-xl">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden backdrop-blur-sm shadow-xl">
               <table className="w-full text-sm text-left">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 font-medium">
+                  <tr className="border-b border-border bg-card text-muted-foreground font-medium">
                     <th className="px-6 py-4">Login de acesso</th>
                     <th className="px-6 py-4">Tipo de Usuário</th>
                     <th className="px-6 py-4">Módulos</th>
@@ -1331,13 +1331,13 @@ export function AdminUsuariosPage() {
                     .map((u, i) => (
                     <tr
                       key={u.id}
-                      className={`border-b border-slate-800/40 hover:bg-slate-800/20 transition-all ${
+                      className={`border-b border-border hover:bg-muted/20 transition-all ${
                         !u.active ? "opacity-50" : ""
                       }`}
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-white font-medium flex items-center gap-2">
+                          <div className="text-foreground font-medium flex items-center gap-2">
                             {u.username}
                             {u.pode_criar_admin && (
                               <span className="text-[9px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.2 rounded-full font-semibold">
@@ -1352,8 +1352,8 @@ export function AdminUsuariosPage() {
                                 const val = u.campos_customizados?.[k];
                                 if (val === undefined || val === null || val === "") return null;
                                 return (
-                                  <span key={k} className="text-[10px] text-slate-400 bg-slate-950/60 px-2 py-0.5 rounded border border-slate-850">
-                                    <strong className="text-slate-500 font-medium uppercase text-[9px] mr-1">{k}:</strong>
+                                  <span key={k} className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border">
+                                    <strong className="text-muted-foreground font-medium uppercase text-[9px] mr-1">{k}:</strong>
                                     {typeof val === "boolean" ? (val ? "Sim" : "Não") : String(val)}
                                   </span>
                                 );
@@ -1366,7 +1366,7 @@ export function AdminUsuariosPage() {
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
                           u.role === "admin"
                             ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
-                            : "bg-slate-800 border border-slate-700/50 text-slate-300"
+                            : "bg-muted border border-border text-foreground"
                         }`}>
                           {u.tipo_usuario || (u.role === "admin" ? "Administrador" : "Lojista")}
                         </span>
@@ -1376,7 +1376,7 @@ export function AdminUsuariosPage() {
                           {u.modulos && u.modulos.length > 0 ? (
                             u.modulos.map((m) => <ModuleBadge key={m} moduleKey={m} />)
                           ) : (
-                            <span className="text-xs text-slate-600 font-medium">Nenhum</span>
+                            <span className="text-xs text-muted-foreground font-medium">Nenhum</span>
                           )}
                         </div>
                       </td>
@@ -1395,7 +1395,7 @@ export function AdminUsuariosPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setShowEditUser(u)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             title="Editar usuário"
                           >
                             <Key className="w-4 h-4" />
@@ -1404,7 +1404,7 @@ export function AdminUsuariosPage() {
                             <button
                               onClick={() => handleDeleteUser(u.id, u.username)}
                               disabled={actionLoading === u.id}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/15 transition-colors"
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/15 transition-colors"
                               title="Excluir usuário"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1416,7 +1416,7 @@ export function AdminUsuariosPage() {
                   ))}
                   {usuarios.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-slate-500 text-sm">
+                      <td colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
                         Nenhum usuário cadastrado.
                       </td>
                     </tr>
@@ -1432,23 +1432,23 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-xl font-semibold text-foreground">Importação em Massa</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
                 </p>
               </div>
               <button
                 onClick={() => setActiveTab("users")}
-                className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                className="flex items-center gap-2 bg-muted/70 hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Usuários
               </button>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
+            <div className="bg-card border border-border rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
               {/* User Type Selection for Import */}
               <div className="max-w-xs mx-auto text-left">
-                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
                   Tipo de Usuário para Importar
                 </label>
                 <select
@@ -1457,7 +1457,7 @@ export function AdminUsuariosPage() {
                     setSelectedUserTypeImportId(e.target.value);
                     setImportRows([]); // reset preview when type changes
                   }}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
                 >
                   {userTypes.map((t) => (
                     <option key={t.id} value={t.nome}>
@@ -1471,7 +1471,7 @@ export function AdminUsuariosPage() {
                 <Upload className="w-6 h-6" />
               </div>
               
-              <h3 className="text-base font-semibold text-white">Selecione sua planilha Excel</h3>
+              <h3 className="text-base font-semibold text-foreground">Selecione sua planilha Excel</h3>
               
               {/* Dynamic instruction text based on selected user type */}
               {(() => {
@@ -1479,9 +1479,9 @@ export function AdminUsuariosPage() {
                 const reqFields = selectedType ? selectedType.campos_schema.filter(f => f.obrigatorio).map(f => f.label) : [];
                 const optFields = selectedType ? selectedType.campos_schema.filter(f => !f.obrigatorio).map(f => f.label) : [];
                 return (
-                  <p className="text-slate-400 text-xs leading-relaxed max-w-md mx-auto">
+                  <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
                     A planilha para importar <strong className="text-blue-400 font-semibold">{selectedUserTypeImportId}</strong> deve conter as colunas:{" "}
-                    <strong className="text-slate-200">Login de acesso</strong> e <strong className="text-slate-200">Senha</strong>.
+                    <strong className="text-foreground">Login de acesso</strong> e <strong className="text-foreground">Senha</strong>.
                     {reqFields.length > 0 && (
                       <>
                         {" "}Mais os campos obrigatórios:{" "}
@@ -1490,7 +1490,7 @@ export function AdminUsuariosPage() {
                     )}
                     {optFields.length > 0 && (
                       <>
-                        {" "}E campos opcionais: <span className="text-slate-300">{optFields.map(f => `"${f}"`).join(", ")}</span>.
+                        {" "}E campos opcionais: <span className="text-foreground">{optFields.map(f => `"${f}"`).join(", ")}</span>.
                       </>
                     )}
                   </p>
@@ -1498,7 +1498,7 @@ export function AdminUsuariosPage() {
               })()}
 
               <div className="flex flex-col items-center gap-4 pt-2">
-                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
+                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
                   <Plus className="w-4 h-4 inline-block mr-2" />
                   Procurar Planilha
                   <input
@@ -1511,18 +1511,18 @@ export function AdminUsuariosPage() {
               </div>
 
               {/* Import instructions preview */}
-              <div className="mt-8 pt-6 border-t border-slate-800/80 text-left">
+              <div className="mt-8 pt-6 border-t border-border text-left">
                 <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-3">Exemplo de Estrutura da Planilha:</h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[10px] text-slate-400 border border-slate-800 rounded-lg">
+                  <table className="w-full text-[10px] text-muted-foreground border border-border rounded-lg">
                     <thead>
-                      <tr className="bg-slate-950 text-slate-300">
-                        <th className="px-3 py-1.5 border border-slate-800">Login de acesso</th>
-                        <th className="px-3 py-1.5 border border-slate-800">Senha</th>
+                      <tr className="bg-background text-foreground">
+                        <th className="px-3 py-1.5 border border-border">Login de acesso</th>
+                        <th className="px-3 py-1.5 border border-border">Senha</th>
                         {(() => {
                           const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
                           return selectedType?.campos_schema.map(f => (
-                            <th key={f.nome} className="px-3 py-1.5 border border-slate-800">
+                            <th key={f.nome} className="px-3 py-1.5 border border-border">
                               {f.label} {f.obrigatorio && <span className="text-red-400 font-bold">*</span>}
                             </th>
                           ));
@@ -1531,12 +1531,12 @@ export function AdminUsuariosPage() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-3 py-1 border border-slate-800 font-medium text-slate-300">usuario123</td>
-                        <td className="px-3 py-1 border border-slate-800">senhaSegura123</td>
+                        <td className="px-3 py-1 border border-border font-medium text-foreground">usuario123</td>
+                        <td className="px-3 py-1 border border-border">senhaSegura123</td>
                         {(() => {
                           const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
                           return selectedType?.campos_schema.map(f => (
-                            <td key={f.nome} className="px-3 py-1 border border-slate-800 italic text-slate-500">
+                            <td key={f.nome} className="px-3 py-1 border border-border italic text-muted-foreground">
                               {f.tipo === "number" ? "123" : f.tipo === "boolean" ? "Sim / Não" : `Exemplo ${f.label}`}
                             </td>
                           ));
@@ -1550,20 +1550,20 @@ export function AdminUsuariosPage() {
 
             {/* Imported Rows Preview */}
             {importRows.length > 0 && (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl animate-scale-up max-w-4xl mx-auto">
-                <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+              <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-xl animate-scale-up max-w-4xl mx-auto">
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center justify-between">
                   <span>Visualizando Registros da Planilha ({importRows.length})</span>
                   <button
                     onClick={() => setImportRows([])}
-                    className="text-slate-400 hover:text-white text-xs flex items-center gap-1 font-semibold"
+                    className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 font-semibold"
                   >
                     Limpar
                   </button>
                 </h3>
-                <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl mb-6">
+                <div className="max-h-60 overflow-y-auto border border-border rounded-xl mb-6">
                   <table className="w-full text-xs text-left">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-slate-950 text-slate-400">
+                      <tr className="border-b border-border bg-background text-muted-foreground">
                         {/* Dynamic headers list based on spreadsheet keys */}
                         {Object.keys(importRows[0]).map((key) => (
                           <th key={key} className="px-4 py-2 uppercase text-[10px] font-bold">
@@ -1574,9 +1574,9 @@ export function AdminUsuariosPage() {
                     </thead>
                     <tbody>
                       {importRows.map((row, idx) => (
-                        <tr key={idx} className="border-b border-slate-800/40 hover:bg-slate-800/10">
+                        <tr key={idx} className="border-b border-border hover:bg-muted/10">
                           {Object.keys(row).map((key) => (
-                            <td key={key} className="px-4 py-2 text-slate-300">
+                            <td key={key} className="px-4 py-2 text-foreground">
                               {typeof row[key] === "boolean" ? (row[key] ? "Sim" : "Não") : String(row[key])}
                             </td>
                           ))}
@@ -1588,14 +1588,14 @@ export function AdminUsuariosPage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setImportRows([])}
-                    className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                    className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                   >
                     Descartar
                   </button>
                   <button
                     onClick={handleProcessImport}
                     disabled={importLoading}
-                    className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+                    className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-foreground text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
                   >
                     {importLoading ? (
                       <>
@@ -1618,10 +1618,10 @@ export function AdminUsuariosPage() {
             {/* Left Col: Companies List */}
             <div className="space-y-6 lg:col-span-1">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Empresas</h2>
+                <h2 className="text-xl font-semibold text-foreground">Empresas</h2>
                 <button
                   onClick={() => setShowCreateCompany(true)}
-                  className="flex items-center gap-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700/50 px-3 py-1.5 rounded-lg font-semibold transition-all"
+                  className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-blue-400 border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" /> Adicionar
                 </button>
@@ -1629,10 +1629,10 @@ export function AdminUsuariosPage() {
 
               {/* Add Company Form */}
               {showCreateCompany && (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 animate-scale-up">
+                <div className="bg-card border border-border rounded-xl p-4 animate-scale-up">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold text-white">Nova Empresa</h3>
-                    <button onClick={() => setShowCreateCompany(false)} className="text-slate-400 hover:text-white">
+                    <h3 className="text-sm font-semibold text-foreground">Nova Empresa</h3>
+                    <button onClick={() => setShowCreateCompany(false)} className="text-muted-foreground hover:text-foreground">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -1644,7 +1644,7 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.nome}
                         onChange={(e) => setNewCompany({ ...newCompany, nome: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -1654,20 +1654,20 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.cnpj}
                         onChange={(e) => setNewCompany({ ...newCompany, cnpj: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                       <button
                         type="button"
                         onClick={() => setShowCreateCompany(false)}
-                        className="px-3 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300"
+                        className="px-3 py-1 text-xs rounded-md bg-muted hover:bg-muted text-foreground"
                       >
                         Cancelar
                       </button>
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-md bg-blue-500 hover:bg-blue-600 text-white"
+                        className="px-3 py-1 text-xs rounded-md bg-blue-500 hover:bg-blue-600 text-foreground"
                       >
                         Cadastrar
                       </button>
@@ -1684,16 +1684,16 @@ export function AdminUsuariosPage() {
                     onClick={() => setSelectedCompanyId(c.id)}
                     className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
                       selectedCompanyId === c.id
-                        ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5 text-white"
-                        : "bg-slate-900/40 border-slate-800 hover:bg-slate-800/30 text-slate-300"
+                        ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5 text-foreground"
+                        : "bg-card border-border hover:bg-accent text-foreground"
                     }`}
                   >
                     <div className="min-w-0">
                       <div className="font-medium text-sm truncate">{c.nome}</div>
-                      <div className="text-xs text-slate-400 mt-1 font-mono">{formatCnpj(c.cnpj)}</div>
+                      <div className="text-xs text-muted-foreground mt-1 font-mono">{formatCnpj(c.cnpj)}</div>
                     </div>
                     <div className="flex items-center gap-1 ml-4 shrink-0">
-                      <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700/50 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full">
                         {arquivos.filter((f) => f.empresa_id === c.id).length} files
                       </span>
                       <button
@@ -1701,7 +1701,7 @@ export function AdminUsuariosPage() {
                           e.stopPropagation();
                           handleEditCompany(c);
                         }}
-                        className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
                         title="Editar empresa"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -1711,7 +1711,7 @@ export function AdminUsuariosPage() {
                           e.stopPropagation();
                           handleDeleteCompany(c.id, c.nome);
                         }}
-                        className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-red-400 transition-colors"
                         title="Excluir empresa"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1720,7 +1720,7 @@ export function AdminUsuariosPage() {
                   </button>
                 ))}
                 {empresas.length === 0 && (
-                  <div className="text-center py-8 text-slate-600 text-sm">
+                  <div className="text-center py-8 text-muted-foreground text-sm">
                     Nenhuma empresa cadastrada.
                   </div>
                 )}
@@ -1734,12 +1734,12 @@ export function AdminUsuariosPage() {
                   const company = empresas.find((e) => e.id === selectedCompanyId);
                   const companyFiles = arquivos.filter((f) => f.empresa_id === selectedCompanyId);
                   return (
-                    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm space-y-6 animate-fade-in">
+                    <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-sm space-y-6 animate-fade-in">
                       {/* Top Header */}
-                      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-4">
+                      <div className="flex items-center justify-between flex-wrap gap-4 border-b border-border pb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{company?.nome}</h3>
-                          <p className="text-xs text-slate-400 mt-1 font-mono">
+                          <h3 className="text-lg font-semibold text-foreground">{company?.nome}</h3>
+                          <p className="text-xs text-muted-foreground mt-1 font-mono">
                             CNPJ: {company ? formatCnpj(company.cnpj) : ""}
                           </p>
                         </div>
@@ -1749,20 +1749,20 @@ export function AdminUsuariosPage() {
                       </div>
 
                       {/* Upload Box */}
-                      <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-4">
-                        <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <div className="bg-muted/60 border border-border rounded-xl p-4 space-y-4">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                           <Upload className="w-4 h-4 text-blue-400" />
                           Anexar Novo Arquivo
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                               Tipo do Documento
                             </label>
                             <select
                               value={selectedDocTypeId}
                               onChange={(e) => setSelectedDocTypeId(e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs focus:outline-none"
+                              className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-xs focus:outline-none"
                             >
                               <option value="">Selecione o Tipo...</option>
                               {docTipos.map((t) => (
@@ -1774,16 +1774,16 @@ export function AdminUsuariosPage() {
                           </div>
                           <div className="flex items-end">
                             <label
-                              className={`w-full flex items-center justify-center gap-2 px-4 py-2 border border-slate-800 hover:border-slate-700 rounded-lg cursor-pointer transition-all text-xs font-semibold text-slate-300 ${
+                              className={`w-full flex items-center justify-center gap-2 px-4 py-2 border border-border hover:border-border rounded-lg cursor-pointer transition-all text-xs font-semibold text-foreground ${
                                 !selectedDocTypeId || uploadLoading
-                                  ? "opacity-50 cursor-not-allowed bg-slate-950"
-                                  : "bg-slate-900 hover:bg-slate-800"
+                                  ? "opacity-50 cursor-not-allowed bg-background"
+                                  : "bg-card hover:bg-muted"
                               }`}
                             >
                               {uploadLoading ? (
-                                <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-200 rounded-full animate-spin" />
+                                <span className="w-3.5 h-3.5 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
                               ) : (
-                                <Upload className="w-3.5 h-3.5 text-slate-400" />
+                                <Upload className="w-3.5 h-3.5 text-muted-foreground" />
                               )}
                               {uploadLoading ? "Enviando..." : "Selecionar e Upload"}
                               <input
@@ -1800,24 +1800,24 @@ export function AdminUsuariosPage() {
 
                       {/* Attached Documents List */}
                       <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-white">Documentos Disponibilizados</h4>
+                        <h4 className="text-sm font-semibold text-foreground">Documentos Disponibilizados</h4>
                         <div className="space-y-2">
                           {companyFiles.map((file) => {
                             const typeObj = docTipos.find((t) => t.id === file.tipo_id);
                             return (
                               <div
                                 key={file.id}
-                                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700/60 transition-all flex-wrap sm:flex-nowrap gap-3"
+                                className="flex items-center justify-between p-3.5 rounded-xl bg-background/40 border border-border hover:border-border transition-all flex-wrap sm:flex-nowrap gap-3"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
                                     <FileText className="w-4 h-4" />
                                   </div>
                                   <div className="min-w-0">
-                                    <div className="text-slate-200 text-xs font-semibold uppercase tracking-wide">
+                                    <div className="text-foreground text-xs font-semibold uppercase tracking-wide">
                                       {typeObj?.nome || "Tipo Desconhecido"}
                                     </div>
-                                    <div className="text-slate-400 text-xs truncate mt-0.5">
+                                    <div className="text-muted-foreground text-xs truncate mt-0.5">
                                       {file.arquivo_nome}
                                     </div>
                                   </div>
@@ -1828,14 +1828,14 @@ export function AdminUsuariosPage() {
                                     download={file.arquivo_nome}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                     title="Visualizar/Baixar"
                                   >
                                     <Download className="w-4 h-4" />
                                   </a>
                                   <button
                                     onClick={() => handleDeleteFile(file.id, file.arquivo_nome)}
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
                                     title="Remover documento"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1845,7 +1845,7 @@ export function AdminUsuariosPage() {
                             );
                           })}
                           {companyFiles.length === 0 && (
-                            <div className="text-center py-10 text-slate-600 text-xs bg-slate-950/20 border border-dashed border-slate-800 rounded-xl">
+                            <div className="text-center py-10 text-muted-foreground text-xs bg-background/20 border border-dashed border-border rounded-xl">
                               Nenhum arquivo anexado a esta empresa.
                             </div>
                           )}
@@ -1855,8 +1855,8 @@ export function AdminUsuariosPage() {
                   );
                 })()
               ) : (
-                <div className="h-96 rounded-2xl border border-dashed border-slate-800 flex flex-col items-center justify-center text-slate-500 text-sm">
-                  <Building className="w-10 h-10 text-slate-700 mb-3" />
+                <div className="h-96 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-muted-foreground text-sm">
+                  <Building className="w-10 h-10 text-muted-foreground mb-3" />
                   Selecione uma empresa na lista ao lado para gerenciar seus documentos.
                 </div>
               )}
@@ -1869,14 +1869,14 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Tipos de Documento</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-xl font-semibold text-foreground">Tipos de Documento</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Defina os tipos de documentos que a sua equipe jurídica e administrativa solicita.
                 </p>
               </div>
               <button
                 onClick={() => setShowCreateDocType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Novo Tipo
               </button>
@@ -1884,46 +1884,46 @@ export function AdminUsuariosPage() {
 
             {/* Create DocType Form */}
             {showCreateDocType && (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-xl mx-auto animate-scale-up">
+              <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-xl mx-auto animate-scale-up">
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setShowCreateDocType(false)} className="text-slate-400 hover:text-white">
+                  <button onClick={() => setShowCreateDocType(false)} className="text-muted-foreground hover:text-foreground">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-md font-semibold text-white mb-4">Novo Tipo de Documento</h3>
+                <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Documento</h3>
                 <form onSubmit={handleCreateDocType} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome do Tipo</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do Tipo</label>
                     <input
                       type="text"
                       required
                       placeholder="Ex: CERTIDÃO NEGATIVA SIMPLIFICADA"
                       value={newDocType.nome}
                       onChange={(e) => setNewDocType({ ...newDocType, nome: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Descrição / Observações</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Descrição / Observações</label>
                     <textarea
                       placeholder="Breve descrição do documento..."
                       value={newDocType.descricao}
                       onChange={(e) => setNewDocType({ ...newDocType, descricao: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div className="flex justify-end gap-3 mt-4">
                     <button
                       type="button"
                       onClick={() => setShowCreateDocType(false)}
-                      className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                      className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
                     >
                       Criar Tipo
                     </button>
@@ -1937,7 +1937,7 @@ export function AdminUsuariosPage() {
               {docTipos.map((t) => (
                 <div
                   key={t.id}
-                  className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
+                  className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -1947,26 +1947,26 @@ export function AdminUsuariosPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEditDocType(t)}
-                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
                           title="Editar tipo"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteDocType(t.id, t.nome)}
-                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                          className="p-1 rounded text-muted-foreground hover:text-red-400 transition-colors"
                           title="Excluir tipo"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
-                    <h3 className="text-white font-semibold text-sm truncate uppercase">{t.nome}</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    <h3 className="text-foreground font-semibold text-sm truncate uppercase">{t.nome}</h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                       {t.descricao || "Sem descrição informada."}
                     </p>
                   </div>
-                  <div className="text-[10px] text-slate-600 mt-4 border-t border-slate-850 pt-3">
+                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-border pt-3">
                     ID: {t.id}
                   </div>
                 </div>
@@ -1979,14 +1979,14 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Configuração de Perfis (Tipos de Usuários)</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-xl font-semibold text-foreground">Configuração de Perfis (Tipos de Usuários)</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Gerencie perfis personalizados de usuários e configure campos dinâmicos obrigatórios ou opcionais.
                 </p>
               </div>
               <button
                 onClick={() => setShowCreateUserType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Novo Perfil
               </button>
@@ -1994,33 +1994,33 @@ export function AdminUsuariosPage() {
 
             {/* Create UserType Form */}
             {showCreateUserType && (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-2xl mx-auto animate-scale-up">
+              <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-2xl mx-auto animate-scale-up">
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setShowCreateUserType(false)} className="text-slate-400 hover:text-white">
+                  <button onClick={() => setShowCreateUserType(false)} className="text-muted-foreground hover:text-foreground">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-md font-semibold text-white mb-4">Novo Tipo de Usuário</h3>
+                <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Usuário</h3>
                 
                 <form onSubmit={handleCreateUserType} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Nome do Tipo / Perfil</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Nome do Tipo / Perfil</label>
                       <input
                         type="text"
                         required
                         placeholder="Ex: Fornecedor, ADM de loja"
                         value={newUserType.nome}
                         onChange={(e) => setNewUserType({ ...newUserType, nome: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5 font-semibold">Nível de Permissão Padrão</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Nível de Permissão Padrão</label>
                       <select
                         value={newUserType.role}
                         onChange={(e) => setNewUserType({ ...newUserType, role: e.target.value as "admin" | "user" })}
-                        className="w-full px-4 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                       >
                         <option value="user">Usuário Comum (Lojistas, etc.)</option>
                         <option value="admin">Administrador (Gestão Geral)</option>
@@ -2029,37 +2029,37 @@ export function AdminUsuariosPage() {
                   </div>
 
                   {/* Fields Creator Section */}
-                  <div className="border-t border-slate-800 pt-4">
+                  <div className="border-t border-border pt-4">
                     <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
                     
-                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-4 space-y-4">
+                    <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Identificador Técnico</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Identificador Técnico</label>
                           <input
                             type="text"
                             placeholder="Ex: razao_social, cnpj"
                             value={newFieldName}
                             onChange={(e) => setNewFieldName(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Rótulo (Label de Exibição)</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Rótulo (Label de Exibição)</label>
                           <input
                             type="text"
                             placeholder="Ex: Razão Social, CNPJ"
                             value={newFieldLabel}
                             onChange={(e) => setNewFieldLabel(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Tipo de Dado</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Tipo de Dado</label>
                           <select
                             value={newFieldType}
                             onChange={(e) => setNewFieldType(e.target.value as any)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           >
                             <option value="text">Texto</option>
                             <option value="number">Número</option>
@@ -2069,12 +2069,12 @@ export function AdminUsuariosPage() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
                           <input
                             type="checkbox"
                             checked={newFieldRequired}
                             onChange={(e) => setNewFieldRequired(e.target.checked)}
-                            className="rounded border-slate-800 bg-slate-900 text-blue-500 focus:ring-0 w-3.5 h-3.5"
+                            className="rounded border-border bg-card text-blue-500 focus:ring-0 w-3.5 h-3.5"
                           />
                           Este campo é obrigatório no cadastro
                         </label>
@@ -2082,7 +2082,7 @@ export function AdminUsuariosPage() {
                         <button
                           type="button"
                           onClick={handleAddFieldToNewType}
-                          className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-all border border-slate-700/50"
+                          className="px-3 py-1 bg-muted hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-all border border-border"
                         >
                           Adicionar Campo
                         </button>
@@ -2092,16 +2092,16 @@ export function AdminUsuariosPage() {
                     {/* Added fields list */}
                     {newUserType.campos_schema.length > 0 ? (
                       <div className="space-y-2">
-                        <label className="block text-xs font-medium text-slate-400">Campos adicionados:</label>
+                        <label className="block text-xs font-medium text-muted-foreground">Campos adicionados:</label>
                         <div className="flex flex-wrap gap-2">
                           {newUserType.campos_schema.map((f, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800/80 px-2.5 py-1 rounded-lg text-xs text-slate-300">
-                              <span className="font-semibold text-white">{f.label}</span>
-                              <span className="text-[10px] text-slate-500">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
+                            <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
+                              <span className="font-semibold text-foreground">{f.label}</span>
+                              <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveFieldFromNewType(idx)}
-                                className="text-slate-500 hover:text-red-400 ml-1 transition-colors"
+                                className="text-muted-foreground hover:text-red-400 ml-1 transition-colors"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -2110,22 +2110,22 @@ export function AdminUsuariosPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500 italic">Nenhum campo personalizado adicionado a este perfil ainda.</p>
+                      <p className="text-xs text-muted-foreground italic">Nenhum campo personalizado adicionado a este perfil ainda.</p>
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-3 mt-6 border-t border-slate-850 pt-4">
+                  <div className="flex justify-end gap-3 mt-6 border-t border-border pt-4">
                     <button
                       type="button"
                       onClick={() => setShowCreateUserType(false)}
-                      className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all"
+                      className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={actionLoading === "create-usertype"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
                     >
                       {actionLoading === "create-usertype" ? "Salvando..." : "Salvar Perfil"}
                     </button>
@@ -2139,7 +2139,7 @@ export function AdminUsuariosPage() {
               {userTypes.map((t) => (
                 <div
                   key={t.id}
-                  className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
+                  className="bg-card border border-border rounded-xl p-5 backdrop-blur-sm relative overflow-hidden flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -2153,7 +2153,7 @@ export function AdminUsuariosPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEditUserType(t)}
-                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          className="p-1 rounded text-muted-foreground hover:text-blue-400 transition-colors"
                           title="Editar perfil"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -2163,7 +2163,7 @@ export function AdminUsuariosPage() {
                           className={`p-1 rounded transition-colors ${
                             t.ativo === false
                               ? "text-emerald-400 hover:text-emerald-300"
-                              : "text-slate-500 hover:text-amber-400"
+                              : "text-muted-foreground hover:text-amber-400"
                           }`}
                           title={t.ativo === false ? "Ativar perfil" : "Inativar perfil"}
                         >
@@ -2172,7 +2172,7 @@ export function AdminUsuariosPage() {
                         {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
                           <button
                             onClick={() => handleDeleteUserType(t.id, t.nome)}
-                            className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                            className="p-1 rounded text-muted-foreground hover:text-red-400 transition-colors"
                             title="Excluir perfil"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2180,24 +2180,24 @@ export function AdminUsuariosPage() {
                         )}
                       </div>
                     </div>
-                    <h3 className="text-white font-semibold text-sm uppercase">{t.nome}</h3>
+                    <h3 className="text-foreground font-semibold text-sm uppercase">{t.nome}</h3>
                     
                     <div className="mt-3 space-y-2">
-                      <span className="text-[10px] text-slate-500 uppercase font-semibold">Campos do Perfil:</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-semibold">Campos do Perfil:</span>
                       <div className="flex flex-wrap gap-1.5">
                         {t.campos_schema && t.campos_schema.length > 0 ? (
                           t.campos_schema.map((f, idx) => (
-                            <span key={idx} className="text-[10px] bg-slate-950/80 text-slate-400 px-2 py-0.5 rounded border border-slate-850">
+                            <span key={idx} className="text-[10px] bg-muted/80 text-muted-foreground px-2 py-0.5 rounded border border-border">
                               {f.label} {f.obrigatorio && <span className="text-red-500">*</span>}
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-slate-600 italic">Apenas Login e Senha</span>
+                          <span className="text-xs text-muted-foreground italic">Apenas Login e Senha</span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-600 mt-4 border-t border-slate-850 pt-3">
+                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-border pt-3">
                     ID: {t.id}
                   </div>
                 </div>
@@ -2209,45 +2209,45 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit Company Modal -------- */}
       {editingCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingCompany(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingCompany(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Empresa</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Empresa</h3>
             <form onSubmit={handleSaveEditCompany} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Razão Social / Nome</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Razão Social / Nome</label>
                 <input
                   type="text"
                   required
                   value={editingCompany.nome}
                   onChange={(e) => setEditingCompany({ ...editingCompany, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">CNPJ</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">CNPJ</label>
                 <input
                   type="text"
                   required
                   value={editingCompany.cnpj}
                   onChange={(e) => setEditingCompany({ ...editingCompany, cnpj: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editingCompany.ativo ?? true}
                   onChange={(e) => setEditingCompany({ ...editingCompany, ativo: e.target.checked })}
-                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                  className="rounded border-border bg-card text-blue-500"
                 />
                 Empresa ativa
               </label>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2258,44 +2258,44 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit DocType Modal -------- */}
       {editingDocType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingDocType(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingDocType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Tipo de Documento</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Tipo de Documento</h3>
             <form onSubmit={handleSaveEditDocType} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome</label>
                 <input
                   type="text"
                   required
                   value={editingDocType.nome}
                   onChange={(e) => setEditingDocType({ ...editingDocType, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5">Descrição</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Descrição</label>
                 <textarea
                   rows={3}
                   value={editingDocType.descricao ?? ""}
                   onChange={(e) => setEditingDocType({ ...editingDocType, descricao: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editingDocType.ativo ?? true}
                   onChange={(e) => setEditingDocType({ ...editingDocType, ativo: e.target.checked })}
-                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                  className="rounded border-border bg-card text-blue-500"
                 />
                 Tipo ativo
               </label>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2306,30 +2306,30 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit UserType Modal -------- */}
       {editingUserType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingUserType(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingUserType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Perfil de Usuário</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Perfil de Usuário</h3>
             <form onSubmit={handleSaveEditUserType} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome do Perfil</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do Perfil</label>
                   <input
                     type="text"
                     required
                     value={editingUserType.nome}
                     onChange={(e) => setEditingUserType({ ...editingUserType, nome: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nível de Permissão</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nível de Permissão</label>
                   <select
                     value={editingUserType.role}
                     onChange={(e) => setEditingUserType({ ...editingUserType, role: e.target.value as "admin" | "user" })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                   >
                     <option value="user">Usuário Comum</option>
                     <option value="admin">Administrador</option>
@@ -2337,39 +2337,39 @@ export function AdminUsuariosPage() {
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editingUserType.ativo ?? true}
                   onChange={(e) => setEditingUserType({ ...editingUserType, ativo: e.target.checked })}
-                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                  className="rounded border-border bg-card text-blue-500"
                 />
                 Perfil ativo
               </label>
 
-              <div className="border-t border-slate-800 pt-4">
+              <div className="border-t border-border pt-4">
                 <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados</h4>
 
-                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-4 space-y-3">
+                <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input
                       type="text"
                       placeholder="Identificador (ex: cnpj)"
                       value={editFieldName}
                       onChange={(e) => setEditFieldName(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     />
                     <input
                       type="text"
                       placeholder="Rótulo (ex: CNPJ)"
                       value={editFieldLabel}
                       onChange={(e) => setEditFieldLabel(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     />
                     <select
                       value={editFieldType}
                       onChange={(e) => setEditFieldType(e.target.value as any)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     >
                       <option value="text">Texto</option>
                       <option value="number">Número</option>
@@ -2377,19 +2377,19 @@ export function AdminUsuariosPage() {
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={editFieldRequired}
                         onChange={(e) => setEditFieldRequired(e.target.checked)}
-                        className="rounded border-slate-800 bg-slate-900 text-blue-500 w-3.5 h-3.5"
+                        className="rounded border-border bg-card text-blue-500 w-3.5 h-3.5"
                       />
                       Obrigatório
                     </label>
                     <button
                       type="button"
                       onClick={handleAddFieldToEditType}
-                      className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg border border-slate-700/50"
+                      className="px-3 py-1 bg-muted hover:bg-muted text-foreground text-xs font-semibold rounded-lg border border-border"
                     >
                       Adicionar Campo
                     </button>
@@ -2399,23 +2399,23 @@ export function AdminUsuariosPage() {
                 {editingUserType.campos_schema.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {editingUserType.campos_schema.map((f, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800/80 px-2.5 py-1 rounded-lg text-xs text-slate-300">
-                        <span className="font-semibold text-white">{f.label}</span>
-                        <span className="text-[10px] text-slate-500">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
-                        <button type="button" onClick={() => handleRemoveFieldFromEditType(idx)} className="text-slate-500 hover:text-red-400 ml-1">
+                      <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
+                        <span className="font-semibold text-foreground">{f.label}</span>
+                        <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
+                        <button type="button" onClick={() => handleRemoveFieldFromEditType(idx)} className="text-muted-foreground hover:text-red-400 ml-1">
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500 italic">Nenhum campo personalizado.</p>
+                  <p className="text-xs text-muted-foreground italic">Nenhum campo personalizado.</p>
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
                 </button>
               </div>
