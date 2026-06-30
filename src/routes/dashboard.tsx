@@ -33,11 +33,32 @@ export const Route = createFileRoute("/dashboard")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(todasTarefasQuery()),
   component: Dashboard,
+  pendingComponent: DashboardSkeleton,
+  pendingMs: 0,
+  pendingMinMs: 200,
   errorComponent: ({ error }) => (
     <div className="p-8 text-sm text-destructive">{error.message}</div>
   ),
   notFoundComponent: () => <div className="p-8">Sem dados.</div>,
 });
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-8 space-y-6 animate-pulse">
+      <div className="h-8 w-64 rounded-md bg-muted" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-28 rounded-xl bg-muted" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="h-72 rounded-xl bg-muted" />
+        <div className="h-72 rounded-xl bg-muted" />
+      </div>
+      <div className="h-64 rounded-xl bg-muted" />
+    </div>
+  );
+}
 
 function Dashboard() {
   const { data: tarefas } = useSuspenseQuery(todasTarefasQuery());

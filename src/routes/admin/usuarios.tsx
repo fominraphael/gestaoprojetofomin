@@ -65,14 +65,9 @@ export const Route = createFileRoute("/admin/usuarios")({
   component: AdminUsuariosPage,
 });
 
-function cleanCnpj(val: string) {
-  return val.replace(/\D/g, "");
-}
-
 function formatCnpj(val: string) {
-  const clean = cleanCnpj(val);
-  if (clean.length !== 14) return val;
-  return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  // Display CNPJ as-is (no formatting/validation).
+  return val;
 }
 
 export function AdminUsuariosPage() {
@@ -140,6 +135,15 @@ export function AdminUsuariosPage() {
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
 
+  // Edit modal states
+  const [editingCompany, setEditingCompany] = useState<Empresa | null>(null);
+  const [editingDocType, setEditingDocType] = useState<DocumentoTipo | null>(null);
+  const [editingUserType, setEditingUserType] = useState<TipoUsuarioConfig | null>(null);
+  const [editFieldName, setEditFieldName] = useState("");
+  const [editFieldLabel, setEditFieldLabel] = useState("");
+  const [editFieldType, setEditFieldType] = useState<"text" | "number" | "boolean">("text");
+  const [editFieldRequired, setEditFieldRequired] = useState(false);
+
   // Load all system data
   const loadAllData = useCallback(async () => {
     setLoadingData(true);
@@ -206,7 +210,7 @@ export function AdminUsuariosPage() {
         password: newUser.password,
         role: selectedType?.role || "user",
         status: "approved",
-        cnpj: newUser.campos_customizados.cnpj ? cleanCnpj(newUser.campos_customizados.cnpj) : null,
+        cnpj: newUser.campos_customizados.cnpj ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj) : null,
         empresa_id: null,
         modulos: newUser.modulos,
         active: newUser.active,
@@ -248,7 +252,7 @@ export function AdminUsuariosPage() {
 
       const updates: any = {
         role: selectedType?.role || "user",
-        cnpj: userObj.campos_customizados?.cnpj ? cleanCnpj(userObj.campos_customizados.cnpj) : null,
+        cnpj: userObj.campos_customizados?.cnpj ? ((v: string) => v.trim())(userObj.campos_customizados.cnpj) : null,
         empresa_id: null,
         modulos: userObj.modulos || [],
         active: userObj.active,
@@ -424,15 +428,22 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditCompany = async (c: Empresa) => {
-    const nome = window.prompt("Nome da empresa:", c.nome);
-    if (nome === null) return;
-    const cnpj = window.prompt("CNPJ (apenas números):", c.cnpj);
-    if (cnpj === null) return;
-    setActionLoading(c.id);
+  const handleEditCompany = (c: Empresa) => {
+    setEditingCompany({ ...c });
+  };
+
+  const handleSaveEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+    setActionLoading(editingCompany.id);
     try {
-      await atualizarEmpresa(c.id, { nome: nome.trim(), cnpj: cnpj.trim() });
+      await atualizarEmpresa(editingCompany.id, {
+        nome: editingCompany.nome.trim(),
+        cnpj: editingCompany.cnpj.trim(),
+        ativo: editingCompany.ativo,
+      });
       showToast("success", "Empresa atualizada.");
+      setEditingCompany(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar empresa.");
@@ -441,15 +452,22 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditDocType = async (t: DocumentoTipo) => {
-    const nome = window.prompt("Nome do tipo:", t.nome);
-    if (nome === null) return;
-    const descricao = window.prompt("Descrição:", t.descricao ?? "");
-    if (descricao === null) return;
-    setActionLoading(t.id);
+  const handleEditDocType = (t: DocumentoTipo) => {
+    setEditingDocType({ ...t });
+  };
+
+  const handleSaveEditDocType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocType) return;
+    setActionLoading(editingDocType.id);
     try {
-      await atualizarDocumentoTipo(t.id, { nome: nome.trim(), descricao: descricao.trim() });
+      await atualizarDocumentoTipo(editingDocType.id, {
+        nome: editingDocType.nome.trim(),
+        descricao: (editingDocType.descricao ?? "").trim(),
+        ativo: editingDocType.ativo,
+      });
       showToast("success", "Tipo de documento atualizado.");
+      setEditingDocType(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar tipo de documento.");
@@ -458,13 +476,59 @@ export function AdminUsuariosPage() {
     }
   };
 
-  const handleEditUserType = async (t: TipoUsuarioConfig) => {
-    const nome = window.prompt("Nome do perfil:", t.nome);
-    if (nome === null) return;
-    setActionLoading(t.id);
+  const handleEditUserType = (t: TipoUsuarioConfig) => {
+    setEditingUserType({ ...t, campos_schema: [...(t.campos_schema || [])] });
+    setEditFieldName("");
+    setEditFieldLabel("");
+    setEditFieldType("text");
+    setEditFieldRequired(false);
+  };
+
+  const handleAddFieldToEditType = () => {
+    if (!editingUserType) return;
+    if (!editFieldName.trim() || !editFieldLabel.trim()) {
+      showToast("error", "Identificador e rótulo são obrigatórios.");
+      return;
+    }
+    setEditingUserType({
+      ...editingUserType,
+      campos_schema: [
+        ...editingUserType.campos_schema,
+        {
+          nome: editFieldName.trim(),
+          label: editFieldLabel.trim(),
+          tipo: editFieldType,
+          obrigatorio: editFieldRequired,
+        },
+      ],
+    });
+    setEditFieldName("");
+    setEditFieldLabel("");
+    setEditFieldType("text");
+    setEditFieldRequired(false);
+  };
+
+  const handleRemoveFieldFromEditType = (idx: number) => {
+    if (!editingUserType) return;
+    setEditingUserType({
+      ...editingUserType,
+      campos_schema: editingUserType.campos_schema.filter((_, i) => i !== idx),
+    });
+  };
+
+  const handleSaveEditUserType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUserType) return;
+    setActionLoading(editingUserType.id);
     try {
-      await atualizarTipoUsuarioConfig(t.id, { nome: nome.trim() });
+      await atualizarTipoUsuarioConfig(editingUserType.id, {
+        nome: editingUserType.nome.trim(),
+        role: editingUserType.role,
+        campos_schema: editingUserType.campos_schema,
+        ativo: editingUserType.ativo,
+      });
       showToast("success", "Perfil atualizado.");
+      setEditingUserType(null);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar perfil.");
@@ -472,6 +536,7 @@ export function AdminUsuariosPage() {
       setActionLoading(null);
     }
   };
+
 
   const handleToggleUserTypeAtivo = async (t: TipoUsuarioConfig) => {
     setActionLoading(t.id);
@@ -633,11 +698,11 @@ export function AdminUsuariosPage() {
       });
 
       // Special action: if CNPJ is a field, create/find the company automatically
-      const cnpj = campos_customizados.cnpj ? cleanCnpj(String(campos_customizados.cnpj)) : "";
+      const cnpj = campos_customizados.cnpj ? ((v: string) => v.trim())(String(campos_customizados.cnpj)) : "";
       
       try {
         if (cnpj) {
-          let companyObj = empresas.find(e => cleanCnpj(e.cnpj) === cleanCnpj(cnpj));
+          let companyObj = empresas.find(e => ((v: string) => v.trim())(e.cnpj) === ((v: string) => v.trim())(cnpj));
           if (!companyObj) {
             // Find a name for the company or use username
             const razaoSocialKey = Object.keys(row).find(k => ["razão social", "razao social", "empresa", "nome da empresa"].includes(k.toLowerCase().trim()));
@@ -770,17 +835,6 @@ export function AdminUsuariosPage() {
             Usuários
           </button>
           <button
-            onClick={() => setActiveTab("import")}
-            className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
-              activeTab === "import"
-                ? "text-blue-400 border-blue-400"
-                : "text-slate-400 border-transparent hover:text-slate-200"
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Importação em Massa
-          </button>
-          <button
             onClick={() => setActiveTab("companies")}
             className={`pb-3 text-sm font-medium transition-all relative border-b-2 whitespace-nowrap flex items-center gap-2 ${
               activeTab === "companies"
@@ -825,12 +879,20 @@ export function AdminUsuariosPage() {
                   Cadastre novos lojistas, configure permissões e defina senhas.
                 </p>
               </div>
-              <button
-                onClick={() => setShowCreateUser(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
-              >
-                <Plus className="w-4 h-4" /> Novo Usuário
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab("import")}
+                  className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4" /> Importação em Massa
+                </button>
+                <button
+                  onClick={() => setShowCreateUser(true)}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                >
+                  <Plus className="w-4 h-4" /> Novo Usuário
+                </button>
+              </div>
             </div>
 
             {/* Create User Form Box */}
@@ -1368,11 +1430,19 @@ export function AdminUsuariosPage() {
         {/* -------------------- TAB: IMPORT -------------------- */}
         {activeTab === "import" && (
           <section className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
-              <p className="text-sm text-slate-400 mt-1">
-                Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
-              </p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("users")}
+                className="flex items-center gap-2 bg-slate-800/70 hover:bg-slate-700 text-slate-200 border border-slate-700/50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Usuários
+              </button>
             </div>
 
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
@@ -1580,7 +1650,7 @@ export function AdminUsuariosPage() {
                     <div>
                       <input
                         type="text"
-                        placeholder="CNPJ (14 dígitos)"
+                        placeholder="CNPJ"
                         required
                         value={newCompany.cnpj}
                         onChange={(e) => setNewCompany({ ...newCompany, cnpj: e.target.value })}
@@ -2136,6 +2206,223 @@ export function AdminUsuariosPage() {
           </section>
         )}
       </main>
+
+      {/* -------- Edit Company Modal -------- */}
+      {editingCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingCompany(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-semibold text-white mb-4">Editar Empresa</h3>
+            <form onSubmit={handleSaveEditCompany} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Razão Social / Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={editingCompany.nome}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, nome: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">CNPJ</label>
+                <input
+                  type="text"
+                  required
+                  value={editingCompany.cnpj}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, cnpj: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingCompany.ativo ?? true}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, ativo: e.target.checked })}
+                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                />
+                Empresa ativa
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                  {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* -------- Edit DocType Modal -------- */}
+      {editingDocType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingDocType(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-semibold text-white mb-4">Editar Tipo de Documento</h3>
+            <form onSubmit={handleSaveEditDocType} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={editingDocType.nome}
+                  onChange={(e) => setEditingDocType({ ...editingDocType, nome: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Descrição</label>
+                <textarea
+                  rows={3}
+                  value={editingDocType.descricao ?? ""}
+                  onChange={(e) => setEditingDocType({ ...editingDocType, descricao: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingDocType.ativo ?? true}
+                  onChange={(e) => setEditingDocType({ ...editingDocType, ativo: e.target.checked })}
+                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                />
+                Tipo ativo
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                  {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* -------- Edit UserType Modal -------- */}
+      {editingUserType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditingUserType(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-semibold text-white mb-4">Editar Perfil de Usuário</h3>
+            <form onSubmit={handleSaveEditUserType} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome do Perfil</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingUserType.nome}
+                    onChange={(e) => setEditingUserType({ ...editingUserType, nome: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">Nível de Permissão</label>
+                  <select
+                    value={editingUserType.role}
+                    onChange={(e) => setEditingUserType({ ...editingUserType, role: e.target.value as "admin" | "user" })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="user">Usuário Comum</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingUserType.ativo ?? true}
+                  onChange={(e) => setEditingUserType({ ...editingUserType, ativo: e.target.checked })}
+                  className="rounded border-slate-800 bg-slate-900 text-blue-500"
+                />
+                Perfil ativo
+              </label>
+
+              <div className="border-t border-slate-800 pt-4">
+                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados</h4>
+
+                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-4 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Identificador (ex: cnpj)"
+                      value={editFieldName}
+                      onChange={(e) => setEditFieldName(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Rótulo (ex: CNPJ)"
+                      value={editFieldLabel}
+                      onChange={(e) => setEditFieldLabel(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                    />
+                    <select
+                      value={editFieldType}
+                      onChange={(e) => setEditFieldType(e.target.value as any)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white focus:outline-none text-xs"
+                    >
+                      <option value="text">Texto</option>
+                      <option value="number">Número</option>
+                      <option value="boolean">Sim/Não</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editFieldRequired}
+                        onChange={(e) => setEditFieldRequired(e.target.checked)}
+                        className="rounded border-slate-800 bg-slate-900 text-blue-500 w-3.5 h-3.5"
+                      />
+                      Obrigatório
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAddFieldToEditType}
+                      className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg border border-slate-700/50"
+                    >
+                      Adicionar Campo
+                    </button>
+                  </div>
+                </div>
+
+                {editingUserType.campos_schema.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {editingUserType.campos_schema.map((f, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800/80 px-2.5 py-1 rounded-lg text-xs text-slate-300">
+                        <span className="font-semibold text-white">{f.label}</span>
+                        <span className="text-[10px] text-slate-500">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
+                        <button type="button" onClick={() => handleRemoveFieldFromEditType(idx)} className="text-slate-500 hover:text-red-400 ml-1">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">Nenhum campo personalizado.</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm">Cancelar</button>
+                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                  {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

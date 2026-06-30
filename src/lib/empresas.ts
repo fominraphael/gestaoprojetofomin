@@ -39,10 +39,9 @@ export async function obterEmpresas(): Promise<Empresa[]> {
 }
 
 export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa> {
-  const cleanCnpj = cnpj.replace(/\D/g, "");
   const { data, error } = await supabase
     .from("empresas")
-    .insert([{ cnpj: cleanCnpj, nome }])
+    .insert([{ cnpj: cnpj.trim(), nome }])
     .select("*")
     .single();
   if (error) {
@@ -57,7 +56,7 @@ export async function atualizarEmpresa(
   updates: { cnpj?: string; nome?: string; ativo?: boolean }
 ): Promise<void> {
   const payload: any = { ...updates };
-  if (payload.cnpj) payload.cnpj = String(payload.cnpj).replace(/\D/g, "");
+  if (payload.cnpj !== undefined) payload.cnpj = String(payload.cnpj).trim();
   const { error } = await supabase.from("empresas").update(payload).eq("id", id);
   if (error) {
     if (error.code === "23505") throw new Error("Uma empresa com este CNPJ já está cadastrada.");
