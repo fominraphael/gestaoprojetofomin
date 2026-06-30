@@ -201,7 +201,7 @@ export function AdminUsuariosPage() {
         password: newUser.password,
         role: selectedType?.role || "user",
         status: "approved",
-        cnpj: newUser.campos_customizados.cnpj ? cleanCnpj(newUser.campos_customizados.cnpj) : null,
+        cnpj: newUser.campos_customizados.cnpj ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj) : null,
         empresa_id: null,
         modulos: newUser.modulos,
         active: newUser.active,
@@ -243,7 +243,7 @@ export function AdminUsuariosPage() {
 
       const updates: any = {
         role: selectedType?.role || "user",
-        cnpj: userObj.campos_customizados?.cnpj ? cleanCnpj(userObj.campos_customizados.cnpj) : null,
+        cnpj: userObj.campos_customizados?.cnpj ? ((v: string) => v.trim())(userObj.campos_customizados.cnpj) : null,
         empresa_id: null,
         modulos: userObj.modulos || [],
         active: userObj.active,
@@ -628,11 +628,11 @@ export function AdminUsuariosPage() {
       });
 
       // Special action: if CNPJ is a field, create/find the company automatically
-      const cnpj = campos_customizados.cnpj ? cleanCnpj(String(campos_customizados.cnpj)) : "";
+      const cnpj = campos_customizados.cnpj ? ((v: string) => v.trim())(String(campos_customizados.cnpj)) : "";
       
       try {
         if (cnpj) {
-          let companyObj = empresas.find(e => cleanCnpj(e.cnpj) === cleanCnpj(cnpj));
+          let companyObj = empresas.find(e => ((v: string) => v.trim())(e.cnpj) === ((v: string) => v.trim())(cnpj));
           if (!companyObj) {
             // Find a name for the company or use username
             const razaoSocialKey = Object.keys(row).find(k => ["razão social", "razao social", "empresa", "nome da empresa"].includes(k.toLowerCase().trim()));
