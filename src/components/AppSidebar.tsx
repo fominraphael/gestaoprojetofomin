@@ -28,7 +28,13 @@ const items = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin, user } = useAuth();
+  const userModules = user?.modulos || [];
+  const visibleItems = items.filter((it) => {
+    if (isAdmin) return true;
+    if (it.to === "/documentos") return userModules.includes("documentos");
+    return userModules.includes("gestao");
+  });
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
