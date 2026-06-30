@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -13,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -25,7 +27,7 @@ function NotFoundComponent() {
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Voltar ao Dashboard
+            Voltar ao Portal
           </Link>
         </div>
       </div>
@@ -70,10 +72,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Gestão de Projetos" },
+      { title: "Portal de Aplicações" },
       { name: "description", content: "Painel pessoal de gestão de projetos e atividades" },
-      { property: "og:title", content: "Gestão de Projetos" },
-      { name: "twitter:title", content: "Gestão de Projetos" },
+      { property: "og:title", content: "Portal de Aplicações" },
+      { name: "twitter:title", content: "Portal de Aplicações" },
       { property: "og:description", content: "Painel pessoal de gestão de projetos e atividades" },
       { name: "twitter:description", content: "Painel pessoal de gestão de projetos e atividades" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5525a6bd-06d3-4db5-b5b1-9f4e437055ee/id-preview-5d767bb2--358d8cb0-fba0-4a79-b55c-25d29ba4cae9.lovable.app-1782310781905.png" },
@@ -103,18 +105,33 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+// Routes that do NOT show the sidebar (public pages + portal)
+const PUBLIC_ROUTES = ["/login", "/registrar", "/"];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <main className="flex-1 min-w-0 overflow-x-hidden">
-          <Outlet />
-        </main>
-      </div>
-      <Toaster />
+      <AuthProvider>
+        <AppLayout />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+function AppLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showSidebar = !PUBLIC_ROUTES.includes(pathname) && pathname !== "/admin/usuarios";
+
+  return (
+    <div className="flex min-h-screen w-full bg-background">
+      {showSidebar && <AppSidebar />}
+      <main className={showSidebar ? "flex-1 min-w-0 overflow-x-hidden" : "w-full"}>
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+

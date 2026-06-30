@@ -1,10 +1,21 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, KanbanSquare, Map, Inbox, Archive, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import {
+  LayoutDashboard,
+  KanbanSquare,
+  Map,
+  Inbox,
+  Archive,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Layers,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/backlog", label: "Backlog", icon: KanbanSquare },
   { to: "/roadmap", label: "Roadmap", icon: Map },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
@@ -13,6 +24,8 @@ const items = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
@@ -28,15 +41,25 @@ export function AppSidebar() {
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/login" });
+  };
+
   return (
-    <aside className={cn(
-      "shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
-      isCollapsed ? "w-[70px]" : "w-60"
-    )}>
-      <div className={cn(
-        "px-5 py-5 border-b border-sidebar-border flex items-center justify-between gap-2",
-        isCollapsed && "px-3 justify-center"
-      )}>
+    <aside
+      className={cn(
+        "shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
+        isCollapsed ? "w-[70px]" : "w-60"
+      )}
+    >
+      {/* Header */}
+      <div
+        className={cn(
+          "px-5 py-5 border-b border-sidebar-border flex items-center justify-between gap-2",
+          isCollapsed && "px-3 justify-center"
+        )}
+      >
         {!isCollapsed && (
           <div className="flex flex-col min-w-0">
             <div className="text-base font-semibold tracking-tight truncate">Gestão de Projetos</div>
@@ -54,9 +77,14 @@ export function AppSidebar() {
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
+
+      {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {items.map((item) => {
-          const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          const active =
+            item.to === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(item.to);
           const Icon = item.icon;
           return (
             <Link
@@ -67,7 +95,7 @@ export function AppSidebar() {
                 isCollapsed ? "justify-center px-2" : "",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
               )}
               title={isCollapsed ? item.label : undefined}
             >
@@ -77,13 +105,44 @@ export function AppSidebar() {
           );
         })}
       </nav>
-      <div className={cn(
-        "px-5 py-4 border-t border-sidebar-border text-xs text-muted-foreground",
-        isCollapsed && "px-3 text-center"
-      )}>
-        {isCollapsed ? "v1" : "v1.0"}
+
+      {/* Footer */}
+      <div
+        className={cn(
+          "px-3 py-4 border-t border-sidebar-border space-y-1",
+          isCollapsed && "px-2"
+        )}
+      >
+        {/* Back to Portal */}
+        <Link
+          to="/"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? "Voltar ao Portal" : undefined}
+        >
+          <Layers className="w-4 h-4 shrink-0" />
+          {!isCollapsed && <span className="truncate">Portal</span>}
+        </Link>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? "Sair" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!isCollapsed && <span className="truncate">Sair</span>}
+        </button>
+
+        {!isCollapsed && (
+          <div className="px-3 pt-2 text-xs text-muted-foreground">v1.0</div>
+        )}
       </div>
     </aside>
   );
 }
-
