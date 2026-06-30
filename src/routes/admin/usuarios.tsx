@@ -703,7 +703,7 @@ export function AdminUsuariosPage() {
             }`}
           >
             <Users className="w-4 h-4" />
-            Gerenciar Lojistas
+            Usuários
           </button>
           <button
             onClick={() => setActiveTab("import")}
