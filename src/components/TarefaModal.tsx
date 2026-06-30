@@ -81,7 +81,6 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
   const qc = useQueryClient();
   const { user } = useAuth();
   const [form, setForm] = useState<FormState>(empty(defaultCategoria));
-  const qc = useQueryClient();
 
   useEffect(() => {
     if (tarefa) {
