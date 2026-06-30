@@ -80,6 +80,7 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
+      { to: "/toyota/estoque/importar", label: "Importar Estoque", icon: Upload },
       { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
     ],
   },
