@@ -9,6 +9,8 @@ import {
   ChevronRight,
   LogOut,
   Layers,
+  FileText,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,6 +22,7 @@ const items = [
   { to: "/roadmap", label: "Roadmap", icon: Map },
   { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
   { to: "/historico", label: "Lixeira", icon: Archive },
+  { to: "/documentos", label: "Documentos", icon: FileText },
 ] as const;
 
 export function AppSidebar() {
