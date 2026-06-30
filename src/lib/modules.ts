@@ -7,8 +7,10 @@ import {
   FileText,
   Car,
   Settings,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
+
 
 
 export interface ModuleNavItem {
