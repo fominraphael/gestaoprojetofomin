@@ -1874,13 +1874,22 @@ export function AdminUsuariosPage() {
                       <div className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                         Documento
                       </div>
-                      <button
-                        onClick={() => handleDeleteDocType(t.id, t.nome)}
-                        className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
-                        title="Excluir tipo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditDocType(t)}
+                          className="p-1 rounded text-slate-500 hover:text-blue-400 transition-colors"
+                          title="Editar tipo"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDocType(t.id, t.nome)}
+                          className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors"
+                          title="Excluir tipo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <h3 className="text-white font-semibold text-sm truncate uppercase">{t.nome}</h3>
                     <p className="text-xs text-slate-400 mt-2 leading-relaxed">
