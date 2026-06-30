@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, ShieldCheck, Loader2, Search } from "lucide-react";
+import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +48,8 @@ export const Route = createFileRoute(
   errorComponent: ModuleErrorBoundary,
   component: AnaliseElegiveis,
 });
+
+const REVISOES_DISPONIVEIS = ["10k", "20k", "30k", "40k", "50k", "60k", "70k", "80k", "100k"];
 
 interface Filial {
   id: string;
