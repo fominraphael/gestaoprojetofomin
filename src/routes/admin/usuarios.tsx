@@ -786,8 +786,8 @@ export function AdminUsuariosPage() {
               <ArrowLeft className="w-4 h-4" />
               Portal
             </Link>
-            <span className="text-slate-700">/</span>
-            <span className="text-white text-sm font-semibold flex items-center gap-2">
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground text-sm font-semibold flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-indigo-400" />
               Painel Administrativo
             </span>
@@ -874,7 +874,7 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Usuários do Sistema</h2>
+                <h2 className="text-xl font-semibold text-foreground">Usuários do Sistema</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Cadastre novos lojistas, configure permissões e defina senhas.
                 </p>
@@ -888,7 +888,7 @@ export function AdminUsuariosPage() {
                 </button>
                 <button
                   onClick={() => setShowCreateUser(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
                 >
                   <Plus className="w-4 h-4" /> Novo Usuário
                 </button>
@@ -906,7 +906,7 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">Adicionar Novo Usuário</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Adicionar Novo Usuário</h3>
                 <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Login de acesso</label>
@@ -916,7 +916,7 @@ export function AdminUsuariosPage() {
                       placeholder="Identificador do usuário para login"
                       value={newUser.username}
                       onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
@@ -927,7 +927,7 @@ export function AdminUsuariosPage() {
                       placeholder="Defina a senha inicial"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
@@ -943,7 +943,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     >
                       {userTypes.map((t) => {
                         // Security check: only users with pode_criar_admin (or root) can choose admin user types
@@ -977,7 +977,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -995,7 +995,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           />
                         )}
                       </div>
@@ -1056,7 +1056,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="submit"
                       disabled={actionLoading === "create-user"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
                     >
                       {actionLoading === "create-user" ? "Criando..." : "Salvar Usuário"}
                     </button>
@@ -1076,7 +1076,7 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
                   Editar Usuário: {showEditUser.username}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1086,7 +1086,7 @@ export function AdminUsuariosPage() {
                       type="text"
                       disabled
                       value={showEditUser.username}
-                      className="w-full px-4 py-2 rounded-lg bg-background/50 border border-slate-850 text-muted-foreground cursor-not-allowed text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-muted/50 border border-border text-muted-foreground cursor-not-allowed text-sm"
                     />
                   </div>
                   <div>
@@ -1098,7 +1098,7 @@ export function AdminUsuariosPage() {
                       placeholder="Preencha apenas para alterar"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
@@ -1115,7 +1115,7 @@ export function AdminUsuariosPage() {
                           campos_customizados: {},
                         });
                       }}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     >
                       {userTypes.map((t) => {
                         const isRoot = currentUser?.username === "root";
@@ -1149,7 +1149,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: e.target.value === "true",
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           >
                             <option value="false">Não</option>
                             <option value="true">Sim</option>
@@ -1167,7 +1167,7 @@ export function AdminUsuariosPage() {
                                 [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
                               }
                             })}
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                           />
                         )}
                       </div>
@@ -1282,7 +1282,7 @@ export function AdminUsuariosPage() {
                       type="button"
                       onClick={() => handleUpdateUser(showEditUser)}
                       disabled={actionLoading === showEditUser.id}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all shadow-md shadow-blue-500/10"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10"
                     >
                       {actionLoading === showEditUser.id ? "Salvando..." : "Salvar Alterações"}
                     </button>
@@ -1299,7 +1299,7 @@ export function AdminUsuariosPage() {
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 placeholder="Buscar por login, tipo, CNPJ..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
               />
             </div>
 
@@ -1337,7 +1337,7 @@ export function AdminUsuariosPage() {
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-white font-medium flex items-center gap-2">
+                          <div className="text-foreground font-medium flex items-center gap-2">
                             {u.username}
                             {u.pode_criar_admin && (
                               <span className="text-[9px] bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.2 rounded-full font-semibold">
@@ -1352,7 +1352,7 @@ export function AdminUsuariosPage() {
                                 const val = u.campos_customizados?.[k];
                                 if (val === undefined || val === null || val === "") return null;
                                 return (
-                                  <span key={k} className="text-[10px] text-muted-foreground bg-background/60 px-2 py-0.5 rounded border border-slate-850">
+                                  <span key={k} className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border">
                                     <strong className="text-muted-foreground font-medium uppercase text-[9px] mr-1">{k}:</strong>
                                     {typeof val === "boolean" ? (val ? "Sim" : "Não") : String(val)}
                                   </span>
@@ -1432,7 +1432,7 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Importação em Massa</h2>
+                <h2 className="text-xl font-semibold text-foreground">Importação em Massa</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
                 </p>
@@ -1457,7 +1457,7 @@ export function AdminUsuariosPage() {
                     setSelectedUserTypeImportId(e.target.value);
                     setImportRows([]); // reset preview when type changes
                   }}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-semibold"
                 >
                   {userTypes.map((t) => (
                     <option key={t.id} value={t.nome}>
@@ -1471,7 +1471,7 @@ export function AdminUsuariosPage() {
                 <Upload className="w-6 h-6" />
               </div>
               
-              <h3 className="text-base font-semibold text-white">Selecione sua planilha Excel</h3>
+              <h3 className="text-base font-semibold text-foreground">Selecione sua planilha Excel</h3>
               
               {/* Dynamic instruction text based on selected user type */}
               {(() => {
@@ -1498,7 +1498,7 @@ export function AdminUsuariosPage() {
               })()}
 
               <div className="flex flex-col items-center gap-4 pt-2">
-                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
+                <label className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/20">
                   <Plus className="w-4 h-4 inline-block mr-2" />
                   Procurar Planilha
                   <input
@@ -1551,7 +1551,7 @@ export function AdminUsuariosPage() {
             {/* Imported Rows Preview */}
             {importRows.length > 0 && (
               <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-xl animate-scale-up max-w-4xl mx-auto">
-                <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center justify-between">
                   <span>Visualizando Registros da Planilha ({importRows.length})</span>
                   <button
                     onClick={() => setImportRows([])}
@@ -1595,7 +1595,7 @@ export function AdminUsuariosPage() {
                   <button
                     onClick={handleProcessImport}
                     disabled={importLoading}
-                    className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+                    className="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-foreground text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
                   >
                     {importLoading ? (
                       <>
@@ -1618,7 +1618,7 @@ export function AdminUsuariosPage() {
             {/* Left Col: Companies List */}
             <div className="space-y-6 lg:col-span-1">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Empresas</h2>
+                <h2 className="text-xl font-semibold text-foreground">Empresas</h2>
                 <button
                   onClick={() => setShowCreateCompany(true)}
                   className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-blue-400 border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
@@ -1631,7 +1631,7 @@ export function AdminUsuariosPage() {
               {showCreateCompany && (
                 <div className="bg-card border border-border rounded-xl p-4 animate-scale-up">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold text-white">Nova Empresa</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Nova Empresa</h3>
                     <button onClick={() => setShowCreateCompany(false)} className="text-muted-foreground hover:text-foreground">
                       <X className="w-4 h-4" />
                     </button>
@@ -1644,7 +1644,7 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.nome}
                         onChange={(e) => setNewCompany({ ...newCompany, nome: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                     <div>
@@ -1654,7 +1654,7 @@ export function AdminUsuariosPage() {
                         required
                         value={newCompany.cnpj}
                         onChange={(e) => setNewCompany({ ...newCompany, cnpj: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
@@ -1667,7 +1667,7 @@ export function AdminUsuariosPage() {
                       </button>
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-md bg-blue-500 hover:bg-blue-600 text-white"
+                        className="px-3 py-1 text-xs rounded-md bg-blue-500 hover:bg-blue-600 text-foreground"
                       >
                         Cadastrar
                       </button>
@@ -1684,7 +1684,7 @@ export function AdminUsuariosPage() {
                     onClick={() => setSelectedCompanyId(c.id)}
                     className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
                       selectedCompanyId === c.id
-                        ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5 text-white"
+                        ? "bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5 text-foreground"
                         : "bg-card border-border hover:bg-accent text-foreground"
                     }`}
                   >
@@ -1738,7 +1738,7 @@ export function AdminUsuariosPage() {
                       {/* Top Header */}
                       <div className="flex items-center justify-between flex-wrap gap-4 border-b border-border pb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{company?.nome}</h3>
+                          <h3 className="text-lg font-semibold text-foreground">{company?.nome}</h3>
                           <p className="text-xs text-muted-foreground mt-1 font-mono">
                             CNPJ: {company ? formatCnpj(company.cnpj) : ""}
                           </p>
@@ -1749,8 +1749,8 @@ export function AdminUsuariosPage() {
                       </div>
 
                       {/* Upload Box */}
-                      <div className="bg-background/60 border border-border rounded-xl p-4 space-y-4">
-                        <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <div className="bg-muted/60 border border-border rounded-xl p-4 space-y-4">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
                           <Upload className="w-4 h-4 text-blue-400" />
                           Anexar Novo Arquivo
                         </h4>
@@ -1781,7 +1781,7 @@ export function AdminUsuariosPage() {
                               }`}
                             >
                               {uploadLoading ? (
-                                <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-200 rounded-full animate-spin" />
+                                <span className="w-3.5 h-3.5 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
                               ) : (
                                 <Upload className="w-3.5 h-3.5 text-muted-foreground" />
                               )}
@@ -1800,7 +1800,7 @@ export function AdminUsuariosPage() {
 
                       {/* Attached Documents List */}
                       <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-white">Documentos Disponibilizados</h4>
+                        <h4 className="text-sm font-semibold text-foreground">Documentos Disponibilizados</h4>
                         <div className="space-y-2">
                           {companyFiles.map((file) => {
                             const typeObj = docTipos.find((t) => t.id === file.tipo_id);
@@ -1856,7 +1856,7 @@ export function AdminUsuariosPage() {
                 })()
               ) : (
                 <div className="h-96 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-muted-foreground text-sm">
-                  <Building className="w-10 h-10 text-slate-700 mb-3" />
+                  <Building className="w-10 h-10 text-muted-foreground mb-3" />
                   Selecione uma empresa na lista ao lado para gerenciar seus documentos.
                 </div>
               )}
@@ -1869,14 +1869,14 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Tipos de Documento</h2>
+                <h2 className="text-xl font-semibold text-foreground">Tipos de Documento</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Defina os tipos de documentos que a sua equipe jurídica e administrativa solicita.
                 </p>
               </div>
               <button
                 onClick={() => setShowCreateDocType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Novo Tipo
               </button>
@@ -1890,7 +1890,7 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-md font-semibold text-white mb-4">Novo Tipo de Documento</h3>
+                <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Documento</h3>
                 <form onSubmit={handleCreateDocType} className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do Tipo</label>
@@ -1900,7 +1900,7 @@ export function AdminUsuariosPage() {
                       placeholder="Ex: CERTIDÃO NEGATIVA SIMPLIFICADA"
                       value={newDocType.nome}
                       onChange={(e) => setNewDocType({ ...newDocType, nome: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -1910,7 +1910,7 @@ export function AdminUsuariosPage() {
                       value={newDocType.descricao}
                       onChange={(e) => setNewDocType({ ...newDocType, descricao: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div className="flex justify-end gap-3 mt-4">
@@ -1923,7 +1923,7 @@ export function AdminUsuariosPage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
                     >
                       Criar Tipo
                     </button>
@@ -1961,12 +1961,12 @@ export function AdminUsuariosPage() {
                         </button>
                       </div>
                     </div>
-                    <h3 className="text-white font-semibold text-sm truncate uppercase">{t.nome}</h3>
+                    <h3 className="text-foreground font-semibold text-sm truncate uppercase">{t.nome}</h3>
                     <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                       {t.descricao || "Sem descrição informada."}
                     </p>
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-slate-850 pt-3">
+                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-border pt-3">
                     ID: {t.id}
                   </div>
                 </div>
@@ -1979,14 +1979,14 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white">Configuração de Perfis (Tipos de Usuários)</h2>
+                <h2 className="text-xl font-semibold text-foreground">Configuração de Perfis (Tipos de Usuários)</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Gerencie perfis personalizados de usuários e configure campos dinâmicos obrigatórios ou opcionais.
                 </p>
               </div>
               <button
                 onClick={() => setShowCreateUserType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
               >
                 <Plus className="w-4 h-4" /> Novo Perfil
               </button>
@@ -2000,7 +2000,7 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-md font-semibold text-white mb-4">Novo Tipo de Usuário</h3>
+                <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Usuário</h3>
                 
                 <form onSubmit={handleCreateUserType} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2012,7 +2012,7 @@ export function AdminUsuariosPage() {
                         placeholder="Ex: Fornecedor, ADM de loja"
                         value={newUserType.nome}
                         onChange={(e) => setNewUserType({ ...newUserType, nome: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                       />
                     </div>
                     <div>
@@ -2020,7 +2020,7 @@ export function AdminUsuariosPage() {
                       <select
                         value={newUserType.role}
                         onChange={(e) => setNewUserType({ ...newUserType, role: e.target.value as "admin" | "user" })}
-                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                       >
                         <option value="user">Usuário Comum (Lojistas, etc.)</option>
                         <option value="admin">Administrador (Gestão Geral)</option>
@@ -2032,7 +2032,7 @@ export function AdminUsuariosPage() {
                   <div className="border-t border-border pt-4">
                     <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
                     
-                    <div className="bg-background/60 p-4 rounded-xl border border-border mb-4 space-y-4">
+                    <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Identificador Técnico</label>
@@ -2041,7 +2041,7 @@ export function AdminUsuariosPage() {
                             placeholder="Ex: razao_social, cnpj"
                             value={newFieldName}
                             onChange={(e) => setNewFieldName(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           />
                         </div>
                         <div>
@@ -2051,7 +2051,7 @@ export function AdminUsuariosPage() {
                             placeholder="Ex: Razão Social, CNPJ"
                             value={newFieldLabel}
                             onChange={(e) => setNewFieldLabel(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           />
                         </div>
                         <div>
@@ -2059,7 +2059,7 @@ export function AdminUsuariosPage() {
                           <select
                             value={newFieldType}
                             onChange={(e) => setNewFieldType(e.target.value as any)}
-                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                            className="w-full px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                           >
                             <option value="text">Texto</option>
                             <option value="number">Número</option>
@@ -2082,7 +2082,7 @@ export function AdminUsuariosPage() {
                         <button
                           type="button"
                           onClick={handleAddFieldToNewType}
-                          className="px-3 py-1 bg-muted hover:bg-muted text-white text-xs font-semibold rounded-lg transition-all border border-border"
+                          className="px-3 py-1 bg-muted hover:bg-muted text-foreground text-xs font-semibold rounded-lg transition-all border border-border"
                         >
                           Adicionar Campo
                         </button>
@@ -2096,7 +2096,7 @@ export function AdminUsuariosPage() {
                         <div className="flex flex-wrap gap-2">
                           {newUserType.campos_schema.map((f, idx) => (
                             <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
-                              <span className="font-semibold text-white">{f.label}</span>
+                              <span className="font-semibold text-foreground">{f.label}</span>
                               <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
                               <button
                                 type="button"
@@ -2114,7 +2114,7 @@ export function AdminUsuariosPage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-3 mt-6 border-t border-slate-850 pt-4">
+                  <div className="flex justify-end gap-3 mt-6 border-t border-border pt-4">
                     <button
                       type="button"
                       onClick={() => setShowCreateUserType(false)}
@@ -2125,7 +2125,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="submit"
                       disabled={actionLoading === "create-usertype"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all"
                     >
                       {actionLoading === "create-usertype" ? "Salvando..." : "Salvar Perfil"}
                     </button>
@@ -2180,14 +2180,14 @@ export function AdminUsuariosPage() {
                         )}
                       </div>
                     </div>
-                    <h3 className="text-white font-semibold text-sm uppercase">{t.nome}</h3>
+                    <h3 className="text-foreground font-semibold text-sm uppercase">{t.nome}</h3>
                     
                     <div className="mt-3 space-y-2">
                       <span className="text-[10px] text-muted-foreground uppercase font-semibold">Campos do Perfil:</span>
                       <div className="flex flex-wrap gap-1.5">
                         {t.campos_schema && t.campos_schema.length > 0 ? (
                           t.campos_schema.map((f, idx) => (
-                            <span key={idx} className="text-[10px] bg-background/80 text-muted-foreground px-2 py-0.5 rounded border border-slate-850">
+                            <span key={idx} className="text-[10px] bg-muted/80 text-muted-foreground px-2 py-0.5 rounded border border-border">
                               {f.label} {f.obrigatorio && <span className="text-red-500">*</span>}
                             </span>
                           ))
@@ -2197,7 +2197,7 @@ export function AdminUsuariosPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-slate-850 pt-3">
+                  <div className="text-[10px] text-muted-foreground mt-4 border-t border-border pt-3">
                     ID: {t.id}
                   </div>
                 </div>
@@ -2209,12 +2209,12 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit Company Modal -------- */}
       {editingCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setEditingCompany(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Empresa</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Empresa</h3>
             <form onSubmit={handleSaveEditCompany} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Razão Social / Nome</label>
@@ -2223,7 +2223,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingCompany.nome}
                   onChange={(e) => setEditingCompany({ ...editingCompany, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <div>
@@ -2233,7 +2233,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingCompany.cnpj}
                   onChange={(e) => setEditingCompany({ ...editingCompany, cnpj: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -2247,7 +2247,7 @@ export function AdminUsuariosPage() {
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2258,12 +2258,12 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit DocType Modal -------- */}
       {editingDocType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setEditingDocType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Tipo de Documento</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Tipo de Documento</h3>
             <form onSubmit={handleSaveEditDocType} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome</label>
@@ -2272,7 +2272,7 @@ export function AdminUsuariosPage() {
                   required
                   value={editingDocType.nome}
                   onChange={(e) => setEditingDocType({ ...editingDocType, nome: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <div>
@@ -2281,7 +2281,7 @@ export function AdminUsuariosPage() {
                   rows={3}
                   value={editingDocType.descricao ?? ""}
                   onChange={(e) => setEditingDocType({ ...editingDocType, descricao: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -2295,7 +2295,7 @@ export function AdminUsuariosPage() {
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2306,12 +2306,12 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit UserType Modal -------- */}
       {editingUserType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setEditingUserType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-semibold text-white mb-4">Editar Perfil de Usuário</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Editar Perfil de Usuário</h3>
             <form onSubmit={handleSaveEditUserType} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -2321,7 +2321,7 @@ export function AdminUsuariosPage() {
                     required
                     value={editingUserType.nome}
                     onChange={(e) => setEditingUserType({ ...editingUserType, nome: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                   />
                 </div>
                 <div>
@@ -2329,7 +2329,7 @@ export function AdminUsuariosPage() {
                   <select
                     value={editingUserType.role}
                     onChange={(e) => setEditingUserType({ ...editingUserType, role: e.target.value as "admin" | "user" })}
-                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                   >
                     <option value="user">Usuário Comum</option>
                     <option value="admin">Administrador</option>
@@ -2350,26 +2350,26 @@ export function AdminUsuariosPage() {
               <div className="border-t border-border pt-4">
                 <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3">Campos Personalizados</h4>
 
-                <div className="bg-background/60 p-4 rounded-xl border border-border mb-4 space-y-3">
+                <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <input
                       type="text"
                       placeholder="Identificador (ex: cnpj)"
                       value={editFieldName}
                       onChange={(e) => setEditFieldName(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     />
                     <input
                       type="text"
                       placeholder="Rótulo (ex: CNPJ)"
                       value={editFieldLabel}
                       onChange={(e) => setEditFieldLabel(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     />
                     <select
                       value={editFieldType}
                       onChange={(e) => setEditFieldType(e.target.value as any)}
-                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-white focus:outline-none text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none text-xs"
                     >
                       <option value="text">Texto</option>
                       <option value="number">Número</option>
@@ -2389,7 +2389,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="button"
                       onClick={handleAddFieldToEditType}
-                      className="px-3 py-1 bg-muted hover:bg-muted text-white text-xs font-semibold rounded-lg border border-border"
+                      className="px-3 py-1 bg-muted hover:bg-muted text-foreground text-xs font-semibold rounded-lg border border-border"
                     >
                       Adicionar Campo
                     </button>
@@ -2400,7 +2400,7 @@ export function AdminUsuariosPage() {
                   <div className="flex flex-wrap gap-2">
                     {editingUserType.campos_schema.map((f, idx) => (
                       <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
-                        <span className="font-semibold text-white">{f.label}</span>
+                        <span className="font-semibold text-foreground">{f.label}</span>
                         <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
                         <button type="button" onClick={() => handleRemoveFieldFromEditType(idx)} className="text-muted-foreground hover:text-red-400 ml-1">
                           <X className="w-3 h-3" />
@@ -2415,7 +2415,7 @@ export function AdminUsuariosPage() {
 
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
                 </button>
               </div>

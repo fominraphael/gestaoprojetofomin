@@ -208,10 +208,10 @@ export function PortalPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20">
-              <Layers className="w-5 h-5 text-white" />
+              <Layers className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white leading-tight">Portal de Aplicações</div>
+              <div className="text-sm font-semibold text-foreground leading-tight">Portal de Aplicações</div>
               <div className="text-xs text-muted-foreground">Painel Principal</div>
             </div>
           </div>
@@ -231,7 +231,7 @@ export function PortalPage() {
             )}
 
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-foreground text-xs font-bold shrink-0">
                 {user?.username?.[0]?.toUpperCase()}
               </div>
               <span className="text-sm text-foreground hidden sm:inline">{user?.username}</span>
@@ -258,7 +258,7 @@ export function PortalPage() {
       {/* Main Content */}
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-12">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             Bem-vindo,{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
               {user?.username}
@@ -289,7 +289,7 @@ export function PortalPage() {
                   <div
                     className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${app.iconBg} mb-4 shadow-lg`}
                   >
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-foreground" />
                   </div>
 
                   {!isActive && (
@@ -298,7 +298,7 @@ export function PortalPage() {
                     </span>
                   )}
 
-                  <h2 className="text-lg font-semibold text-white mb-2">{app.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground mb-2">{app.title}</h2>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-5">{app.description}</p>
 
                   {isActive ? (
