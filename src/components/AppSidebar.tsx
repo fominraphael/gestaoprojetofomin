@@ -135,6 +135,20 @@ export function AppSidebar() {
           {!isCollapsed && <span className="truncate">Portal</span>}
         </Link>
 
+        {isAdmin && (
+          <Link
+            to="/admin/usuarios"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors",
+              isCollapsed && "justify-center px-2"
+            )}
+            title={isCollapsed ? "Painel Admin" : undefined}
+          >
+            <Users className="w-4 h-4 shrink-0" />
+            {!isCollapsed && <span className="truncate">Painel Admin</span>}
+          </Link>
+        )}
+
         {/* Logout */}
         <button
           onClick={handleLogout}
