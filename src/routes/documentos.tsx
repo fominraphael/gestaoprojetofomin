@@ -210,7 +210,7 @@ function DocumentosPage() {
                     <button
                       onClick={handleDownloadAll}
                       disabled={zipProgress}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-emerald-600 hover:to-teal-700 rounded-lg text-xs font-semibold text-foreground transition-all shadow-md shadow-blue-500/10 disabled:opacity-55"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-xs font-semibold text-primary-foreground transition-all shadow-md disabled:opacity-55"
                     >
                       <Download className="w-3.5 h-3.5" />
                       {zipProgress ? zipPercent : "Baixar Kit Completo (ZIP)"}

@@ -888,7 +888,7 @@ export function AdminUsuariosPage() {
                 </button>
                 <button
                   onClick={() => setShowCreateUser(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20"
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md"
                 >
                   <Plus className="w-4 h-4" /> Novo Usuário
                 </button>
@@ -1056,7 +1056,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="submit"
                       disabled={actionLoading === "create-user"}
-                      className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-foreground text-sm font-semibold transition-all shadow-md shadow-blue-500/10 disabled:opacity-50"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-all shadow-md disabled:opacity-50"
                     >
                       {actionLoading === "create-user" ? "Criando..." : "Salvar Usuário"}
                     </button>
