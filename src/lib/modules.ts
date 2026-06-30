@@ -12,6 +12,8 @@ import {
   ClipboardCheck,
   ListChecks,
   GitBranch,
+  Wrench,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 
