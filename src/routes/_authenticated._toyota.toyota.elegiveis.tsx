@@ -70,7 +70,7 @@ interface Veiculo {
 }
 
 function AnaliseElegiveis() {
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [filiais, setFiliais] = useState<Filial[]>([]);
@@ -81,7 +81,6 @@ function AnaliseElegiveis() {
   const [filialDestinoId, setFilialDestinoId] = useState<string>("");
   const [salvando, setSalvando] = useState(false);
 
-  const isAdmin = user?.isAdmin ?? false;
 
   async function carregar() {
     setLoading(true);
