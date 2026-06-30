@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Loader2,
   Building2,
-  Building2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
