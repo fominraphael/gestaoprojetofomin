@@ -239,16 +239,11 @@ export function PortalPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activeApps.map((app) => {
             const Icon = app.icon;
-            const isActive = app.status === "active";
 
             return (
               <div
                 key={app.id}
-                className={`group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden ${
-                  isActive
-                    ? "border-border hover:border-primary/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
-                    : "border-border opacity-60 cursor-not-allowed"
-                }`}
+                className="group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden border-border hover:border-primary/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
               >
                 <div className="p-6">
                   {/* Icon */}
@@ -258,34 +253,19 @@ export function PortalPage() {
                     <Icon className="w-6 h-6 text-foreground" />
                   </div>
 
-                  {!isActive && (
-                    <span className="absolute top-4 right-4 text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-medium">
-                      Em breve
-                    </span>
-                  )}
-
-                  <h2 className="text-lg font-semibold text-foreground mb-2">{app.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground mb-2">{app.label}</h2>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-5">{app.description}</p>
 
-                  {isActive ? (
-                    <Link
-                      to={app.href as any}
-                      id={`btn-app-${app.id}`}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground group-hover:gap-2.5 transition-all"
-                    >
-                      Acessar Módulo
-                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Lock className="w-3.5 h-3.5" />
-                      Indisponível
-                    </span>
-                  )}
+                  <Link
+                    to={app.href as any}
+                    id={`btn-app-${app.id}`}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground group-hover:gap-2.5 transition-all"
+                  >
+                    Acessar Módulo
+                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
                 </div>
-                {isActive && (
-                  <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                )}
+                <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             );
           })}
