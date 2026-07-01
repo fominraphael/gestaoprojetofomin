@@ -148,6 +148,7 @@ export async function atualizarUsuario(
   if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;
   if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.email_recuperacao !== undefined) payload.email_recuperacao = updates.email_recuperacao;
 
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase.from("profiles").update(payload).eq("id", id);
