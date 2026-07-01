@@ -127,11 +127,19 @@ export function findModuleByPath(pathname: string): ModuleDef | undefined {
   );
 }
 
-/** Returns true if the user can access the given module. Admins bypass. */
+/**
+ * Access rule:
+ * - If the user has an explicit non-empty `modulos` list, respect it strictly
+ *   (including for admins — a scoped admin sees only the listed modules).
+ * - Otherwise, admins bypass and see everything; regular users see nothing.
+ */
 export function userCanAccess(
   mod: ModuleDef,
   isAdmin: boolean,
   userModules: string[],
 ): boolean {
-  return isAdmin || userModules.includes(mod.requiredModule);
+  if (userModules && userModules.length > 0) {
+    return userModules.includes(mod.requiredModule);
+  }
+  return isAdmin;
 }
