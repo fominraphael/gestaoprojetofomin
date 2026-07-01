@@ -6,7 +6,8 @@ import { createFileRoute } from "@tanstack/react-router";
 // Uso: GET/POST /api/public/hooks/notificar-vencimentos-test
 async function runSimulation() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const nodemailer = (await import("nodemailer")).default;
+  const { sendMail } = await import("@/lib/smtp.server");
+
 
   const hoje = new Date().toISOString().slice(0, 10);
   const NOME_EMPRESA = "AB COMERCIO DE VEICULOS LTDA";
@@ -71,13 +72,6 @@ async function runSimulation() {
   }
 
   // 4. Enviar e-mail
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-
   const assunto = `[SIMULAÇÃO] Documento vence hoje — ${tipo.nome}`;
   const html = `
     <p><strong>⚠️ Simulação de alerta de vencimento</strong></p>
@@ -90,12 +84,8 @@ async function runSimulation() {
     <p style="color:#666;font-size:12px">E-mail disparado pela rota de simulação.</p>
   `;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to: empresa.email_notificacao,
-    subject: assunto,
-    html,
-  });
+  await sendMail({ to: empresa.email_notificacao, subject: assunto, html });
+
 
   await supabaseAdmin
     .from("documentos_arquivo")
@@ -118,11 +108,13 @@ async function handle() {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, error: e.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("[notificar-vencimentos-test] falhou:", e?.message, e?.stack);
+    return new Response(
+      JSON.stringify({ ok: false, error: e?.message, stack: e?.stack }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
+
 }
 
 export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos-test")({
