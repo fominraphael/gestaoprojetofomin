@@ -1633,15 +1633,35 @@ export function AdminUsuariosPage() {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Col: Companies List */}
             <div className="space-y-6 lg:col-span-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <h2 className="text-xl font-semibold text-foreground">Empresas</h2>
-                <button
-                  onClick={() => setShowCreateCompany(true)}
-                  className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Adicionar
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const r = await fetch("/api/public/hooks/notificar-vencimentos-test", { method: "POST" });
+                        const j = await r.json();
+                        if (j.ok) showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
+                        else showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
+                        console.log("[teste-email]", j);
+                      } catch (err: any) {
+                        showToast("error", err.message);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg font-semibold transition-all"
+                    title="Envia um e-mail de teste para a empresa AB COMERCIO DE VEICULOS LTDA"
+                  >
+                    ✉ Disparar E-mail de Teste
+                  </button>
+                  <button
+                    onClick={() => setShowCreateCompany(true)}
+                    className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Adicionar
+                  </button>
+                </div>
               </div>
+
 
               {/* Add Company Form */}
               {showCreateCompany && (
