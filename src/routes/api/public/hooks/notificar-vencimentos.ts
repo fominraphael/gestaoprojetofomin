@@ -36,16 +36,6 @@ export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos")(
           const empresaMap = new Map((empresas || []).map((e: any) => [e.id, e]));
           const tipoMap = new Map((tipos || []).map((t: any) => [t.id, t]));
 
-          const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT || 587),
-            secure: false, // STARTTLS na porta 587
-            auth: {
-              user: process.env.SMTP_USER,
-              pass: process.env.SMTP_PASS,
-            },
-          });
-
           let enviados = 0;
           const erros: string[] = [];
 
@@ -69,12 +59,8 @@ export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos")(
             `;
 
             try {
-              await transporter.sendMail({
-                from: process.env.SMTP_FROM,
-                to: destinatario,
-                subject: assunto,
-                html,
-              });
+              await sendMail({ to: destinatario, subject: assunto, html });
+
               await supabaseAdmin
                 .from("documentos_arquivo")
                 .update({ notificado_em: new Date().toISOString() })
