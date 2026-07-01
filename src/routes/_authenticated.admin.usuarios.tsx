@@ -2261,6 +2261,17 @@ export function AdminUsuariosPage() {
                   className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail para Notificações de Vencimento</label>
+                <input
+                  type="email"
+                  placeholder="notificacoes@empresa.com"
+                  value={editingCompany.email_notificacao ?? ""}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, email_notificacao: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Receberá alertas automáticos no dia do vencimento de cada documento.</p>
+              </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
