@@ -1640,14 +1640,20 @@ export function AdminUsuariosPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={async () => {
+                      setEmailTestError(null);
                       try {
                         const r = await fetch("/api/public/hooks/notificar-vencimentos-test", { method: "POST" });
                         const j = await r.json();
-                        if (j.ok) showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
-                        else showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
                         console.log("[teste-email]", j);
+                        if (j.ok) {
+                          showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
+                        } else {
+                          showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
+                          setEmailTestError({ message: j.error || "erro desconhecido", stack: j.stack });
+                        }
                       } catch (err: any) {
                         showToast("error", err.message);
+                        setEmailTestError({ message: err.message, stack: err.stack });
                       }
                     }}
                     className="flex items-center gap-1.5 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg font-semibold transition-all"
@@ -1655,6 +1661,7 @@ export function AdminUsuariosPage() {
                   >
                     ✉ Disparar E-mail de Teste
                   </button>
+
                   <button
                     onClick={() => setShowCreateCompany(true)}
                     className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
