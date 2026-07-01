@@ -6,7 +6,8 @@ import { createFileRoute } from "@tanstack/react-router";
 // Uso: GET/POST /api/public/hooks/notificar-vencimentos-test
 async function runSimulation() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const nodemailer = (await import("nodemailer")).default;
+  const { sendMail } = await import("@/lib/smtp.server");
+
 
   const hoje = new Date().toISOString().slice(0, 10);
   const NOME_EMPRESA = "AB COMERCIO DE VEICULOS LTDA";
