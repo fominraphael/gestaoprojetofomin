@@ -371,10 +371,10 @@ export function AdminUsuariosPage() {
     if (!newCompany.cnpj || !newCompany.nome) return showToast("error", "CNPJ e Nome são obrigatórios.");
     setActionLoading("create-company");
     try {
-      await criarEmpresa(newCompany.cnpj, newCompany.nome);
+      await criarEmpresa(newCompany.cnpj, newCompany.nome, newCompany.email_notificacao || null);
       showToast("success", "Empresa cadastrada com sucesso.");
       setShowCreateCompany(false);
-      setNewCompany({ cnpj: "", nome: "" });
+      setNewCompany({ cnpj: "", nome: "", email_notificacao: "" });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar empresa.");
