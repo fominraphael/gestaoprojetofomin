@@ -107,7 +107,7 @@ export function AdminUsuariosPage() {
   const [editPassword, setEditPassword] = useState("");
 
   const [showCreateCompany, setShowCreateCompany] = useState(false);
-  const [newCompany, setNewCompany] = useState({ cnpj: "", nome: "" });
+  const [newCompany, setNewCompany] = useState({ cnpj: "", nome: "", email_notificacao: "" });
 
   const [showCreateDocType, setShowCreateDocType] = useState(false);
   const [newDocType, setNewDocType] = useState({ nome: "", descricao: "" });
