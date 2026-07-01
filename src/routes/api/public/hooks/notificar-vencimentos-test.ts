@@ -72,13 +72,6 @@ async function runSimulation() {
   }
 
   // 4. Enviar e-mail
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-
   const assunto = `[SIMULAÇÃO] Documento vence hoje — ${tipo.nome}`;
   const html = `
     <p><strong>⚠️ Simulação de alerta de vencimento</strong></p>
@@ -91,12 +84,8 @@ async function runSimulation() {
     <p style="color:#666;font-size:12px">E-mail disparado pela rota de simulação.</p>
   `;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to: empresa.email_notificacao,
-    subject: assunto,
-    html,
-  });
+  await sendMail({ to: empresa.email_notificacao, subject: assunto, html });
+
 
   await supabaseAdmin
     .from("documentos_arquivo")
