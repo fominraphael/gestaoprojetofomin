@@ -29,6 +29,7 @@ import {
   obterArquivos,
   uploadArquivo,
   excluirArquivo,
+  atualizarVencimentoArquivo,
 } from "@/lib/empresas";
 import { Search, Edit3 } from "lucide-react";
 import { ModuleBadge } from "@/components/ModuleBadge";
