@@ -129,6 +129,7 @@ export function AdminUsuariosPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [selectedDocTypeId, setSelectedDocTypeId] = useState("");
+  const [uploadVencimento, setUploadVencimento] = useState<string>("");
 
   // Import states
   const [selectedUserTypeImportId, setSelectedUserTypeImportId] = useState("Lojista");
