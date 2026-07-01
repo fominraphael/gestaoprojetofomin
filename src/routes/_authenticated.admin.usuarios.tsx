@@ -1859,6 +1859,21 @@ export function AdminUsuariosPage() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 ml-auto">
+                                  <div className="flex flex-col items-end">
+                                    <label className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">Vencimento</label>
+                                    <input
+                                      type="date"
+                                      defaultValue={file.data_vencimento ?? ""}
+                                      onBlur={(e) => {
+                                        const v = e.target.value;
+                                        if ((v || null) !== (file.data_vencimento ?? null)) {
+                                          handleUpdateVencimento(file.id, v);
+                                        }
+                                      }}
+                                      title="Definir/alterar data de vencimento"
+                                      className="px-2 py-1 rounded-md bg-card border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                    />
+                                  </div>
                                   <a
                                     href={file.arquivo_url}
                                     download={file.arquivo_nome}
