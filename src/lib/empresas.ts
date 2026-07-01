@@ -127,7 +127,8 @@ export async function obterArquivos(empresaId?: string): Promise<DocumentoArquiv
 export async function uploadArquivo(
   empresaId: string,
   tipoId: string,
-  file: File
+  file: File,
+  dataVencimento?: string | null
 ): Promise<DocumentoArquivo> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(
@@ -158,8 +159,6 @@ export async function uploadArquivo(
     .upload(storagePath, file, { cacheControl: "3600", upsert: true });
   if (upErr) throw new Error(upErr.message);
 
-  // Private bucket → use signed URL with long TTL for display/download (1 hour);
-  // for archival we store the storage_path and re-sign on demand if needed.
   const { data: signed } = await supabase.storage
     .from("documentos")
     .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
@@ -174,11 +173,20 @@ export async function uploadArquivo(
       arquivo_nome: file.name,
       arquivo_tamanho: file.size,
       storage_path: storagePath,
+      data_vencimento: dataVencimento || null,
     }])
     .select("*")
     .single();
   if (insErr) throw insErr;
   return rec as DocumentoArquivo;
+}
+
+export async function atualizarVencimentoArquivo(id: string, data_vencimento: string | null): Promise<void> {
+  const { error } = await supabase
+    .from("documentos_arquivo")
+    .update({ data_vencimento, notificado_em: null })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function excluirArquivo(id: string): Promise<void> {
