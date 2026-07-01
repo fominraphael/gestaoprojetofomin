@@ -243,12 +243,14 @@ export function PortalPage() {
             const Icon = app.icon;
 
             return (
-              <div
+              <Link
                 key={app.id}
-                className="group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden border-border hover:border-primary/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
+                to={app.href as any}
+                id={`btn-app-${app.id}`}
+                preload="intent"
+                className="group relative rounded-2xl border transition-all duration-300 bg-card backdrop-blur-sm overflow-hidden border-border hover:border-primary/40 cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 block"
               >
                 <div className="p-6">
-                  {/* Icon */}
                   <div
                     className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${app.iconBg} mb-4 shadow-lg`}
                   >
@@ -258,17 +260,13 @@ export function PortalPage() {
                   <h2 className="text-lg font-semibold text-foreground mb-2">{app.label}</h2>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-5">{app.description}</p>
 
-                  <Link
-                    to={app.href as any}
-                    id={`btn-app-${app.id}`}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground group-hover:gap-2.5 transition-all"
-                  >
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:gap-2.5 transition-all">
                     Acessar Módulo
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
+                  </span>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
+              </Link>
             );
           })}
         </div>
