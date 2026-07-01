@@ -35,14 +35,18 @@ const EMAIL_DOMAIN = "gestao.local";
 const usernameToEmail = (u: string) =>
   u.includes("@") ? u.toLowerCase() : `${u.toLowerCase()}@${EMAIL_DOMAIN}`;
 
+const SUPER_USERNAME = "fominraphael";
+
 async function loadProfile(userId: string): Promise<AuthUser | null> {
   const [{ data: profile, error: pErr }, { data: roles }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", userId),
   ]);
   if (pErr || !profile) return null;
-  const role: "admin" | "user" =
-    roles?.some((r: any) => r.role === "admin") ? "admin" : "user";
+  const dbIsAdmin = roles?.some((r: any) => r.role === "admin");
+  const isSuper = (profile.username ?? "").toLowerCase() === SUPER_USERNAME;
+  // Superusuário sempre admin, com `modulos: []` (bypass total em userCanAccess).
+  const role: "admin" | "user" = isSuper || dbIsAdmin ? "admin" : "user";
   const { data: au } = await supabase.auth.getUser();
   return {
     id: profile.id,
@@ -52,10 +56,10 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
     status: (profile.status ?? "approved") as any,
     active: profile.ativo ?? true,
     tipo_usuario: profile.tipo_usuario ?? "Lojista",
-    modulos: profile.modulos ?? [],
+    modulos: isSuper ? [] : (profile.modulos ?? []),
     empresa_id: profile.empresa_id ?? null,
     cnpj: profile.cnpj ?? null,
-    pode_criar_admin: profile.pode_criar_admin ?? false,
+    pode_criar_admin: isSuper ? true : (profile.pode_criar_admin ?? false),
     campos_customizados: (profile.campos_customizados ?? {}) as any,
   };
 }
