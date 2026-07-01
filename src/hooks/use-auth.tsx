@@ -124,8 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
   };
 
-  const register = async (username: string, password: string) => {
+  const register: AuthContextType["register"] = async (username, password, extras) => {
     const email = usernameToEmail(username);
+    const tipo = extras?.tipo_usuario || "Lojista";
+    const campos = extras?.campos_customizados || {};
+    const cnpj = extras?.cnpj ?? (campos.cnpj ? String(campos.cnpj).trim() : null);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -133,7 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
           username,
-          tipo_usuario: "Lojista",
+          tipo_usuario: tipo,
+          campos_customizados: campos,
+          cnpj,
           modulos: ["gestao"],
           status: "pending",
           ativo: true,
