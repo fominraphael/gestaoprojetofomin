@@ -564,9 +564,10 @@ export function AdminUsuariosPage() {
     if (!filesList || filesList.length === 0 || !selectedCompanyId || !selectedDocTypeId) return;
     setUploadLoading(true);
     try {
-      await uploadArquivo(selectedCompanyId, selectedDocTypeId, filesList[0]);
+      await uploadArquivo(selectedCompanyId, selectedDocTypeId, filesList[0], uploadVencimento || null);
       showToast("success", `Arquivo "${filesList[0].name}" enviado com sucesso.`);
       setSelectedDocTypeId("");
+      setUploadVencimento("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       await loadAllData();
     } catch (err: any) {
