@@ -173,16 +173,16 @@ export async function atualizarUsuario(
   }
 
   if (updates.password) {
-    // Senha só pode ser alterada via fluxo de reset/atualização do próprio usuário.
-    // Para o próprio usuário logado, usamos supabase.auth.updateUser.
+    // Redefinição sem e-mail: admin (ou o próprio usuário) altera direto via
+    // server function usando service role. Fallback para o próprio usuário
+    // logado via supabase.auth.updateUser.
     const { data: au } = await supabase.auth.getUser();
     if (au.user?.id === id) {
       const { error } = await supabase.auth.updateUser({ password: updates.password });
       if (error) throw error;
     } else {
-      throw new Error(
-        "Alteração de senha de outro usuário requer redefinição via e-mail (não suportado nesta interface)."
-      );
+      const { adminSetUserPassword } = await import("./admin-users.functions");
+      await adminSetUserPassword({ data: { userId: id, password: updates.password } });
     }
   }
 }
