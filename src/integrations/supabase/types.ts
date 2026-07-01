@@ -125,12 +125,43 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_codes: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
           campos_customizados: Json
           cnpj: string | null
           created_at: string
+          email_recuperacao: string | null
           empresa_id: string | null
           id: string
           modulos: string[]
@@ -145,6 +176,7 @@ export type Database = {
           campos_customizados?: Json
           cnpj?: string | null
           created_at?: string
+          email_recuperacao?: string | null
           empresa_id?: string | null
           id: string
           modulos?: string[]
@@ -159,6 +191,7 @@ export type Database = {
           campos_customizados?: Json
           cnpj?: string | null
           created_at?: string
+          email_recuperacao?: string | null
           empresa_id?: string | null
           id?: string
           modulos?: string[]
