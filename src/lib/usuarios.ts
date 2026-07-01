@@ -31,6 +31,7 @@ export interface UsuarioSistema {
   tipo_usuario?: string;
   pode_criar_admin?: boolean;
   campos_customizados?: Record<string, any>;
+  email_recuperacao?: string | null;
   created_at?: string;
 }
 
