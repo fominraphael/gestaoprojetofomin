@@ -1673,6 +1673,15 @@ export function AdminUsuariosPage() {
                         className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
+                    <div>
+                      <input
+                        type="email"
+                        placeholder="E-mail para Notificações de Vencimento (opcional)"
+                        value={newCompany.email_notificacao}
+                        onChange={(e) => setNewCompany({ ...newCompany, email_notificacao: e.target.value })}
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
                     <div className="flex justify-end gap-2 pt-2">
                       <button
                         type="button"
