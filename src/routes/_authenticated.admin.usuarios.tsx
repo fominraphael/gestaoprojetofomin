@@ -1779,7 +1779,7 @@ export function AdminUsuariosPage() {
                           <Upload className="w-4 h-4 text-foreground" />
                           Anexar Novo Arquivo
                         </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                               Tipo do Documento
@@ -1796,6 +1796,17 @@ export function AdminUsuariosPage() {
                                 </option>
                               ))}
                             </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">
+                              Data de Vencimento (opcional)
+                            </label>
+                            <input
+                              type="date"
+                              value={uploadVencimento}
+                              onChange={(e) => setUploadVencimento(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-xs focus:outline-none"
+                            />
                           </div>
                           <div className="flex items-end">
                             <label
