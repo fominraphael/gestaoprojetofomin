@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos")(
       POST: async () => {
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const nodemailer = (await import("nodemailer")).default;
+          const { sendMail } = await import("@/lib/smtp.server");
 
           const hoje = new Date().toISOString().slice(0, 10);
 
