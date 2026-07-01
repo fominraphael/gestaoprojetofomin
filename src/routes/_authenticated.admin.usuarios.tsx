@@ -443,6 +443,7 @@ export function AdminUsuariosPage() {
         nome: editingCompany.nome.trim(),
         cnpj: editingCompany.cnpj.trim(),
         ativo: editingCompany.ativo,
+        email_notificacao: editingCompany.email_notificacao?.trim() || null,
       });
       showToast("success", "Empresa atualizada.");
       setEditingCompany(null);
