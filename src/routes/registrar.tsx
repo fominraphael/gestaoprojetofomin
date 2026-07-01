@@ -1,6 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { obterTiposUsuarioConfig, type TipoUsuarioConfig } from "@/lib/usuarios";
 import { Eye, EyeOff, UserPlus, Layers, CheckCircle } from "lucide-react";
 
 export const Route = createFileRoute("/registrar")({
@@ -9,7 +10,6 @@ export const Route = createFileRoute("/registrar")({
 
 function RegistrarPage() {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,6 +17,40 @@ function RegistrarPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [tipos, setTipos] = useState<TipoUsuarioConfig[]>([]);
+  const [tipoSelecionado, setTipoSelecionado] = useState<string>("Lojista");
+  const [campos, setCampos] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const all = await obterTiposUsuarioConfig();
+        // Filtra estritamente: sem administradores e sem tipos inativos.
+        const filtrados = all.filter(
+          (t) => t.role !== "admin" && t.ativo !== false && t.nome !== "Administrador",
+        );
+        setTipos(filtrados);
+        if (filtrados.length > 0 && !filtrados.some((t) => t.nome === tipoSelecionado)) {
+          setTipoSelecionado(filtrados[0].nome);
+        }
+      } catch {
+        setTipos([]);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const tipoAtual = tipos.find((t) => t.nome === tipoSelecionado);
+
+  const handleTipoChange = (nome: string) => {
+    setTipoSelecionado(nome);
+    setCampos({});
+  };
+
+  const handleCampoChange = (nome: string, valor: any) => {
+    setCampos((prev) => ({ ...prev, [nome]: valor }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +63,26 @@ function RegistrarPage() {
       setError("A senha deve ter pelo menos 4 caracteres.");
       return;
     }
+    // Validação de campos dinâmicos obrigatórios
+    if (tipoAtual) {
+      for (const f of tipoAtual.campos_schema) {
+        if (f.obrigatorio) {
+          const v = campos[f.nome];
+          if (v === undefined || v === null || v === "") {
+            setError(`O campo "${f.label}" é obrigatório.`);
+            return;
+          }
+        }
+      }
+    }
+
     setLoading(true);
     try {
-      await register(username, password);
+      await register(username, password, {
+        tipo_usuario: tipoSelecionado,
+        campos_customizados: campos,
+        cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
+      });
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Erro ao solicitar conta.");
@@ -53,7 +104,9 @@ function RegistrarPage() {
             <Layers className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Solicitar Acesso</h1>
-          <p className="text-muted-foreground text-sm mt-1">Sua conta será revisada pelo administrador</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Sua conta será revisada pelo administrador
+          </p>
         </div>
 
         <div className="bg-accent backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
@@ -131,6 +184,59 @@ function RegistrarPage() {
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
+
+              {tipos.length > 0 && (
+                <div>
+                  <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
+                    Tipo de Usuário
+                  </label>
+                  <select
+                    id="reg-tipo"
+                    value={tipoSelecionado}
+                    onChange={(e) => handleTipoChange(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                  >
+                    {tipos.map((t) => (
+                      <option key={t.id} value={t.nome}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Campos dinâmicos do tipo selecionado */}
+              {tipoAtual?.campos_schema.map((field) => (
+                <div key={field.nome}>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                  </label>
+                  {field.tipo === "boolean" ? (
+                    <select
+                      value={campos[field.nome] ? "true" : "false"}
+                      onChange={(e) => handleCampoChange(field.nome, e.target.value === "true")}
+                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                    >
+                      <option value="false">Não</option>
+                      <option value="true">Sim</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={field.tipo === "number" ? "number" : "text"}
+                      required={field.obrigatorio}
+                      value={campos[field.nome] ?? ""}
+                      onChange={(e) =>
+                        handleCampoChange(
+                          field.nome,
+                          field.tipo === "number" ? Number(e.target.value) : e.target.value,
+                        )
+                      }
+                      placeholder={`Preencha o campo ${field.label}`}
+                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                    />
+                  )}
+                </div>
+              ))}
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">
