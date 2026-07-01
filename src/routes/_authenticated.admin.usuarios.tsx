@@ -140,6 +140,7 @@ export function AdminUsuariosPage() {
 
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "rejected" | "inactive">("all");
 
   // Edit modal states
   const [editingCompany, setEditingCompany] = useState<Empresa | null>(null);
