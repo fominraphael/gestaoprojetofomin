@@ -91,6 +91,8 @@ export function AdminUsuariosPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [emailTestError, setEmailTestError] = useState<{ message: string; stack?: string } | null>(null);
+
 
   // Forms states
   const [showCreateUser, setShowCreateUser] = useState(false);
