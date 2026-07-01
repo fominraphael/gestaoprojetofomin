@@ -1119,6 +1119,18 @@ export function AdminUsuariosPage() {
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      E-mail de Recuperação <span className="text-muted-foreground">(recebe códigos de "Esqueci minha senha")</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="usuario@exemplo.com"
+                      value={showEditUser.email_recuperacao ?? ""}
+                      onChange={(e) => setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
                     <select
