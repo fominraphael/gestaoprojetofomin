@@ -140,6 +140,7 @@ export function AdminUsuariosPage() {
 
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "rejected" | "inactive">("all");
 
   // Edit modal states
   const [editingCompany, setEditingCompany] = useState<Empresa | null>(null);
@@ -1322,16 +1323,29 @@ export function AdminUsuariosPage() {
               </div>
             )}
 
-            {/* Search Bar */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="Buscar por login, tipo, CNPJ..."
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-              />
+            {/* Search + Status Filter */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Buscar por login, tipo, CNPJ..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+              >
+                <option value="all">Todos os status</option>
+                <option value="approved">Ativo (Aprovado)</option>
+                <option value="pending">Pendente</option>
+                <option value="rejected">Rejeitado</option>
+                <option value="inactive">Inativo</option>
+              </select>
             </div>
 
             {/* Users Table */}
@@ -1349,6 +1363,11 @@ export function AdminUsuariosPage() {
                 <tbody>
                   {usuarios
                     .filter((u) => {
+                      if (statusFilter === "inactive") {
+                        if (u.active !== false) return false;
+                      } else if (statusFilter !== "all") {
+                        if (u.status !== statusFilter) return false;
+                      }
                       if (!userSearch.trim()) return true;
                       const q = userSearch.toLowerCase();
                       return (

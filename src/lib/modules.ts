@@ -107,7 +107,7 @@ export const MODULE_ROUTES: string[] = Array.from(
 );
 
 /** Always-on app routes (public + portal + admin). */
-export const CORE_ROUTES = ["/", "/login", "/registrar", "/admin/usuarios"];
+export const CORE_ROUTES = ["/", "/login", "/registrar", "/recuperar-senha", "/admin/usuarios"];
 
 /** Allowlist used by the router to detect unknown URLs (404s). */
 export const KNOWN_ROUTES = [...CORE_ROUTES, ...MODULE_ROUTES];
