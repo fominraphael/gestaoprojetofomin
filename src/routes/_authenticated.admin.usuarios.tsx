@@ -591,6 +591,16 @@ export function AdminUsuariosPage() {
     }
   };
 
+  const handleUpdateVencimento = async (id: string, value: string) => {
+    try {
+      await atualizarVencimentoArquivo(id, value || null);
+      showToast("success", "Data de vencimento atualizada.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar data.");
+    }
+  };
+
   // Bulk Excel Import Actions
   const handleExcelImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
