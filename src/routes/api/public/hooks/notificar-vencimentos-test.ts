@@ -108,11 +108,13 @@ async function handle() {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, error: e.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("[notificar-vencimentos-test] falhou:", e?.message, e?.stack);
+    return new Response(
+      JSON.stringify({ ok: false, error: e?.message, stack: e?.stack }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
+
 }
 
 export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos-test")({
