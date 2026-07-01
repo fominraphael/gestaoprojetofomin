@@ -48,6 +48,7 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     tipo_usuario: p.tipo_usuario ?? "Lojista",
     pode_criar_admin: p.pode_criar_admin ?? false,
     campos_customizados: p.campos_customizados ?? {},
+    email_recuperacao: p.email_recuperacao ?? null,
     created_at: p.created_at,
   };
 }
