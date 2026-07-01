@@ -31,6 +31,7 @@ export interface UsuarioSistema {
   tipo_usuario?: string;
   pode_criar_admin?: boolean;
   campos_customizados?: Record<string, any>;
+  email_recuperacao?: string | null;
   created_at?: string;
 }
 
@@ -47,6 +48,7 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     tipo_usuario: p.tipo_usuario ?? "Lojista",
     pode_criar_admin: p.pode_criar_admin ?? false,
     campos_customizados: p.campos_customizados ?? {},
+    email_recuperacao: p.email_recuperacao ?? null,
     created_at: p.created_at,
   };
 }
@@ -146,6 +148,7 @@ export async function atualizarUsuario(
   if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;
   if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.email_recuperacao !== undefined) payload.email_recuperacao = updates.email_recuperacao;
 
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase.from("profiles").update(payload).eq("id", id);

@@ -118,6 +118,17 @@ function LoginPage() {
             </button>
           </form>
 
+          <div className="mt-4 text-center">
+            <Link
+              to="/recuperar-senha"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+
+
+
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-muted-foreground text-sm">
               Não tem uma conta?{" "}

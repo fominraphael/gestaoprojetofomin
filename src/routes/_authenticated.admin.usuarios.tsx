@@ -91,6 +91,8 @@ export function AdminUsuariosPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [emailTestError, setEmailTestError] = useState<{ message: string; stack?: string } | null>(null);
+
 
   // Forms states
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -264,6 +266,7 @@ export function AdminUsuariosPage() {
         tipo_usuario: userObj.tipo_usuario,
         pode_criar_admin: userObj.pode_criar_admin || false,
         campos_customizados: userObj.campos_customizados || {},
+        email_recuperacao: userObj.email_recuperacao ?? null,
       };
       if (editPassword) {
         updates.password = editPassword;
@@ -1117,6 +1120,18 @@ export function AdminUsuariosPage() {
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      E-mail de Recuperação <span className="text-muted-foreground">(recebe códigos de "Esqueci minha senha")</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="usuario@exemplo.com"
+                      value={showEditUser.email_recuperacao ?? ""}
+                      onChange={(e) => setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
                     <select
@@ -1638,14 +1653,20 @@ export function AdminUsuariosPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={async () => {
+                      setEmailTestError(null);
                       try {
                         const r = await fetch("/api/public/hooks/notificar-vencimentos-test", { method: "POST" });
                         const j = await r.json();
-                        if (j.ok) showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
-                        else showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
                         console.log("[teste-email]", j);
+                        if (j.ok) {
+                          showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
+                        } else {
+                          showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
+                          setEmailTestError({ message: j.error || "erro desconhecido", stack: j.stack });
+                        }
                       } catch (err: any) {
                         showToast("error", err.message);
+                        setEmailTestError({ message: err.message, stack: err.stack });
                       }
                     }}
                     className="flex items-center gap-1.5 text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg font-semibold transition-all"
@@ -1653,6 +1674,7 @@ export function AdminUsuariosPage() {
                   >
                     ✉ Disparar E-mail de Teste
                   </button>
+
                   <button
                     onClick={() => setShowCreateCompany(true)}
                     className="flex items-center gap-1.5 text-xs bg-muted hover:bg-muted text-foreground border border-border px-3 py-1.5 rounded-lg font-semibold transition-all"
@@ -1661,6 +1683,29 @@ export function AdminUsuariosPage() {
                   </button>
                 </div>
               </div>
+
+              {emailTestError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-semibold text-red-500">
+                      Falha no envio: {emailTestError.message}
+                    </div>
+                    <button
+                      onClick={() => setEmailTestError(null)}
+                      className="text-red-500/70 hover:text-red-500 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {emailTestError.stack && (
+                    <pre className="text-[10px] leading-tight text-red-500/80 bg-black/20 p-2 rounded overflow-x-auto max-h-48 whitespace-pre-wrap">
+                      {emailTestError.stack}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+
 
 
               {/* Add Company Form */}
