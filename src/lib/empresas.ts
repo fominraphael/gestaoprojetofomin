@@ -5,6 +5,7 @@ export interface Empresa {
   cnpj: string;
   nome: string;
   ativo?: boolean;
+  email_notificacao?: string | null;
   created_at?: string;
 }
 
@@ -24,6 +25,8 @@ export interface DocumentoArquivo {
   arquivo_nome: string;
   arquivo_tamanho?: number | null;
   storage_path?: string | null;
+  data_vencimento?: string | null;
+  notificado_em?: string | null;
   uploaded_at?: string;
 }
 
