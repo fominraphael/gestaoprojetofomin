@@ -41,10 +41,10 @@ export async function obterEmpresas(): Promise<Empresa[]> {
   return (data as Empresa[]) || [];
 }
 
-export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa> {
+export async function criarEmpresa(cnpj: string, nome: string, email_notificacao?: string | null): Promise<Empresa> {
   const { data, error } = await supabase
     .from("empresas")
-    .insert([{ cnpj: cnpj.trim(), nome }])
+    .insert([{ cnpj: cnpj.trim(), nome, email_notificacao: email_notificacao?.trim() || null }])
     .select("*")
     .single();
   if (error) {
@@ -56,7 +56,7 @@ export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa>
 
 export async function atualizarEmpresa(
   id: string,
-  updates: { cnpj?: string; nome?: string; ativo?: boolean }
+  updates: { cnpj?: string; nome?: string; ativo?: boolean; email_notificacao?: string | null }
 ): Promise<void> {
   const payload: any = { ...updates };
   if (payload.cnpj !== undefined) payload.cnpj = String(payload.cnpj).trim();
