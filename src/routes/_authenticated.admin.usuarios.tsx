@@ -1716,6 +1716,9 @@ export function AdminUsuariosPage() {
                     <div className="min-w-0">
                       <div className="font-medium text-sm truncate">{c.nome}</div>
                       <div className="text-xs text-muted-foreground mt-1 font-mono">{formatCnpj(c.cnpj)}</div>
+                      {c.email_notificacao && (
+                        <div className="text-xs text-muted-foreground mt-0.5 truncate">✉ {c.email_notificacao}</div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 ml-4 shrink-0">
                       <span className="text-[10px] bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full">

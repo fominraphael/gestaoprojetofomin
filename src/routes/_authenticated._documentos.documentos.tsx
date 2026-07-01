@@ -194,6 +194,9 @@ function DocumentosPage() {
                     >
                       <div className="font-semibold truncate">{emp.nome}</div>
                       <div className="text-[10px] text-muted-foreground mt-0.5">CNPJ: {emp.cnpj}</div>
+                      {emp.email_notificacao && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">✉ {emp.email_notificacao}</div>
+                      )}
                     </button>
                   );
                 })}

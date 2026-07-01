@@ -23,6 +23,7 @@ import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
+import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
 import { Route as AuthenticatedToyotaToyotaValidacaoRouteImport } from './routes/_authenticated._toyota.toyota.validacao'
 import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
@@ -106,6 +107,12 @@ const AuthenticatedDocumentosDocumentosRoute =
     path: '/documentos',
     getParentRoute: () => AuthenticatedDocumentosRoute,
   } as any)
+const ApiPublicHooksNotificarVencimentosTestRoute =
+  ApiPublicHooksNotificarVencimentosTestRouteImport.update({
+    id: '/api/public/hooks/notificar-vencimentos-test',
+    path: '/api/public/hooks/notificar-vencimentos-test',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNotificarVencimentosRoute =
   ApiPublicHooksNotificarVencimentosRouteImport.update({
     id: '/api/public/hooks/notificar-vencimentos',
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
+  '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesByTo {
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
+  '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesById {
@@ -227,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/_authenticated/_toyota/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
+  '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRouteTypes {
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
+    | '/api/public/hooks/notificar-vencimentos-test'
     | '/toyota/estoque/importar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
+    | '/api/public/hooks/notificar-vencimentos-test'
     | '/toyota/estoque/importar'
   id:
     | '__root__'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/painel'
     | '/_authenticated/_toyota/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
+    | '/api/public/hooks/notificar-vencimentos-test'
     | '/_authenticated/_toyota/toyota/estoque/importar'
   fileRoutesById: FileRoutesById
 }
@@ -304,6 +317,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegistrarRoute: typeof RegistrarRoute
   ApiPublicHooksNotificarVencimentosRoute: typeof ApiPublicHooksNotificarVencimentosRoute
+  ApiPublicHooksNotificarVencimentosTestRoute: typeof ApiPublicHooksNotificarVencimentosTestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -405,6 +419,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/documentos'
       preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
       parentRoute: typeof AuthenticatedDocumentosRoute
+    }
+    '/api/public/hooks/notificar-vencimentos-test': {
+      id: '/api/public/hooks/notificar-vencimentos-test'
+      path: '/api/public/hooks/notificar-vencimentos-test'
+      fullPath: '/api/public/hooks/notificar-vencimentos-test'
+      preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosTestRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/notificar-vencimentos': {
       id: '/api/public/hooks/notificar-vencimentos'
@@ -564,6 +585,8 @@ const rootRouteChildren: RootRouteChildren = {
   RegistrarRoute: RegistrarRoute,
   ApiPublicHooksNotificarVencimentosRoute:
     ApiPublicHooksNotificarVencimentosRoute,
+  ApiPublicHooksNotificarVencimentosTestRoute:
+    ApiPublicHooksNotificarVencimentosTestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
