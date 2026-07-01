@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistrarRouteImport } from './routes/registrar'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
@@ -37,6 +38,11 @@ import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './
 const RegistrarRoute = RegistrarRouteImport.update({
   id: '/registrar',
   path: '/registrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -171,6 +177,7 @@ const AuthenticatedToyotaToyotaEstoqueImportarRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/registrar': typeof RegistrarRoute
   '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/registrar': typeof RegistrarRoute
   '/': typeof AuthenticatedIndexRoute
   '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/registrar': typeof RegistrarRoute
   '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/_gestao': typeof AuthenticatedGestaoRouteWithChildren
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/recuperar-senha'
     | '/registrar'
     | '/documentos'
     | '/backlog'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/recuperar-senha'
     | '/registrar'
     | '/'
     | '/documentos'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/recuperar-senha'
     | '/registrar'
     | '/_authenticated/_documentos'
     | '/_authenticated/_gestao'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RegistrarRoute: typeof RegistrarRoute
   ApiPublicHooksNotificarVencimentosRoute: typeof ApiPublicHooksNotificarVencimentosRoute
   ApiPublicHooksNotificarVencimentosTestRoute: typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/registrar'
       fullPath: '/registrar'
       preLoaderRoute: typeof RegistrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -582,6 +602,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  RecuperarSenhaRoute: RecuperarSenhaRoute,
   RegistrarRoute: RegistrarRoute,
   ApiPublicHooksNotificarVencimentosRoute:
     ApiPublicHooksNotificarVencimentosRoute,
