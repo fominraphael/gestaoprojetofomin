@@ -23,7 +23,15 @@ interface AuthContextType {
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    password: string,
+    extras?: {
+      tipo_usuario?: string;
+      campos_customizados?: Record<string, any>;
+      cnpj?: string | null;
+    },
+  ) => Promise<void>;
   refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
