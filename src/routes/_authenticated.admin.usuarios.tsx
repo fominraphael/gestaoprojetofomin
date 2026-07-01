@@ -1671,6 +1671,29 @@ export function AdminUsuariosPage() {
                 </div>
               </div>
 
+              {emailTestError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-semibold text-red-500">
+                      Falha no envio: {emailTestError.message}
+                    </div>
+                    <button
+                      onClick={() => setEmailTestError(null)}
+                      className="text-red-500/70 hover:text-red-500 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {emailTestError.stack && (
+                    <pre className="text-[10px] leading-tight text-red-500/80 bg-black/20 p-2 rounded overflow-x-auto max-h-48 whitespace-pre-wrap">
+                      {emailTestError.stack}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+
+
 
               {/* Add Company Form */}
               {showCreateCompany && (
