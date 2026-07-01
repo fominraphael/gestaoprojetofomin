@@ -73,6 +73,11 @@ export async function criarUsuario(
   const password = usuario.password || "Trocar@2026!";
   const email = usernameToEmail(usuario.username);
 
+  // Preserve the current admin session — signUp otherwise switches the active
+  // session to the newly created user, effectively logging the admin out.
+  const { data: currentSessionData } = await supabase.auth.getSession();
+  const preservedSession = currentSessionData.session;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -92,6 +97,18 @@ export async function criarUsuario(
       },
     },
   });
+
+  // Restore the admin session regardless of signUp outcome.
+  if (preservedSession) {
+    try {
+      await supabase.auth.setSession({
+        access_token: preservedSession.access_token,
+        refresh_token: preservedSession.refresh_token,
+      });
+    } catch {
+      // best-effort; ignore restore failure
+    }
+  }
 
   if (error) {
     if (error.message.toLowerCase().includes("already") || (error as any).code === "user_already_exists")
