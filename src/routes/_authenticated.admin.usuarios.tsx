@@ -29,6 +29,7 @@ import {
   obterArquivos,
   uploadArquivo,
   excluirArquivo,
+  atualizarVencimentoArquivo,
 } from "@/lib/empresas";
 import { Search, Edit3 } from "lucide-react";
 import { ModuleBadge } from "@/components/ModuleBadge";
@@ -107,7 +108,7 @@ export function AdminUsuariosPage() {
   const [editPassword, setEditPassword] = useState("");
 
   const [showCreateCompany, setShowCreateCompany] = useState(false);
-  const [newCompany, setNewCompany] = useState({ cnpj: "", nome: "" });
+  const [newCompany, setNewCompany] = useState({ cnpj: "", nome: "", email_notificacao: "" });
 
   const [showCreateDocType, setShowCreateDocType] = useState(false);
   const [newDocType, setNewDocType] = useState({ nome: "", descricao: "" });
@@ -128,6 +129,7 @@ export function AdminUsuariosPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [selectedDocTypeId, setSelectedDocTypeId] = useState("");
+  const [uploadVencimento, setUploadVencimento] = useState<string>("");
 
   // Import states
   const [selectedUserTypeImportId, setSelectedUserTypeImportId] = useState("Lojista");
@@ -371,10 +373,10 @@ export function AdminUsuariosPage() {
     if (!newCompany.cnpj || !newCompany.nome) return showToast("error", "CNPJ e Nome são obrigatórios.");
     setActionLoading("create-company");
     try {
-      await criarEmpresa(newCompany.cnpj, newCompany.nome);
+      await criarEmpresa(newCompany.cnpj, newCompany.nome, newCompany.email_notificacao || null);
       showToast("success", "Empresa cadastrada com sucesso.");
       setShowCreateCompany(false);
-      setNewCompany({ cnpj: "", nome: "" });
+      setNewCompany({ cnpj: "", nome: "", email_notificacao: "" });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar empresa.");
@@ -443,6 +445,7 @@ export function AdminUsuariosPage() {
         nome: editingCompany.nome.trim(),
         cnpj: editingCompany.cnpj.trim(),
         ativo: editingCompany.ativo,
+        email_notificacao: editingCompany.email_notificacao?.trim() || null,
       });
       showToast("success", "Empresa atualizada.");
       setEditingCompany(null);
@@ -561,9 +564,10 @@ export function AdminUsuariosPage() {
     if (!filesList || filesList.length === 0 || !selectedCompanyId || !selectedDocTypeId) return;
     setUploadLoading(true);
     try {
-      await uploadArquivo(selectedCompanyId, selectedDocTypeId, filesList[0]);
+      await uploadArquivo(selectedCompanyId, selectedDocTypeId, filesList[0], uploadVencimento || null);
       showToast("success", `Arquivo "${filesList[0].name}" enviado com sucesso.`);
       setSelectedDocTypeId("");
+      setUploadVencimento("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       await loadAllData();
     } catch (err: any) {
@@ -584,6 +588,16 @@ export function AdminUsuariosPage() {
       showToast("error", err.message || "Erro ao excluir arquivo.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleUpdateVencimento = async (id: string, value: string) => {
+    try {
+      await atualizarVencimentoArquivo(id, value || null);
+      showToast("success", "Data de vencimento atualizada.");
+      await loadAllData();
+    } catch (err: any) {
+      showToast("error", err.message || "Erro ao atualizar data.");
     }
   };
 
@@ -1659,6 +1673,15 @@ export function AdminUsuariosPage() {
                         className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
+                    <div>
+                      <input
+                        type="email"
+                        placeholder="E-mail para Notificações de Vencimento (opcional)"
+                        value={newCompany.email_notificacao}
+                        onChange={(e) => setNewCompany({ ...newCompany, email_notificacao: e.target.value })}
+                        className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
                     <div className="flex justify-end gap-2 pt-2">
                       <button
                         type="button"
@@ -1756,7 +1779,7 @@ export function AdminUsuariosPage() {
                           <Upload className="w-4 h-4 text-foreground" />
                           Anexar Novo Arquivo
                         </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-[10px] font-medium text-muted-foreground mb-1">
                               Tipo do Documento
@@ -1773,6 +1796,17 @@ export function AdminUsuariosPage() {
                                 </option>
                               ))}
                             </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-medium text-muted-foreground mb-1">
+                              Data de Vencimento (opcional)
+                            </label>
+                            <input
+                              type="date"
+                              value={uploadVencimento}
+                              onChange={(e) => setUploadVencimento(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-card border border-border text-foreground text-xs focus:outline-none"
+                            />
                           </div>
                           <div className="flex items-end">
                             <label
@@ -1825,6 +1859,21 @@ export function AdminUsuariosPage() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 ml-auto">
+                                  <div className="flex flex-col items-end">
+                                    <label className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">Vencimento</label>
+                                    <input
+                                      type="date"
+                                      defaultValue={file.data_vencimento ?? ""}
+                                      onBlur={(e) => {
+                                        const v = e.target.value;
+                                        if ((v || null) !== (file.data_vencimento ?? null)) {
+                                          handleUpdateVencimento(file.id, v);
+                                        }
+                                      }}
+                                      title="Definir/alterar data de vencimento"
+                                      className="px-2 py-1 rounded-md bg-card border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                    />
+                                  </div>
                                   <a
                                     href={file.arquivo_url}
                                     download={file.arquivo_nome}
@@ -2237,6 +2286,17 @@ export function AdminUsuariosPage() {
                   onChange={(e) => setEditingCompany({ ...editingCompany, cnpj: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail para Notificações de Vencimento</label>
+                <input
+                  type="email"
+                  placeholder="notificacoes@empresa.com"
+                  value={editingCompany.email_notificacao ?? ""}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, email_notificacao: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Receberá alertas automáticos no dia do vencimento de cada documento.</p>
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input

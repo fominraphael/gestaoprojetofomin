@@ -19,8 +19,10 @@ export type Database = {
           arquivo_nome: string
           arquivo_tamanho: number | null
           arquivo_url: string
+          data_vencimento: string | null
           empresa_id: string
           id: string
+          notificado_em: string | null
           storage_path: string | null
           tipo_id: string
           uploaded_at: string
@@ -29,8 +31,10 @@ export type Database = {
           arquivo_nome: string
           arquivo_tamanho?: number | null
           arquivo_url: string
+          data_vencimento?: string | null
           empresa_id: string
           id?: string
+          notificado_em?: string | null
           storage_path?: string | null
           tipo_id: string
           uploaded_at?: string
@@ -39,8 +43,10 @@ export type Database = {
           arquivo_nome?: string
           arquivo_tamanho?: number | null
           arquivo_url?: string
+          data_vencimento?: string | null
           empresa_id?: string
           id?: string
+          notificado_em?: string | null
           storage_path?: string | null
           tipo_id?: string
           uploaded_at?: string
@@ -94,6 +100,7 @@ export type Database = {
           ativo: boolean
           cnpj: string
           created_at: string
+          email_notificacao: string | null
           id: string
           nome: string
           updated_at: string
@@ -102,6 +109,7 @@ export type Database = {
           ativo?: boolean
           cnpj: string
           created_at?: string
+          email_notificacao?: string | null
           id?: string
           nome: string
           updated_at?: string
@@ -110,6 +118,7 @@ export type Database = {
           ativo?: boolean
           cnpj?: string
           created_at?: string
+          email_notificacao?: string | null
           id?: string
           nome?: string
           updated_at?: string

@@ -5,6 +5,7 @@ export interface Empresa {
   cnpj: string;
   nome: string;
   ativo?: boolean;
+  email_notificacao?: string | null;
   created_at?: string;
 }
 
@@ -24,6 +25,8 @@ export interface DocumentoArquivo {
   arquivo_nome: string;
   arquivo_tamanho?: number | null;
   storage_path?: string | null;
+  data_vencimento?: string | null;
+  notificado_em?: string | null;
   uploaded_at?: string;
 }
 
@@ -38,10 +41,10 @@ export async function obterEmpresas(): Promise<Empresa[]> {
   return (data as Empresa[]) || [];
 }
 
-export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa> {
+export async function criarEmpresa(cnpj: string, nome: string, email_notificacao?: string | null): Promise<Empresa> {
   const { data, error } = await supabase
     .from("empresas")
-    .insert([{ cnpj: cnpj.trim(), nome }])
+    .insert([{ cnpj: cnpj.trim(), nome, email_notificacao: email_notificacao?.trim() || null }])
     .select("*")
     .single();
   if (error) {
@@ -53,7 +56,7 @@ export async function criarEmpresa(cnpj: string, nome: string): Promise<Empresa>
 
 export async function atualizarEmpresa(
   id: string,
-  updates: { cnpj?: string; nome?: string; ativo?: boolean }
+  updates: { cnpj?: string; nome?: string; ativo?: boolean; email_notificacao?: string | null }
 ): Promise<void> {
   const payload: any = { ...updates };
   if (payload.cnpj !== undefined) payload.cnpj = String(payload.cnpj).trim();
@@ -124,7 +127,8 @@ export async function obterArquivos(empresaId?: string): Promise<DocumentoArquiv
 export async function uploadArquivo(
   empresaId: string,
   tipoId: string,
-  file: File
+  file: File,
+  dataVencimento?: string | null
 ): Promise<DocumentoArquivo> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(
@@ -155,8 +159,6 @@ export async function uploadArquivo(
     .upload(storagePath, file, { cacheControl: "3600", upsert: true });
   if (upErr) throw new Error(upErr.message);
 
-  // Private bucket → use signed URL with long TTL for display/download (1 hour);
-  // for archival we store the storage_path and re-sign on demand if needed.
   const { data: signed } = await supabase.storage
     .from("documentos")
     .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
@@ -171,11 +173,20 @@ export async function uploadArquivo(
       arquivo_nome: file.name,
       arquivo_tamanho: file.size,
       storage_path: storagePath,
+      data_vencimento: dataVencimento || null,
     }])
     .select("*")
     .single();
   if (insErr) throw insErr;
   return rec as DocumentoArquivo;
+}
+
+export async function atualizarVencimentoArquivo(id: string, data_vencimento: string | null): Promise<void> {
+  const { error } = await supabase
+    .from("documentos_arquivo")
+    .update({ data_vencimento, notificado_em: null })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function excluirArquivo(id: string): Promise<void> {
