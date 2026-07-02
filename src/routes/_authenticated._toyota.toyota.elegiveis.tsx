@@ -70,7 +70,7 @@ interface Veiculo {
   status_aprovacao: string;
   filial_id: string;
   filial_destino_id: string | null;
-  filial: { nome: string; dealer_number: string | null } | null;
+  filial: { nome: string } | null;
 }
 
 function AnaliseElegiveis() {
@@ -101,14 +101,14 @@ function AnaliseElegiveis() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, dealer_number)",
+          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome)",
         )
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
         .order("importado_em", { ascending: false }),
       supabase
         .from("toyota_patios")
-        .select("id, nome, dealer_number")
+        .select("id, nome")
         .eq("ativo", true)
         .order("nome"),
     ]);
@@ -294,11 +294,6 @@ function AnaliseElegiveis() {
                       </TableCell>
                       <TableCell>
                         <div>{v.filial?.nome ?? "—"}</div>
-                        {v.filial?.dealer_number && (
-                          <div className="text-xs text-muted-foreground">
-                            {v.filial.dealer_number}
-                          </div>
-                        )}
                       </TableCell>
                       <TableCell>
                         {v.elegibilidade === "TCUV" ? (
@@ -387,7 +382,6 @@ function AnaliseElegiveis() {
                     {filiais.map((f) => (
                       <SelectItem key={f.id} value={f.id}>
                         {f.nome}
-                        {f.dealer_number ? ` (${f.dealer_number})` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
