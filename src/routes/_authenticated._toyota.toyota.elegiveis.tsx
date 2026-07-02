@@ -82,6 +82,8 @@ interface Veiculo {
   hsv_revisoes_pendentes: string[] | null;
   hsv_os_ajustes: string[] | null;
   hsv_observacoes_preparador: string | null;
+  retorno_toyota_em: string | null;
+  observacao_toyota: string | null;
 }
 
 function AnaliseElegiveis() {
@@ -114,7 +116,7 @@ function AnaliseElegiveis() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, filial_id)",
+          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, retorno_toyota_em, observacao_toyota, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, filial_id)",
         )
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
@@ -307,7 +309,7 @@ function AnaliseElegiveis() {
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
-        status_aprovacao: "reprovado_admin",
+        status_aprovacao: "arquivado",
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
       })
@@ -405,8 +407,17 @@ function AnaliseElegiveis() {
                         const hsvOk = v.hsv_status === "ok";
                         const aprovarHabilitado = podeAprovar(v);
                         return (
-                          <TableRow key={v.id}>
-                            <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                          <TableRow key={v.id} className={v.retorno_toyota_em ? "bg-red-50/60" : ""}>
+                            <TableCell className="font-mono text-xs">
+                              <div className="flex items-center gap-2">
+                                <span>{v.chassi}</span>
+                                {v.retorno_toyota_em && (
+                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100" title={v.observacao_toyota ?? undefined}>
+                                    Recusado Toyota
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
                             <TableCell>
                               <div className="font-medium">{v.modelo ?? "—"}</div>
@@ -699,6 +710,9 @@ function EnvioToyotaTab() {
   const [gerando, setGerando] = useState<string | null>(null);
   const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
   const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
+  const [recusaVeic, setRecusaVeic] = useState<VeiculoEnvio | null>(null);
+  const [recusaMotivo, setRecusaMotivo] = useState("");
+  const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
   const carregar = async () => {
     setLoading(true);
@@ -888,6 +902,33 @@ function EnvioToyotaTab() {
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
+  async function confirmarRecusa() {
+    if (!recusaVeic) return;
+    const motivo = recusaMotivo.trim();
+    if (!motivo) {
+      toast.error("Informe o motivo da recusa.");
+      return;
+    }
+    setSalvandoRecusa(true);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({
+        status_aprovacao: "analise",
+        retorno_toyota_em: new Date().toISOString(),
+        observacao_toyota: motivo,
+      })
+      .eq("id", recusaVeic.id);
+    setSalvandoRecusa(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Recusa registrada. Veículo retornou para a Análise Central.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== recusaVeic.id));
+    setRecusaVeic(null);
+    setRecusaMotivo("");
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12 text-muted-foreground">
@@ -1006,6 +1047,18 @@ function EnvioToyotaTab() {
                         )}
                         Salvar TCUV
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          setRecusaVeic(v);
+                          setRecusaMotivo("");
+                        }}
+                        title="Registrar recusa da Toyota — retorna o veículo para a Análise Central"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Registrar Recusa
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -1015,6 +1068,37 @@ function EnvioToyotaTab() {
         </div>
       </CardContent>
     </Card>
+
+    <Dialog open={!!recusaVeic} onOpenChange={(o) => !o && setRecusaVeic(null)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Registrar recusa da Toyota</DialogTitle>
+          <DialogDescription>
+            O veículo retornará para a <strong>Análise Central</strong> com destaque.
+            O Administrador poderá revisar e reenviar ou arquivar definitivamente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="motivo-recusa">Motivo / observação da Toyota</Label>
+          <Textarea
+            id="motivo-recusa"
+            value={recusaMotivo}
+            onChange={(e) => setRecusaMotivo(e.target.value)}
+            placeholder="Ex.: pendência de documentação, item reprovado no check-list, etc."
+            rows={4}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setRecusaVeic(null)} disabled={salvandoRecusa}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" onClick={confirmarRecusa} disabled={salvandoRecusa}>
+            {salvandoRecusa && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            Confirmar recusa
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
