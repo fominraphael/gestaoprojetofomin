@@ -488,7 +488,7 @@ export type Database = {
             foreignKeyName: "toyota_estoque_veiculos_filial_destino_id_fkey"
             columns: ["filial_destino_id"]
             isOneToOne: false
-            referencedRelation: "toyota_patios"
+            referencedRelation: "toyota_filiais"
             referencedColumns: ["id"]
           },
           {
