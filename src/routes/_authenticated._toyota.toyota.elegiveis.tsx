@@ -679,6 +679,14 @@ interface VeiculoEnvio {
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
   codigo_tcuv: string | null;
   dossie_pdf_path: string | null;
+  posvendas_km: number | null;
+  posvendas_finalizado_em: string | null;
+  posvendas_finalizado_por: string | null;
+  filial_id: string | null;
+  toyota_filiais: {
+    dealer_number: string | null;
+    nome_bi_toyota: string | null;
+  } | null;
 }
 
 const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
