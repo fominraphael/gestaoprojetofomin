@@ -1,0 +1,1 @@
+ALTER TABLE public.toyota_estoque_veiculos DROP CONSTRAINT IF EXISTS toyota_estoque_veiculos_status_aprovacao_check;
