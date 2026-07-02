@@ -241,7 +241,9 @@ function GosystemImporter() {
           const km = parseInt0(pick(r, ["km", "quilometragem", "hodometro"]));
           const placa = String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase();
           const laudo = String(pick(r, ["resultado.*laudo", "laudo"]) ?? "").trim();
-          const patioNome = String(pick(r, ["^patio$", "p[aá]tio", "filial"]) ?? "").trim();
+          // Spec: a coluna "Filial" da planilha é o Pátio no sistema.
+          // A Filial (do sistema) é deduzida via toyota_patios.filial_id.
+          const patioNome = String(pick(r, ["^filial$", "filial", "p[aá]tio", "^patio$"]) ?? "").trim();
           const patioId = patioMap.get(normalize(patioNome)) ?? null;
           if (!patioId) semPatioCount++;
           return {
