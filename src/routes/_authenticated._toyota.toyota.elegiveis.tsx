@@ -271,23 +271,18 @@ function AnaliseElegiveis() {
     await carregar();
   }
 
-  // ============ APROVAR ============
-  function iniciarAprovacao(v: Veiculo) {
+  // ============ APROVAR (automático — filial vem do pátio) ============
+  async function iniciarAprovacao(v: Veiculo) {
     if (!podeAprovar(v)) {
       toast.error("Conclua o HSV e anexe um laudo válido antes de aprovar.");
       return;
     }
+    const filialDestinoId = v.filial?.filial_id ?? null;
+    if (!filialDestinoId) {
+      toast.error("O pátio deste veículo não está vinculado a uma filial. Ajuste o cadastro do pátio.");
+      return;
+    }
     setAprovando(v);
-    // Pré-seleciona a primeira filial disponível (não há mais correspondência 1:1 com pátio de origem)
-    setFilialDestinoId(
-      v.filial_destino_id && filiais.some((f) => f.id === v.filial_destino_id)
-        ? v.filial_destino_id
-        : "",
-    );
-  }
-
-  async function confirmarAprovacao() {
-    if (!aprovando || !filialDestinoId) return;
     setSalvandoAprovar(true);
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase
@@ -298,16 +293,16 @@ function AnaliseElegiveis() {
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
       })
-      .eq("id", aprovando.id);
+      .eq("id", v.id);
     setSalvandoAprovar(false);
+    setAprovando(null);
     if (error) {
       toast.error(error.message);
       return;
     }
-    const filialNome = filiais.find((f) => f.id === filialDestinoId)?.nome ?? "filial";
-    toast.success(`Veículo enviado para a fila de preparação de ${filialNome}.`);
-    setAprovando(null);
-    setVeiculos((prev) => prev.filter((v) => v.id !== aprovando.id));
+    const filialNome = filiais.find((f) => f.id === filialDestinoId)?.nome ?? "filial de destino";
+    toast.success(`Veículo enviado para a Fila do Pós-Vendas de ${filialNome}.`);
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
   async function arquivarVeiculo(v: Veiculo) {
