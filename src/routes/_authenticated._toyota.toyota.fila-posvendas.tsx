@@ -74,7 +74,7 @@ function FilaPosVendas() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,health_check_pdf_path,health_check_uploaded_at",
+        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,health_check_pdf_path,health_check_uploaded_at,posvendas_km",
       )
       .eq("status_aprovacao", "em_posvendas")
       .order("updated_at", { ascending: false });
