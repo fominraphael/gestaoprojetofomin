@@ -205,6 +205,10 @@ function GosystemImporter() {
 
   const processFile = useCallback(
     async (f: File) => {
+      if (f.size > 100 * 1024 * 1024) {
+        toast.error("Arquivo excede o limite de 100 MB.");
+        return;
+      }
       setLoading(true);
       try {
         const buf = await f.arrayBuffer();
@@ -370,7 +374,7 @@ function GosystemImporter() {
 
     const { error, data: saved } = await supabase
       .from("toyota_estoque_veiculos")
-      .upsert(payload, { onConflict: "external_id" })
+      .upsert(payload, { onConflict: "chassi,chassi_resumido" })
       .select("id");
 
     await supabase.from("toyota_importacoes").insert({

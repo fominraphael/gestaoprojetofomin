@@ -59,8 +59,8 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
       toast.error("Apenas arquivos PDF são aceitos.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Arquivo excede 10MB.");
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo excede 100MB.");
       return;
     }
     const url = URL.createObjectURL(file);
@@ -121,7 +121,7 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
             <p className="text-sm font-medium text-slate-700">
               Clique ou arraste o PDF do Health Check
             </p>
-            <p className="text-xs text-slate-500">Apenas PDF, até 10MB</p>
+            <p className="text-xs text-slate-500">Apenas PDF, até 100MB</p>
             <input
               ref={inputRef}
               type="file"
