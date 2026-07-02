@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench } from "lucide-react";
+import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench, XCircle } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
