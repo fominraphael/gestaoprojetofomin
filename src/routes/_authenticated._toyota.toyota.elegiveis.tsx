@@ -309,7 +309,7 @@ function AnaliseElegiveis() {
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
-        status_aprovacao: "reprovado_admin",
+        status_aprovacao: "arquivado",
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
       })
