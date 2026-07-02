@@ -54,7 +54,6 @@ const REVISOES_DISPONIVEIS = ["10k", "20k", "30k", "40k", "50k", "60k", "70k", "
 interface Filial {
   id: string;
   nome: string;
-  dealer_number: string | null;
 }
 
 interface Veiculo {
