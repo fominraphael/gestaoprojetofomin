@@ -913,3 +913,137 @@ function AcaoBadge({ a }: { a: BiRow["novoStatus"] }) {
   if (a === "nao_encontrado") return <Badge variant="secondary">Ignorar</Badge>;
   return <Badge variant="outline">Manter</Badge>;
 }
+
+// ============================================================================
+// Histórico de Importações
+// ============================================================================
+
+function HistoricoImportacoes({ tipo, refreshKey }: { tipo: string; refreshKey: number }) {
+  const [items, setItems] = useState<ImportacaoHist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("toyota_importacoes")
+        .select("id, created_at, status, arquivo_nome, arquivo_path, total_linhas, total_salvos, total_ignorados, mensagem, tipo, user_id")
+        .eq("tipo", tipo)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (!alive) return;
+      const list = (data ?? []) as ImportacaoHist[];
+      // Buscar nomes de usuários
+      const ids = Array.from(new Set(list.map((i) => i.user_id).filter(Boolean))) as string[];
+      if (ids.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", ids);
+        const map = new Map<string, string>();
+        (profs ?? []).forEach((p: any) => map.set(p.id, p.username));
+        list.forEach((i) => {
+          if (i.user_id) i.usuario_nome = map.get(i.user_id) ?? null;
+        });
+      }
+      setItems(list);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [tipo, refreshKey]);
+
+  const download = async (path: string, name: string | null) => {
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) {
+      toast.error("Falha ao gerar link de download");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = name ?? "arquivo";
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <History className="w-4 h-4" /> Histórico de Importações
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center py-8 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Nenhuma importação registrada ainda.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Arquivo</TableHead>
+                  <TableHead>Linhas</TableHead>
+                  <TableHead>Salvos</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((i) => (
+                  <TableRow key={i.id}>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {new Date(i.created_at).toLocaleString("pt-BR")}
+                    </TableCell>
+                    <TableCell className="text-xs">{i.usuario_nome ?? "—"}</TableCell>
+                    <TableCell className="text-xs max-w-xs truncate" title={i.arquivo_nome ?? ""}>
+                      {i.arquivo_nome ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{i.total_linhas ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{i.total_salvos ?? 0}</TableCell>
+                    <TableCell>
+                      {i.status === "sucesso" ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Sucesso
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="gap-1" title={i.mensagem ?? ""}>
+                          <AlertCircle className="w-3 h-3" /> Erro
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {i.arquivo_path ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => download(i.arquivo_path!, i.arquivo_nome)}
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1" /> Baixar
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">sem arquivo</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
