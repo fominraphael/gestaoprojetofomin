@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Building2, Warehouse } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Building2, Warehouse, FileText, Upload, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
@@ -490,6 +490,140 @@ function ToyotaConfiguracoes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isAdmin && <TemplatesChecklistCard />}
     </div>
   );
 }
+
+// ============================================================================
+// Templates de Check-list (Upload dos PDFs base TCUV / TSIM)
+// ============================================================================
+
+const TEMPLATE_KEYS = {
+  tcuv: "toyota_template_tcuv_path",
+  tsim: "toyota_template_tsim_path",
+} as const;
+
+function TemplatesChecklistCard() {
+  const [paths, setPaths] = useState<{ tcuv: string | null; tsim: string | null }>({
+    tcuv: null,
+    tsim: null,
+  });
+  const [uploading, setUploading] = useState<null | "tcuv" | "tsim">(null);
+
+  async function carregar() {
+    const { data } = await supabase
+      .from("system_settings")
+      .select("key,value")
+      .in("key", [TEMPLATE_KEYS.tcuv, TEMPLATE_KEYS.tsim]);
+    const next = { tcuv: null as string | null, tsim: null as string | null };
+    for (const row of data ?? []) {
+      const v = row.value as { path?: string } | string | null;
+      const p = typeof v === "string" ? v : (v?.path ?? null);
+      if (row.key === TEMPLATE_KEYS.tcuv) next.tcuv = p;
+      if (row.key === TEMPLATE_KEYS.tsim) next.tsim = p;
+    }
+    setPaths(next);
+  }
+  useEffect(() => {
+    carregar();
+  }, []);
+
+  async function upload(tipo: "tcuv" | "tsim", file: File) {
+    if (file.type !== "application/pdf") {
+      toast.error("Envie um arquivo PDF.");
+      return;
+    }
+    setUploading(tipo);
+    try {
+      const path = `toyota/templates/${tipo}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, file, { upsert: true, contentType: "application/pdf" });
+      if (upErr) throw upErr;
+      const { error: sErr } = await supabase.from("system_settings").upsert(
+        { key: TEMPLATE_KEYS[tipo], value: { path } as unknown as never },
+        { onConflict: "key" },
+      );
+      if (sErr) throw sErr;
+      toast.success(`Template ${tipo.toUpperCase()} atualizado.`);
+      await carregar();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Falha no upload.";
+      toast.error(msg);
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <CardTitle className="text-lg">Templates de Check-list</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              PDFs base oficiais da Toyota usados para preenchimento dinâmico do check-list.
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(["tcuv", "tsim"] as const).map((tipo) => (
+          <div
+            key={tipo}
+            className="border rounded-md p-4 space-y-3 bg-muted/20"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Template {tipo.toUpperCase()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {paths[tipo] ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Configurado
+                    </span>
+                  ) : (
+                    "Nenhum arquivo enviado"
+                  )}
+                </p>
+              </div>
+              <Badge variant={paths[tipo] ? "default" : "secondary"}>
+                {paths[tipo] ? "Ativo" : "Pendente"}
+              </Badge>
+            </div>
+            <label className="block">
+              <input
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void upload(tipo, f);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                asChild
+                variant="outline"
+                className="w-full cursor-pointer"
+                disabled={uploading === tipo}
+              >
+                <span>
+                  <Upload className="w-4 h-4" />
+                  {uploading === tipo
+                    ? "Enviando..."
+                    : paths[tipo]
+                      ? "Substituir PDF"
+                      : "Enviar PDF"}
+                </span>
+              </Button>
+            </label>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+

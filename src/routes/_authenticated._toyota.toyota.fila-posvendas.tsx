@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute(
   "/_authenticated/_toyota/toyota/fila-posvendas",
@@ -52,14 +53,17 @@ interface Veiculo {
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
   health_check_pdf_path: string | null;
   health_check_uploaded_at: string | null;
+  posvendas_km: number | null;
 }
 
 function FilaPosVendas() {
+  const { user } = useAuth();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
+  const [km, setKm] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
@@ -70,7 +74,7 @@ function FilaPosVendas() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,health_check_pdf_path,health_check_uploaded_at",
+        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,health_check_pdf_path,health_check_uploaded_at,posvendas_km",
       )
       .eq("status_aprovacao", "em_posvendas")
       .order("updated_at", { ascending: false });
@@ -100,6 +104,7 @@ function FilaPosVendas() {
   const abrir = (v: Veiculo) => {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
+    setKm(v.posvendas_km != null ? String(v.posvendas_km) : "");
   };
 
   const salvarChecklist = async () => {
@@ -209,12 +214,20 @@ function FilaPosVendas() {
       toast.error("Preencha o checklist antes de enviar.");
       return;
     }
+    const kmNum = Number(km.replace(/\D/g, ""));
+    if (!kmNum || kmNum <= 0) {
+      toast.error("Informe a quilometragem atual do veículo.");
+      return;
+    }
     setEnviando(true);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
         status_aprovacao: "aguardando_analise_central",
         motivo_reprovacao: null,
+        posvendas_km: kmNum,
+        posvendas_finalizado_em: new Date().toISOString(),
+        posvendas_finalizado_por: user?.username ?? null,
       })
       .eq("id", aberto.id);
     setEnviando(false);
@@ -456,6 +469,24 @@ function FilaPosVendas() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-sm">Quilometragem atual *</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={km}
+                  onChange={(e) => setKm(e.target.value)}
+                  placeholder="Ex: 45230"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Informe a KM lida no odômetro. Será usada no cabeçalho do
+                  check-list enviado à Toyota.
+                </p>
+              </div>
+
+
+
               <DialogFooter>
                 <div className="mr-auto text-xs text-muted-foreground">
                   {!aberto.checklist_data?.preenchido_em && "• Preencha o check-list  "}
@@ -473,7 +504,8 @@ function FilaPosVendas() {
                   disabled={
                     enviando ||
                     !aberto.checklist_data?.preenchido_em ||
-                    !aberto.health_check_pdf_path
+                    !aberto.health_check_pdf_path ||
+                    !Number(km.replace(/\D/g, ""))
                   }
                 >
                   {enviando ? (

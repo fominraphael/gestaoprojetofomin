@@ -679,6 +679,14 @@ interface VeiculoEnvio {
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
   codigo_tcuv: string | null;
   dossie_pdf_path: string | null;
+  posvendas_km: number | null;
+  posvendas_finalizado_em: string | null;
+  posvendas_finalizado_por: string | null;
+  filial_id: string | null;
+  toyota_filiais: {
+    dealer_number: string | null;
+    nome_bi_toyota: string | null;
+  } | null;
 }
 
 const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
@@ -695,7 +703,7 @@ function EnvioToyotaTab() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path",
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,toyota_filiais:filial_id(dealer_number,nome_bi_toyota)",
       )
       .eq("status_aprovacao", "aguardando_analise_central")
       .order("updated_at", { ascending: false });
@@ -724,35 +732,29 @@ function EnvioToyotaTab() {
     }
   }
 
-  function checklistParaPdfBytes(v: VeiculoEnvio): ArrayBuffer {
-    // Gera um PDF simples com o texto do checklist usando pdf-lib
-    // (retornaremos via função async abaixo). Este stub é substituído em gerarDossie.
-    return new ArrayBuffer(0);
-  }
-  // silêncio linter: função stub usada apenas para tipagem
-  void checklistParaPdfBytes;
-
   async function gerarPdfChecklist(v: VeiculoEnvio): Promise<Uint8Array> {
-    const { PDFDocument, StandardFonts } = await import("pdf-lib");
-    const doc = await PDFDocument.create();
-    const font = await doc.embedFont(StandardFonts.Helvetica);
-    const page = doc.addPage([595, 842]);
-    const lines = [
-      `Check-list — ${v.chassi}`,
-      `Modelo: ${v.modelo ?? "—"}  Placa: ${v.placa ?? "—"}  Ano: ${v.ano_modelo ?? "—"}`,
-      `Programa: ${v.elegibilidade ?? "—"}`,
-      `Preenchido em: ${v.checklist_data?.preenchido_em ? new Date(v.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`,
-      "",
-      "Observações:",
-      ...(v.checklist_data?.observacoes ?? "—").split("\n"),
-    ];
-    let y = 800;
-    for (const l of lines) {
-      page.drawText(l.slice(0, 90), { x: 40, y, size: 11, font });
-      y -= 16;
-      if (y < 40) break;
+    const { gerarChecklistPreenchido, detectarTipoTemplate, formatarDataHora } =
+      await import("@/lib/checklist-template");
+    const tipo = detectarTipoTemplate(v.elegibilidade);
+    if (!tipo) {
+      throw new Error(
+        `Elegibilidade "${v.elegibilidade ?? "—"}" não corresponde a TCUV nem TSIM.`,
+      );
     }
-    return doc.save();
+    const { data, hora } = formatarDataHora(v.posvendas_finalizado_em);
+    const km = v.posvendas_km != null ? v.posvendas_km.toLocaleString("pt-BR") : "";
+    const responsavel = v.posvendas_finalizado_por ?? "";
+    return gerarChecklistPreenchido(tipo, {
+      veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
+      chassi: v.chassi,
+      km,
+      dn: v.toyota_filiais?.dealer_number ?? "",
+      nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
+      avaliadorResponsavel: responsavel,
+      tecnicoResponsavel: responsavel,
+      data,
+      hora,
+    });
   }
 
   async function gerarDossie(v: VeiculoEnvio) {
@@ -769,11 +771,17 @@ function EnvioToyotaTab() {
         const b = await baixarUrl(v.laudo_url);
         if (b) pdfs.push(b);
       }
-      // 2. Checklist (gerado on-the-fly)
-      const cl = await gerarPdfChecklist(v);
-      const clBuf = new ArrayBuffer(cl.byteLength);
-      new Uint8Array(clBuf).set(cl);
-      pdfs.push(clBuf);
+      // 2. Checklist preenchido dinamicamente sobre o template oficial
+      try {
+        const cl = await gerarPdfChecklist(v);
+        const clBuf = new ArrayBuffer(cl.byteLength);
+        new Uint8Array(clBuf).set(cl);
+        pdfs.push(clBuf);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Falha ao gerar check-list.";
+        toast.error(msg);
+        return;
+      }
       // 3. Health Check
       if (v.health_check_pdf_path) {
         const b = await baixarBytes(v.health_check_pdf_path);
