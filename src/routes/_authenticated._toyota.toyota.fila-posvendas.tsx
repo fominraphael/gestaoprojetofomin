@@ -51,9 +51,17 @@ interface Veiculo {
   hsv_os_ajustes: string[] | null;
   hsv_observacoes_preparador: string | null;
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  checklist_itens: Record<string, "" | "✓" | "N/A"> | null;
+  checklist_pdf_path: string | null;
   health_check_pdf_path: string | null;
   health_check_uploaded_at: string | null;
   posvendas_km: number | null;
+  filial_destino_id: string | null;
+}
+
+interface FilialInfo {
+  dealer_number: string | null;
+  nome_bi_toyota: string | null;
 }
 
 function FilaPosVendas() {
@@ -64,6 +72,7 @@ function FilaPosVendas() {
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
   const [km, setKm] = useState("");
+  const [marcacoes, setMarcacoes] = useState<Record<string, "" | "✓" | "N/A">>({});
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
@@ -74,7 +83,7 @@ function FilaPosVendas() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,health_check_pdf_path,health_check_uploaded_at,posvendas_km",
+        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,checklist_itens,checklist_pdf_path,health_check_pdf_path,health_check_uploaded_at,posvendas_km,filial_destino_id",
       )
       .eq("status_aprovacao", "em_posvendas")
       .order("updated_at", { ascending: false });
@@ -105,38 +114,154 @@ function FilaPosVendas() {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
     setKm(v.posvendas_km != null ? String(v.posvendas_km) : "");
+    setMarcacoes(v.checklist_itens ?? {});
+  };
+
+  const tipoChecklist = useMemo(() => {
+    if (!aberto?.elegibilidade) return null;
+    const e = aberto.elegibilidade.toUpperCase();
+    if (e.includes("TCUV")) return "TCUV" as const;
+    if (e.includes("TSIM")) return "TSIM" as const;
+    return null;
+  }, [aberto]);
+
+
+  // Carrega o modelo de check-list (TCUV/TSIM) sob demanda para renderizar o formulário
+  const [modeloSecoes, setModeloSecoes] = useState<
+    { titulo: string; itens: string[] }[] | null
+  >(null);
+  useEffect(() => {
+    if (!tipoChecklist) {
+      setModeloSecoes(null);
+      return;
+    }
+    let cancel = false;
+    void import("@/lib/toyota-checklist").then((m) => {
+      if (cancel) return;
+      setModeloSecoes(m.CHECKLIST_MODELOS[tipoChecklist].secoes);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, [tipoChecklist]);
+
+  const totalObrigatorios = useMemo(
+    () => modeloSecoes?.reduce((a, s) => a + s.itens.length, 0) ?? 0,
+    [modeloSecoes],
+  );
+  const totalMarcados = useMemo(
+    () =>
+      Object.values(marcacoes).filter((v) => v === "✓" || v === "N/A").length,
+    [marcacoes],
+  );
+  const tudoMarcado = totalObrigatorios > 0 && totalMarcados >= totalObrigatorios;
+
+  const setMarca = (key: string, val: "✓" | "N/A" | "") => {
+    setMarcacoes((prev) => {
+      const next = { ...prev };
+      if (!val) delete next[key];
+      else next[key] = val;
+      return next;
+    });
   };
 
   const salvarChecklist = async () => {
     if (!aberto) return;
-    setSalvando(true);
-    const { error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .update({
-        checklist_data: {
-          observacoes: obs,
-          preenchido_em: new Date().toISOString(),
-        },
-      })
-      .eq("id", aberto.id);
-    setSalvando(false);
-    if (error) {
-      toast.error("Erro ao salvar checklist");
+    if (!tipoChecklist) {
+      toast.error("Elegibilidade do veículo não corresponde a TCUV ou TSIM.");
       return;
     }
-    toast.success("Checklist salvo");
-    await carregar();
-    setAberto((cur) =>
-      cur
-        ? {
-            ...cur,
-            checklist_data: {
-              observacoes: obs,
-              preenchido_em: new Date().toISOString(),
-            },
-          }
-        : cur,
-    );
+    if (!tudoMarcado) {
+      toast.error("Marque todos os itens do check-list antes de salvar.");
+      return;
+    }
+    const kmNum = Number(km.replace(/\D/g, ""));
+    if (!kmNum || kmNum <= 0) {
+      toast.error("Informe a quilometragem atual antes de salvar o check-list.");
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      // Busca dados da filial para o cabeçalho
+      let filial: FilialInfo = { dealer_number: null, nome_bi_toyota: null };
+      if (aberto.filial_destino_id) {
+        const { data } = await supabase
+          .from("toyota_filiais")
+          .select("dealer_number,nome_bi_toyota")
+          .eq("id", aberto.filial_destino_id)
+          .maybeSingle();
+        if (data) filial = data as FilialInfo;
+      }
+
+      const { gerarChecklistPreenchido, formatarDataHora } = await import(
+        "@/lib/checklist-template"
+      );
+      const agora = new Date().toISOString();
+      const { data: dataStr, hora } = formatarDataHora(agora);
+      const responsavel = user?.username ?? "";
+
+      const pdfBytes = await gerarChecklistPreenchido(
+        tipoChecklist.toLowerCase() as "tcuv" | "tsim",
+        {
+          veiculoAnoModelo: [aberto.modelo, aberto.ano_modelo].filter(Boolean).join(" "),
+          chassi: aberto.chassi,
+          km: kmNum.toLocaleString("pt-BR"),
+          dn: filial.dealer_number ?? "",
+          nomeDistribuidor: filial.nome_bi_toyota ?? "",
+          avaliadorResponsavel: responsavel,
+          tecnicoResponsavel: responsavel,
+          data: dataStr,
+          hora,
+        },
+        marcacoes,
+      );
+
+      const path = `toyota/checklists/${aberto.id}/${Date.now()}-checklist.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(
+          path,
+          new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" }),
+          { upsert: true, contentType: "application/pdf" },
+        );
+      if (upErr) {
+        toast.error(`Falha ao salvar PDF do check-list: ${upErr.message}`);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("toyota_estoque_veiculos")
+        .update({
+          checklist_data: { observacoes: obs, preenchido_em: agora },
+          checklist_itens: marcacoes,
+          checklist_pdf_path: path,
+          posvendas_km: kmNum,
+        })
+        .eq("id", aberto.id);
+      if (error) {
+        toast.error("Erro ao salvar check-list");
+        return;
+      }
+      toast.success("Check-list preenchido e PDF gerado.");
+      await carregar();
+      setAberto((cur) =>
+        cur
+          ? {
+              ...cur,
+              checklist_data: { observacoes: obs, preenchido_em: agora },
+              checklist_itens: marcacoes,
+              checklist_pdf_path: path,
+              posvendas_km: kmNum,
+            }
+          : cur,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Falha ao gerar PDF.";
+      toast.error(msg);
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const uploadPdf = async (file: File) => {
@@ -343,7 +468,7 @@ function FilaPosVendas() {
           if (!o) setAberto(null);
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {aberto && (
             <>
               <DialogHeader>
@@ -394,41 +519,112 @@ function FilaPosVendas() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm">
-                  Check-list geral — observações da oficina
-                </Label>
+                <Label className="text-sm">Quilometragem atual *</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={km}
+                  onChange={(e) => setKm(e.target.value)}
+                  placeholder="Ex: 45230"
+                />
+              </div>
+
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-semibold">
+                      Check-list digital {tipoChecklist ? `— ${tipoChecklist}` : ""}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Marque cada item como Conforme (✓) ou N/A. Todos os itens
+                      são obrigatórios.
+                    </p>
+                  </div>
+                  <Badge variant={tudoMarcado ? "default" : "outline"}>
+                    {totalMarcados}/{totalObrigatorios}
+                  </Badge>
+                </div>
+
+                {!tipoChecklist ? (
+                  <div className="text-xs text-destructive">
+                    Elegibilidade do veículo não corresponde a TCUV nem TSIM.
+                  </div>
+                ) : !modeloSecoes ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Carregando itens...
+                  </div>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto space-y-4 pr-2">
+                    {modeloSecoes.map((sec, si) => (
+                      <div key={si} className="space-y-1.5">
+                        <div className="text-xs font-semibold text-primary">
+                          {sec.titulo}
+                        </div>
+                        {sec.itens.map((item, ii) => {
+                          const key = `${si}.${ii}`;
+                          const val = marcacoes[key] ?? "";
+                          return (
+                            <div
+                              key={key}
+                              className="flex items-center justify-between gap-2 text-xs border-b border-border/40 pb-1.5"
+                            >
+                              <span className="flex-1">{item}</span>
+                              <div className="flex gap-1 shrink-0">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={val === "✓" ? "default" : "outline"}
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() =>
+                                    setMarca(key, val === "✓" ? "" : "✓")
+                                  }
+                                >
+                                  ✓
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={val === "N/A" ? "secondary" : "outline"}
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() =>
+                                    setMarca(key, val === "N/A" ? "" : "N/A")
+                                  }
+                                >
+                                  N/A
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <Textarea
                   value={obs}
                   onChange={(e) => setObs(e.target.value)}
-                  placeholder="Resumo do check-list, itens N/A, observações finais..."
-                  rows={4}
+                  placeholder="Observações finais (opcional)..."
+                  rows={2}
                 />
+
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {aberto.checklist_data?.preenchido_em
-                      ? `Salvo em ${new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR")}`
-                      : "Não preenchido"}
+                    {aberto.checklist_pdf_path
+                      ? `PDF salvo em ${aberto.checklist_data?.preenchido_em ? new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`
+                      : "Ainda não salvo"}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setAberto(null)}
-                      disabled={salvando}
-                    >
-                      Voltar
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={salvarChecklist}
-                      disabled={salvando}
-                    >
-                      {salvando && (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                      )}
-                      Salvar check-list
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={salvarChecklist}
+                    disabled={salvando || !tudoMarcado}
+                  >
+                    {salvando && (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    )}
+                    Salvar e Concluir Check-list
+                  </Button>
                 </div>
               </div>
 
@@ -469,21 +665,6 @@ function FilaPosVendas() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm">Quilometragem atual *</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={km}
-                  onChange={(e) => setKm(e.target.value)}
-                  placeholder="Ex: 45230"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Informe a KM lida no odômetro. Será usada no cabeçalho do
-                  check-list enviado à Toyota.
-                </p>
-              </div>
 
 
 

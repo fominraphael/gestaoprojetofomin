@@ -365,6 +365,8 @@ export type Database = {
           chassi: string
           chassi_resumido: string | null
           checklist_data: Json | null
+          checklist_itens: Json | null
+          checklist_pdf_path: string | null
           codigo_tcuv: string | null
           created_at: string
           dados_originais: Json | null
@@ -413,6 +415,8 @@ export type Database = {
           chassi: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
+          checklist_itens?: Json | null
+          checklist_pdf_path?: string | null
           codigo_tcuv?: string | null
           created_at?: string
           dados_originais?: Json | null
@@ -461,6 +465,8 @@ export type Database = {
           chassi?: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
+          checklist_itens?: Json | null
+          checklist_pdf_path?: string | null
           codigo_tcuv?: string | null
           created_at?: string
           dados_originais?: Json | null

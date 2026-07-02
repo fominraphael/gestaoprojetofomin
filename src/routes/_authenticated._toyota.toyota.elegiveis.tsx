@@ -677,6 +677,8 @@ interface VeiculoEnvio {
   laudo_arquivo_path: string | null;
   health_check_pdf_path: string | null;
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  checklist_pdf_path: string | null;
+  checklist_itens: Record<string, "" | "✓" | "N/A"> | null;
   codigo_tcuv: string | null;
   dossie_pdf_path: string | null;
   posvendas_km: number | null;
@@ -703,7 +705,7 @@ function EnvioToyotaTab() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,checklist_itens,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
       )
       .eq("status_aprovacao", "aguardando_analise_central")
       .order("updated_at", { ascending: false });
@@ -747,17 +749,21 @@ function EnvioToyotaTab() {
     const { data, hora } = formatarDataHora(v.posvendas_finalizado_em);
     const km = v.posvendas_km != null ? v.posvendas_km.toLocaleString("pt-BR") : "";
     const responsavel = v.posvendas_finalizado_por ?? "";
-    return gerarChecklistPreenchido(tipo, {
-      veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
-      chassi: v.chassi,
-      km,
-      dn: v.toyota_filiais?.dealer_number ?? "",
-      nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
-      avaliadorResponsavel: responsavel,
-      tecnicoResponsavel: responsavel,
-      data,
-      hora,
-    });
+    return gerarChecklistPreenchido(
+      tipo,
+      {
+        veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
+        chassi: v.chassi,
+        km,
+        dn: v.toyota_filiais?.dealer_number ?? "",
+        nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
+        avaliadorResponsavel: responsavel,
+        tecnicoResponsavel: responsavel,
+        data,
+        hora,
+      },
+      v.checklist_itens ?? undefined,
+    );
   }
 
   async function gerarDossie(v: VeiculoEnvio) {
@@ -766,7 +772,27 @@ function EnvioToyotaTab() {
       const { mesclarPdfs } = await import("@/lib/pdf-utils");
       const pdfs: ArrayBuffer[] = [];
 
-      // 1. Laudo (arquivo ou URL)
+      // 1º) Check-list — usa o PDF já gerado no Pós-Vendas (com marcações);
+      //     se não existir, gera on-the-fly a partir do template + marcações salvas.
+      let clBytes: ArrayBuffer | null = null;
+      if (v.checklist_pdf_path) {
+        clBytes = await baixarBytes(v.checklist_pdf_path);
+      }
+      if (!clBytes) {
+        try {
+          const cl = await gerarPdfChecklist(v);
+          const buf = new ArrayBuffer(cl.byteLength);
+          new Uint8Array(buf).set(cl);
+          clBytes = buf;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : "Falha ao gerar check-list.";
+          toast.error(msg);
+          return;
+        }
+      }
+      if (clBytes) pdfs.push(clBytes);
+
+      // 2º) Laudo Cautelar
       if (v.laudo_arquivo_path) {
         const b = await baixarBytes(v.laudo_arquivo_path);
         if (b) pdfs.push(b);
@@ -774,18 +800,8 @@ function EnvioToyotaTab() {
         const b = await baixarUrl(v.laudo_url);
         if (b) pdfs.push(b);
       }
-      // 2. Checklist preenchido dinamicamente sobre o template oficial
-      try {
-        const cl = await gerarPdfChecklist(v);
-        const clBuf = new ArrayBuffer(cl.byteLength);
-        new Uint8Array(clBuf).set(cl);
-        pdfs.push(clBuf);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "Falha ao gerar check-list.";
-        toast.error(msg);
-        return;
-      }
-      // 3. Health Check
+
+      // 3º) Health Check
       if (v.health_check_pdf_path) {
         const b = await baixarBytes(v.health_check_pdf_path);
         if (b) pdfs.push(b);
@@ -796,12 +812,26 @@ function EnvioToyotaTab() {
         return;
       }
 
-      const merged = await mesclarPdfs(pdfs);
+      let merged = await mesclarPdfs(pdfs);
+      // Compressão: se ultrapassar 3MB, refaz a mesclagem com object streams
+      // e sem metadados, tentando enquadrar no limite da Toyota.
       if (merged.byteLength > MAX_DOSSIE_BYTES) {
-        toast.warning(
-          `Dossiê gerado com ${(merged.byteLength / 1024 / 1024).toFixed(2)}MB — excede o limite de 3MB da Toyota. Otimize os PDFs originais.`,
-        );
+        try {
+          const { PDFDocument } = await import("pdf-lib");
+          const compact = await PDFDocument.load(merged, { ignoreEncryption: true });
+          compact.setTitle("");
+          compact.setAuthor("");
+          compact.setSubject("");
+          compact.setKeywords([]);
+          compact.setProducer("");
+          compact.setCreator("");
+          merged = await compact.save({ useObjectStreams: true, addDefaultPage: false });
+        } catch (e) {
+          console.warn("Falha na compressão adicional:", e);
+        }
       }
+
+      const excedeu = merged.byteLength > MAX_DOSSIE_BYTES;
 
       const path = `toyota/dossies/${v.id}/${Date.now()}.pdf`;
       const { error: upErr } = await supabase.storage
@@ -823,7 +853,15 @@ function EnvioToyotaTab() {
         .from("documentos")
         .createSignedUrl(path, 600);
       if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-      toast.success("Dossiê gerado.");
+
+      const sizeMb = (merged.byteLength / 1024 / 1024).toFixed(2);
+      if (excedeu) {
+        toast.warning(
+          `Dossiê gerado (${sizeMb}MB) — excede o limite de 3MB da Toyota mesmo após compressão. Otimize os PDFs originais.`,
+        );
+      } else {
+        toast.success(`Dossiê gerado com sucesso (${sizeMb}MB).`);
+      }
       await carregar();
     } finally {
       setGerando(null);
@@ -868,6 +906,22 @@ function EnvioToyotaTab() {
   }
 
   return (
+    <>
+      {gerando && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+          <Card className="max-w-sm">
+            <CardContent className="py-6 flex flex-col items-center gap-3 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="font-semibold">Gerando Dossiê... Aguarde</p>
+                <p className="text-xs text-muted-foreground">
+                  Mesclando Check-list, Laudo e Health Check. Não feche esta janela.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
@@ -961,5 +1015,6 @@ function EnvioToyotaTab() {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
