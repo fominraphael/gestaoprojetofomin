@@ -26,14 +26,13 @@ import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authen
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
-import { Route as AuthenticatedToyotaToyotaValidacaoRouteImport } from './routes/_authenticated._toyota.toyota.validacao'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
+import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
 import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
 import { Route as AuthenticatedToyotaToyotaFilaPreparadorRouteImport } from './routes/_authenticated._toyota.toyota.fila-preparador'
 import { Route as AuthenticatedToyotaToyotaFilaPosvendasRouteImport } from './routes/_authenticated._toyota.toyota.fila-posvendas'
 import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
 import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
-import { Route as AuthenticatedToyotaToyotaChecklistRouteImport } from './routes/_authenticated._toyota.toyota.checklist'
 import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
 
 const RegistrarRoute = RegistrarRouteImport.update({
@@ -126,16 +125,16 @@ const ApiPublicHooksNotificarVencimentosRoute =
     path: '/api/public/hooks/notificar-vencimentos',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedToyotaToyotaValidacaoRoute =
-  AuthenticatedToyotaToyotaValidacaoRouteImport.update({
-    id: '/toyota/validacao',
-    path: '/toyota/validacao',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
 const AuthenticatedToyotaToyotaRegrasRoute =
   AuthenticatedToyotaToyotaRegrasRouteImport.update({
     id: '/toyota/regras',
     path: '/toyota/regras',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaPainelGeralRoute =
+  AuthenticatedToyotaToyotaPainelGeralRouteImport.update({
+    id: '/toyota/painel-geral',
+    path: '/toyota/painel-geral',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
 const AuthenticatedToyotaToyotaPainelRoute =
@@ -168,12 +167,6 @@ const AuthenticatedToyotaToyotaConfiguracoesRoute =
     path: '/toyota/configuracoes',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
-const AuthenticatedToyotaToyotaChecklistRoute =
-  AuthenticatedToyotaToyotaChecklistRouteImport.update({
-    id: '/toyota/checklist',
-    path: '/toyota/checklist',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
 const AuthenticatedToyotaToyotaEstoqueImportarRoute =
   AuthenticatedToyotaToyotaEstoqueImportarRouteImport.update({
     id: '/toyota/estoque/importar',
@@ -193,14 +186,13 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
-  '/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
   '/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
+  '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
-  '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
@@ -217,14 +209,13 @@ export interface FileRoutesByTo {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
-  '/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
   '/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
+  '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
-  '/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
@@ -246,14 +237,13 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
-  '/_authenticated/_toyota/toyota/checklist': typeof AuthenticatedToyotaToyotaChecklistRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/_authenticated/_toyota/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/_authenticated/_toyota/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
   '/_authenticated/_toyota/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
+  '/_authenticated/_toyota/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
-  '/_authenticated/_toyota/toyota/validacao': typeof AuthenticatedToyotaToyotaValidacaoRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
@@ -272,14 +262,13 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
-    | '/toyota/checklist'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
     | '/toyota/fila-posvendas'
     | '/toyota/fila-preparador'
     | '/toyota/painel'
+    | '/toyota/painel-geral'
     | '/toyota/regras'
-    | '/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/toyota/estoque/importar'
@@ -296,14 +285,13 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
-    | '/toyota/checklist'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
     | '/toyota/fila-posvendas'
     | '/toyota/fila-preparador'
     | '/toyota/painel'
+    | '/toyota/painel-geral'
     | '/toyota/regras'
-    | '/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/toyota/estoque/importar'
@@ -324,14 +312,13 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/roadmap'
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
-    | '/_authenticated/_toyota/toyota/checklist'
     | '/_authenticated/_toyota/toyota/configuracoes'
     | '/_authenticated/_toyota/toyota/elegiveis'
     | '/_authenticated/_toyota/toyota/fila-posvendas'
     | '/_authenticated/_toyota/toyota/fila-preparador'
     | '/_authenticated/_toyota/toyota/painel'
+    | '/_authenticated/_toyota/toyota/painel-geral'
     | '/_authenticated/_toyota/toyota/regras'
-    | '/_authenticated/_toyota/toyota/validacao'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/_authenticated/_toyota/toyota/estoque/importar'
@@ -467,18 +454,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/_toyota/toyota/validacao': {
-      id: '/_authenticated/_toyota/toyota/validacao'
-      path: '/toyota/validacao'
-      fullPath: '/toyota/validacao'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaValidacaoRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
     '/_authenticated/_toyota/toyota/regras': {
       id: '/_authenticated/_toyota/toyota/regras'
       path: '/toyota/regras'
       fullPath: '/toyota/regras'
       preLoaderRoute: typeof AuthenticatedToyotaToyotaRegrasRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/painel-geral': {
+      id: '/_authenticated/_toyota/toyota/painel-geral'
+      path: '/toyota/painel-geral'
+      fullPath: '/toyota/painel-geral'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelGeralRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
     '/_authenticated/_toyota/toyota/painel': {
@@ -514,13 +501,6 @@ declare module '@tanstack/react-router' {
       path: '/toyota/configuracoes'
       fullPath: '/toyota/configuracoes'
       preLoaderRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/checklist': {
-      id: '/_authenticated/_toyota/toyota/checklist'
-      path: '/toyota/checklist'
-      fullPath: '/toyota/checklist'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaChecklistRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
     '/_authenticated/_toyota/toyota/estoque/importar': {
@@ -568,20 +548,17 @@ const AuthenticatedGestaoRouteWithChildren =
   AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
 interface AuthenticatedToyotaRouteChildren {
-  AuthenticatedToyotaToyotaChecklistRoute: typeof AuthenticatedToyotaToyotaChecklistRoute
   AuthenticatedToyotaToyotaConfiguracoesRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   AuthenticatedToyotaToyotaElegiveisRoute: typeof AuthenticatedToyotaToyotaElegiveisRoute
   AuthenticatedToyotaToyotaFilaPosvendasRoute: typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
   AuthenticatedToyotaToyotaFilaPreparadorRoute: typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   AuthenticatedToyotaToyotaPainelRoute: typeof AuthenticatedToyotaToyotaPainelRoute
+  AuthenticatedToyotaToyotaPainelGeralRoute: typeof AuthenticatedToyotaToyotaPainelGeralRoute
   AuthenticatedToyotaToyotaRegrasRoute: typeof AuthenticatedToyotaToyotaRegrasRoute
-  AuthenticatedToyotaToyotaValidacaoRoute: typeof AuthenticatedToyotaToyotaValidacaoRoute
   AuthenticatedToyotaToyotaEstoqueImportarRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 
 const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
-  AuthenticatedToyotaToyotaChecklistRoute:
-    AuthenticatedToyotaToyotaChecklistRoute,
   AuthenticatedToyotaToyotaConfiguracoesRoute:
     AuthenticatedToyotaToyotaConfiguracoesRoute,
   AuthenticatedToyotaToyotaElegiveisRoute:
@@ -591,9 +568,9 @@ const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
   AuthenticatedToyotaToyotaFilaPreparadorRoute:
     AuthenticatedToyotaToyotaFilaPreparadorRoute,
   AuthenticatedToyotaToyotaPainelRoute: AuthenticatedToyotaToyotaPainelRoute,
+  AuthenticatedToyotaToyotaPainelGeralRoute:
+    AuthenticatedToyotaToyotaPainelGeralRoute,
   AuthenticatedToyotaToyotaRegrasRoute: AuthenticatedToyotaToyotaRegrasRoute,
-  AuthenticatedToyotaToyotaValidacaoRoute:
-    AuthenticatedToyotaToyotaValidacaoRoute,
   AuthenticatedToyotaToyotaEstoqueImportarRoute:
     AuthenticatedToyotaToyotaEstoqueImportarRoute,
 }
