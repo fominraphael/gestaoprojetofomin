@@ -703,11 +703,14 @@ function EnvioToyotaTab() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,toyota_filiais:filial_id(dealer_number,nome_bi_toyota)",
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
       )
       .eq("status_aprovacao", "aguardando_analise_central")
       .order("updated_at", { ascending: false });
-    if (error) toast.error("Falha ao carregar envios.");
+    if (error) {
+      console.error("[EnvioToyotaTab] carregar", error);
+      toast.error(`Falha ao carregar envios: ${error.message}`);
+    }
     setVeiculos((data ?? []) as unknown as VeiculoEnvio[]);
     setLoading(false);
   };
