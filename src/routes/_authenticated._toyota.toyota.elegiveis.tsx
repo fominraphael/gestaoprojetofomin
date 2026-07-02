@@ -175,6 +175,25 @@ function AnaliseElegiveis() {
     );
   }
 
+  async function reprovarVeiculo(v: Veiculo) {
+    if (!confirm(`Reprovar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`)) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({
+        status_aprovacao: "reprovado_admin",
+        aprovado_por: userData.user?.id ?? null,
+        aprovado_em: new Date().toISOString(),
+      })
+      .eq("id", v.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Veículo reprovado e movido para o histórico.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
 
   if (!isAdmin) {
     return (
