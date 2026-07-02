@@ -116,7 +116,7 @@ function AnaliseElegiveis() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, filial_id)",
+          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, retorno_toyota_em, observacao_toyota, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, filial_id)",
         )
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
