@@ -732,35 +732,29 @@ function EnvioToyotaTab() {
     }
   }
 
-  function checklistParaPdfBytes(v: VeiculoEnvio): ArrayBuffer {
-    // Gera um PDF simples com o texto do checklist usando pdf-lib
-    // (retornaremos via função async abaixo). Este stub é substituído em gerarDossie.
-    return new ArrayBuffer(0);
-  }
-  // silêncio linter: função stub usada apenas para tipagem
-  void checklistParaPdfBytes;
-
   async function gerarPdfChecklist(v: VeiculoEnvio): Promise<Uint8Array> {
-    const { PDFDocument, StandardFonts } = await import("pdf-lib");
-    const doc = await PDFDocument.create();
-    const font = await doc.embedFont(StandardFonts.Helvetica);
-    const page = doc.addPage([595, 842]);
-    const lines = [
-      `Check-list — ${v.chassi}`,
-      `Modelo: ${v.modelo ?? "—"}  Placa: ${v.placa ?? "—"}  Ano: ${v.ano_modelo ?? "—"}`,
-      `Programa: ${v.elegibilidade ?? "—"}`,
-      `Preenchido em: ${v.checklist_data?.preenchido_em ? new Date(v.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`,
-      "",
-      "Observações:",
-      ...(v.checklist_data?.observacoes ?? "—").split("\n"),
-    ];
-    let y = 800;
-    for (const l of lines) {
-      page.drawText(l.slice(0, 90), { x: 40, y, size: 11, font });
-      y -= 16;
-      if (y < 40) break;
+    const { gerarChecklistPreenchido, detectarTipoTemplate, formatarDataHora } =
+      await import("@/lib/checklist-template");
+    const tipo = detectarTipoTemplate(v.elegibilidade);
+    if (!tipo) {
+      throw new Error(
+        `Elegibilidade "${v.elegibilidade ?? "—"}" não corresponde a TCUV nem TSIM.`,
+      );
     }
-    return doc.save();
+    const { data, hora } = formatarDataHora(v.posvendas_finalizado_em);
+    const km = v.posvendas_km != null ? v.posvendas_km.toLocaleString("pt-BR") : "";
+    const responsavel = v.posvendas_finalizado_por ?? "";
+    return gerarChecklistPreenchido(tipo, {
+      veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
+      chassi: v.chassi,
+      km,
+      dn: v.toyota_filiais?.dealer_number ?? "",
+      nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
+      avaliadorResponsavel: responsavel,
+      tecnicoResponsavel: responsavel,
+      data,
+      hora,
+    });
   }
 
   async function gerarDossie(v: VeiculoEnvio) {
