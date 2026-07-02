@@ -660,3 +660,292 @@ function AnaliseElegiveis() {
     </div>
   );
 }
+
+// ============================================================================
+// Aba "Envio Toyota" — dossiê, mesclagem e código TCUV
+// ============================================================================
+
+interface VeiculoEnvio {
+  id: string;
+  chassi: string;
+  placa: string | null;
+  modelo: string | null;
+  ano_modelo: number | null;
+  elegibilidade: string | null;
+  laudo_url: string | null;
+  laudo_arquivo_path: string | null;
+  health_check_pdf_path: string | null;
+  checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  codigo_tcuv: string | null;
+  dossie_pdf_path: string | null;
+}
+
+const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
+
+function EnvioToyotaTab() {
+  const [loading, setLoading] = useState(true);
+  const [veiculos, setVeiculos] = useState<VeiculoEnvio[]>([]);
+  const [gerando, setGerando] = useState<string | null>(null);
+  const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
+  const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
+
+  const carregar = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .select(
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path",
+      )
+      .eq("status_aprovacao", "aguardando_analise_central")
+      .order("updated_at", { ascending: false });
+    if (error) toast.error("Falha ao carregar envios.");
+    setVeiculos((data ?? []) as unknown as VeiculoEnvio[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    carregar();
+  }, []);
+
+  async function baixarBytes(path: string): Promise<ArrayBuffer | null> {
+    const { data, error } = await supabase.storage.from("documentos").download(path);
+    if (error || !data) return null;
+    return await data.arrayBuffer();
+  }
+
+  async function baixarUrl(url: string): Promise<ArrayBuffer | null> {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.arrayBuffer();
+    } catch {
+      return null;
+    }
+  }
+
+  function checklistParaPdfBytes(v: VeiculoEnvio): ArrayBuffer {
+    // Gera um PDF simples com o texto do checklist usando pdf-lib
+    // (retornaremos via função async abaixo). Este stub é substituído em gerarDossie.
+    return new ArrayBuffer(0);
+  }
+  // silêncio linter: função stub usada apenas para tipagem
+  void checklistParaPdfBytes;
+
+  async function gerarPdfChecklist(v: VeiculoEnvio): Promise<Uint8Array> {
+    const { PDFDocument, StandardFonts } = await import("pdf-lib");
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const page = doc.addPage([595, 842]);
+    const lines = [
+      `Check-list — ${v.chassi}`,
+      `Modelo: ${v.modelo ?? "—"}  Placa: ${v.placa ?? "—"}  Ano: ${v.ano_modelo ?? "—"}`,
+      `Programa: ${v.elegibilidade ?? "—"}`,
+      `Preenchido em: ${v.checklist_data?.preenchido_em ? new Date(v.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`,
+      "",
+      "Observações:",
+      ...(v.checklist_data?.observacoes ?? "—").split("\n"),
+    ];
+    let y = 800;
+    for (const l of lines) {
+      page.drawText(l.slice(0, 90), { x: 40, y, size: 11, font });
+      y -= 16;
+      if (y < 40) break;
+    }
+    return doc.save();
+  }
+
+  async function gerarDossie(v: VeiculoEnvio) {
+    setGerando(v.id);
+    try {
+      const { mesclarPdfs } = await import("@/lib/pdf-utils");
+      const pdfs: ArrayBuffer[] = [];
+
+      // 1. Laudo (arquivo ou URL)
+      if (v.laudo_arquivo_path) {
+        const b = await baixarBytes(v.laudo_arquivo_path);
+        if (b) pdfs.push(b);
+      } else if (v.laudo_url) {
+        const b = await baixarUrl(v.laudo_url);
+        if (b) pdfs.push(b);
+      }
+      // 2. Checklist (gerado on-the-fly)
+      const cl = await gerarPdfChecklist(v);
+      pdfs.push(cl.buffer.slice(cl.byteOffset, cl.byteOffset + cl.byteLength));
+      // 3. Health Check
+      if (v.health_check_pdf_path) {
+        const b = await baixarBytes(v.health_check_pdf_path);
+        if (b) pdfs.push(b);
+      }
+
+      if (pdfs.length === 0) {
+        toast.error("Nenhum documento disponível para gerar o dossiê.");
+        return;
+      }
+
+      const merged = await mesclarPdfs(pdfs);
+      if (merged.byteLength > MAX_DOSSIE_BYTES) {
+        toast.warning(
+          `Dossiê gerado com ${(merged.byteLength / 1024 / 1024).toFixed(2)}MB — excede o limite de 3MB da Toyota. Otimize os PDFs originais.`,
+        );
+      }
+
+      const path = `toyota/dossies/${v.id}/${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, new Blob([merged as unknown as BlobPart], { type: "application/pdf" }), {
+          upsert: true,
+          contentType: "application/pdf",
+        });
+      if (upErr) {
+        toast.error(upErr.message);
+        return;
+      }
+      await supabase
+        .from("toyota_estoque_veiculos")
+        .update({ dossie_pdf_path: path, dossie_enviado_em: new Date().toISOString() })
+        .eq("id", v.id);
+
+      const { data: signed } = await supabase.storage
+        .from("documentos")
+        .createSignedUrl(path, 600);
+      if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+      toast.success("Dossiê gerado.");
+      await carregar();
+    } finally {
+      setGerando(null);
+    }
+  }
+
+  async function salvarTcuv(v: VeiculoEnvio) {
+    const codigo = (tcuvInput[v.id] ?? "").trim();
+    if (!codigo) {
+      toast.error("Informe o Código TCUV.");
+      return;
+    }
+    setSalvandoTcuv(v.id);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ codigo_tcuv: codigo, status_aprovacao: "certificado_toyota" })
+      .eq("id", v.id);
+    setSalvandoTcuv(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Código TCUV salvo. Processo finalizado.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin" />
+      </div>
+    );
+  }
+  if (veiculos.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          Nenhum veículo aguardando envio à Toyota.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">
+          Aguardando envio à Toyota
+          <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Chassi</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Programa</TableHead>
+                <TableHead>Dossiê</TableHead>
+                <TableHead>Código TCUV</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {veiculos.map((v) => (
+                <TableRow key={v.id}>
+                  <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{v.modelo ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {v.dossie_pdf_path ? (
+                      <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-amber-300 text-amber-700">
+                        Pendente
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      placeholder="Ex: TCUV-2026-0001"
+                      value={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
+                      onChange={(e) =>
+                        setTcuvInput((p) => ({ ...p, [v.id]: e.target.value }))
+                      }
+                      className="w-44"
+                      disabled={!v.dossie_pdf_path}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => gerarDossie(v)}
+                        disabled={gerando === v.id}
+                      >
+                        {gerando === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FileStack className="w-3.5 h-3.5" />
+                        )}
+                        {v.dossie_pdf_path ? "Regerar" : "Gerar Dossiê"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => salvarTcuv(v)}
+                        disabled={
+                          !v.dossie_pdf_path ||
+                          salvandoTcuv === v.id ||
+                          !(tcuvInput[v.id] ?? v.codigo_tcuv ?? "").trim()
+                        }
+                      >
+                        {salvandoTcuv === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Send className="w-3.5 h-3.5" />
+                        )}
+                        Salvar TCUV
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
