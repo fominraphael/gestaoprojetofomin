@@ -762,6 +762,7 @@ function EnvioToyotaTab() {
     try {
       const { mesclarPdfs } = await import("@/lib/pdf-utils");
       const pdfs: ArrayBuffer[] = [];
+      try {
 
       // 1. Laudo (arquivo ou URL)
       if (v.laudo_arquivo_path) {
