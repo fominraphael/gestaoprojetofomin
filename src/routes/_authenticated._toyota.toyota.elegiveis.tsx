@@ -78,7 +78,7 @@ interface Veiculo {
   status_aprovacao: string;
   filial_id: string;
   filial_destino_id: string | null;
-  filial: { nome: string } | null;
+  filial: { nome: string; filial_id: string | null } | null;
   resultado_laudo: string | null;
   laudo_url: string | null;
   laudo_arquivo_path: string | null;
@@ -97,7 +97,6 @@ function AnaliseElegiveis() {
 
   // Aprovar
   const [aprovando, setAprovando] = useState<Veiculo | null>(null);
-  const [filialDestinoId, setFilialDestinoId] = useState<string>("");
   const [salvandoAprovar, setSalvandoAprovar] = useState(false);
 
   // HSV
@@ -119,7 +118,7 @@ function AnaliseElegiveis() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome)",
+          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, resultado_laudo, laudo_url, laudo_arquivo_path, hsv_status, hsv_revisoes_pendentes, hsv_os_ajustes, hsv_observacoes_preparador, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, filial_id)",
         )
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
@@ -271,23 +270,18 @@ function AnaliseElegiveis() {
     await carregar();
   }
 
-  // ============ APROVAR ============
-  function iniciarAprovacao(v: Veiculo) {
+  // ============ APROVAR (automático — filial vem do pátio) ============
+  async function iniciarAprovacao(v: Veiculo) {
     if (!podeAprovar(v)) {
       toast.error("Conclua o HSV e anexe um laudo válido antes de aprovar.");
       return;
     }
+    const filialDestinoId = v.filial?.filial_id ?? null;
+    if (!filialDestinoId) {
+      toast.error("O pátio deste veículo não está vinculado a uma filial. Ajuste o cadastro do pátio.");
+      return;
+    }
     setAprovando(v);
-    // Pré-seleciona a primeira filial disponível (não há mais correspondência 1:1 com pátio de origem)
-    setFilialDestinoId(
-      v.filial_destino_id && filiais.some((f) => f.id === v.filial_destino_id)
-        ? v.filial_destino_id
-        : "",
-    );
-  }
-
-  async function confirmarAprovacao() {
-    if (!aprovando || !filialDestinoId) return;
     setSalvandoAprovar(true);
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase
@@ -298,16 +292,16 @@ function AnaliseElegiveis() {
         aprovado_por: userData.user?.id ?? null,
         aprovado_em: new Date().toISOString(),
       })
-      .eq("id", aprovando.id);
+      .eq("id", v.id);
     setSalvandoAprovar(false);
+    setAprovando(null);
     if (error) {
       toast.error(error.message);
       return;
     }
-    const filialNome = filiais.find((f) => f.id === filialDestinoId)?.nome ?? "filial";
-    toast.success(`Veículo enviado para a fila de preparação de ${filialNome}.`);
-    setAprovando(null);
-    setVeiculos((prev) => prev.filter((v) => v.id !== aprovando.id));
+    const filialNome = filiais.find((f) => f.id === filialDestinoId)?.nome ?? "filial de destino";
+    toast.success(`Veículo enviado para a Fila do Pós-Vendas de ${filialNome}.`);
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
   async function arquivarVeiculo(v: Veiculo) {
@@ -486,14 +480,18 @@ function AnaliseElegiveis() {
                             <Button
                               size="sm"
                               onClick={() => iniciarAprovacao(v)}
-                              disabled={!aprovarHabilitado}
+                              disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
                               title={
                                 aprovarHabilitado
                                   ? "Aprovar para preparação"
                                   : "Conclua HSV e anexe laudo válido"
                               }
                             >
-                              <ShieldCheck className="w-3.5 h-3.5" />
+                              {salvandoAprovar && aprovando?.id === v.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                              )}
                               Aprovar
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
@@ -512,47 +510,8 @@ function AnaliseElegiveis() {
         </CardContent>
       </Card>
 
-      {/* =============== APROVAR =============== */}
-      <Dialog open={!!aprovando} onOpenChange={(o) => !o && setAprovando(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Aprovar para Preparação</DialogTitle>
-            <DialogDescription>
-              Selecione a filial de destino que receberá o veículo.
-            </DialogDescription>
-          </DialogHeader>
-          {aprovando && (
-            <div className="space-y-4">
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
-                <div><span className="text-muted-foreground">Chassi: </span><span className="font-mono">{aprovando.chassi}</span></div>
-                <div><span className="text-muted-foreground">Modelo: </span>{aprovando.modelo ?? "—"}</div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Filial de destino</Label>
-                <Select value={filialDestinoId} onValueChange={setFilialDestinoId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a filial..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filiais.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAprovando(null)} disabled={salvandoAprovar}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarAprovacao} disabled={salvandoAprovar || !filialDestinoId}>
-              {salvandoAprovar && <Loader2 className="w-4 h-4 animate-spin" />}
-              Confirmar envio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Aprovação é 100% automática — sem seleção manual de filial */}
+
 
       {/* =============== HSV =============== */}
       <Dialog open={!!hsvVeiculo} onOpenChange={(o) => !o && setHsvVeiculo(null)}>
