@@ -97,7 +97,6 @@ function AnaliseElegiveis() {
 
   // Aprovar
   const [aprovando, setAprovando] = useState<Veiculo | null>(null);
-  const [filialDestinoId, setFilialDestinoId] = useState<string>("");
   const [salvandoAprovar, setSalvandoAprovar] = useState(false);
 
   // HSV
