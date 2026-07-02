@@ -118,9 +118,10 @@ function PainelCertificacao() {
       user?.id
         ? supabase
             .from("toyota_usuario_patio")
-            .select("filial_id")
+            .select("patio_id")
             .eq("user_id", user.id)
-        : Promise.resolve({ data: [] as { filial_id: string }[], error: null }),
+        : Promise.resolve({ data: [] as { patio_id: string }[], error: null }),
+
     ]);
 
     if (vRes.error) toast.error("Erro ao carregar veículos");
