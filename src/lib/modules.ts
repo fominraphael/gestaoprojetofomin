@@ -89,7 +89,7 @@ export const MODULES: ModuleDef[] = [
     navItems: [
       { to: "/toyota/painel", label: "Painel de Certificação", icon: GitBranch },
       { to: "/toyota/estoque/importar", label: "Importações", icon: Upload },
-      { to: "/toyota/elegiveis", label: "Análise de Elegíveis", icon: ShieldCheck },
+      { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck },
       { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck },
       { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench },
       { to: "/toyota/validacao", label: "Validação Técnica", icon: ClipboardCheck },
