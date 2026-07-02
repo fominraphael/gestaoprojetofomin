@@ -61,11 +61,11 @@ function RegrasPage() {
     const { data: u } = await supabase.auth.getUser();
     const uid = u.user?.id ?? null;
     const rows = [
-      { key: "toyota_regras", value: toyota, updated_by: uid, updated_at: new Date().toISOString() },
-      { key: "upload", value: { max_mb: uploadMb }, updated_by: uid, updated_at: new Date().toISOString() },
-      { key: "alertas", value: { horario_diario: horarioAlerta }, updated_by: uid, updated_at: new Date().toISOString() },
+      { key: "toyota_regras", value: toyota as unknown as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
+      { key: "upload", value: { max_mb: uploadMb } as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
+      { key: "alertas", value: { horario_diario: horarioAlerta } as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
     ];
-    const { error } = await supabase.from("system_settings").upsert(rows, { onConflict: "key" });
+    const { error } = await supabase.from("system_settings").upsert(rows as any, { onConflict: "key" });
     setSaving(false);
     if (error) {
       toast.error(error.message);
