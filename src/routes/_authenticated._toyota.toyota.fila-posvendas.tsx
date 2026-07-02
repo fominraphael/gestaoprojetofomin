@@ -53,14 +53,17 @@ interface Veiculo {
   checklist_data: { observacoes?: string; preenchido_em?: string } | null;
   health_check_pdf_path: string | null;
   health_check_uploaded_at: string | null;
+  posvendas_km: number | null;
 }
 
 function FilaPosVendas() {
+  const { user } = useAuth();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
+  const [km, setKm] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
