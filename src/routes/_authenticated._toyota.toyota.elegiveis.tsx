@@ -326,6 +326,13 @@ function AnaliseElegiveis() {
                               <ShieldCheck className="w-4 h-4" />
                               Aprovar para Preparação
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => reprovarVeiculo(v)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reprovar (finalizar)
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
