@@ -285,45 +285,61 @@ function GosystemImporter() {
       return;
     }
     setSaving(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id ?? null;
-      const elegMap: Record<Elegibilidade, "TCUV" | "TSIM" | "NAO_ELEGIVEL"> = {
-        "Elegível TCUV": "TCUV",
-        "Elegível TSIM": "TSIM",
-        "Não Elegível": "NAO_ELEGIVEL",
-      };
-      const payload = novos.map((r) => ({
-        filial_id: filialId,
-        user_id: userId,
-        chassi: r.chassi,
-        placa: r.placa || null,
-        modelo: r.modelo || null,
-        marca: r.marca || null,
-        ano_fabricacao: r.anoFabricacao,
-        ano_modelo: r.anoModelo,
-        quilometragem: r.quilometragem,
-        status_cautelar: r.statusCautelar,
-        elegibilidade: elegMap[r.elegibilidade],
-        origem: r.origem || null,
-        chassi_resumido: r.chassiResumido || null,
-        external_id: r.externalId,
-        resultado_laudo: r.resultadoLaudo || null,
-        fonte_importacao: "gosystem",
-        dados_originais: r.raw,
-      }));
-      const { error } = await supabase
-        .from("toyota_estoque_veiculos")
-        .upsert(payload, { onConflict: "external_id" });
-      if (error) throw error;
-      toast.success(`${payload.length} veículo(s) salvos.`);
-      setRows((prev) => prev.map((r) => ({ ...r, duplicado: true })));
-    } catch (e: any) {
-      toast.error(e.message ?? "Falha ao salvar.");
-    } finally {
-      setSaving(false);
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id ?? null;
+    const elegMap: Record<Elegibilidade, "TCUV" | "TSIM" | "NAO_ELEGIVEL"> = {
+      "Elegível TCUV": "TCUV",
+      "Elegível TSIM": "TSIM",
+      "Não Elegível": "NAO_ELEGIVEL",
+    };
+    const payload = novos.map((r) => ({
+      filial_id: filialId,
+      user_id: userId,
+      chassi: r.chassi,
+      placa: r.placa || null,
+      modelo: r.modelo || null,
+      marca: r.marca || null,
+      ano_fabricacao: r.anoFabricacao,
+      ano_modelo: r.anoModelo,
+      quilometragem: r.quilometragem,
+      status_cautelar: r.statusCautelar,
+      elegibilidade: elegMap[r.elegibilidade],
+      origem: r.origem || null,
+      chassi_resumido: r.chassiResumido || null,
+      external_id: r.externalId,
+      resultado_laudo: r.resultadoLaudo || null,
+      fonte_importacao: "gosystem",
+      status_aprovacao: "analise",
+      dados_originais: r.raw,
+    }));
+    const { error, data: saved } = await supabase
+      .from("toyota_estoque_veiculos")
+      .upsert(payload, { onConflict: "external_id" })
+      .select("id");
+
+    // Registra histórico da importação (sucesso ou erro)
+    await supabase.from("toyota_importacoes").insert({
+      user_id: userId,
+      filial_id: filialId,
+      tipo: "gosystem",
+      status: error ? "erro" : "sucesso",
+      arquivo_nome: fileName || null,
+      total_linhas: rows.length,
+      total_salvos: saved?.length ?? 0,
+      total_ignorados: rows.length - (saved?.length ?? 0),
+      mensagem: error?.message ?? null,
+    });
+
+    setSaving(false);
+    if (error) {
+      toast.error(`Falha ao salvar: ${error.message}`);
+      return;
     }
-  }, [filialId, rows]);
+    toast.success(
+      `${payload.length} veículo(s) enviados para Análise do Administrador.`,
+    );
+    setRows((prev) => prev.map((r) => ({ ...r, duplicado: true })));
+  }, [filialId, rows, fileName]);
 
   const filtered = useMemo(() => {
     const q = filtro.toLowerCase().trim();

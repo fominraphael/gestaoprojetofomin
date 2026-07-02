@@ -94,6 +94,7 @@ export const MODULES: ModuleDef[] = [
       { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench },
       { to: "/toyota/validacao", label: "Validação Técnica", icon: ClipboardCheck },
       { to: "/toyota/checklist", label: "Checklist ICS", icon: ListChecks },
+      { to: "/toyota/regras", label: "Regras do Sistema", icon: Settings },
       { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
     ],
   },
