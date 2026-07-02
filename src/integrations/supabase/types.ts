@@ -365,8 +365,11 @@ export type Database = {
           chassi: string
           chassi_resumido: string | null
           checklist_data: Json | null
+          codigo_tcuv: string | null
           created_at: string
           dados_originais: Json | null
+          dossie_enviado_em: string | null
+          dossie_pdf_path: string | null
           elegibilidade: string | null
           enviado_toyota_em: string | null
           external_id: string | null
@@ -407,8 +410,11 @@ export type Database = {
           chassi: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
+          codigo_tcuv?: string | null
           created_at?: string
           dados_originais?: Json | null
+          dossie_enviado_em?: string | null
+          dossie_pdf_path?: string | null
           elegibilidade?: string | null
           enviado_toyota_em?: string | null
           external_id?: string | null
@@ -449,8 +455,11 @@ export type Database = {
           chassi?: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
+          codigo_tcuv?: string | null
           created_at?: string
           dados_originais?: Json | null
+          dossie_enviado_em?: string | null
+          dossie_pdf_path?: string | null
           elegibilidade?: string | null
           enviado_toyota_em?: string | null
           external_id?: string | null
