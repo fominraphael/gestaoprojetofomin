@@ -488,26 +488,29 @@ export type Database = {
       toyota_filiais: {
         Row: {
           ativo: boolean
-          codigo: string | null
           created_at: string
+          dealer_number: string | null
           id: string
           nome: string
+          nome_bi_toyota: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
-          codigo?: string | null
           created_at?: string
+          dealer_number?: string | null
           id?: string
           nome: string
+          nome_bi_toyota?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
-          codigo?: string | null
           created_at?: string
+          dealer_number?: string | null
           id?: string
           nome?: string
+          nome_bi_toyota?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -568,35 +571,26 @@ export type Database = {
       toyota_patios: {
         Row: {
           ativo: boolean
-          cidade: string | null
           created_at: string
-          dealer_number: string
           filial_id: string | null
           id: string
           nome: string
-          uf: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
-          cidade?: string | null
           created_at?: string
-          dealer_number: string
           filial_id?: string | null
           id?: string
           nome: string
-          uf?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
-          cidade?: string | null
           created_at?: string
-          dealer_number?: string
           filial_id?: string | null
           id?: string
           nome?: string
-          uf?: string | null
           updated_at?: string
         }
         Relationships: [
