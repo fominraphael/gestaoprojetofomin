@@ -469,6 +469,24 @@ function FilaPosVendas() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-sm">Quilometragem atual *</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={km}
+                  onChange={(e) => setKm(e.target.value)}
+                  placeholder="Ex: 45230"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Informe a KM lida no odômetro. Será usada no cabeçalho do
+                  check-list enviado à Toyota.
+                </p>
+              </div>
+
+
+
               <DialogFooter>
                 <div className="mr-auto text-xs text-muted-foreground">
                   {!aberto.checklist_data?.preenchido_em && "• Preencha o check-list  "}
