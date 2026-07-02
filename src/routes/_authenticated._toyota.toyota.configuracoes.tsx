@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Link2, X, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, X, Building2, Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
-import { obterUsuarios, type UsuarioSistema } from "@/lib/usuarios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,16 +42,18 @@ export const Route = createFileRoute("/_authenticated/_toyota/toyota/configuraco
 interface Filial {
   id: string;
   nome: string;
+  codigo: string | null;
+  ativo: boolean;
+}
+
+interface Patio {
+  id: string;
+  nome: string;
   dealer_number: string;
   cidade: string | null;
   uf: string | null;
   ativo: boolean;
-}
-
-interface VinculoRow {
-  id: string;
-  user_id: string;
-  filial_id: string;
+  filial_id: string | null;
 }
 
 const UF_LIST = [
@@ -62,39 +63,43 @@ const UF_LIST = [
 function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
   const [filiais, setFiliais] = useState<Filial[]>([]);
-  const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
-  const [vinculos, setVinculos] = useState<VinculoRow[]>([]);
+  const [patios, setPatios] = useState<Patio[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal filial
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Filial | null>(null);
-  const [form, setForm] = useState<Omit<Filial, "id">>({
+  // Modal Filial
+  const [filialModalOpen, setFilialModalOpen] = useState(false);
+  const [editingFilial, setEditingFilial] = useState<Filial | null>(null);
+  const [filialForm, setFilialForm] = useState<Omit<Filial, "id">>({
+    nome: "",
+    codigo: "",
+    ativo: true,
+  });
+
+  // Modal Pátio
+  const [patioModalOpen, setPatioModalOpen] = useState(false);
+  const [editingPatio, setEditingPatio] = useState<Patio | null>(null);
+  const [patioForm, setPatioForm] = useState<Omit<Patio, "id">>({
     nome: "",
     dealer_number: "",
     cidade: "",
     uf: "",
     ativo: true,
+    filial_id: null,
   });
-  const [saving, setSaving] = useState(false);
 
-  // Vinculação
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [userSearch, setUserSearch] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function carregar() {
     setLoading(true);
     try {
-      const [f, u, v] = await Promise.all([
+      const [fRes, pRes] = await Promise.all([
         supabase.from("toyota_filiais").select("*").order("nome"),
-        obterUsuarios(),
-        supabase.from("toyota_usuario_filial").select("id, user_id, filial_id"),
+        supabase.from("toyota_patios").select("*").order("nome"),
       ]);
-      if (f.error) throw f.error;
-      if (v.error) throw v.error;
-      setFiliais((f.data ?? []) as Filial[]);
-      setUsuarios(u);
-      setVinculos((v.data ?? []) as VinculoRow[]);
+      if (fRes.error) throw fRes.error;
+      if (pRes.error) throw pRes.error;
+      setFiliais((fRes.data ?? []) as Filial[]);
+      setPatios((pRes.data ?? []) as Patio[]);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao carregar dados.");
     } finally {
@@ -106,43 +111,34 @@ function ToyotaConfiguracoes() {
     carregar();
   }, []);
 
-  function openNew() {
-    setEditing(null);
-    setForm({ nome: "", dealer_number: "", cidade: "", uf: "", ativo: true });
-    setModalOpen(true);
+  // ---------- FILIAL CRUD ----------
+  function openNewFilial() {
+    setEditingFilial(null);
+    setFilialForm({ nome: "", codigo: "", ativo: true });
+    setFilialModalOpen(true);
   }
-
-  function openEdit(f: Filial) {
-    setEditing(f);
-    setForm({
-      nome: f.nome,
-      dealer_number: f.dealer_number,
-      cidade: f.cidade ?? "",
-      uf: f.uf ?? "",
-      ativo: f.ativo,
-    });
-    setModalOpen(true);
+  function openEditFilial(f: Filial) {
+    setEditingFilial(f);
+    setFilialForm({ nome: f.nome, codigo: f.codigo ?? "", ativo: f.ativo });
+    setFilialModalOpen(true);
   }
-
-  async function salvar() {
-    if (!form.nome.trim() || !form.dealer_number.trim()) {
-      toast.error("Nome e Dealer Number são obrigatórios.");
+  async function salvarFilial() {
+    if (!filialForm.nome.trim()) {
+      toast.error("Nome é obrigatório.");
       return;
     }
     setSaving(true);
     try {
       const payload = {
-        nome: form.nome.trim(),
-        dealer_number: form.dealer_number.trim(),
-        cidade: form.cidade?.trim() || null,
-        uf: form.uf?.trim() || null,
-        ativo: form.ativo,
+        nome: filialForm.nome.trim(),
+        codigo: filialForm.codigo?.trim() || null,
+        ativo: filialForm.ativo,
       };
-      if (editing) {
+      if (editingFilial) {
         const { error } = await supabase
           .from("toyota_filiais")
           .update(payload)
-          .eq("id", editing.id);
+          .eq("id", editingFilial.id);
         if (error) throw error;
         toast.success("Filial atualizada.");
       } else {
@@ -150,82 +146,118 @@ function ToyotaConfiguracoes() {
         if (error) throw error;
         toast.success("Filial criada.");
       }
-      setModalOpen(false);
+      setFilialModalOpen(false);
       await carregar();
     } catch (e: any) {
-      const msg = e.code === "23505"
-        ? "Dealer Number já cadastrado."
-        : e.message ?? "Falha ao salvar.";
-      toast.error(msg);
+      toast.error(e.code === "23505" ? "Código já cadastrado." : (e.message ?? "Falha ao salvar."));
     } finally {
       setSaving(false);
     }
   }
-
-  async function excluir(f: Filial) {
-    if (!confirm(`Excluir a filial "${f.nome}"? Os vínculos serão removidos.`)) return;
+  async function excluirFilial(f: Filial) {
+    if (!confirm(`Excluir a filial "${f.nome}"? Os pátios vinculados ficarão sem filial.`)) return;
     const { error } = await supabase.from("toyota_filiais").delete().eq("id", f.id);
     if (error) return toast.error(error.message);
     toast.success("Filial excluída.");
     carregar();
   }
 
-  async function toggleVinculo(filialId: string) {
-    if (!selectedUser) return;
-    const existente = vinculos.find(
-      (v) => v.user_id === selectedUser && v.filial_id === filialId,
-    );
-    if (existente) {
-      const { error } = await supabase
-        .from("toyota_usuario_filial")
-        .delete()
-        .eq("id", existente.id);
-      if (error) return toast.error(error.message);
-      setVinculos((prev) => prev.filter((v) => v.id !== existente.id));
-    } else {
-      const { data, error } = await supabase
-        .from("toyota_usuario_filial")
-        .insert({ user_id: selectedUser, filial_id: filialId })
-        .select("id, user_id, filial_id")
-        .single();
-      if (error) return toast.error(error.message);
-      setVinculos((prev) => [...prev, data as VinculoRow]);
+  // ---------- PÁTIO CRUD ----------
+  function openNewPatio() {
+    setEditingPatio(null);
+    setPatioForm({
+      nome: "",
+      dealer_number: "",
+      cidade: "",
+      uf: "",
+      ativo: true,
+      filial_id: null,
+    });
+    setPatioModalOpen(true);
+  }
+  function openEditPatio(p: Patio) {
+    setEditingPatio(p);
+    setPatioForm({
+      nome: p.nome,
+      dealer_number: p.dealer_number,
+      cidade: p.cidade ?? "",
+      uf: p.uf ?? "",
+      ativo: p.ativo,
+      filial_id: p.filial_id,
+    });
+    setPatioModalOpen(true);
+  }
+  async function salvarPatio() {
+    if (!patioForm.nome.trim() || !patioForm.dealer_number.trim()) {
+      toast.error("Nome e Dealer Number são obrigatórios.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        nome: patioForm.nome.trim(),
+        dealer_number: patioForm.dealer_number.trim(),
+        cidade: patioForm.cidade?.trim() || null,
+        uf: patioForm.uf?.trim() || null,
+        ativo: patioForm.ativo,
+        filial_id: patioForm.filial_id,
+      };
+      if (editingPatio) {
+        const { error } = await supabase
+          .from("toyota_patios")
+          .update(payload)
+          .eq("id", editingPatio.id);
+        if (error) throw error;
+        toast.success("Pátio atualizado.");
+      } else {
+        const { error } = await supabase.from("toyota_patios").insert(payload);
+        if (error) throw error;
+        toast.success("Pátio criado.");
+      }
+      setPatioModalOpen(false);
+      await carregar();
+    } catch (e: any) {
+      toast.error(e.code === "23505" ? "Dealer Number já cadastrado." : (e.message ?? "Falha ao salvar."));
+    } finally {
+      setSaving(false);
     }
   }
+  async function excluirPatio(p: Patio) {
+    if (!confirm(`Excluir o pátio "${p.nome}"?`)) return;
+    const { error } = await supabase.from("toyota_patios").delete().eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success("Pátio excluído.");
+    carregar();
+  }
 
-  const filteredUsuarios = useMemo(() => {
-    const q = userSearch.toLowerCase().trim();
-    if (!q) return usuarios;
-    return usuarios.filter((u) => u.username.toLowerCase().includes(q));
-  }, [usuarios, userSearch]);
-
-  const vinculosDoUsuario = useMemo(
-    () => new Set(vinculos.filter((v) => v.user_id === selectedUser).map((v) => v.filial_id)),
-    [vinculos, selectedUser],
-  );
+  const filialNome = (id: string | null) =>
+    id ? (filiais.find((f) => f.id === id)?.nome ?? "—") : "—";
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Configurações — Certificação Toyota</h1>
         <p className="text-sm text-muted-foreground">
-          Gerencie as filiais participantes e os vínculos com usuários do sistema.
+          Gerencie as Filiais (agrupadores) e seus Pátios (unidades operacionais).
         </p>
       </header>
 
-      {/* Filiais */}
+      {/* FILIAIS */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle className="text-lg">Filiais</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filiais.length} cadastrada{filiais.length === 1 ? "" : "s"}
-            </p>
+          <div className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <CardTitle className="text-lg">Filiais</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {filiais.length} cadastrada{filiais.length === 1 ? "" : "s"}
+              </p>
+            </div>
           </div>
           {isAdmin && (
-            <Button onClick={openNew}>
+            <Button onClick={openNewFilial}>
               <Plus className="w-4 h-4" />
-              Criar Nova Filial
+              Nova Filial
             </Button>
           )}
         </CardHeader>
@@ -233,9 +265,9 @@ function ToyotaConfiguracoes() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome da Filial</TableHead>
-                <TableHead>Dealer Number</TableHead>
-                <TableHead>Cidade/UF</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Pátios vinculados</TableHead>
                 <TableHead>Status</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -254,25 +286,106 @@ function ToyotaConfiguracoes() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filiais.map((f) => (
-                  <TableRow key={f.id}>
-                    <TableCell className="font-medium">{f.nome}</TableCell>
-                    <TableCell className="font-mono text-xs">{f.dealer_number}</TableCell>
+                filiais.map((f) => {
+                  const count = patios.filter((p) => p.filial_id === f.id).length;
+                  return (
+                    <TableRow key={f.id}>
+                      <TableCell className="font-medium">{f.nome}</TableCell>
+                      <TableCell className="font-mono text-xs">{f.codigo ?? "—"}</TableCell>
+                      <TableCell>{count}</TableCell>
+                      <TableCell>
+                        <Badge variant={f.ativo ? "default" : "secondary"}>
+                          {f.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => openEditFilial(f)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => excluirFilial(f)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* PÁTIOS */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Warehouse className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <CardTitle className="text-lg">Pátios</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {patios.length} cadastrado{patios.length === 1 ? "" : "s"} — vincule cada pátio a uma Filial.
+              </p>
+            </div>
+          </div>
+          {isAdmin && (
+            <Button onClick={openNewPatio}>
+              <Plus className="w-4 h-4" />
+              Novo Pátio
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome do Pátio</TableHead>
+                <TableHead>Dealer Number</TableHead>
+                <TableHead>Filial</TableHead>
+                <TableHead>Cidade/UF</TableHead>
+                <TableHead>Status</TableHead>
+                {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                    Carregando...
+                  </TableCell>
+                </TableRow>
+              ) : patios.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                    Nenhum pátio cadastrado.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                patios.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.nome}</TableCell>
+                    <TableCell className="font-mono text-xs">{p.dealer_number}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {[f.cidade, f.uf].filter(Boolean).join(" / ") || "—"}
+                      {filialNome(p.filial_id)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {[p.cidade, p.uf].filter(Boolean).join(" / ") || "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={f.ativo ? "default" : "secondary"}>
-                        {f.ativo ? "Ativo" : "Inativo"}
+                      <Badge variant={p.ativo ? "default" : "secondary"}>
+                        {p.ativo ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(f)}>
+                          <Button size="icon" variant="ghost" onClick={() => openEditPatio(p)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => excluir(f)}>
+                          <Button size="icon" variant="ghost" onClick={() => excluirPatio(p)}>
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
@@ -286,134 +399,106 @@ function ToyotaConfiguracoes() {
         </CardContent>
       </Card>
 
-      {/* Vinculação */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Vincular Usuário a Filiais</CardTitle>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Selecione um usuário do sistema e marque as filiais a que ele tem acesso.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Buscar usuário</Label>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Digite parte do login..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Usuário</Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um usuário..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredUsuarios.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">
-                      Nenhum usuário encontrado.
-                    </div>
-                  ) : (
-                    filteredUsuarios.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.username} {u.role === "admin" && "(admin)"}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {!selectedUser ? (
-            <div className="text-sm text-muted-foreground border border-dashed rounded-md py-8 text-center">
-              Selecione um usuário para gerenciar os vínculos.
-            </div>
-          ) : !isAdmin ? (
-            <div className="text-sm text-muted-foreground border border-dashed rounded-md py-8 text-center">
-              Apenas administradores podem alterar vínculos.
-            </div>
-          ) : filiais.length === 0 ? (
-            <div className="text-sm text-muted-foreground border border-dashed rounded-md py-8 text-center">
-              Cadastre uma filial primeiro.
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {filiais.map((f) => {
-                const vinculado = vinculosDoUsuario.has(f.id);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => toggleVinculo(f.id)}
-                    className={`text-left border rounded-md px-3 py-2.5 transition-colors ${
-                      vinculado
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{f.nome}</div>
-                        <div className="text-xs text-muted-foreground font-mono">
-                          {f.dealer_number}
-                        </div>
-                      </div>
-                      <Switch checked={vinculado} className="pointer-events-none" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Modal filial */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      {/* Modal Filial */}
+      <Dialog open={filialModalOpen} onOpenChange={setFilialModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar Filial" : "Nova Filial"}</DialogTitle>
+            <DialogTitle>{editingFilial ? "Editar Filial" : "Nova Filial"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Nome da Filial *</Label>
+              <Label>Nome *</Label>
               <Input
-                value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                value={filialForm.nome}
+                onChange={(e) => setFilialForm({ ...filialForm, nome: e.target.value })}
+                placeholder="Ex: Fomin SP"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Código</Label>
+              <Input
+                value={filialForm.codigo ?? ""}
+                onChange={(e) => setFilialForm({ ...filialForm, codigo: e.target.value })}
+                placeholder="Opcional"
+              />
+            </div>
+            <div className="flex items-center justify-between border rounded-md px-3 py-2.5">
+              <Label className="cursor-pointer">Filial Ativa</Label>
+              <Switch
+                checked={filialForm.ativo}
+                onCheckedChange={(v) => setFilialForm({ ...filialForm, ativo: v })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFilialModalOpen(false)} disabled={saving}>
+              <X className="w-4 h-4" />
+              Cancelar
+            </Button>
+            <Button onClick={salvarFilial} disabled={saving}>
+              {saving ? "Salvando..." : editingFilial ? "Salvar" : "Criar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Pátio */}
+      <Dialog open={patioModalOpen} onOpenChange={setPatioModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingPatio ? "Editar Pátio" : "Novo Pátio"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nome do Pátio *</Label>
+              <Input
+                value={patioForm.nome}
+                onChange={(e) => setPatioForm({ ...patioForm, nome: e.target.value })}
                 placeholder="Ex: Toyota Centro"
               />
             </div>
             <div className="space-y-2">
               <Label>Dealer Number *</Label>
               <Input
-                value={form.dealer_number}
-                onChange={(e) => setForm({ ...form, dealer_number: e.target.value })}
+                value={patioForm.dealer_number}
+                onChange={(e) => setPatioForm({ ...patioForm, dealer_number: e.target.value })}
                 placeholder="Ex: 12345"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Filial</Label>
+              <Select
+                value={patioForm.filial_id ?? "__none__"}
+                onValueChange={(v) =>
+                  setPatioForm({ ...patioForm, filial_id: v === "__none__" ? null : v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a filial..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Sem filial —</SelectItem>
+                  {filiais.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-[1fr_120px] gap-3">
               <div className="space-y-2">
                 <Label>Cidade</Label>
                 <Input
-                  value={form.cidade ?? ""}
-                  onChange={(e) => setForm({ ...form, cidade: e.target.value })}
+                  value={patioForm.cidade ?? ""}
+                  onChange={(e) => setPatioForm({ ...patioForm, cidade: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>UF</Label>
                 <Select
-                  value={form.uf ?? ""}
-                  onValueChange={(v) => setForm({ ...form, uf: v })}
+                  value={patioForm.uf ?? ""}
+                  onValueChange={(v) => setPatioForm({ ...patioForm, uf: v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="—" />
@@ -429,25 +514,20 @@ function ToyotaConfiguracoes() {
               </div>
             </div>
             <div className="flex items-center justify-between border rounded-md px-3 py-2.5">
-              <div>
-                <Label className="cursor-pointer">Filial Ativa</Label>
-                <p className="text-xs text-muted-foreground">
-                  Filiais inativas não aparecem em fluxos operacionais.
-                </p>
-              </div>
+              <Label className="cursor-pointer">Pátio Ativo</Label>
               <Switch
-                checked={form.ativo}
-                onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+                checked={patioForm.ativo}
+                onCheckedChange={(v) => setPatioForm({ ...patioForm, ativo: v })}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
+            <Button variant="outline" onClick={() => setPatioModalOpen(false)} disabled={saving}>
               <X className="w-4 h-4" />
               Cancelar
             </Button>
-            <Button onClick={salvar} disabled={saving}>
-              {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar filial"}
+            <Button onClick={salvarPatio} disabled={saving}>
+              {saving ? "Salvando..." : editingPatio ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>
