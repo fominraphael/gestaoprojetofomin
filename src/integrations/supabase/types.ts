@@ -211,6 +211,27 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       tarefas: {
         Row: {
           categoria: Database["public"]["Enums"]["tarefa_categoria"]
@@ -486,6 +507,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      toyota_importacoes: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          created_at: string
+          filial_id: string | null
+          id: string
+          mensagem: string | null
+          status: string
+          tipo: string
+          total_ignorados: number | null
+          total_linhas: number | null
+          total_salvos: number | null
+          user_id: string | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          filial_id?: string | null
+          id?: string
+          mensagem?: string | null
+          status: string
+          tipo: string
+          total_ignorados?: number | null
+          total_linhas?: number | null
+          total_salvos?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          created_at?: string
+          filial_id?: string | null
+          id?: string
+          mensagem?: string | null
+          status?: string
+          tipo?: string
+          total_ignorados?: number | null
+          total_linhas?: number | null
+          total_salvos?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toyota_importacoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       toyota_usuario_filial: {
         Row: {
