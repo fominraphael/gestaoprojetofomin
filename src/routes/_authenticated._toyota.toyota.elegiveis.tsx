@@ -102,13 +102,13 @@ function AnaliseElegiveis() {
       supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, filial:toyota_filiais!toyota_estoque_veiculos_filial_id_fkey(nome, dealer_number)",
+          "id, chassi, placa, modelo, marca, ano_fabricacao, ano_modelo, quilometragem, status_cautelar, elegibilidade, status_aprovacao, filial_id, filial_destino_id, filial:toyota_patios!toyota_estoque_veiculos_filial_id_fkey(nome, dealer_number)",
         )
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
         .order("importado_em", { ascending: false }),
       supabase
-        .from("toyota_filiais")
+        .from("toyota_patios")
         .select("id, nome, dealer_number")
         .eq("ativo", true)
         .order("nome"),

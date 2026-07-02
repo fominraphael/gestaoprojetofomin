@@ -114,13 +114,14 @@ function PainelCertificacao() {
           "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,filial_id,filial_destino_id,motivo_reprovacao,observacao_toyota,enviado_toyota_em,retorno_toyota_em,aprovado_em,hsv_observacoes_preparador,checklist_data,health_check_pdf_path",
         )
         .order("updated_at", { ascending: false }),
-      supabase.from("toyota_filiais").select("id,nome,dealer_number"),
+      supabase.from("toyota_patios").select("id,nome,dealer_number"),
       user?.id
         ? supabase
-            .from("toyota_usuario_filial")
-            .select("filial_id")
+            .from("toyota_usuario_patio")
+            .select("patio_id")
             .eq("user_id", user.id)
-        : Promise.resolve({ data: [] as { filial_id: string }[], error: null }),
+        : Promise.resolve({ data: [] as { patio_id: string }[], error: null }),
+
     ]);
 
     if (vRes.error) toast.error("Erro ao carregar veículos");
@@ -128,7 +129,7 @@ function PainelCertificacao() {
 
     setVeiculos((vRes.data ?? []) as Veiculo[]);
     setFiliais((fRes.data ?? []) as Filial[]);
-    setMinhasFiliais(new Set((uRes.data ?? []).map((r) => r.filial_id)));
+    setMinhasFiliais(new Set((uRes.data ?? []).map((r) => r.patio_id)));
     setLoading(false);
   };
 

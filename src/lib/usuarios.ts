@@ -32,8 +32,10 @@ export interface UsuarioSistema {
   pode_criar_admin?: boolean;
   campos_customizados?: Record<string, any>;
   email_recuperacao?: string | null;
+  filial_id?: string | null;
   created_at?: string;
 }
+
 
 function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
   return {
@@ -49,8 +51,10 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     pode_criar_admin: p.pode_criar_admin ?? false,
     campos_customizados: p.campos_customizados ?? {},
     email_recuperacao: p.email_recuperacao ?? null,
+    filial_id: p.filial_id ?? null,
     created_at: p.created_at,
   };
+
 }
 
 // ============================================================
@@ -149,6 +153,8 @@ export async function atualizarUsuario(
   if (updates.active !== undefined) payload.ativo = updates.active;
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.email_recuperacao !== undefined) payload.email_recuperacao = updates.email_recuperacao;
+  if (updates.filial_id !== undefined) payload.filial_id = updates.filial_id;
+
 
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase.from("profiles").update(payload).eq("id", id);
