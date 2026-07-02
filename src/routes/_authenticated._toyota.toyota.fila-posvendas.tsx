@@ -504,7 +504,8 @@ function FilaPosVendas() {
                   disabled={
                     enviando ||
                     !aberto.checklist_data?.preenchido_em ||
-                    !aberto.health_check_pdf_path
+                    !aberto.health_check_pdf_path ||
+                    !Number(km.replace(/\D/g, ""))
                   }
                 >
                   {enviando ? (
