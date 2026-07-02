@@ -480,14 +480,18 @@ function AnaliseElegiveis() {
                             <Button
                               size="sm"
                               onClick={() => iniciarAprovacao(v)}
-                              disabled={!aprovarHabilitado}
+                              disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
                               title={
                                 aprovarHabilitado
                                   ? "Aprovar para preparação"
                                   : "Conclua HSV e anexe laudo válido"
                               }
                             >
-                              <ShieldCheck className="w-3.5 h-3.5" />
+                              {salvandoAprovar && aprovando?.id === v.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                              )}
                               Aprovar
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
