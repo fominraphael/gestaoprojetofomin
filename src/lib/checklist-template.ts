@@ -21,6 +21,12 @@ export interface ChecklistHeaderData {
   hora: string; // HH:MM
 }
 
+/**
+ * Marcações do check-list preenchidas em tela pelo Pós-Vendas.
+ * chave = "SecaoIndex.ItemIndex" (ex: "0.3"); valor = status marcado.
+ */
+export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
+
 // Coordenadas por template. Ajuste conforme o PDF oficial recebido.
 // x,y em pontos (pt); size em pt.
 const COORDS = {
@@ -79,6 +85,7 @@ async function getTemplatePath(tipo: TemplateTipo): Promise<string | null> {
 export async function gerarChecklistPreenchido(
   tipo: TemplateTipo,
   dados: ChecklistHeaderData,
+  marcacoes?: MarcacoesMap,
 ): Promise<Uint8Array> {
   const path = await getTemplatePath(tipo);
   if (!path) {
@@ -96,6 +103,7 @@ export async function gerarChecklistPreenchido(
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const page = doc.getPage(0);
 
   const coords = COORDS[tipo];
@@ -118,7 +126,73 @@ export async function gerarChecklistPreenchido(
   draw(dados.data, coords.data);
   draw(dados.hora, coords.hora);
 
-  return doc.save();
+  // Anexa páginas com marcações item-a-item. Enquanto não temos o mapa
+  // exato de coordenadas de cada checkbox no template oficial, as marcações
+  // preenchidas em tela são "carimbadas" em páginas anexas ao PDF base,
+  // garantindo rastreabilidade completa do que foi verificado.
+  if (marcacoes) {
+    const { CHECKLIST_MODELOS } = await import("./toyota-checklist");
+    const modelo = CHECKLIST_MODELOS[tipo.toUpperCase() as "TCUV" | "TSIM"];
+    const pageW = 595;
+    const pageH = 842;
+    const marginX = 40;
+    const marginY = 50;
+    const lineHeight = 13;
+    let current = doc.addPage([pageW, pageH]);
+    let y = pageH - marginY;
+    current.drawText(`Check-list ${tipo.toUpperCase()} — Marcações do Pós-Vendas`, {
+      x: marginX,
+      y,
+      size: 12,
+      font: fontBold,
+      color: black,
+    });
+    y -= lineHeight * 2;
+    current.drawText(`Chassi: ${dados.chassi}  •  KM: ${dados.km}  •  ${dados.data} ${dados.hora}`, {
+      x: marginX,
+      y,
+      size: 9,
+      font,
+      color: black,
+    });
+    y -= lineHeight * 1.5;
+
+    const newPage = () => {
+      current = doc.addPage([pageW, pageH]);
+      y = pageH - marginY;
+    };
+
+    modelo.secoes.forEach((sec, si) => {
+      if (y < marginY + lineHeight * 3) newPage();
+      current.drawText(sec.titulo, {
+        x: marginX,
+        y,
+        size: 10,
+        font: fontBold,
+        color: black,
+      });
+      y -= lineHeight;
+      sec.itens.forEach((item, ii) => {
+        if (y < marginY + lineHeight) newPage();
+        const key = `${si}.${ii}`;
+        const marca = marcacoes[key] || "";
+        const box = marca === "✓" ? "[X]" : marca === "N/A" ? "[N/A]" : "[ ]";
+        const line = `${box}  ${item}`;
+        const truncated = line.length > 110 ? line.slice(0, 107) + "..." : line;
+        current.drawText(truncated, {
+          x: marginX,
+          y,
+          size: 9,
+          font,
+          color: black,
+        });
+        y -= lineHeight;
+      });
+      y -= lineHeight * 0.5;
+    });
+  }
+
+  return doc.save({ useObjectStreams: true });
 }
 
 export function formatarDataHora(iso: string | null): { data: string; hora: string } {
