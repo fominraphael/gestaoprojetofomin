@@ -163,6 +163,7 @@ export type Database = {
           created_at: string
           email_recuperacao: string | null
           empresa_id: string | null
+          filial_id: string | null
           id: string
           modulos: string[]
           pode_criar_admin: boolean
@@ -178,6 +179,7 @@ export type Database = {
           created_at?: string
           email_recuperacao?: string | null
           empresa_id?: string | null
+          filial_id?: string | null
           id: string
           modulos?: string[]
           pode_criar_admin?: boolean
@@ -193,6 +195,7 @@ export type Database = {
           created_at?: string
           email_recuperacao?: string | null
           empresa_id?: string | null
+          filial_id?: string | null
           id?: string
           modulos?: string[]
           pode_criar_admin?: boolean
@@ -207,6 +210,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
             referencedColumns: ["id"]
           },
         ]
@@ -463,14 +473,14 @@ export type Database = {
             foreignKeyName: "toyota_estoque_veiculos_filial_destino_id_fkey"
             columns: ["filial_destino_id"]
             isOneToOne: false
-            referencedRelation: "toyota_filiais"
+            referencedRelation: "toyota_patios"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "toyota_estoque_veiculos_filial_id_fkey"
             columns: ["filial_id"]
             isOneToOne: false
-            referencedRelation: "toyota_filiais"
+            referencedRelation: "toyota_patios"
             referencedColumns: ["id"]
           },
         ]
@@ -478,32 +488,26 @@ export type Database = {
       toyota_filiais: {
         Row: {
           ativo: boolean
-          cidade: string | null
+          codigo: string | null
           created_at: string
-          dealer_number: string
           id: string
           nome: string
-          uf: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
-          cidade?: string | null
+          codigo?: string | null
           created_at?: string
-          dealer_number: string
           id?: string
           nome: string
-          uf?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
-          cidade?: string | null
+          codigo?: string | null
           created_at?: string
-          dealer_number?: string
           id?: string
           nome?: string
-          uf?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -556,36 +560,80 @@ export type Database = {
             foreignKeyName: "toyota_importacoes_filial_id_fkey"
             columns: ["filial_id"]
             isOneToOne: false
+            referencedRelation: "toyota_patios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      toyota_patios: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          created_at: string
+          dealer_number: string
+          filial_id: string | null
+          id: string
+          nome: string
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          dealer_number: string
+          filial_id?: string | null
+          id?: string
+          nome: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          dealer_number?: string
+          filial_id?: string | null
+          id?: string
+          nome?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toyota_patios_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
             referencedRelation: "toyota_filiais"
             referencedColumns: ["id"]
           },
         ]
       }
-      toyota_usuario_filial: {
+      toyota_usuario_patio: {
         Row: {
           created_at: string
-          filial_id: string
           id: string
+          patio_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          filial_id: string
           id?: string
+          patio_id: string
           user_id: string
         }
         Update: {
           created_at?: string
-          filial_id?: string
           id?: string
+          patio_id?: string
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "toyota_usuario_filial_filial_id_fkey"
-            columns: ["filial_id"]
+            columns: ["patio_id"]
             isOneToOne: false
-            referencedRelation: "toyota_filiais"
+            referencedRelation: "toyota_patios"
             referencedColumns: ["id"]
           },
         ]
