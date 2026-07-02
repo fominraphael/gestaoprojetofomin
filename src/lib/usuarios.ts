@@ -32,8 +32,10 @@ export interface UsuarioSistema {
   pode_criar_admin?: boolean;
   campos_customizados?: Record<string, any>;
   email_recuperacao?: string | null;
+  filial_id?: string | null;
   created_at?: string;
 }
+
 
 function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
   return {
