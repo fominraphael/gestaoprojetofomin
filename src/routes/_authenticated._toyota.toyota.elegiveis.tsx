@@ -507,47 +507,8 @@ function AnaliseElegiveis() {
         </CardContent>
       </Card>
 
-      {/* =============== APROVAR =============== */}
-      <Dialog open={!!aprovando} onOpenChange={(o) => !o && setAprovando(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Aprovar para Preparação</DialogTitle>
-            <DialogDescription>
-              Selecione a filial de destino que receberá o veículo.
-            </DialogDescription>
-          </DialogHeader>
-          {aprovando && (
-            <div className="space-y-4">
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
-                <div><span className="text-muted-foreground">Chassi: </span><span className="font-mono">{aprovando.chassi}</span></div>
-                <div><span className="text-muted-foreground">Modelo: </span>{aprovando.modelo ?? "—"}</div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Filial de destino</Label>
-                <Select value={filialDestinoId} onValueChange={setFilialDestinoId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a filial..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filiais.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAprovando(null)} disabled={salvandoAprovar}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarAprovacao} disabled={salvandoAprovar || !filialDestinoId}>
-              {salvandoAprovar && <Loader2 className="w-4 h-4 animate-spin" />}
-              Confirmar envio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Aprovação é 100% automática — sem seleção manual de filial */}
+
 
       {/* =============== HSV =============== */}
       <Dialog open={!!hsvVeiculo} onOpenChange={(o) => !o && setHsvVeiculo(null)}>
