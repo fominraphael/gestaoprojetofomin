@@ -149,8 +149,9 @@ function AnaliseElegiveis() {
   }, [veiculos, filtro]);
 
   function laudoValido(v: Veiculo): boolean {
-    // Regra: precisa ter link OU arquivo anexado. Se resultado_laudo = 'reprovado',
-    // ainda assim exige um anexo/link (o admin pode ter substituído o laudo).
+    // Se o laudo já veio aprovado (planilha ou marcação manual), libera sem exigir anexo.
+    if (v.resultado_laudo === "aprovado") return true;
+    // Caso contrário, exige link ou arquivo anexado.
     return !!(v.laudo_url || v.laudo_arquivo_path);
   }
 
