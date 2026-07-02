@@ -457,6 +457,10 @@ function FilaPosVendas() {
               </div>
 
               <DialogFooter>
+                <div className="mr-auto text-xs text-muted-foreground">
+                  {!aberto.checklist_data?.preenchido_em && "• Preencha o check-list  "}
+                  {!aberto.health_check_pdf_path && "• Anexe o Health Check"}
+                </div>
                 <Button
                   variant="outline"
                   onClick={() => setAberto(null)}
@@ -464,7 +468,14 @@ function FilaPosVendas() {
                 >
                   Fechar
                 </Button>
-                <Button onClick={enviarCentral} disabled={enviando}>
+                <Button
+                  onClick={enviarCentral}
+                  disabled={
+                    enviando ||
+                    !aberto.checklist_data?.preenchido_em ||
+                    !aberto.health_check_pdf_path
+                  }
+                >
                   {enviando ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
                   ) : (
