@@ -9,7 +9,6 @@ import {
   Settings,
   Upload,
   ShieldCheck,
-  ClipboardCheck,
   ListChecks,
   GitBranch,
   Wrench,
