@@ -8,8 +8,7 @@ export async function extractPdfText(bytes: ArrayBuffer): Promise<string> {
   const pdfjs = await import("pdfjs-dist");
   // worker embutido como URL para funcionar em Vite
   const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
-  // @ts-expect-error - GlobalWorkerOptions available at runtime
-  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  (pdfjs as unknown as { GlobalWorkerOptions: { workerSrc: string } }).GlobalWorkerOptions.workerSrc = workerSrc;
 
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
   const doc = await loadingTask.promise;
