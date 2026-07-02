@@ -113,6 +113,18 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Defensive HTTPS enforcement: se por qualquer motivo o navegador carregar
+  // o app via HTTP em um domínio público, redireciona imediatamente para HTTPS.
+  // A infraestrutura da Lovable já faz isso na borda; isto é apenas uma trava
+  // extra no cliente para evitar Mixed Content em ambientes proxy/cache.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const { protocol, hostname, href } = window.location;
+    if (protocol === "http:" && hostname !== "localhost" && hostname !== "127.0.0.1") {
+      window.location.replace(href.replace(/^http:/, "https:"));
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -123,6 +135,7 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
 
 function RedirectToLogin() {
   const navigate = useNavigate();
