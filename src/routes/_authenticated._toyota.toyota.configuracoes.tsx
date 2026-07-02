@@ -42,23 +42,17 @@ export const Route = createFileRoute("/_authenticated/_toyota/toyota/configuraco
 interface Filial {
   id: string;
   nome: string;
-  codigo: string | null;
+  dealer_number: string | null;
+  nome_bi_toyota: string | null;
   ativo: boolean;
 }
 
 interface Patio {
   id: string;
   nome: string;
-  dealer_number: string;
-  cidade: string | null;
-  uf: string | null;
   ativo: boolean;
   filial_id: string | null;
 }
-
-const UF_LIST = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
-];
 
 function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
@@ -66,23 +60,23 @@ function ToyotaConfiguracoes() {
   const [patios, setPatios] = useState<Patio[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal Filial
   const [filialModalOpen, setFilialModalOpen] = useState(false);
   const [editingFilial, setEditingFilial] = useState<Filial | null>(null);
-  const [filialForm, setFilialForm] = useState<Omit<Filial, "id">>({
+  const [filialForm, setFilialForm] = useState({
     nome: "",
-    codigo: "",
+    dealer_number: "",
+    nome_bi_toyota: "",
     ativo: true,
   });
 
-  // Modal Pátio
   const [patioModalOpen, setPatioModalOpen] = useState(false);
   const [editingPatio, setEditingPatio] = useState<Patio | null>(null);
-  const [patioForm, setPatioForm] = useState<Omit<Patio, "id">>({
+  const [patioForm, setPatioForm] = useState<{
+    nome: string;
+    ativo: boolean;
+    filial_id: string | null;
+  }>({
     nome: "",
-    dealer_number: "",
-    cidade: "",
-    uf: "",
     ativo: true,
     filial_id: null,
   });
@@ -93,8 +87,14 @@ function ToyotaConfiguracoes() {
     setLoading(true);
     try {
       const [fRes, pRes] = await Promise.all([
-        supabase.from("toyota_filiais").select("*").order("nome"),
-        supabase.from("toyota_patios").select("*").order("nome"),
+        supabase
+          .from("toyota_filiais")
+          .select("id, nome, dealer_number, nome_bi_toyota, ativo")
+          .order("nome"),
+        supabase
+          .from("toyota_patios")
+          .select("id, nome, ativo, filial_id")
+          .order("nome"),
       ]);
       if (fRes.error) throw fRes.error;
       if (pRes.error) throw pRes.error;
@@ -111,15 +111,19 @@ function ToyotaConfiguracoes() {
     carregar();
   }, []);
 
-  // ---------- FILIAL CRUD ----------
   function openNewFilial() {
     setEditingFilial(null);
-    setFilialForm({ nome: "", codigo: "", ativo: true });
+    setFilialForm({ nome: "", dealer_number: "", nome_bi_toyota: "", ativo: true });
     setFilialModalOpen(true);
   }
   function openEditFilial(f: Filial) {
     setEditingFilial(f);
-    setFilialForm({ nome: f.nome, codigo: f.codigo ?? "", ativo: f.ativo });
+    setFilialForm({
+      nome: f.nome,
+      dealer_number: f.dealer_number ?? "",
+      nome_bi_toyota: f.nome_bi_toyota ?? "",
+      ativo: f.ativo,
+    });
     setFilialModalOpen(true);
   }
   async function salvarFilial() {
@@ -131,7 +135,8 @@ function ToyotaConfiguracoes() {
     try {
       const payload = {
         nome: filialForm.nome.trim(),
-        codigo: filialForm.codigo?.trim() || null,
+        dealer_number: filialForm.dealer_number?.trim() || null,
+        nome_bi_toyota: filialForm.nome_bi_toyota?.trim() || null,
         ativo: filialForm.ativo,
       };
       if (editingFilial) {
@@ -149,7 +154,9 @@ function ToyotaConfiguracoes() {
       setFilialModalOpen(false);
       await carregar();
     } catch (e: any) {
-      toast.error(e.code === "23505" ? "Código já cadastrado." : (e.message ?? "Falha ao salvar."));
+      toast.error(
+        e.code === "23505" ? "Dealer Number já cadastrado." : (e.message ?? "Falha ao salvar."),
+      );
     } finally {
       setSaving(false);
     }
@@ -162,43 +169,25 @@ function ToyotaConfiguracoes() {
     carregar();
   }
 
-  // ---------- PÁTIO CRUD ----------
   function openNewPatio() {
     setEditingPatio(null);
-    setPatioForm({
-      nome: "",
-      dealer_number: "",
-      cidade: "",
-      uf: "",
-      ativo: true,
-      filial_id: null,
-    });
+    setPatioForm({ nome: "", ativo: true, filial_id: null });
     setPatioModalOpen(true);
   }
   function openEditPatio(p: Patio) {
     setEditingPatio(p);
-    setPatioForm({
-      nome: p.nome,
-      dealer_number: p.dealer_number,
-      cidade: p.cidade ?? "",
-      uf: p.uf ?? "",
-      ativo: p.ativo,
-      filial_id: p.filial_id,
-    });
+    setPatioForm({ nome: p.nome, ativo: p.ativo, filial_id: p.filial_id });
     setPatioModalOpen(true);
   }
   async function salvarPatio() {
-    if (!patioForm.nome.trim() || !patioForm.dealer_number.trim()) {
-      toast.error("Nome e Dealer Number são obrigatórios.");
+    if (!patioForm.nome.trim()) {
+      toast.error("Nome é obrigatório.");
       return;
     }
     setSaving(true);
     try {
       const payload = {
         nome: patioForm.nome.trim(),
-        dealer_number: patioForm.dealer_number.trim(),
-        cidade: patioForm.cidade?.trim() || null,
-        uf: patioForm.uf?.trim() || null,
         ativo: patioForm.ativo,
         filial_id: patioForm.filial_id,
       };
@@ -217,7 +206,7 @@ function ToyotaConfiguracoes() {
       setPatioModalOpen(false);
       await carregar();
     } catch (e: any) {
-      toast.error(e.code === "23505" ? "Dealer Number já cadastrado." : (e.message ?? "Falha ao salvar."));
+      toast.error(e.message ?? "Falha ao salvar.");
     } finally {
       setSaving(false);
     }
@@ -266,8 +255,9 @@ function ToyotaConfiguracoes() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Pátios vinculados</TableHead>
+                <TableHead>Dealer Number</TableHead>
+                <TableHead>Nome BI Toyota</TableHead>
+                <TableHead>Pátios</TableHead>
                 <TableHead>Status</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -275,13 +265,13 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filiais.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
                     Nenhuma filial cadastrada.
                   </TableCell>
                 </TableRow>
@@ -291,7 +281,8 @@ function ToyotaConfiguracoes() {
                   return (
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
-                      <TableCell className="font-mono text-xs">{f.codigo ?? "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{f.dealer_number ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{f.nome_bi_toyota ?? "—"}</TableCell>
                       <TableCell>{count}</TableCell>
                       <TableCell>
                         <Badge variant={f.ativo ? "default" : "secondary"}>
@@ -343,9 +334,7 @@ function ToyotaConfiguracoes() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome do Pátio</TableHead>
-                <TableHead>Dealer Number</TableHead>
                 <TableHead>Filial</TableHead>
-                <TableHead>Cidade/UF</TableHead>
                 <TableHead>Status</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -353,13 +342,13 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-muted-foreground py-8">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : patios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-muted-foreground py-8">
                     Nenhum pátio cadastrado.
                   </TableCell>
                 </TableRow>
@@ -367,12 +356,8 @@ function ToyotaConfiguracoes() {
                 patios.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.nome}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.dealer_number}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {filialNome(p.filial_id)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {[p.cidade, p.uf].filter(Boolean).join(" / ") || "—"}
                     </TableCell>
                     <TableCell>
                       <Badge variant={p.ativo ? "default" : "secondary"}>
@@ -415,11 +400,19 @@ function ToyotaConfiguracoes() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Código</Label>
+              <Label>Dealer Number</Label>
               <Input
-                value={filialForm.codigo ?? ""}
-                onChange={(e) => setFilialForm({ ...filialForm, codigo: e.target.value })}
-                placeholder="Opcional"
+                value={filialForm.dealer_number}
+                onChange={(e) => setFilialForm({ ...filialForm, dealer_number: e.target.value })}
+                placeholder="Ex: 12345"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nome BI Toyota</Label>
+              <Input
+                value={filialForm.nome_bi_toyota}
+                onChange={(e) => setFilialForm({ ...filialForm, nome_bi_toyota: e.target.value })}
+                placeholder="Nome exatamente como aparece no BI Toyota"
               />
             </div>
             <div className="flex items-center justify-between border rounded-md px-3 py-2.5">
@@ -458,15 +451,7 @@ function ToyotaConfiguracoes() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Dealer Number *</Label>
-              <Input
-                value={patioForm.dealer_number}
-                onChange={(e) => setPatioForm({ ...patioForm, dealer_number: e.target.value })}
-                placeholder="Ex: 12345"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Filial</Label>
+              <Label>Filial *</Label>
               <Select
                 value={patioForm.filial_id ?? "__none__"}
                 onValueChange={(v) =>
@@ -485,33 +470,6 @@ function ToyotaConfiguracoes() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="grid grid-cols-[1fr_120px] gap-3">
-              <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input
-                  value={patioForm.cidade ?? ""}
-                  onChange={(e) => setPatioForm({ ...patioForm, cidade: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>UF</Label>
-                <Select
-                  value={patioForm.uf ?? ""}
-                  onValueChange={(v) => setPatioForm({ ...patioForm, uf: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UF_LIST.map((uf) => (
-                      <SelectItem key={uf} value={uf}>
-                        {uf}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <div className="flex items-center justify-between border rounded-md px-3 py-2.5">
               <Label className="cursor-pointer">Pátio Ativo</Label>
