@@ -30,7 +30,7 @@ export interface DocumentoArquivo {
   uploaded_at?: string;
 }
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB
 
 // ============================================================
 // EMPRESAS
@@ -132,7 +132,7 @@ export async function uploadArquivo(
 ): Promise<DocumentoArquivo> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(
-      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Limite: 10 MB.`
+      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Limite: 100 MB.`
     );
   }
 
