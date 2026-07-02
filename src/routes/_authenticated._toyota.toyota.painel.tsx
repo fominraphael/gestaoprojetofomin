@@ -129,7 +129,7 @@ function PainelCertificacao() {
 
     setVeiculos((vRes.data ?? []) as Veiculo[]);
     setFiliais((fRes.data ?? []) as Filial[]);
-    setMinhasFiliais(new Set((uRes.data ?? []).map((r) => r.filial_id)));
+    setMinhasFiliais(new Set((uRes.data ?? []).map((r) => r.patio_id)));
     setLoading(false);
   };
 
