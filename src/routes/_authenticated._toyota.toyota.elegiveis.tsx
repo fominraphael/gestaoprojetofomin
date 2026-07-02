@@ -13,6 +13,8 @@ import {
   Link as LinkIcon,
   CheckCircle2,
   AlertCircle,
+  FileStack,
+  Send,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -38,13 +41,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -342,175 +338,187 @@ function AnaliseElegiveis() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Análise de Elegíveis</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Análise Central</h1>
         <p className="text-sm text-muted-foreground">
-          Veículos pré-aprovados na importação aguardando validação de laudo, HSV e direcionamento para uma filial.
+          Centralize a análise de elegibilidade e o envio final dos veículos para a Toyota.
         </p>
       </header>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle className="text-lg">
-            Pendentes de análise
-            <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
-          </CardTitle>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por chassi, placa, modelo ou pátio..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-80 pl-9"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-12 text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-12">
-              Nenhum veículo elegível aguardando análise.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Chassi</TableHead>
-                    <TableHead>Placa</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Ano</TableHead>
-                    <TableHead className="text-right">KM</TableHead>
-                    <TableHead>Pátio origem</TableHead>
-                    <TableHead>Programa</TableHead>
-                    <TableHead>Laudo</TableHead>
-                    <TableHead>HSV</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((v) => {
-                    const laudoOk = laudoValido(v);
-                    const laudoStatus = v.resultado_laudo === "reprovado"
-                      ? "Reprovado"
-                      : v.resultado_laudo === "aprovado" || laudoOk
-                        ? "Aprovado"
-                        : "Pendente";
-                    const hsvOk = v.hsv_status === "ok";
-                    const aprovarHabilitado = podeAprovar(v);
-                    return (
-                      <TableRow key={v.id}>
-                        <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
-                        <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
-                        <TableCell>
-                          <div className="font-medium">{v.modelo ?? "—"}</div>
-                          {v.marca && <div className="text-xs text-muted-foreground">{v.marca}</div>}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
-                        </TableCell>
-                        <TableCell>{v.filial?.nome ?? "—"}</TableCell>
-                        <TableCell>
-                          {v.elegibilidade === "TCUV" ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
-                          ) : (
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">TSIM</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <Badge
-                              variant="outline"
-                              className={
-                                laudoStatus === "Aprovado"
-                                  ? "border-emerald-300 text-emerald-700"
-                                  : laudoStatus === "Reprovado"
-                                    ? "border-red-300 text-red-700"
-                                    : "border-amber-300 text-amber-700"
-                              }
-                            >
-                              {laudoStatus}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => abrirLaudo(v)}
-                              disabled={!laudoOk}
-                              title={laudoOk ? "Visualizar laudo" : "Nenhum laudo anexado"}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => iniciarLaudo(v)}
-                              title="Anexar/atualizar laudo"
-                            >
-                              <Upload className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant={hsvOk ? "outline" : "ghost"}
-                            size="sm"
-                            onClick={() => iniciarHsv(v)}
-                            className={hsvOk ? "border-emerald-300 text-emerald-700" : "text-red-600 font-semibold"}
-                          >
-                            {hsvOk ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5" /> OK
-                              </>
-                            ) : (
-                              <>
-                                <AlertCircle className="w-3.5 h-3.5" /> Pendente
-                              </>
-                            )}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => iniciarAprovacao(v)}
-                              disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
-                              title={
-                                aprovarHabilitado
-                                  ? "Aprovar para preparação"
-                                  : "Conclua HSV e anexe laudo válido"
-                              }
-                            >
-                              {salvandoAprovar && aprovando?.id === v.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                              )}
-                              Aprovar
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
-                              <Archive className="w-3.5 h-3.5" />
-                              Arquivar
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="elegibilidade" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="elegibilidade">Análise de Elegibilidade</TabsTrigger>
+          <TabsTrigger value="envio">Envio Toyota</TabsTrigger>
+        </TabsList>
 
-      {/* Aprovação é 100% automática — sem seleção manual de filial */}
+        <TabsContent value="elegibilidade" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
+              <CardTitle className="text-lg">
+                Pendentes de análise
+                <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
+              </CardTitle>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por chassi, placa, modelo ou pátio..."
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  className="w-80 pl-9"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-12 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-12">
+                  Nenhum veículo elegível aguardando análise.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Chassi</TableHead>
+                        <TableHead>Placa</TableHead>
+                        <TableHead>Modelo</TableHead>
+                        <TableHead>Ano</TableHead>
+                        <TableHead className="text-right">KM</TableHead>
+                        <TableHead>Pátio origem</TableHead>
+                        <TableHead>Programa</TableHead>
+                        <TableHead>Laudo</TableHead>
+                        <TableHead>HSV</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((v) => {
+                        const laudoOk = laudoValido(v);
+                        const laudoStatus = v.resultado_laudo === "reprovado"
+                          ? "Reprovado"
+                          : v.resultado_laudo === "aprovado" || laudoOk
+                            ? "Aprovado"
+                            : "Pendente";
+                        const hsvOk = v.hsv_status === "ok";
+                        const aprovarHabilitado = podeAprovar(v);
+                        return (
+                          <TableRow key={v.id}>
+                            <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                            <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{v.modelo ?? "—"}</div>
+                              {v.marca && <div className="text-xs text-muted-foreground">{v.marca}</div>}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
+                            </TableCell>
+                            <TableCell>{v.filial?.nome ?? "—"}</TableCell>
+                            <TableCell>
+                              {v.elegibilidade === "TCUV" ? (
+                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
+                              ) : (
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">TSIM</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    laudoStatus === "Aprovado"
+                                      ? "border-emerald-300 text-emerald-700"
+                                      : laudoStatus === "Reprovado"
+                                        ? "border-red-300 text-red-700"
+                                        : "border-amber-300 text-amber-700"
+                                  }
+                                >
+                                  {laudoStatus}
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => abrirLaudo(v)}
+                                  disabled={!laudoOk}
+                                  title={laudoOk ? "Visualizar laudo" : "Nenhum laudo anexado"}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => iniciarLaudo(v)}
+                                  title="Anexar/atualizar laudo"
+                                >
+                                  <Upload className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant={hsvOk ? "outline" : "ghost"}
+                                size="sm"
+                                onClick={() => iniciarHsv(v)}
+                                className={hsvOk ? "border-emerald-300 text-emerald-700" : "text-red-600 font-semibold"}
+                              >
+                                {hsvOk ? (
+                                  <>
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> OK
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="w-3.5 h-3.5" /> Pendente
+                                  </>
+                                )}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => iniciarAprovacao(v)}
+                                  disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
+                                  title={
+                                    aprovarHabilitado
+                                      ? "Aprovar para preparação"
+                                      : "Conclua HSV e anexe laudo válido"
+                                  }
+                                >
+                                  {salvandoAprovar && aprovando?.id === v.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                  )}
+                                  Aprovar
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
+                                  <Archive className="w-3.5 h-3.5" />
+                                  Arquivar
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="envio" className="space-y-4">
+          <EnvioToyotaTab />
+        </TabsContent>
+      </Tabs>
+
 
 
       {/* =============== HSV =============== */}
@@ -650,5 +658,296 @@ function AnaliseElegiveis() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// ============================================================================
+// Aba "Envio Toyota" — dossiê, mesclagem e código TCUV
+// ============================================================================
+
+interface VeiculoEnvio {
+  id: string;
+  chassi: string;
+  placa: string | null;
+  modelo: string | null;
+  ano_modelo: number | null;
+  elegibilidade: string | null;
+  laudo_url: string | null;
+  laudo_arquivo_path: string | null;
+  health_check_pdf_path: string | null;
+  checklist_data: { observacoes?: string; preenchido_em?: string } | null;
+  codigo_tcuv: string | null;
+  dossie_pdf_path: string | null;
+}
+
+const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
+
+function EnvioToyotaTab() {
+  const [loading, setLoading] = useState(true);
+  const [veiculos, setVeiculos] = useState<VeiculoEnvio[]>([]);
+  const [gerando, setGerando] = useState<string | null>(null);
+  const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
+  const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
+
+  const carregar = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .select(
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,codigo_tcuv,dossie_pdf_path",
+      )
+      .eq("status_aprovacao", "aguardando_analise_central")
+      .order("updated_at", { ascending: false });
+    if (error) toast.error("Falha ao carregar envios.");
+    setVeiculos((data ?? []) as unknown as VeiculoEnvio[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    carregar();
+  }, []);
+
+  async function baixarBytes(path: string): Promise<ArrayBuffer | null> {
+    const { data, error } = await supabase.storage.from("documentos").download(path);
+    if (error || !data) return null;
+    return await data.arrayBuffer();
+  }
+
+  async function baixarUrl(url: string): Promise<ArrayBuffer | null> {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.arrayBuffer();
+    } catch {
+      return null;
+    }
+  }
+
+  function checklistParaPdfBytes(v: VeiculoEnvio): ArrayBuffer {
+    // Gera um PDF simples com o texto do checklist usando pdf-lib
+    // (retornaremos via função async abaixo). Este stub é substituído em gerarDossie.
+    return new ArrayBuffer(0);
+  }
+  // silêncio linter: função stub usada apenas para tipagem
+  void checklistParaPdfBytes;
+
+  async function gerarPdfChecklist(v: VeiculoEnvio): Promise<Uint8Array> {
+    const { PDFDocument, StandardFonts } = await import("pdf-lib");
+    const doc = await PDFDocument.create();
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const page = doc.addPage([595, 842]);
+    const lines = [
+      `Check-list — ${v.chassi}`,
+      `Modelo: ${v.modelo ?? "—"}  Placa: ${v.placa ?? "—"}  Ano: ${v.ano_modelo ?? "—"}`,
+      `Programa: ${v.elegibilidade ?? "—"}`,
+      `Preenchido em: ${v.checklist_data?.preenchido_em ? new Date(v.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`,
+      "",
+      "Observações:",
+      ...(v.checklist_data?.observacoes ?? "—").split("\n"),
+    ];
+    let y = 800;
+    for (const l of lines) {
+      page.drawText(l.slice(0, 90), { x: 40, y, size: 11, font });
+      y -= 16;
+      if (y < 40) break;
+    }
+    return doc.save();
+  }
+
+  async function gerarDossie(v: VeiculoEnvio) {
+    setGerando(v.id);
+    try {
+      const { mesclarPdfs } = await import("@/lib/pdf-utils");
+      const pdfs: ArrayBuffer[] = [];
+
+      // 1. Laudo (arquivo ou URL)
+      if (v.laudo_arquivo_path) {
+        const b = await baixarBytes(v.laudo_arquivo_path);
+        if (b) pdfs.push(b);
+      } else if (v.laudo_url) {
+        const b = await baixarUrl(v.laudo_url);
+        if (b) pdfs.push(b);
+      }
+      // 2. Checklist (gerado on-the-fly)
+      const cl = await gerarPdfChecklist(v);
+      const clBuf = new ArrayBuffer(cl.byteLength);
+      new Uint8Array(clBuf).set(cl);
+      pdfs.push(clBuf);
+      // 3. Health Check
+      if (v.health_check_pdf_path) {
+        const b = await baixarBytes(v.health_check_pdf_path);
+        if (b) pdfs.push(b);
+      }
+
+      if (pdfs.length === 0) {
+        toast.error("Nenhum documento disponível para gerar o dossiê.");
+        return;
+      }
+
+      const merged = await mesclarPdfs(pdfs);
+      if (merged.byteLength > MAX_DOSSIE_BYTES) {
+        toast.warning(
+          `Dossiê gerado com ${(merged.byteLength / 1024 / 1024).toFixed(2)}MB — excede o limite de 3MB da Toyota. Otimize os PDFs originais.`,
+        );
+      }
+
+      const path = `toyota/dossies/${v.id}/${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, new Blob([merged as unknown as BlobPart], { type: "application/pdf" }), {
+          upsert: true,
+          contentType: "application/pdf",
+        });
+      if (upErr) {
+        toast.error(upErr.message);
+        return;
+      }
+      await supabase
+        .from("toyota_estoque_veiculos")
+        .update({ dossie_pdf_path: path, dossie_enviado_em: new Date().toISOString() })
+        .eq("id", v.id);
+
+      const { data: signed } = await supabase.storage
+        .from("documentos")
+        .createSignedUrl(path, 600);
+      if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+      toast.success("Dossiê gerado.");
+      await carregar();
+    } finally {
+      setGerando(null);
+    }
+  }
+
+  async function salvarTcuv(v: VeiculoEnvio) {
+    const codigo = (tcuvInput[v.id] ?? "").trim();
+    if (!codigo) {
+      toast.error("Informe o Código TCUV.");
+      return;
+    }
+    setSalvandoTcuv(v.id);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ codigo_tcuv: codigo, status_aprovacao: "certificado_toyota" })
+      .eq("id", v.id);
+    setSalvandoTcuv(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Código TCUV salvo. Processo finalizado.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin" />
+      </div>
+    );
+  }
+  if (veiculos.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          Nenhum veículo aguardando envio à Toyota.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">
+          Aguardando envio à Toyota
+          <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Chassi</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Programa</TableHead>
+                <TableHead>Dossiê</TableHead>
+                <TableHead>Código TCUV</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {veiculos.map((v) => (
+                <TableRow key={v.id}>
+                  <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{v.modelo ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {v.dossie_pdf_path ? (
+                      <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-amber-300 text-amber-700">
+                        Pendente
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      placeholder="Ex: TCUV-2026-0001"
+                      value={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
+                      onChange={(e) =>
+                        setTcuvInput((p) => ({ ...p, [v.id]: e.target.value }))
+                      }
+                      className="w-44"
+                      disabled={!v.dossie_pdf_path}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => gerarDossie(v)}
+                        disabled={gerando === v.id}
+                      >
+                        {gerando === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FileStack className="w-3.5 h-3.5" />
+                        )}
+                        {v.dossie_pdf_path ? "Regerar" : "Gerar Dossiê"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => salvarTcuv(v)}
+                        disabled={
+                          !v.dossie_pdf_path ||
+                          salvandoTcuv === v.id ||
+                          !(tcuvInput[v.id] ?? v.codigo_tcuv ?? "").trim()
+                        }
+                      >
+                        {salvandoTcuv === v.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Send className="w-3.5 h-3.5" />
+                        )}
+                        Salvar TCUV
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

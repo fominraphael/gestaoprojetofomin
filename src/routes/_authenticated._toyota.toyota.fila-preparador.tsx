@@ -207,7 +207,7 @@ function FilaPreparador() {
           <Truck className="h-6 w-6" /> Fila do Preparador
         </h1>
         <p className="text-sm text-muted-foreground">
-          Veículos aprovados pela Análise de Elegíveis aguardando entrega ao
+          Veículos aprovados pela Análise Central aguardando entrega ao
           Pós-Vendas (oficina).
         </p>
       </div>

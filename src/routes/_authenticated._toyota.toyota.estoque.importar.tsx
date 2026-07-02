@@ -368,7 +368,11 @@ function GosystemImporter() {
       origem: r.origem || null,
       chassi_resumido: r.chassiResumido || null,
       external_id: r.externalId,
-      resultado_laudo: r.resultadoLaudo || null,
+      resultado_laudo: /avaliado|aprovado/i.test(r.resultadoLaudo)
+        ? "aprovado"
+        : /reprovado|recusado/i.test(r.resultadoLaudo)
+          ? "reprovado"
+          : r.resultadoLaudo || null,
       fonte_importacao: "gosystem",
       status_aprovacao: "analise",
       dados_originais: r.raw,
