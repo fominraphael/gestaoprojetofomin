@@ -394,6 +394,9 @@ export type Database = {
           observacao_toyota: string | null
           origem: string | null
           placa: string | null
+          posvendas_finalizado_em: string | null
+          posvendas_finalizado_por: string | null
+          posvendas_km: number | null
           quilometragem: number | null
           resultado_laudo: string | null
           retorno_toyota_em: string | null
@@ -439,6 +442,9 @@ export type Database = {
           observacao_toyota?: string | null
           origem?: string | null
           placa?: string | null
+          posvendas_finalizado_em?: string | null
+          posvendas_finalizado_por?: string | null
+          posvendas_km?: number | null
           quilometragem?: number | null
           resultado_laudo?: string | null
           retorno_toyota_em?: string | null
@@ -484,6 +490,9 @@ export type Database = {
           observacao_toyota?: string | null
           origem?: string | null
           placa?: string | null
+          posvendas_finalizado_em?: string | null
+          posvendas_finalizado_por?: string | null
+          posvendas_km?: number | null
           quilometragem?: number | null
           resultado_laudo?: string | null
           retorno_toyota_em?: string | null
