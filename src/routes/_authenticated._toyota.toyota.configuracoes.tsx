@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Building2, Warehouse } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Building2, Warehouse, FileText, Upload, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
