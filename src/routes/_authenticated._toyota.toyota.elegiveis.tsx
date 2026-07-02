@@ -906,6 +906,22 @@ function EnvioToyotaTab() {
   }
 
   return (
+    <>
+      {gerando && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+          <Card className="max-w-sm">
+            <CardContent className="py-6 flex flex-col items-center gap-3 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="font-semibold">Gerando Dossiê... Aguarde</p>
+                <p className="text-xs text-muted-foreground">
+                  Mesclando Check-list, Laudo e Health Check. Não feche esta janela.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
