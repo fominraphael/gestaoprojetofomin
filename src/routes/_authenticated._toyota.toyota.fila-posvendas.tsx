@@ -104,6 +104,7 @@ function FilaPosVendas() {
   const abrir = (v: Veiculo) => {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
+    setKm(v.posvendas_km != null ? String(v.posvendas_km) : "");
   };
 
   const salvarChecklist = async () => {
