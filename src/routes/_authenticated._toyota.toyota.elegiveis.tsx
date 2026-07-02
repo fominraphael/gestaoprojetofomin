@@ -78,7 +78,7 @@ interface Veiculo {
   status_aprovacao: string;
   filial_id: string;
   filial_destino_id: string | null;
-  filial: { nome: string } | null;
+  filial: { nome: string; filial_id: string | null } | null;
   resultado_laudo: string | null;
   laudo_url: string | null;
   laudo_arquivo_path: string | null;
