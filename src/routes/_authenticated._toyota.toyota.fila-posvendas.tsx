@@ -140,39 +140,63 @@ function FilaPosVendas() {
       toast.error("Envie um arquivo PDF");
       return;
     }
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo excede o limite de 100MB.");
+      return;
+    }
     setUploadando(true);
-    const path = `toyota/health-check/${aberto.id}/${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage
-      .from("documentos")
-      .upload(path, file, { upsert: true, contentType: "application/pdf" });
-    if (upErr) {
+    try {
+      // 1. Ler bytes e validar chassi no PDF antes de subir
+      const bytes = await file.arrayBuffer();
+      const { extractPdfText, pdfContemChassi } = await import("@/lib/pdf-utils");
+      let texto = "";
+      try {
+        texto = await extractPdfText(bytes);
+      } catch (e) {
+        console.error(e);
+        toast.error("Não foi possível ler o PDF para validar o chassi.");
+        return;
+      }
+      if (!pdfContemChassi(texto, aberto.chassi)) {
+        toast.error(
+          `O chassi ${aberto.chassi} não foi encontrado no PDF. Verifique se o Health Check é do veículo correto.`,
+        );
+        return;
+      }
+
+      const path = `toyota/health-check/${aberto.id}/${Date.now()}-${file.name}`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, file, { upsert: true, contentType: "application/pdf" });
+      if (upErr) {
+        toast.error("Erro ao subir PDF");
+        return;
+      }
+      const { error } = await supabase
+        .from("toyota_estoque_veiculos")
+        .update({
+          health_check_pdf_path: path,
+          health_check_uploaded_at: new Date().toISOString(),
+        })
+        .eq("id", aberto.id);
+      if (error) {
+        toast.error("Erro ao registrar PDF");
+        return;
+      }
+      toast.success("Health Check anexado (chassi validado).");
+      await carregar();
+      setAberto((cur) =>
+        cur
+          ? {
+              ...cur,
+              health_check_pdf_path: path,
+              health_check_uploaded_at: new Date().toISOString(),
+            }
+          : cur,
+      );
+    } finally {
       setUploadando(false);
-      toast.error("Erro ao subir PDF");
-      return;
     }
-    const { error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .update({
-        health_check_pdf_path: path,
-        health_check_uploaded_at: new Date().toISOString(),
-      })
-      .eq("id", aberto.id);
-    setUploadando(false);
-    if (error) {
-      toast.error("Erro ao registrar PDF");
-      return;
-    }
-    toast.success("Health Check anexado");
-    await carregar();
-    setAberto((cur) =>
-      cur
-        ? {
-            ...cur,
-            health_check_pdf_path: path,
-            health_check_uploaded_at: new Date().toISOString(),
-          }
-        : cur,
-    );
   };
 
   const enviarCentral = async () => {
