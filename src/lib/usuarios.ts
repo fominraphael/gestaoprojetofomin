@@ -51,8 +51,10 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     pode_criar_admin: p.pode_criar_admin ?? false,
     campos_customizados: p.campos_customizados ?? {},
     email_recuperacao: p.email_recuperacao ?? null,
+    filial_id: p.filial_id ?? null,
     created_at: p.created_at,
   };
+
 }
 
 // ============================================================
