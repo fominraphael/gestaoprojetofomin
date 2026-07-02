@@ -152,6 +152,8 @@ interface VeiculoGosystem {
   statusCautelar: string;
   elegibilidade: Elegibilidade;
   duplicado: boolean;
+  patioNome: string;
+  patioId: string | null;
   raw: Record<string, any>;
 }
 
