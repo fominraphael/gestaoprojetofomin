@@ -11,6 +11,8 @@ import {
   Save,
   Database,
   BarChart3,
+  History,
+  Loader2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -26,13 +28,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,11 +39,17 @@ export const Route = createFileRoute(
   component: ImportarHub,
 });
 
-interface Filial {
+interface Patio {
   id: string;
   nome: string;
-  dealer_number: string | null;
-  ativo: boolean;
+}
+
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
 }
 
 // ============================================================================
@@ -151,149 +152,203 @@ interface VeiculoGosystem {
   statusCautelar: string;
   elegibilidade: Elegibilidade;
   duplicado: boolean;
+  patioNome: string;
+  patioId: string | null;
   raw: Record<string, any>;
+}
+
+interface ImportacaoHist {
+  id: string;
+  created_at: string;
+  status: string;
+  arquivo_nome: string | null;
+  arquivo_path: string | null;
+  total_linhas: number | null;
+  total_salvos: number | null;
+  total_ignorados: number | null;
+  mensagem: string | null;
+  tipo: string;
+  user_id: string | null;
+  usuario_nome?: string | null;
 }
 
 function GosystemImporter() {
   const [rows, setRows] = useState<VeiculoGosystem[]>([]);
   const [fileName, setFileName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filtro, setFiltro] = useState("");
-  const [filiais, setFiliais] = useState<Filial[]>([]);
-  const [filialId, setFilialId] = useState<string>("");
+  const [patios, setPatios] = useState<Patio[]>([]);
   const [descartadosMarca, setDescartadosMarca] = useState(0);
+  const [semPatio, setSemPatio] = useState(0);
+  const [refreshHist, setRefreshHist] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("toyota_patios")
-        .select("id, nome, dealer_number, ativo")
+        .select("id, nome")
         .eq("ativo", true)
         .order("nome");
-      setFiliais((data ?? []) as Filial[]);
+      setPatios((data ?? []) as Patio[]);
     })();
   }, []);
 
-  const processFile = useCallback(async (file: File) => {
-    setLoading(true);
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      if (!ws) throw new Error("Planilha vazia.");
-      const data = XLSX.utils.sheet_to_json<Record<string, any>>(ws, {
-        defval: "",
-        raw: false,
-      });
-      if (data.length === 0) throw new Error("Nenhuma linha encontrada.");
+  const patioMap = useMemo(() => {
+    const m = new Map<string, string>();
+    patios.forEach((p) => m.set(normalize(p.nome), p.id));
+    return m;
+  }, [patios]);
 
-      // Pré-filtro: somente Toyota/Lexus + origem "Toyota - Estoque"
-      const elegiveis = data.filter((r) => {
-        const marca = String(pick(r, ["^marca$", "fabricante"]) ?? "").trim();
-        const origem = String(pick(r, ["^origem$"]) ?? "").trim();
-        return /^(toyota|lexus)$/i.test(marca) && /toyota\s*-\s*estoque/i.test(origem);
-      });
-      setDescartadosMarca(data.length - elegiveis.length);
+  const processFile = useCallback(
+    async (f: File) => {
+      setLoading(true);
+      try {
+        const buf = await f.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        if (!ws) throw new Error("Planilha vazia.");
+        const data = XLSX.utils.sheet_to_json<Record<string, any>>(ws, {
+          defval: "",
+          raw: false,
+        });
+        if (data.length === 0) throw new Error("Nenhuma linha encontrada.");
 
-      // Coleta external_ids para checagem de duplicidade
-      const candidatos: VeiculoGosystem[] = elegiveis.map((r) => {
-        const origem = String(pick(r, ["^origem$"]) ?? "").trim();
-        const chassiResumido = String(pick(r, ["chassiresumido", "chassi.*resumido"]) ?? "").trim();
-        const chassi = String(pick(r, ["^chassi$", "^vin$"]) ?? "").trim();
-        const externalId = `${origem}::${chassiResumido || chassi}`;
-        const marca = String(pick(r, ["^marca$"]) ?? "").trim();
-        const modelo = String(pick(r, ["^modelo$", "descricao"]) ?? "").trim();
-        const anoFab = parseInt0(pick(r, ["anofabricacao", "ano.*fab"]));
-        const anoMod = parseInt0(pick(r, ["anomodelo", "ano.*mod"]));
-        const km = parseInt0(pick(r, ["km", "quilometragem", "hodometro"]));
-        const placa = String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase();
-        const laudo = String(pick(r, ["resultado.*laudo", "laudo"]) ?? "").trim();
-        return {
-          externalId,
-          origem,
-          chassiResumido,
-          chassi,
-          placa,
-          modelo,
-          marca,
-          anoFabricacao: anoFab,
-          anoModelo: anoMod,
-          quilometragem: km,
-          resultadoLaudo: laudo,
-          statusCautelar: mapStatusLaudo(laudo),
-          elegibilidade: classificarElegibilidadeGosystem(anoFab),
-          duplicado: false,
-          raw: r,
-        };
-      });
+        const elegiveis = data.filter((r) => {
+          const marca = String(pick(r, ["^marca$", "fabricante"]) ?? "").trim();
+          const origem = String(pick(r, ["^origem$"]) ?? "").trim();
+          return /^(toyota|lexus)$/i.test(marca) && /toyota\s*-\s*estoque/i.test(origem);
+        });
+        setDescartadosMarca(data.length - elegiveis.length);
 
-      // Checa duplicidade no banco
-      const ids = candidatos.map((c) => c.externalId).filter(Boolean);
-      const dupSet = new Set<string>();
-      if (ids.length > 0) {
-        const { data: existing } = await supabase
-          .from("toyota_estoque_veiculos")
-          .select("external_id")
-          .in("external_id", ids);
-        (existing ?? []).forEach((e: any) => e.external_id && dupSet.add(e.external_id));
+        let semPatioCount = 0;
+        const candidatos: VeiculoGosystem[] = elegiveis.map((r) => {
+          const origem = String(pick(r, ["^origem$"]) ?? "").trim();
+          const chassiResumido = String(pick(r, ["chassiresumido", "chassi.*resumido"]) ?? "").trim();
+          const chassi = String(pick(r, ["^chassi$", "^vin$"]) ?? "").trim();
+          const externalId = `${origem}::${chassiResumido || chassi}`;
+          const marca = String(pick(r, ["^marca$"]) ?? "").trim();
+          const modelo = String(pick(r, ["^modelo$", "descricao"]) ?? "").trim();
+          const anoFab = parseInt0(pick(r, ["anofabricacao", "ano.*fab"]));
+          const anoMod = parseInt0(pick(r, ["anomodelo", "ano.*mod"]));
+          const km = parseInt0(pick(r, ["km", "quilometragem", "hodometro"]));
+          const placa = String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase();
+          const laudo = String(pick(r, ["resultado.*laudo", "laudo"]) ?? "").trim();
+          const patioNome = String(pick(r, ["^patio$", "p[aá]tio", "filial"]) ?? "").trim();
+          const patioId = patioMap.get(normalize(patioNome)) ?? null;
+          if (!patioId) semPatioCount++;
+          return {
+            externalId,
+            origem,
+            chassiResumido,
+            chassi,
+            placa,
+            modelo,
+            marca,
+            anoFabricacao: anoFab,
+            anoModelo: anoMod,
+            quilometragem: km,
+            resultadoLaudo: laudo,
+            statusCautelar: mapStatusLaudo(laudo),
+            elegibilidade: classificarElegibilidadeGosystem(anoFab),
+            duplicado: false,
+            patioNome,
+            patioId,
+            raw: r,
+          };
+        });
+        setSemPatio(semPatioCount);
+
+        const ids = candidatos.map((c) => c.externalId).filter(Boolean);
+        const dupSet = new Set<string>();
+        if (ids.length > 0) {
+          const { data: existing } = await supabase
+            .from("toyota_estoque_veiculos")
+            .select("external_id")
+            .in("external_id", ids);
+          (existing ?? []).forEach((e: any) => e.external_id && dupSet.add(e.external_id));
+        }
+        const mapped = candidatos.map((c) => ({ ...c, duplicado: dupSet.has(c.externalId) }));
+
+        setRows(mapped);
+        setFileName(f.name);
+        setFile(f);
+        const novos = mapped.filter((r) => !r.duplicado && r.patioId).length;
+        toast.success(
+          `${mapped.length} Toyota/Lexus · ${novos} novos c/ pátio · ${semPatioCount} sem pátio`,
+        );
+        if (semPatioCount > 0) {
+          toast.warning(
+            `${semPatioCount} veículo(s) com pátio não cadastrado serão ignorados. Cadastre em Configurações.`,
+          );
+        }
+      } catch (e: any) {
+        toast.error(e.message ?? "Falha ao ler arquivo.");
+      } finally {
+        setLoading(false);
       }
-      const mapped = candidatos.map((c) => ({ ...c, duplicado: dupSet.has(c.externalId) }));
-
-      setRows(mapped);
-      setFileName(file.name);
-      const novos = mapped.filter((r) => !r.duplicado).length;
-      toast.success(
-        `${mapped.length} Toyota/Lexus importados · ${novos} novos · ${mapped.length - novos} já analisados`,
-      );
-    } catch (e: any) {
-      toast.error(e.message ?? "Falha ao ler arquivo.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [patioMap],
+  );
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) processFile(file);
+      const f = e.dataTransfer.files?.[0];
+      if (f) processFile(f);
     },
     [processFile],
   );
 
   const onPick = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) processFile(file);
+      const f = e.target.files?.[0];
+      if (f) processFile(f);
       e.target.value = "";
     },
     [processFile],
   );
 
   const salvar = useCallback(async () => {
-    if (!filialId) {
-      toast.error("Selecione uma filial.");
-      return;
-    }
-    const novos = rows.filter((r) => !r.duplicado && r.chassi);
+    const novos = rows.filter((r) => !r.duplicado && r.chassi && r.patioId);
     if (novos.length === 0) {
-      toast.error("Nenhum veículo novo para salvar.");
+      toast.error("Nenhum veículo novo com pátio cadastrado para salvar.");
       return;
     }
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id ?? null;
+
+    // Upload do arquivo original
+    let arquivoPath: string | null = null;
+    if (file) {
+      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      arquivoPath = `toyota/importacoes/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(arquivoPath, file, {
+          upsert: false,
+          contentType:
+            file.type ||
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+      if (upErr) {
+        console.warn("Falha upload arquivo:", upErr.message);
+        arquivoPath = null;
+      }
+    }
+
     const elegMap: Record<Elegibilidade, "TCUV" | "TSIM" | "NAO_ELEGIVEL"> = {
       "Elegível TCUV": "TCUV",
       "Elegível TSIM": "TSIM",
       "Não Elegível": "NAO_ELEGIVEL",
     };
     const payload = novos.map((r) => ({
-      filial_id: filialId,
+      filial_id: r.patioId!, // pátio deduzido do sheet
       user_id: userId,
       chassi: r.chassi,
       placa: r.placa || null,
@@ -312,18 +367,19 @@ function GosystemImporter() {
       status_aprovacao: "analise",
       dados_originais: r.raw,
     }));
+
     const { error, data: saved } = await supabase
       .from("toyota_estoque_veiculos")
       .upsert(payload, { onConflict: "external_id" })
       .select("id");
 
-    // Registra histórico da importação (sucesso ou erro)
     await supabase.from("toyota_importacoes").insert({
       user_id: userId,
-      filial_id: filialId,
+      filial_id: null,
       tipo: "gosystem",
       status: error ? "erro" : "sucesso",
       arquivo_nome: fileName || null,
+      arquivo_path: arquivoPath,
       total_linhas: rows.length,
       total_salvos: saved?.length ?? 0,
       total_ignorados: rows.length - (saved?.length ?? 0),
@@ -331,15 +387,14 @@ function GosystemImporter() {
     });
 
     setSaving(false);
+    setRefreshHist((x) => x + 1);
     if (error) {
       toast.error(`Falha ao salvar: ${error.message}`);
       return;
     }
-    toast.success(
-      `${payload.length} veículo(s) enviados para Análise do Administrador.`,
-    );
+    toast.success(`${payload.length} veículo(s) enviados para Análise.`);
     setRows((prev) => prev.map((r) => ({ ...r, duplicado: true })));
-  }, [filialId, rows, fileName]);
+  }, [rows, fileName, file]);
 
   const filtered = useMemo(() => {
     const q = filtro.toLowerCase().trim();
@@ -349,17 +404,17 @@ function GosystemImporter() {
         r.chassi.toLowerCase().includes(q) ||
         r.placa.toLowerCase().includes(q) ||
         r.modelo.toLowerCase().includes(q) ||
-        r.origem.toLowerCase().includes(q),
+        r.origem.toLowerCase().includes(q) ||
+        r.patioNome.toLowerCase().includes(q),
     );
   }, [rows, filtro]);
 
   const resumo = useMemo(() => {
     const total = rows.length;
-    const tcuv = rows.filter((r) => r.elegibilidade === "Elegível TCUV" && !r.duplicado).length;
-    const tsim = rows.filter((r) => r.elegibilidade === "Elegível TSIM" && !r.duplicado).length;
-    const nao = rows.filter((r) => r.elegibilidade === "Não Elegível").length;
+    const tcuv = rows.filter((r) => r.elegibilidade === "Elegível TCUV" && !r.duplicado && r.patioId).length;
+    const tsim = rows.filter((r) => r.elegibilidade === "Elegível TSIM" && !r.duplicado && r.patioId).length;
     const dup = rows.filter((r) => r.duplicado).length;
-    return { total, tcuv, tsim, nao, dup };
+    return { total, tcuv, tsim, dup };
   }, [rows]);
 
   return (
@@ -399,7 +454,7 @@ function GosystemImporter() {
                     : "Arraste o arquivo Gosystem ou clique para selecionar"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Filtra automaticamente Toyota/Lexus · Detecta duplicados pelo ID Origem+Chassi
+                  A filial é deduzida automaticamente pelo campo "Pátio" da planilha.
                 </p>
               </div>
               {fileName && !loading && (
@@ -411,7 +466,9 @@ function GosystemImporter() {
                       e.stopPropagation();
                       setRows([]);
                       setFileName("");
+                      setFile(null);
                       setDescartadosMarca(0);
+                      setSemPatio(0);
                     }}
                     className="p-1 hover:text-foreground"
                   >
@@ -431,33 +488,20 @@ function GosystemImporter() {
             <SummaryTile label="TCUV (novos)" value={resumo.tcuv} tone="success" />
             <SummaryTile label="TSIM (novos)" value={resumo.tsim} tone="info" />
             <SummaryTile label="Já analisados" value={resumo.dup} tone="muted" />
-            <SummaryTile label="Descartados (marca)" value={descartadosMarca} tone="muted" />
+            <SummaryTile label="Sem pátio" value={semPatio} tone="muted" />
           </div>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
               <CardTitle className="text-lg">Pré-visualização</CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
-                <Select value={filialId} onValueChange={setFilialId}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Selecione a filial..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filiais.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                        {f.dealer_number ? ` (${f.dealer_number})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Input
                   placeholder="Filtrar..."
                   value={filtro}
                   onChange={(e) => setFiltro(e.target.value)}
                   className="w-56"
                 />
-                <Button onClick={salvar} disabled={saving || !filialId}>
+                <Button onClick={salvar} disabled={saving}>
                   <Save className="w-4 h-4" />
                   {saving ? "Salvando..." : "Salvar novos"}
                 </Button>
@@ -468,7 +512,7 @@ function GosystemImporter() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Origem</TableHead>
+                      <TableHead>Pátio</TableHead>
                       <TableHead>Chassi</TableHead>
                       <TableHead>Placa</TableHead>
                       <TableHead>Modelo</TableHead>
@@ -480,8 +524,16 @@ function GosystemImporter() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((r, i) => (
-                      <TableRow key={`${r.externalId}-${i}`} className={r.duplicado ? "opacity-50" : ""}>
-                        <TableCell className="font-mono text-xs">{r.origem || "—"}</TableCell>
+                      <TableRow key={`${r.externalId}-${i}`} className={r.duplicado || !r.patioId ? "opacity-50" : ""}>
+                        <TableCell className="text-xs">
+                          {r.patioId ? (
+                            r.patioNome || "—"
+                          ) : (
+                            <span className="text-destructive" title="Pátio não cadastrado">
+                              {r.patioNome || "—"} ⚠
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="font-mono text-xs">{r.chassi || "—"}</TableCell>
                         <TableCell className="font-mono">{r.placa || "—"}</TableCell>
                         <TableCell>
@@ -492,7 +544,9 @@ function GosystemImporter() {
                         <TableCell><LaudoBadge status={r.statusCautelar} /></TableCell>
                         <TableCell><ElegBadge value={r.elegibilidade} /></TableCell>
                         <TableCell>
-                          {r.duplicado ? (
+                          {!r.patioId ? (
+                            <Badge variant="outline">Sem pátio</Badge>
+                          ) : r.duplicado ? (
                             <Badge variant="outline">Já analisado</Badge>
                           ) : (
                             <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Novo</Badge>
@@ -507,6 +561,8 @@ function GosystemImporter() {
           </Card>
         </>
       )}
+
+      <HistoricoImportacoes tipo="gosystem" refreshKey={refreshHist} />
     </div>
   );
 }
@@ -856,4 +912,138 @@ function AcaoBadge({ a }: { a: BiRow["novoStatus"] }) {
     return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Reprovar</Badge>;
   if (a === "nao_encontrado") return <Badge variant="secondary">Ignorar</Badge>;
   return <Badge variant="outline">Manter</Badge>;
+}
+
+// ============================================================================
+// Histórico de Importações
+// ============================================================================
+
+function HistoricoImportacoes({ tipo, refreshKey }: { tipo: string; refreshKey: number }) {
+  const [items, setItems] = useState<ImportacaoHist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("toyota_importacoes")
+        .select("id, created_at, status, arquivo_nome, arquivo_path, total_linhas, total_salvos, total_ignorados, mensagem, tipo, user_id")
+        .eq("tipo", tipo)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (!alive) return;
+      const list = (data ?? []) as ImportacaoHist[];
+      // Buscar nomes de usuários
+      const ids = Array.from(new Set(list.map((i) => i.user_id).filter(Boolean))) as string[];
+      if (ids.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", ids);
+        const map = new Map<string, string>();
+        (profs ?? []).forEach((p: any) => map.set(p.id, p.username));
+        list.forEach((i) => {
+          if (i.user_id) i.usuario_nome = map.get(i.user_id) ?? null;
+        });
+      }
+      setItems(list);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [tipo, refreshKey]);
+
+  const download = async (path: string, name: string | null) => {
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) {
+      toast.error("Falha ao gerar link de download");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = name ?? "arquivo";
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <History className="w-4 h-4" /> Histórico de Importações
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center py-8 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Nenhuma importação registrada ainda.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Arquivo</TableHead>
+                  <TableHead>Linhas</TableHead>
+                  <TableHead>Salvos</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((i) => (
+                  <TableRow key={i.id}>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {new Date(i.created_at).toLocaleString("pt-BR")}
+                    </TableCell>
+                    <TableCell className="text-xs">{i.usuario_nome ?? "—"}</TableCell>
+                    <TableCell className="text-xs max-w-xs truncate" title={i.arquivo_nome ?? ""}>
+                      {i.arquivo_nome ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{i.total_linhas ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{i.total_salvos ?? 0}</TableCell>
+                    <TableCell>
+                      {i.status === "sucesso" ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Sucesso
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="gap-1" title={i.mensagem ?? ""}>
+                          <AlertCircle className="w-3 h-3" /> Erro
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {i.arquivo_path ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => download(i.arquivo_path!, i.arquivo_nome)}
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1" /> Baixar
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">sem arquivo</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
