@@ -1068,6 +1068,37 @@ function EnvioToyotaTab() {
         </div>
       </CardContent>
     </Card>
+
+    <Dialog open={!!recusaVeic} onOpenChange={(o) => !o && setRecusaVeic(null)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Registrar recusa da Toyota</DialogTitle>
+          <DialogDescription>
+            O veículo retornará para a <strong>Análise Central</strong> com destaque.
+            O Administrador poderá revisar e reenviar ou arquivar definitivamente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="motivo-recusa">Motivo / observação da Toyota</Label>
+          <Textarea
+            id="motivo-recusa"
+            value={recusaMotivo}
+            onChange={(e) => setRecusaMotivo(e.target.value)}
+            placeholder="Ex.: pendência de documentação, item reprovado no check-list, etc."
+            rows={4}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setRecusaVeic(null)} disabled={salvandoRecusa}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" onClick={confirmarRecusa} disabled={salvandoRecusa}>
+            {salvandoRecusa && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            Confirmar recusa
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
