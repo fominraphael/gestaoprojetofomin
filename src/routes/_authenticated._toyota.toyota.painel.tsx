@@ -106,7 +106,7 @@ function PainelCertificacao() {
 
   const carregar = async () => {
     setLoading(true);
-    const [vRes, fRes, uRes] = await Promise.all([
+    const [vRes, fRes, filRes, uRes] = await Promise.all([
       supabase
         .from("toyota_estoque_veiculos")
         .select(
@@ -114,6 +114,7 @@ function PainelCertificacao() {
         )
         .order("updated_at", { ascending: false }),
       supabase.from("toyota_patios").select("id,nome"),
+      supabase.from("toyota_filiais").select("id,nome"),
       user?.id
         ? supabase
             .from("toyota_usuario_patio")
@@ -127,7 +128,8 @@ function PainelCertificacao() {
     if (fRes.error) toast.error("Erro ao carregar filiais");
 
     setVeiculos((vRes.data ?? []) as Veiculo[]);
-    setFiliais((fRes.data ?? []) as Filial[]);
+    // Combina pátios + filiais para resolver nomes de origem (pátio) e destino (filial)
+    setFiliais([...(fRes.data ?? []), ...(filRes.data ?? [])] as Filial[]);
     setMinhasFiliais(new Set((uRes.data ?? []).map((r) => r.patio_id)));
     setLoading(false);
   };
