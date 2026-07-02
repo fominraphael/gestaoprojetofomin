@@ -82,6 +82,8 @@ interface Veiculo {
   hsv_revisoes_pendentes: string[] | null;
   hsv_os_ajustes: string[] | null;
   hsv_observacoes_preparador: string | null;
+  retorno_toyota_em: string | null;
+  observacao_toyota: string | null;
 }
 
 function AnaliseElegiveis() {
