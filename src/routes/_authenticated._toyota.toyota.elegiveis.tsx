@@ -1047,6 +1047,18 @@ function EnvioToyotaTab() {
                         )}
                         Salvar TCUV
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          setRecusaVeic(v);
+                          setRecusaMotivo("");
+                        }}
+                        title="Registrar recusa da Toyota — retorna o veículo para a Análise Central"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Registrar Recusa
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
