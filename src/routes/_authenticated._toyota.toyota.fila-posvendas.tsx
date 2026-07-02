@@ -214,12 +214,20 @@ function FilaPosVendas() {
       toast.error("Preencha o checklist antes de enviar.");
       return;
     }
+    const kmNum = Number(km.replace(/\D/g, ""));
+    if (!kmNum || kmNum <= 0) {
+      toast.error("Informe a quilometragem atual do veículo.");
+      return;
+    }
     setEnviando(true);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
         status_aprovacao: "aguardando_analise_central",
         motivo_reprovacao: null,
+        posvendas_km: kmNum,
+        posvendas_finalizado_em: new Date().toISOString(),
+        posvendas_finalizado_por: user?.username ?? null,
       })
       .eq("id", aberto.id);
     setEnviando(false);
