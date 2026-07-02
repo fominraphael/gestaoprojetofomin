@@ -338,175 +338,187 @@ function AnaliseElegiveis() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Análise de Elegíveis</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Análise Central</h1>
         <p className="text-sm text-muted-foreground">
-          Veículos pré-aprovados na importação aguardando validação de laudo, HSV e direcionamento para uma filial.
+          Centralize a análise de elegibilidade e o envio final dos veículos para a Toyota.
         </p>
       </header>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle className="text-lg">
-            Pendentes de análise
-            <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
-          </CardTitle>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por chassi, placa, modelo ou pátio..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-80 pl-9"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-12 text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-12">
-              Nenhum veículo elegível aguardando análise.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Chassi</TableHead>
-                    <TableHead>Placa</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Ano</TableHead>
-                    <TableHead className="text-right">KM</TableHead>
-                    <TableHead>Pátio origem</TableHead>
-                    <TableHead>Programa</TableHead>
-                    <TableHead>Laudo</TableHead>
-                    <TableHead>HSV</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((v) => {
-                    const laudoOk = laudoValido(v);
-                    const laudoStatus = v.resultado_laudo === "reprovado"
-                      ? "Reprovado"
-                      : v.resultado_laudo === "aprovado" || laudoOk
-                        ? "Aprovado"
-                        : "Pendente";
-                    const hsvOk = v.hsv_status === "ok";
-                    const aprovarHabilitado = podeAprovar(v);
-                    return (
-                      <TableRow key={v.id}>
-                        <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
-                        <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
-                        <TableCell>
-                          <div className="font-medium">{v.modelo ?? "—"}</div>
-                          {v.marca && <div className="text-xs text-muted-foreground">{v.marca}</div>}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
-                        </TableCell>
-                        <TableCell>{v.filial?.nome ?? "—"}</TableCell>
-                        <TableCell>
-                          {v.elegibilidade === "TCUV" ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
-                          ) : (
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">TSIM</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <Badge
-                              variant="outline"
-                              className={
-                                laudoStatus === "Aprovado"
-                                  ? "border-emerald-300 text-emerald-700"
-                                  : laudoStatus === "Reprovado"
-                                    ? "border-red-300 text-red-700"
-                                    : "border-amber-300 text-amber-700"
-                              }
-                            >
-                              {laudoStatus}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => abrirLaudo(v)}
-                              disabled={!laudoOk}
-                              title={laudoOk ? "Visualizar laudo" : "Nenhum laudo anexado"}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => iniciarLaudo(v)}
-                              title="Anexar/atualizar laudo"
-                            >
-                              <Upload className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant={hsvOk ? "outline" : "ghost"}
-                            size="sm"
-                            onClick={() => iniciarHsv(v)}
-                            className={hsvOk ? "border-emerald-300 text-emerald-700" : "text-red-600 font-semibold"}
-                          >
-                            {hsvOk ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5" /> OK
-                              </>
-                            ) : (
-                              <>
-                                <AlertCircle className="w-3.5 h-3.5" /> Pendente
-                              </>
-                            )}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => iniciarAprovacao(v)}
-                              disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
-                              title={
-                                aprovarHabilitado
-                                  ? "Aprovar para preparação"
-                                  : "Conclua HSV e anexe laudo válido"
-                              }
-                            >
-                              {salvandoAprovar && aprovando?.id === v.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                              )}
-                              Aprovar
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
-                              <Archive className="w-3.5 h-3.5" />
-                              Arquivar
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="elegibilidade" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="elegibilidade">Análise de Elegibilidade</TabsTrigger>
+          <TabsTrigger value="envio">Envio Toyota</TabsTrigger>
+        </TabsList>
 
-      {/* Aprovação é 100% automática — sem seleção manual de filial */}
+        <TabsContent value="elegibilidade" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
+              <CardTitle className="text-lg">
+                Pendentes de análise
+                <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
+              </CardTitle>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por chassi, placa, modelo ou pátio..."
+                  value={filtro}
+                  onChange={(e) => setFiltro(e.target.value)}
+                  className="w-80 pl-9"
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-12 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-12">
+                  Nenhum veículo elegível aguardando análise.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Chassi</TableHead>
+                        <TableHead>Placa</TableHead>
+                        <TableHead>Modelo</TableHead>
+                        <TableHead>Ano</TableHead>
+                        <TableHead className="text-right">KM</TableHead>
+                        <TableHead>Pátio origem</TableHead>
+                        <TableHead>Programa</TableHead>
+                        <TableHead>Laudo</TableHead>
+                        <TableHead>HSV</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((v) => {
+                        const laudoOk = laudoValido(v);
+                        const laudoStatus = v.resultado_laudo === "reprovado"
+                          ? "Reprovado"
+                          : v.resultado_laudo === "aprovado" || laudoOk
+                            ? "Aprovado"
+                            : "Pendente";
+                        const hsvOk = v.hsv_status === "ok";
+                        const aprovarHabilitado = podeAprovar(v);
+                        return (
+                          <TableRow key={v.id}>
+                            <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                            <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{v.modelo ?? "—"}</div>
+                              {v.marca && <div className="text-xs text-muted-foreground">{v.marca}</div>}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
+                            </TableCell>
+                            <TableCell>{v.filial?.nome ?? "—"}</TableCell>
+                            <TableCell>
+                              {v.elegibilidade === "TCUV" ? (
+                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
+                              ) : (
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">TSIM</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    laudoStatus === "Aprovado"
+                                      ? "border-emerald-300 text-emerald-700"
+                                      : laudoStatus === "Reprovado"
+                                        ? "border-red-300 text-red-700"
+                                        : "border-amber-300 text-amber-700"
+                                  }
+                                >
+                                  {laudoStatus}
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => abrirLaudo(v)}
+                                  disabled={!laudoOk}
+                                  title={laudoOk ? "Visualizar laudo" : "Nenhum laudo anexado"}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => iniciarLaudo(v)}
+                                  title="Anexar/atualizar laudo"
+                                >
+                                  <Upload className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant={hsvOk ? "outline" : "ghost"}
+                                size="sm"
+                                onClick={() => iniciarHsv(v)}
+                                className={hsvOk ? "border-emerald-300 text-emerald-700" : "text-red-600 font-semibold"}
+                              >
+                                {hsvOk ? (
+                                  <>
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> OK
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="w-3.5 h-3.5" /> Pendente
+                                  </>
+                                )}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => iniciarAprovacao(v)}
+                                  disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
+                                  title={
+                                    aprovarHabilitado
+                                      ? "Aprovar para preparação"
+                                      : "Conclua HSV e anexe laudo válido"
+                                  }
+                                >
+                                  {salvandoAprovar && aprovando?.id === v.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                  )}
+                                  Aprovar
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
+                                  <Archive className="w-3.5 h-3.5" />
+                                  Arquivar
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="envio" className="space-y-4">
+          <EnvioToyotaTab />
+        </TabsContent>
+      </Tabs>
+
 
 
       {/* =============== HSV =============== */}
