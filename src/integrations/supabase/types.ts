@@ -375,11 +375,16 @@ export type Database = {
           fonte_importacao: string
           health_check_pdf_path: string | null
           health_check_uploaded_at: string | null
+          hsv_analisado_em: string | null
+          hsv_analisado_por: string | null
           hsv_observacoes_preparador: string | null
           hsv_os_ajustes: string[]
           hsv_revisoes_pendentes: string[]
+          hsv_status: string
           id: string
           importado_em: string
+          laudo_arquivo_path: string | null
+          laudo_url: string | null
           marca: string | null
           modelo: string | null
           motivo_reprovacao: string | null
@@ -412,11 +417,16 @@ export type Database = {
           fonte_importacao?: string
           health_check_pdf_path?: string | null
           health_check_uploaded_at?: string | null
+          hsv_analisado_em?: string | null
+          hsv_analisado_por?: string | null
           hsv_observacoes_preparador?: string | null
           hsv_os_ajustes?: string[]
           hsv_revisoes_pendentes?: string[]
+          hsv_status?: string
           id?: string
           importado_em?: string
+          laudo_arquivo_path?: string | null
+          laudo_url?: string | null
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
@@ -449,11 +459,16 @@ export type Database = {
           fonte_importacao?: string
           health_check_pdf_path?: string | null
           health_check_uploaded_at?: string | null
+          hsv_analisado_em?: string | null
+          hsv_analisado_por?: string | null
           hsv_observacoes_preparador?: string | null
           hsv_os_ajustes?: string[]
           hsv_revisoes_pendentes?: string[]
+          hsv_status?: string
           id?: string
           importado_em?: string
+          laudo_arquivo_path?: string | null
+          laudo_url?: string | null
           marca?: string | null
           modelo?: string | null
           motivo_reprovacao?: string | null
