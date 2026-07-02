@@ -357,26 +357,43 @@ function FilaPosVendas() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">
-                    Checklist ICS — observações da oficina
-                  </Label>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link
-                      to="/toyota/checklist"
-                      search={{
-                        chassi: aberto.chassi,
-                        placa: aberto.placa ?? "",
-                        modelo: aberto.modelo ?? "",
-                        tipo: aberto.elegibilidade ?? "",
-                      } as never}
-                    >
-                      <ListChecks className="h-3.5 w-3.5 mr-1" /> Abrir
-                      checklist
-                    </Link>
-                  </Button>
-                </div>
+                <Label className="text-sm">
+                  Check-list geral — observações da oficina
+                </Label>
                 <Textarea
+                  value={obs}
+                  onChange={(e) => setObs(e.target.value)}
+                  placeholder="Resumo do check-list, itens N/A, observações finais..."
+                  rows={4}
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {aberto.checklist_data?.preenchido_em
+                      ? `Salvo em ${new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR")}`
+                      : "Não preenchido"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAberto(null)}
+                      disabled={salvando}
+                    >
+                      Voltar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={salvarChecklist}
+                      disabled={salvando}
+                    >
+                      {salvando && (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                      )}
+                      Salvar check-list
+                    </Button>
+                  </div>
+                </div>
+              </div>
                   value={obs}
                   onChange={(e) => setObs(e.target.value)}
                   placeholder="Resumo do checklist, itens N/A, observações finais..."
