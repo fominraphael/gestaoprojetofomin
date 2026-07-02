@@ -57,8 +57,12 @@ export function AppSidebar() {
       >
         {!isCollapsed && (
           <div className="flex flex-col min-w-0">
-            <div className="text-base font-semibold tracking-tight truncate">Gestão de Projetos</div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">Painel pessoal</div>
+            <div className="text-base font-semibold tracking-tight truncate">
+              {activeModule?.label ?? "Portal"}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">
+              {activeModule?.id === "toyota" ? "Programa de certificação" : "Painel pessoal"}
+            </div>
           </div>
         )}
         <button

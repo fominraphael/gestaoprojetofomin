@@ -190,10 +190,11 @@ function GosystemImporter() {
       });
       if (data.length === 0) throw new Error("Nenhuma linha encontrada.");
 
-      // Pré-filtro: somente Toyota ou Lexus
+      // Pré-filtro: somente Toyota/Lexus + origem "Toyota - Estoque"
       const elegiveis = data.filter((r) => {
         const marca = String(pick(r, ["^marca$", "fabricante"]) ?? "").trim();
-        return /^(toyota|lexus)$/i.test(marca);
+        const origem = String(pick(r, ["^origem$"]) ?? "").trim();
+        return /^(toyota|lexus)$/i.test(marca) && /toyota\s*-\s*estoque/i.test(origem);
       });
       setDescartadosMarca(data.length - elegiveis.length);
 

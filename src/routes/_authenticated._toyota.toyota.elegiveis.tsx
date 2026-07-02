@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench } from "lucide-react";
+import { MoreHorizontal, ShieldCheck, Loader2, Search, Plus, Trash2, Wrench, XCircle } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,6 +175,25 @@ function AnaliseElegiveis() {
     );
   }
 
+  async function reprovarVeiculo(v: Veiculo) {
+    if (!confirm(`Reprovar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`)) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({
+        status_aprovacao: "reprovado_admin",
+        aprovado_por: userData.user?.id ?? null,
+        aprovado_em: new Date().toISOString(),
+      })
+      .eq("id", v.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Veículo reprovado e movido para o histórico.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
 
   if (!isAdmin) {
     return (
@@ -306,6 +325,13 @@ function AnaliseElegiveis() {
                             >
                               <ShieldCheck className="w-4 h-4" />
                               Aprovar para Preparação
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => reprovarVeiculo(v)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reprovar (finalizar)
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
