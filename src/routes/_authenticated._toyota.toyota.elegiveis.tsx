@@ -771,11 +771,17 @@ function EnvioToyotaTab() {
         const b = await baixarUrl(v.laudo_url);
         if (b) pdfs.push(b);
       }
-      // 2. Checklist (gerado on-the-fly)
-      const cl = await gerarPdfChecklist(v);
-      const clBuf = new ArrayBuffer(cl.byteLength);
-      new Uint8Array(clBuf).set(cl);
-      pdfs.push(clBuf);
+      // 2. Checklist preenchido dinamicamente sobre o template oficial
+      try {
+        const cl = await gerarPdfChecklist(v);
+        const clBuf = new ArrayBuffer(cl.byteLength);
+        new Uint8Array(clBuf).set(cl);
+        pdfs.push(clBuf);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Falha ao gerar check-list.";
+        toast.error(msg);
+        return;
+      }
       // 3. Health Check
       if (v.health_check_pdf_path) {
         const b = await baixarBytes(v.health_check_pdf_path);
