@@ -394,30 +394,6 @@ function FilaPosVendas() {
                   </div>
                 </div>
               </div>
-                  value={obs}
-                  onChange={(e) => setObs(e.target.value)}
-                  placeholder="Resumo do checklist, itens N/A, observações finais..."
-                  rows={4}
-                />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {aberto.checklist_data?.preenchido_em
-                      ? `Salvo em ${new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR")}`
-                      : "Não preenchido"}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={salvarChecklist}
-                    disabled={salvando}
-                  >
-                    {salvando && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                    )}
-                    Salvar checklist
-                  </Button>
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label className="text-sm">Health Check (PDF)</Label>
