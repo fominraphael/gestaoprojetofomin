@@ -11,6 +11,8 @@ import {
   Save,
   Database,
   BarChart3,
+  History,
+  Loader2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -26,13 +28,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,11 +39,17 @@ export const Route = createFileRoute(
   component: ImportarHub,
 });
 
-interface Filial {
+interface Patio {
   id: string;
   nome: string;
-  dealer_number: string | null;
-  ativo: boolean;
+}
+
+function normalize(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
 }
 
 // ============================================================================
