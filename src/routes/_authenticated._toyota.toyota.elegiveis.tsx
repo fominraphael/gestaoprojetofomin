@@ -407,8 +407,17 @@ function AnaliseElegiveis() {
                         const hsvOk = v.hsv_status === "ok";
                         const aprovarHabilitado = podeAprovar(v);
                         return (
-                          <TableRow key={v.id}>
-                            <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
+                          <TableRow key={v.id} className={v.retorno_toyota_em ? "bg-red-50/60" : ""}>
+                            <TableCell className="font-mono text-xs">
+                              <div className="flex items-center gap-2">
+                                <span>{v.chassi}</span>
+                                {v.retorno_toyota_em && (
+                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100" title={v.observacao_toyota ?? undefined}>
+                                    Recusado Toyota
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
                             <TableCell>
                               <div className="font-medium">{v.modelo ?? "—"}</div>
