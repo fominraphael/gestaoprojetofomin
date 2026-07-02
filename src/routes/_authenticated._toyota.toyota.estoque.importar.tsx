@@ -169,7 +169,7 @@ function GosystemImporter() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from("toyota_filiais")
+        .from("toyota_patios")
         .select("id, nome, dealer_number, ativo")
         .eq("ativo", true)
         .order("nome");
