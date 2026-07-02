@@ -770,7 +770,9 @@ function EnvioToyotaTab() {
       }
       // 2. Checklist (gerado on-the-fly)
       const cl = await gerarPdfChecklist(v);
-      pdfs.push(cl.buffer.slice(cl.byteOffset, cl.byteOffset + cl.byteLength));
+      const clBuf = new ArrayBuffer(cl.byteLength);
+      new Uint8Array(clBuf).set(cl);
+      pdfs.push(clBuf);
       // 3. Health Check
       if (v.health_check_pdf_path) {
         const b = await baixarBytes(v.health_check_pdf_path);
