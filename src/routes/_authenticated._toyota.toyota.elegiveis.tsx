@@ -1294,8 +1294,11 @@ async function uploadDocumento(
     toast.error(`Falha ao enviar arquivo: ${upErr.message}`);
     return;
   }
-  const patch: Record<string, string | null> = { [coluna]: path };
-  if (coluna === "laudo_arquivo_path") patch.laudo_url = null;
+  const patch: Partial<
+    Database["public"]["Tables"]["toyota_estoque_veiculos"]["Update"]
+  > = { [coluna]: path } as Record<string, string>;
+  if (coluna === "laudo_arquivo_path")
+    (patch as { laudo_url?: string | null }).laudo_url = null;
   const { error } = await supabase
     .from("toyota_estoque_veiculos")
     .update(patch)
