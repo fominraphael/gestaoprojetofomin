@@ -985,105 +985,34 @@ function EnvioToyotaTab() {
           Aguardando envio à Toyota
           <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê.
+          O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado.
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Chassi</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead>Programa</TableHead>
-                <TableHead>Dossiê</TableHead>
-                <TableHead>Código TCUV</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {veiculos.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell className="font-mono text-xs">{v.chassi}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{v.modelo ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {v.dossie_pdf_path ? (
-                      <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
-                    ) : (
-                      <Badge variant="outline" className="border-amber-300 text-amber-700">
-                        Pendente
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      placeholder="Ex: TCUV-2026-0001"
-                      value={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
-                      onChange={(e) =>
-                        setTcuvInput((p) => ({ ...p, [v.id]: e.target.value }))
-                      }
-                      className="w-44"
-                      disabled={!v.dossie_pdf_path}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => gerarDossie(v)}
-                        disabled={gerando === v.id}
-                      >
-                        {gerando === v.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <FileStack className="w-3.5 h-3.5" />
-                        )}
-                        {v.dossie_pdf_path ? "Regerar" : "Gerar Dossiê"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => salvarTcuv(v)}
-                        disabled={
-                          !v.dossie_pdf_path ||
-                          salvandoTcuv === v.id ||
-                          !(tcuvInput[v.id] ?? v.codigo_tcuv ?? "").trim()
-                        }
-                      >
-                        {salvandoTcuv === v.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Send className="w-3.5 h-3.5" />
-                        )}
-                        Salvar TCUV
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => {
-                          setRecusaVeic(v);
-                          setRecusaMotivo("");
-                        }}
-                        title="Registrar recusa da Toyota — retorna o veículo para a Análise Central"
-                      >
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Registrar Recusa
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <CardContent className="space-y-4">
+        {veiculos.map((v) => (
+          <VeiculoEnvioCard
+            key={v.id}
+            v={v}
+            gerando={gerando === v.id}
+            salvandoTcuv={salvandoTcuv === v.id}
+            tcuvValue={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
+            onTcuvChange={(val) =>
+              setTcuvInput((p) => ({ ...p, [v.id]: val }))
+            }
+            onGerar={() => gerarDossie(v)}
+            onSalvarTcuv={() => salvarTcuv(v)}
+            onRecusar={() => {
+              setRecusaVeic(v);
+              setRecusaMotivo("");
+            }}
+            onRefresh={carregar}
+          />
+        ))}
       </CardContent>
     </Card>
+
 
     <Dialog open={!!recusaVeic} onOpenChange={(o) => !o && setRecusaVeic(null)}>
       <DialogContent className="max-w-md">
