@@ -8,7 +8,6 @@ import {
   Send,
   FileUp,
   FileText,
-  ListChecks,
   CheckCircle2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
@@ -72,7 +71,7 @@ function FilaPosVendas() {
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
   const [km, setKm] = useState("");
-  const [marcacoes, setMarcacoes] = useState<Record<string, "" | "✓" | "N/A">>({});
+  // Marcações removidas: o Template PDF já vem previamente preenchido.
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
@@ -114,7 +113,6 @@ function FilaPosVendas() {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
     setKm(v.posvendas_km != null ? String(v.posvendas_km) : "");
-    setMarcacoes(v.checklist_itens ?? {});
   };
 
   const tipoChecklist = useMemo(() => {
@@ -126,55 +124,14 @@ function FilaPosVendas() {
   }, [aberto]);
 
 
-  // Carrega o modelo de check-list (TCUV/TSIM) sob demanda para renderizar o formulário
-  const [modeloSecoes, setModeloSecoes] = useState<
-    { titulo: string; itens: string[] }[] | null
-  >(null);
-  useEffect(() => {
-    if (!tipoChecklist) {
-      setModeloSecoes(null);
-      return;
-    }
-    let cancel = false;
-    void import("@/lib/toyota-checklist").then((m) => {
-      if (cancel) return;
-      setModeloSecoes(m.CHECKLIST_MODELOS[tipoChecklist].secoes);
-    });
-    return () => {
-      cancel = true;
-    };
-  }, [tipoChecklist]);
-
-  const totalObrigatorios = useMemo(
-    () => modeloSecoes?.reduce((a, s) => a + s.itens.length, 0) ?? 0,
-    [modeloSecoes],
-  );
-  const totalMarcados = useMemo(
-    () =>
-      Object.values(marcacoes).filter((v) => v === "✓" || v === "N/A").length,
-    [marcacoes],
-  );
-  const tudoMarcado = totalObrigatorios > 0 && totalMarcados >= totalObrigatorios;
-
-  const setMarca = (key: string, val: "✓" | "N/A" | "") => {
-    setMarcacoes((prev) => {
-      const next = { ...prev };
-      if (!val) delete next[key];
-      else next[key] = val;
-      return next;
-    });
-  };
-
   const salvarChecklist = async () => {
     if (!aberto) return;
     if (!tipoChecklist) {
       toast.error("Elegibilidade do veículo não corresponde a TCUV ou TSIM.");
       return;
     }
-    if (!tudoMarcado) {
-      toast.error("Marque todos os itens do check-list antes de salvar.");
-      return;
-    }
+    // Não há mais marcação de itens em tela: o Template PDF já vem pré-preenchido.
+
     const kmNum = Number(km.replace(/\D/g, ""));
     if (!kmNum || kmNum <= 0) {
       toast.error("Informe a quilometragem atual antes de salvar o check-list.");
@@ -214,7 +171,8 @@ function FilaPosVendas() {
           data: dataStr,
           hora,
         },
-        marcacoes,
+        undefined,
+        { skipMarcacoesPages: true },
       );
 
       const path = `toyota/checklists/${aberto.id}/${Date.now()}-checklist.pdf`;
@@ -234,7 +192,7 @@ function FilaPosVendas() {
         .from("toyota_estoque_veiculos")
         .update({
           checklist_data: { observacoes: obs, preenchido_em: agora },
-          checklist_itens: marcacoes,
+          checklist_itens: null,
           checklist_pdf_path: path,
           posvendas_km: kmNum,
         })
@@ -250,7 +208,7 @@ function FilaPosVendas() {
           ? {
               ...cur,
               checklist_data: { observacoes: obs, preenchido_em: agora },
-              checklist_itens: marcacoes,
+              checklist_itens: null,
               checklist_pdf_path: path,
               posvendas_km: kmNum,
             }
@@ -443,7 +401,7 @@ function FilaPosVendas() {
                     {v.checklist_data?.preenchido_em ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     ) : (
-                      <ListChecks className="h-3.5 w-3.5" />
+                      <FileText className="h-3.5 w-3.5" />
                     )}
                     Checklist
                   </span>
@@ -531,74 +489,21 @@ function FilaPosVendas() {
               </div>
 
               <div className="space-y-3 rounded-md border p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold">
-                      Check-list digital {tipoChecklist ? `— ${tipoChecklist}` : ""}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Marque cada item como Conforme (✓) ou N/A. Todos os itens
-                      são obrigatórios.
-                    </p>
-                  </div>
-                  <Badge variant={tudoMarcado ? "default" : "outline"}>
-                    {totalMarcados}/{totalObrigatorios}
-                  </Badge>
+                <div>
+                  <Label className="text-sm font-semibold">
+                    Check-list {tipoChecklist ? `— ${tipoChecklist}` : ""}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    O Template PDF configurado já vem previamente preenchido/marcado.
+                    Ao salvar, o sistema apenas escreve os dados do cabeçalho
+                    (Veículo, Chassi, KM, DN, Distribuidor, Avaliador, Técnico,
+                    Data e Hora) sobre o arquivo original.
+                  </p>
                 </div>
 
-                {!tipoChecklist ? (
+                {!tipoChecklist && (
                   <div className="text-xs text-destructive">
                     Elegibilidade do veículo não corresponde a TCUV nem TSIM.
-                  </div>
-                ) : !modeloSecoes ? (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Carregando itens...
-                  </div>
-                ) : (
-                  <div className="max-h-72 overflow-y-auto space-y-4 pr-2">
-                    {modeloSecoes.map((sec, si) => (
-                      <div key={si} className="space-y-1.5">
-                        <div className="text-xs font-semibold text-primary">
-                          {sec.titulo}
-                        </div>
-                        {sec.itens.map((item, ii) => {
-                          const key = `${si}.${ii}`;
-                          const val = marcacoes[key] ?? "";
-                          return (
-                            <div
-                              key={key}
-                              className="flex items-center justify-between gap-2 text-xs border-b border-border/40 pb-1.5"
-                            >
-                              <span className="flex-1">{item}</span>
-                              <div className="flex gap-1 shrink-0">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={val === "✓" ? "default" : "outline"}
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() =>
-                                    setMarca(key, val === "✓" ? "" : "✓")
-                                  }
-                                >
-                                  ✓
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={val === "N/A" ? "secondary" : "outline"}
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() =>
-                                    setMarca(key, val === "N/A" ? "" : "N/A")
-                                  }
-                                >
-                                  N/A
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
                   </div>
                 )}
 
@@ -618,7 +523,7 @@ function FilaPosVendas() {
                   <Button
                     size="sm"
                     onClick={salvarChecklist}
-                    disabled={salvando || !tudoMarcado}
+                    disabled={salvando || !tipoChecklist || !Number(km.replace(/\D/g, ""))}
                   >
                     {salvando && (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
@@ -627,6 +532,7 @@ function FilaPosVendas() {
                   </Button>
                 </div>
               </div>
+
 
               <div className="space-y-2">
                 <Label className="text-sm">Health Check (PDF)</Label>

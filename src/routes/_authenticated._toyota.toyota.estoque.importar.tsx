@@ -149,6 +149,7 @@ interface VeiculoGosystem {
   anoModelo: number | null;
   quilometragem: number | null;
   resultadoLaudo: string;
+  laudoUrl: string;
   statusCautelar: string;
   elegibilidade: Elegibilidade;
   duplicado: boolean;
@@ -240,7 +241,19 @@ function GosystemImporter() {
           const anoMod = parseInt0(pick(r, ["anomodelo", "ano.*mod"]));
           const km = parseInt0(pick(r, ["km", "quilometragem", "hodometro"]));
           const placa = String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase();
-          const laudo = String(pick(r, ["resultado.*laudo", "laudo"]) ?? "").trim();
+          const laudo = String(pick(r, ["resultado.*laudo", "^laudo$"]) ?? "").trim();
+          const laudoUrl = String(
+            pick(r, [
+              "link.*laudo",
+              "laudo.*link",
+              "url.*laudo",
+              "laudo.*url",
+              "linkcautelar",
+              "cautelar.*link",
+              "url.*cautelar",
+              "cautelar.*url",
+            ]) ?? "",
+          ).trim();
           // Spec: a coluna "Filial" da planilha é o Pátio no sistema.
           // A Filial (do sistema) é deduzida via toyota_patios.filial_id.
           const patioNome = String(pick(r, ["^filial$", "filial", "p[aá]tio", "^patio$"]) ?? "").trim();
@@ -258,6 +271,7 @@ function GosystemImporter() {
             anoModelo: anoMod,
             quilometragem: km,
             resultadoLaudo: laudo,
+            laudoUrl,
             statusCautelar: mapStatusLaudo(laudo),
             elegibilidade: classificarElegibilidadeGosystem(anoFab),
             duplicado: false,
@@ -373,6 +387,7 @@ function GosystemImporter() {
         : /reprovado|recusado/i.test(r.resultadoLaudo)
           ? "reprovado"
           : r.resultadoLaudo || null,
+      laudo_url: r.laudoUrl || null,
       fonte_importacao: "gosystem",
       status_aprovacao: "analise",
       dados_originais: r.raw,
