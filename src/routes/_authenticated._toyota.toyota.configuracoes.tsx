@@ -497,57 +497,79 @@ function ToyotaConfiguracoes() {
 }
 
 // ============================================================================
-// Templates de Check-list (Upload dos PDFs base TCUV / TSIM)
+// Templates de Check-list (Upload de .txt com Base64 pré-marcado)
 // ============================================================================
+//
+// Cada template é um PDF cujos checkboxes já estão marcados. O usuário exporta
+// esse PDF como Base64 dentro de um arquivo .txt e envia aqui. Guardamos a
+// string em `system_settings.value.base64` sob a chave
+// `toyota_template_<tipo>_<grupo>_base64`.
 
-const TEMPLATE_KEYS = {
-  tcuv: "toyota_template_tcuv_path",
-  tsim: "toyota_template_tsim_path",
-} as const;
+type Tipo = "tcuv" | "tsim";
+type Grupo = "hev" | "utilitario" | "passeio";
+
+const GRUPO_META: Record<Grupo, { label: string; hint: string }> = {
+  hev: { label: "Grupo 1 — Híbridos (HEV)", hint: "Prius, Corolla Hybrid, linha Lexus…" },
+  utilitario: {
+    label: "Grupo 2 — Utilitários",
+    hint: "Hilux, SW4 (combustão com itens 4x4/suspensão).",
+  },
+  passeio: { label: "Grupo 3 — Passeio", hint: "Etios, Yaris, Corolla flex, etc." },
+};
+
+const TIPOS: Tipo[] = ["tcuv", "tsim"];
+const GRUPOS: Grupo[] = ["hev", "utilitario", "passeio"];
+
+const settingKey = (tipo: Tipo, grupo: Grupo) => `toyota_template_${tipo}_${grupo}_base64`;
+
+type StatusMap = Record<string, boolean>; // key => configurado?
 
 function TemplatesChecklistCard() {
-  const [paths, setPaths] = useState<{ tcuv: string | null; tsim: string | null }>({
-    tcuv: null,
-    tsim: null,
-  });
-  const [uploading, setUploading] = useState<null | "tcuv" | "tsim">(null);
+  const [status, setStatus] = useState<StatusMap>({});
+  const [uploading, setUploading] = useState<string | null>(null);
 
   async function carregar() {
+    const keys = TIPOS.flatMap((t) => GRUPOS.map((g) => settingKey(t, g)));
     const { data } = await supabase
       .from("system_settings")
       .select("key,value")
-      .in("key", [TEMPLATE_KEYS.tcuv, TEMPLATE_KEYS.tsim]);
-    const next = { tcuv: null as string | null, tsim: null as string | null };
+      .in("key", keys);
+    const next: StatusMap = {};
     for (const row of data ?? []) {
-      const v = row.value as { path?: string } | string | null;
-      const p = typeof v === "string" ? v : (v?.path ?? null);
-      if (row.key === TEMPLATE_KEYS.tcuv) next.tcuv = p;
-      if (row.key === TEMPLATE_KEYS.tsim) next.tsim = p;
+      const v = row.value as { base64?: string } | string | null;
+      const b64 = typeof v === "string" ? v : (v?.base64 ?? null);
+      next[row.key] = !!(b64 && b64.length > 100);
     }
-    setPaths(next);
+    setStatus(next);
   }
   useEffect(() => {
     carregar();
   }, []);
 
-  async function upload(tipo: "tcuv" | "tsim", file: File) {
-    if (file.type !== "application/pdf") {
-      toast.error("Envie um arquivo PDF.");
+  async function upload(tipo: Tipo, grupo: Grupo, file: File) {
+    const isTxt =
+      file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
+    if (!isTxt) {
+      toast.error("Envie um arquivo .txt contendo o Base64 do PDF.");
       return;
     }
-    setUploading(tipo);
+    const key = settingKey(tipo, grupo);
+    setUploading(key);
     try {
-      const path = `toyota/templates/${tipo}.pdf`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, file, { upsert: true, contentType: "application/pdf" });
-      if (upErr) throw upErr;
+      const text = await file.text();
+      const base64 = text
+        .replace(/^data:application\/pdf;base64,/i, "")
+        .replace(/\s+/g, "");
+      if (base64.length < 100 || !/^[A-Za-z0-9+/=]+$/.test(base64)) {
+        toast.error("Arquivo .txt não contém um Base64 válido.");
+        return;
+      }
       const { error: sErr } = await supabase.from("system_settings").upsert(
-        { key: TEMPLATE_KEYS[tipo], value: { path } as unknown as never },
+        { key, value: { base64 } as unknown as never },
         { onConflict: "key" },
       );
       if (sErr) throw sErr;
-      toast.success(`Template ${tipo.toUpperCase()} atualizado.`);
+      toast.success(`Template ${tipo.toUpperCase()} • ${GRUPO_META[grupo].label} atualizado.`);
       await carregar();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Falha no upload.";
@@ -565,65 +587,77 @@ function TemplatesChecklistCard() {
           <div>
             <CardTitle className="text-lg">Templates de Check-list</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              PDFs base oficiais da Toyota usados para preenchimento dinâmico do check-list.
+              Envie arquivos <strong>.txt</strong> contendo o Base64 do PDF já com os itens
+              marcados. O sistema seleciona o template certo pelo modelo do veículo.
             </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(["tcuv", "tsim"] as const).map((tipo) => (
-          <div
-            key={tipo}
-            className="border rounded-md p-4 space-y-3 bg-muted/20"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Template {tipo.toUpperCase()}</p>
-                <p className="text-xs text-muted-foreground">
-                  {paths[tipo] ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Configurado
-                    </span>
-                  ) : (
-                    "Nenhum arquivo enviado"
-                  )}
-                </p>
-              </div>
-              <Badge variant={paths[tipo] ? "default" : "secondary"}>
-                {paths[tipo] ? "Ativo" : "Pendente"}
-              </Badge>
+      <CardContent className="space-y-6">
+        {TIPOS.map((tipo) => (
+          <div key={tipo} className="space-y-3">
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+              {tipo.toUpperCase()}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {GRUPOS.map((grupo) => {
+                const key = settingKey(tipo, grupo);
+                const ok = !!status[key];
+                const isUp = uploading === key;
+                return (
+                  <div key={key} className="border rounded-md p-4 space-y-3 bg-muted/20">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm">{GRUPO_META[grupo].label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {GRUPO_META[grupo].hint}
+                        </p>
+                        <p className="text-xs mt-2">
+                          {ok ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Configurado
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Nenhum arquivo enviado</span>
+                          )}
+                        </p>
+                      </div>
+                      <Badge variant={ok ? "default" : "secondary"}>
+                        {ok ? "Ativo" : "Pendente"}
+                      </Badge>
+                    </div>
+                    <label className="block">
+                      <input
+                        type="file"
+                        accept=".txt,text/plain"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void upload(tipo, grupo, f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full cursor-pointer"
+                        disabled={isUp}
+                      >
+                        <span>
+                          <Upload className="w-4 h-4" />
+                          {isUp ? "Enviando..." : ok ? "Substituir .txt" : "Enviar .txt"}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                );
+              })}
             </div>
-            <label className="block">
-              <input
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void upload(tipo, f);
-                  e.target.value = "";
-                }}
-              />
-              <Button
-                asChild
-                variant="outline"
-                className="w-full cursor-pointer"
-                disabled={uploading === tipo}
-              >
-                <span>
-                  <Upload className="w-4 h-4" />
-                  {uploading === tipo
-                    ? "Enviando..."
-                    : paths[tipo]
-                      ? "Substituir PDF"
-                      : "Enviar PDF"}
-                </span>
-              </Button>
-            </label>
           </div>
         ))}
       </CardContent>
     </Card>
   );
 }
+
 
