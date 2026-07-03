@@ -1047,3 +1047,263 @@ function EnvioToyotaTab() {
     </>
   );
 }
+
+/* ---------- Card individual do veículo no fluxo Envio Toyota ---------- */
+
+interface VeiculoEnvioCardProps {
+  v: VeiculoEnvio;
+  gerando: boolean;
+  salvandoTcuv: boolean;
+  tcuvValue: string;
+  onTcuvChange: (val: string) => void;
+  onGerar: () => void;
+  onSalvarTcuv: () => void;
+  onRecusar: () => void;
+  onRefresh: () => void | Promise<void>;
+}
+
+function VeiculoEnvioCard({
+  v,
+  gerando,
+  salvandoTcuv,
+  tcuvValue,
+  onTcuvChange,
+  onGerar,
+  onSalvarTcuv,
+  onRecusar,
+  onRefresh,
+}: VeiculoEnvioCardProps) {
+  const laudoPresente = !!(v.laudo_arquivo_path || v.laudo_url);
+  const healthPresente = !!v.health_check_pdf_path;
+  const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
+  const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
+  const dossieOk = !!v.dossie_pdf_path;
+
+  return (
+    <div className="rounded-lg border p-4 space-y-3 bg-white">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <div className="font-semibold">{v.modelo ?? "—"}</div>
+          <div className="text-xs text-muted-foreground font-mono">
+            {v.chassi} · {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
+          {dossieOk ? (
+            <Badge className="bg-emerald-100 text-emerald-700">Dossiê gerado</Badge>
+          ) : (
+            <Badge variant="outline" className="border-amber-300 text-amber-700">
+              Dossiê pendente
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-3">
+        <DocumentoSlot
+          label="Check-list"
+          descricao="Gerado a partir do template TCUV/TSIM"
+          presente={checklistPresente}
+          onVisualizar={
+            v.checklist_pdf_path
+              ? () => abrirPathStorage(v.checklist_pdf_path!)
+              : undefined
+          }
+          onSubstituir={async (file) => {
+            const path = `toyota/checklist/${v.id}/${Date.now()}.pdf`;
+            await uploadDocumento(path, file, "checklist_pdf_path", v.id);
+            await onRefresh();
+          }}
+        />
+        <DocumentoSlot
+          label="Laudo Cautelar"
+          descricao={
+            v.laudo_arquivo_path
+              ? "Anexo interno"
+              : v.laudo_url
+                ? "Link externo"
+                : "Não anexado"
+          }
+          presente={laudoPresente}
+          onVisualizar={
+            v.laudo_arquivo_path
+              ? () => abrirPathStorage(v.laudo_arquivo_path!)
+              : v.laudo_url
+                ? () => window.open(v.laudo_url!, "_blank", "noopener,noreferrer")
+                : undefined
+          }
+          onSubstituir={async (file) => {
+            const path = `toyota/laudos/${v.id}/${Date.now()}.pdf`;
+            await uploadDocumento(path, file, "laudo_arquivo_path", v.id);
+            await onRefresh();
+          }}
+        />
+        <DocumentoSlot
+          label="Health Check"
+          descricao="Revisão Toyota"
+          presente={healthPresente}
+          onVisualizar={
+            v.health_check_pdf_path
+              ? () => abrirPathStorage(v.health_check_pdf_path!)
+              : undefined
+          }
+          onSubstituir={async (file) => {
+            const path = `toyota/health/${v.id}/${Date.now()}.pdf`;
+            await uploadDocumento(path, file, "health_check_pdf_path", v.id);
+            await onRefresh();
+          }}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onGerar}
+          disabled={gerando || !podeGerar}
+          title={podeGerar ? undefined : "Anexe Laudo e Health Check antes de gerar o Dossiê"}
+        >
+          {gerando ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <FileStack className="w-3.5 h-3.5" />
+          )}
+          {dossieOk ? "Regerar Dossiê" : "Gerar Dossiê"}
+        </Button>
+
+        {dossieOk ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="Código TCUV (ex: TCUV-2026-0001)"
+              value={tcuvValue}
+              onChange={(e) => onTcuvChange(e.target.value)}
+              className="w-56"
+            />
+            <Button
+              size="sm"
+              onClick={onSalvarTcuv}
+              disabled={salvandoTcuv || !tcuvValue.trim()}
+            >
+              {salvandoTcuv ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              Enviar / Concluir
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={onRecusar}
+              title="Registrar recusa da Toyota"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              Registrar Recusa
+            </Button>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground">
+            Gere o Dossiê para liberar o envio final e o Código TCUV.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DocumentoSlot({
+  label,
+  descricao,
+  presente,
+  onVisualizar,
+  onSubstituir,
+}: {
+  label: string;
+  descricao: string;
+  presente: boolean;
+  onVisualizar?: () => void;
+  onSubstituir: (file: File) => void | Promise<void>;
+}) {
+  const inputId = `subst-${label.replace(/\s+/g, "-").toLowerCase()}-${Math.random().toString(36).slice(2, 7)}`;
+  return (
+    <div className="rounded-md border p-3 text-sm space-y-2 bg-slate-50/40">
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{label}</span>
+        {presente ? (
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        ) : (
+          <AlertCircle className="w-4 h-4 text-amber-500" />
+        )}
+      </div>
+      <div className="text-xs text-muted-foreground">{descricao}</div>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          onClick={onVisualizar}
+          disabled={!onVisualizar || !presente}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          Visualizar
+        </Button>
+        <label
+          htmlFor={inputId}
+          className="flex-1 inline-flex items-center justify-center gap-1 rounded-md border px-3 h-9 text-xs font-medium cursor-pointer hover:bg-slate-100"
+        >
+          <Upload className="w-3.5 h-3.5" />
+          Substituir
+          <input
+            id={inputId}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await onSubstituir(file);
+                e.target.value = "";
+              }
+            }}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+async function abrirPathStorage(path: string) {
+  const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 600);
+  if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+}
+
+async function uploadDocumento(
+  path: string,
+  file: File,
+  coluna:
+    | "checklist_pdf_path"
+    | "laudo_arquivo_path"
+    | "health_check_pdf_path",
+  veiculoId: string,
+) {
+  const { error: upErr } = await supabase.storage
+    .from("documentos")
+    .upload(path, file, { upsert: true, contentType: "application/pdf" });
+  if (upErr) {
+    toast.error(`Falha ao enviar arquivo: ${upErr.message}`);
+    return;
+  }
+  const patch: Record<string, string | null> = { [coluna]: path };
+  if (coluna === "laudo_arquivo_path") patch.laudo_url = null;
+  const { error } = await supabase
+    .from("toyota_estoque_veiculos")
+    .update(patch)
+    .eq("id", veiculoId);
+  if (error) {
+    toast.error(error.message);
+    return;
+  }
+  toast.success("Documento substituído.");
+}
+
