@@ -161,9 +161,9 @@ function FilaPosVendas() {
       const pdfBytes = await gerarChecklistPreenchido(
         tipoChecklist.toLowerCase() as "tcuv" | "tsim",
         {
+          modelo: aberto.modelo ?? "",
           veiculoAnoModelo: [aberto.modelo, aberto.ano_modelo].filter(Boolean).join(" "),
           chassi: aberto.chassi,
-          katashiki: "",
           km: kmNum.toLocaleString("pt-BR"),
           dn: filial.dealer_number ?? "",
           nomeDistribuidor: filial.nome_bi_toyota ?? "",
@@ -172,8 +172,6 @@ function FilaPosVendas() {
           data: dataStr,
           hora,
         },
-        undefined,
-        { skipMarcacoesPages: true },
       );
 
       const path = `toyota/checklists/${aberto.id}/${Date.now()}-checklist.pdf`;
