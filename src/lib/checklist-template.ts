@@ -1,11 +1,7 @@
 // Preenchimento dinâmico do Check-list Toyota sobre o PDF template oficial.
-// Usa pdf-lib para carregar o template (TCUV ou TSIM) e desenhar os dados
-// do veículo/consultor por cima da 1ª página, em Helvetica.
-//
-// IMPORTANTE: as coordenadas abaixo são um MAPA INICIAL aproximado
-// (assumindo A4 retrato ~ 595x842 pt). Ajuste os valores após visualizar
-// o resultado sobre o template real da Toyota. O ponto (0,0) do pdf-lib
-// é o canto INFERIOR esquerdo — y cresce para cima.
+// O template deve ser um PDF Formulário (AcroForm) com campos de texto
+// nomeados previamente. O cabeçalho é preenchido via pdf-lib getForm(), sem
+// coordenadas X/Y, e depois achatado com form.flatten().
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,111 +24,17 @@ export interface ChecklistHeaderData {
  */
 export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
 
-type HeaderFieldKey = keyof ChecklistHeaderData;
-
-interface HeaderFieldPosition {
-  /** Rótulo exato do PDF oficial usado como contrato do mapeamento. */
-  label: string;
-  /** Coordenada horizontal absoluta em pontos na Página 1. */
-  x: number;
-  /** Distância fixa a partir do topo da página. O Y final é pageHeight - topOffset. */
-  topOffset: number;
-  size: number;
-  /** Limite visual do campo para impedir invasão do campo paralelo. */
-  maxWidth: number;
-}
-
-type HeaderMap = Record<HeaderFieldKey, HeaderFieldPosition>;
-
-// Mapeamento fixo do cabeçalho do arquivo "Checklist Novo - 135 itens -EM BRANCO.pdf".
-// A ordem abaixo replica o grid visual do template: 5 linhas x 2 colunas.
-// No pdf-lib, (0,0) fica no canto inferior esquerdo; por isso o Y é calculado
-// exclusivamente como page.getHeight() - topOffset para ancorar no topo real.
-const HEADER_FIELD_MAP: HeaderMap = {
-  veiculoAnoModelo: {
-    label: "Veiculo/ Ano modelo:",
-    x: 145,
-    topOffset: 118,
-    size: 10,
-    maxWidth: 185,
-  },
-  chassi: {
-    label: "Chassi:",
-    x: 385,
-    topOffset: 118,
-    size: 10,
-    maxWidth: 160,
-  },
-  km: {
-    label: "Quilometragem atual:",
-    x: 160,
-    topOffset: 138,
-    size: 10,
-    maxWidth: 120,
-  },
-  katashiki: {
-    label: "Katashiki:",
-    x: 385,
-    topOffset: 138,
-    size: 10,
-    maxWidth: 160,
-  },
-  dn: {
-    label: "DN:",
-    x: 85,
-    topOffset: 158,
-    size: 10,
-    maxWidth: 75,
-  },
-  nomeDistribuidor: {
-    label: "Nome do distribuidor:",
-    x: 430,
-    topOffset: 158,
-    size: 10,
-    maxWidth: 115,
-  },
-  avaliadorResponsavel: {
-    label: "Avaliador Responsável:",
-    x: 185,
-    topOffset: 178,
-    size: 10,
-    maxWidth: 135,
-  },
-  tecnicoResponsavel: {
-    label: "Técnico Responsável:",
-    x: 430,
-    topOffset: 178,
-    size: 10,
-    maxWidth: 115,
-  },
-  data: {
-    label: "Data:",
-    x: 90,
-    topOffset: 198,
-    size: 10,
-    maxWidth: 85,
-  },
-  hora: {
-    label: "Hora:",
-    x: 360,
-    topOffset: 198,
-    size: 10,
-    maxWidth: 70,
-  },
-} as const;
-
-const HEADER_FIELD_ORDER: HeaderFieldKey[] = [
-  "veiculoAnoModelo",
-  "km",
-  "dn",
-  "avaliadorResponsavel",
-  "data",
-  "chassi",
-  "katashiki",
-  "nomeDistribuidor",
-  "tecnicoResponsavel",
-  "hora",
-];
+const ACROFORM_HEADER_FIELDS = {
+  veiculoAnoModelo: "Corolla / 2010",
+  chassi: "999999999999999999",
+  km: "12.298",
+  dn: "12312313",
+  nomeDistribuidor: "Kurumá Cachoeiro",
+  avaliadorResponsavel: "Douglas",
+  tecnicoResponsavel: "Marcos Vinicius",
+  data: "12 05 2026",
+  hora: "00 30",
+} as const satisfies Record<Exclude<keyof ChecklistHeaderData, "katashiki">, string>;
 
 export type TemplateTipo = "tcuv" | "tsim";
 
@@ -159,8 +61,8 @@ async function getTemplatePath(tipo: TemplateTipo): Promise<string | null> {
 }
 
 /**
- * Carrega o template base do bucket `documentos`, desenha os dados de
- * cabeçalho e retorna os bytes do PDF preenchido.
+ * Carrega o template base do bucket `documentos`, preenche o AcroForm do
+ * cabeçalho e retorna os bytes do PDF achatado.
  */
 export async function gerarChecklistPreenchido(
   tipo: TemplateTipo,
@@ -183,42 +85,25 @@ export async function gerarChecklistPreenchido(
 
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+  const form = doc.getForm();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const page = doc.getPage(0);
-  const pageHeight = page.getHeight();
 
   const black = rgb(0, 0, 0);
-  const normalizeSingleLine = (text: string): string => text.replace(/\s+/g, " ").trim();
-  const truncateToWidth = (text: string, maxWidth: number, size: number): string => {
-    const clean = normalizeSingleLine(text);
-    if (!clean || font.widthOfTextAtSize(clean, size) <= maxWidth) return clean;
 
-    const ellipsis = "...";
-    let end = clean.length;
-    while (end > 0) {
-      const candidate = `${clean.slice(0, end).trimEnd()}${ellipsis}`;
-      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) return candidate;
-      end -= 1;
-    }
-    return "";
-  };
-  const draw = (
-    text: string,
-    pos: HeaderFieldPosition,
-  ) => {
-    const value = truncateToWidth(text, pos.maxWidth, pos.size);
-    if (!value) return;
-    page.drawText(value, {
-      x: pos.x,
-      y: pageHeight - pos.topOffset,
-      size: pos.size,
-      font,
-      color: black,
-    });
-  };
-
-  HEADER_FIELD_ORDER.forEach((field) => draw(dados[field], HEADER_FIELD_MAP[field]));
+  try {
+    form.getTextField(ACROFORM_HEADER_FIELDS.veiculoAnoModelo).setText(dados.veiculoAnoModelo);
+    form.getTextField(ACROFORM_HEADER_FIELDS.chassi).setText(dados.chassi);
+    form.getTextField(ACROFORM_HEADER_FIELDS.km).setText(dados.km);
+    form.getTextField(ACROFORM_HEADER_FIELDS.dn).setText(dados.dn);
+    form.getTextField(ACROFORM_HEADER_FIELDS.nomeDistribuidor).setText(dados.nomeDistribuidor);
+    form.getTextField(ACROFORM_HEADER_FIELDS.avaliadorResponsavel).setText(dados.avaliadorResponsavel);
+    form.getTextField(ACROFORM_HEADER_FIELDS.tecnicoResponsavel).setText(dados.tecnicoResponsavel);
+    form.getTextField(ACROFORM_HEADER_FIELDS.data).setText(dados.data);
+    form.getTextField(ACROFORM_HEADER_FIELDS.hora).setText(dados.hora);
+  } catch (error) {
+    console.log("Erro ao preencher um dos campos do formulário:", error);
+  }
 
   // MODO DE TESTE (homologação): marca automaticamente TODAS as checkboxes
   // do formulário original do template Toyota, simulando aprovação 100%.
@@ -226,7 +111,6 @@ export async function gerarChecklistPreenchido(
   // absoluto fixo do cabeçalho da Página 1.
   if (opts?.testModeAutoCheck) {
     try {
-      const form = doc.getForm();
       const fields = form.getFields();
       const { PDFCheckBox } = await import("pdf-lib");
       for (const f of fields) {
@@ -238,12 +122,12 @@ export async function gerarChecklistPreenchido(
           // campo com estado inesperado — ignora e segue
         }
       }
-      // Preserva as marcações visíveis mesmo após flatten opcional
-      try { form.updateFieldAppearances(font); } catch { /* noop */ }
     } catch (e) {
       console.warn("[checklist] Template sem AcroForm ou falha ao marcar:", e);
     }
   }
+
+  form.flatten();
 
   if (marcacoes && !opts?.skipMarcacoesPages) {
     const { CHECKLIST_MODELOS } = await import("./toyota-checklist");
