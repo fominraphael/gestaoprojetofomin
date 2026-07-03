@@ -8,7 +8,6 @@ import {
   Send,
   FileUp,
   FileText,
-  ListChecks,
   CheckCircle2,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
