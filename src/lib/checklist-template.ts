@@ -29,28 +29,30 @@ export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
 
 // Coordenadas por template. Ajuste conforme o PDF oficial recebido.
 // x,y em pontos (pt); size em pt.
+// Mapeamento estrito de coordenadas do cabeçalho do template Toyota (A4 retrato, 595x842pt).
+// pdf-lib: Y=0 é o rodapé. Katashiki é ignorado propositalmente.
 const COORDS = {
   tcuv: {
-    veiculoAnoModelo: { x: 130, y: 760, size: 10 },
-    chassi: { x: 130, y: 742, size: 10 },
-    km: { x: 130, y: 724, size: 10 },
-    dn: { x: 420, y: 760, size: 10 },
-    nomeDistribuidor: { x: 420, y: 742, size: 10 },
-    avaliadorResponsavel: { x: 130, y: 700, size: 10 },
-    tecnicoResponsavel: { x: 130, y: 682, size: 10 },
-    data: { x: 420, y: 700, size: 10 },
-    hora: { x: 490, y: 700, size: 10 },
+    veiculoAnoModelo:     { x: 150, y: 750, size: 10 },
+    chassi:               { x: 400, y: 750, size: 10 },
+    km:                   { x: 150, y: 730, size: 10 },
+    dn:                   { x: 150, y: 710, size: 10 },
+    nomeDistribuidor:     { x: 400, y: 710, size: 10 },
+    avaliadorResponsavel: { x: 150, y: 690, size: 10 },
+    tecnicoResponsavel:   { x: 400, y: 690, size: 10 },
+    data:                 { x: 150, y: 670, size: 10 },
+    hora:                 { x: 400, y: 670, size: 10 },
   },
   tsim: {
-    veiculoAnoModelo: { x: 130, y: 760, size: 10 },
-    chassi: { x: 130, y: 742, size: 10 },
-    km: { x: 130, y: 724, size: 10 },
-    dn: { x: 420, y: 760, size: 10 },
-    nomeDistribuidor: { x: 420, y: 742, size: 10 },
-    avaliadorResponsavel: { x: 130, y: 700, size: 10 },
-    tecnicoResponsavel: { x: 130, y: 682, size: 10 },
-    data: { x: 420, y: 700, size: 10 },
-    hora: { x: 490, y: 700, size: 10 },
+    veiculoAnoModelo:     { x: 150, y: 750, size: 10 },
+    chassi:               { x: 400, y: 750, size: 10 },
+    km:                   { x: 150, y: 730, size: 10 },
+    dn:                   { x: 150, y: 710, size: 10 },
+    nomeDistribuidor:     { x: 400, y: 710, size: 10 },
+    avaliadorResponsavel: { x: 150, y: 690, size: 10 },
+    tecnicoResponsavel:   { x: 400, y: 690, size: 10 },
+    data:                 { x: 150, y: 670, size: 10 },
+    hora:                 { x: 400, y: 670, size: 10 },
   },
 } as const;
 
