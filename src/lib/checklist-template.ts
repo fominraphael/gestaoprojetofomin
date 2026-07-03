@@ -103,44 +103,50 @@ export async function gerarChecklistPreenchido(
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const form = doc.getForm();
 
-  const setField = (name: string, value: string) => {
+  const preencherCampo = (nome: string, valor: unknown) => {
     try {
-      form.getTextField(name).setText(value ?? "");
-    } catch (err) {
-      console.warn(`[checklist] Campo "${name}" ausente no template:`, err);
+      const campo = form.getTextField(nome);
+      if (campo) {
+        // Limpa qualquer valor padrão / texto residual travado no template
+        campo.setText("");
+        // Injeta o dado real do sistema
+        campo.setText(String(valor ?? ""));
+      }
+    } catch (e) {
+      console.warn(`[checklist] Campo [${nome}] não encontrado ou erro ao preencher:`, e);
     }
   };
 
   try {
-    setField("veiculo", dados.veiculoAnoModelo);
-    setField("chassi", dados.chassi);
-    setField("km", dados.km);
-    setField("dn", dados.dn);
-    setField("distribuidor", dados.nomeDistribuidor);
-    setField("avaliador", dados.avaliadorResponsavel);
-    setField("tecnico", dados.tecnicoResponsavel);
+    preencherCampo("veiculo", dados.veiculoAnoModelo);
+    preencherCampo("chassi", dados.chassi);
+    preencherCampo("km", dados.km);
+    preencherCampo("dn", dados.dn);
+    preencherCampo("distribuidor", dados.nomeDistribuidor);
+    preencherCampo("avaliador", dados.avaliadorResponsavel);
+    preencherCampo("tecnico", dados.tecnicoResponsavel);
 
-    // Tratamento da Data (Separando DD, MM e YYYY)
+    // Tratamento e quebra da Data (data01, data02, data03)
     const dataString = dados.data || "";
     const dataParts = dataString.includes("/")
       ? dataString.split("/")
       : dataString.split("-");
     if (dataParts.length >= 3) {
       const isAnoPrimeiro = dataParts[0].length === 4;
-      setField("data01", isAnoPrimeiro ? dataParts[2] : dataParts[0]); // Dia
-      setField("data02", dataParts[1]); // Mês
-      setField("data03", isAnoPrimeiro ? dataParts[0] : dataParts[2]); // Ano
+      preencherCampo("data01", isAnoPrimeiro ? dataParts[2] : dataParts[0]); // Dia
+      preencherCampo("data02", dataParts[1]); // Mês
+      preencherCampo("data03", isAnoPrimeiro ? dataParts[0] : dataParts[2]); // Ano
     }
 
-    // Tratamento da Hora (Separando HH e MM)
+    // Tratamento e quebra da Hora (hora, minuto)
     const horaString = dados.hora || "";
     const horaParts = horaString.split(":");
     if (horaParts.length >= 2) {
-      setField("hora", horaParts[0]); // Hora
-      setField("minuto", horaParts[1]); // Minuto
+      preencherCampo("hora", horaParts[0]);
+      preencherCampo("minuto", horaParts[1]);
     }
   } catch (error) {
-    console.error("Erro ao preencher um dos campos do cabeçalho:", error);
+    console.error("Erro geral no processamento do cabeçalho do AcroForm:", error);
   }
 
 
