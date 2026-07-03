@@ -1,38 +1,43 @@
-# Botão de diagnóstico de campos do template
+Escopo grande com 3 frentes independentes. Executarei nesta ordem para reduzir risco de regressão.
 
-## Objetivo
-Permitir que você confira, direto no painel de **Configurações → Templates de Check-list**, se o PDF em Base64 que acabou de subir contém os campos AcroForm com os nomes corretos (`veiculo`, `chassi`, `km`, `dn`, `distribuidor`, `avaliador`, `tecnico`, `data01`, `data02`, `data03`, `hora`, `minuto`).
+## 1. Formatação e compressão do Dossiê
 
-Assim, antes de gerar um checklist real, você já sabe se precisa voltar ao Acrobat para renomear algum campo.
+Arquivos: `src/lib/pdf-veiculo.ts`, `src/lib/pdf-utils.ts`, e o ponto que gera o dossiê final (localizar em `painel.tsx` / `toyota-checklist.ts`).
 
-## O que muda na interface
+- Criar helper `formatarModeloCurto(modelo)` que retorna as 2 primeiras palavras significativas (remove versões: XRE, XEI, GLI, SR, tokens com números tipo `2.0`, `16V`, e palavras `FLEX`, `AUT`, `CVT`, `TB`, `HYBRID` fora do nome base). Regra prática: dividir por espaço, manter tokens até encontrar o primeiro que casa com regex `/^([0-9]|XRE|XEI|GLI|SR|GR|XLE|SE|LE|FLEX|AUT|CVT|TB|HYBRID|H\d|16V|20V|V6|V8)/i`. Fallback: primeiras 2 palavras.
+- `formatarModeloComAno(modelo, ano)` → `"${curto} / ${ano}"`.
+- `formatarKm(km)` → `Intl.NumberFormat("pt-BR").format(Number(km))`.
+- Aplicar ambos no preenchimento do AcroForm do checklist (campos `veiculo` e `km`) em `pdf-veiculo.ts` e no fluxo do dossiê.
+- Compressão em `mesclarPdfs`: usar `PDFDocument.save({ useObjectStreams: true, addDefaultPage: false, objectsPerTick: 200 })` + `merged.setTitle("")`, `setAuthor("")`, `setSubject("")`, `setKeywords([])`, `setProducer("")`, `setCreator("")` para remover metadados. Adicionar loop opcional que percorre imagens embutidas e re-encoda via canvas para JPEG 0.7 quando o PDF final excede 3MB — implementado como best-effort com try/catch.
+- Se ainda > 3MB, logar warning; não integrar API externa nesta iteração (evita adicionar secret novo sem aprovação). Deixar TODO comentado com hook para PDF.co.
 
-Em cada uma das 6 linhas de template (TCUV × {HEV, Utilitário, Passeio} e TSIM × {HEV, Utilitário, Passeio}), além dos botões atuais (upload / remover), aparece um novo botão:
+## 2. Tela "Envio Toyota"
 
-- **"Diagnosticar campos"** (ícone de lupa)
+Localizar seção "Enviados para a Toyota" em `painel.tsx` (linha ~627) e no expandido do veículo. Refatorar:
 
-Ao clicar:
-1. Lê o Base64 salvo em `system_settings` daquela combinação.
-2. Carrega com `pdf-lib` no navegador (nada de servidor).
-3. Extrai a lista de nomes de campos via `PDFDocument.getForm().getFields()`.
-4. Abre um modal com:
-   - **Total de campos** detectados.
-   - **Tabela comparativa**: para cada nome esperado, mostra ✅ (encontrado) ou ❌ (ausente).
-   - **Campos extras** que existem no PDF mas o sistema não usa (só informativo).
-   - Botão "Copiar lista" para ajudar caso você queira ajustar nomes no Acrobat.
+- Bloco por documento (Check-list, Laudo, Health Check) com botões `Visualizar` (usa `abrirPath`/`abrirLaudo` já existentes) e `Substituir` (input file → upload storage `documentos` → update coluna correspondente em `toyota_estoque_veiculos`).
+- Botão `Gerar Dossiê` / `Regerar Dossiê` sempre habilitado quando os 3 docs existem.
+- Input `Código TCUV` + botão `Enviar/Concluir` renderizados condicionalmente somente após `dossie_pdf_path` estar populado.
 
-Se o total for 0, o modal exibe um aviso destacado: *"Este PDF não contém campos de AcroForm. Volte ao Acrobat / LibreOffice e adicione os campos de texto conforme o guia."*
+## 3. Dashboard (renomear + limpar + filtro mês + cards)
 
-## Detalhes técnicos
+Arquivo: `src/routes/_authenticated._toyota.toyota.painel.tsx` e `AppSidebar.tsx`.
 
-- Arquivo novo: `src/components/toyota/DiagnosticoCamposTemplate.tsx` (componente do modal + botão).
-- Arquivo novo: `src/lib/pdf-diagnostico.ts` com a função `listarCamposPdf(base64: string): Promise<{ nome: string; tipo: string }[]>`.
-- Integração: `src/routes/_authenticated._toyota.toyota.configuracoes.tsx` — importa o novo botão e renderiza ao lado dos existentes em cada linha da tabela de templates.
-- Lista canônica de campos esperados fica em constante exportada de `src/lib/checklist-template.ts` (`CAMPOS_ESPERADOS_TEMPLATE`) para não duplicar strings.
-- Modal usa componentes já existentes (`Dialog`, `Table`, `Badge` do shadcn) — sem novas dependências.
-- 100% client-side: nenhuma migration, nenhuma edge function, nenhuma alteração no Supabase.
+- Sidebar: renomear label "Painel de Certificação" → "Dashboard".
+- Título da página → "Dashboard".
+- Remover TODO conteúdo abaixo dos cards (tabelas, listas, seções 1/2/3, filtros por aba). Manter só header + filtro Mês/Ano + grid de cards.
+- Adicionar `<Select>` de mês/ano (default = mês atual). Estado `mesFiltro: "YYYY-MM"`.
+- Refazer contagens baseando no `status_aprovacao` atual (snapshot) exceto "Solicitados" que usa `aprovado_em` dentro do mês:
+  1. **Solicitados**: `count(aprovado_em BETWEEN inicioMes AND fimMes)`.
+  2. **Preparador**: `status_aprovacao IN ('pendente_preparacao','devolvido_preparador')`.
+  3. **Pós-Vendas**: `status_aprovacao = 'em_posvendas'`.
+  4. **Análise Central**: `status_aprovacao IN ('analise','aguardando_analise_central')` + retornos Toyota ativos (`retorno_toyota_em NOT NULL AND status_aprovacao='analise'`).
+  5. **Enviados Toyota**: `enviado_toyota_em NOT NULL AND status_aprovacao NOT IN ('certificado_toyota','arquivado','reprovado_admin')` — os que estão aguardando retorno.
+  6. Remover card "Estoque importado".
+- Cards 2-5 são snapshot atual (não filtram por mês); card "Solicitados" usa o mês. Deixar isso claro na UI com legenda pequena.
 
-## Fora do escopo (não faz agora)
-- Não altera a lógica de preenchimento (`gerarChecklistPreenchido`).
-- Não altera a rotina do botão "Gerar PDF do Veículo".
-- Não mexe na estrutura de armazenamento em `system_settings`.
+## Fora de escopo
+- Integração com API externa de compressão (deixarei TODO). Se o usuário confirmar credenciais de PDF.co/Cloudmersive, faço em turno seguinte.
+- Testes automatizados dessa refatoração.
+
+Confirma para eu executar?
