@@ -113,7 +113,6 @@ function FilaPosVendas() {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
     setKm(v.posvendas_km != null ? String(v.posvendas_km) : "");
-    setMarcacoes(v.checklist_itens ?? {});
   };
 
   const tipoChecklist = useMemo(() => {
@@ -124,45 +123,6 @@ function FilaPosVendas() {
     return null;
   }, [aberto]);
 
-
-  // Carrega o modelo de check-list (TCUV/TSIM) sob demanda para renderizar o formulário
-  const [modeloSecoes, setModeloSecoes] = useState<
-    { titulo: string; itens: string[] }[] | null
-  >(null);
-  useEffect(() => {
-    if (!tipoChecklist) {
-      setModeloSecoes(null);
-      return;
-    }
-    let cancel = false;
-    void import("@/lib/toyota-checklist").then((m) => {
-      if (cancel) return;
-      setModeloSecoes(m.CHECKLIST_MODELOS[tipoChecklist].secoes);
-    });
-    return () => {
-      cancel = true;
-    };
-  }, [tipoChecklist]);
-
-  const totalObrigatorios = useMemo(
-    () => modeloSecoes?.reduce((a, s) => a + s.itens.length, 0) ?? 0,
-    [modeloSecoes],
-  );
-  const totalMarcados = useMemo(
-    () =>
-      Object.values(marcacoes).filter((v) => v === "✓" || v === "N/A").length,
-    [marcacoes],
-  );
-  const tudoMarcado = totalObrigatorios > 0 && totalMarcados >= totalObrigatorios;
-
-  const setMarca = (key: string, val: "✓" | "N/A" | "") => {
-    setMarcacoes((prev) => {
-      const next = { ...prev };
-      if (!val) delete next[key];
-      else next[key] = val;
-      return next;
-    });
-  };
 
   const salvarChecklist = async () => {
     if (!aberto) return;
