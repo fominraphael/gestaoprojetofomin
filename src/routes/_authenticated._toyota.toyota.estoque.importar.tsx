@@ -149,6 +149,7 @@ interface VeiculoGosystem {
   anoModelo: number | null;
   quilometragem: number | null;
   resultadoLaudo: string;
+  laudoUrl: string;
   statusCautelar: string;
   elegibilidade: Elegibilidade;
   duplicado: boolean;
