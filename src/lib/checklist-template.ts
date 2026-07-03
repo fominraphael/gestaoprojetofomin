@@ -33,9 +33,10 @@ type HeaderFieldKey = keyof ChecklistHeaderData;
 interface HeaderFieldPosition {
   /** Rótulo exato do PDF oficial usado como contrato do mapeamento. */
   label: string;
-  /** Coordenadas absolutas em pontos na Página 1. Não dependem de height/offset. */
+  /** Coordenada horizontal absoluta em pontos na Página 1. */
   x: number;
-  y: number;
+  /** Distância fixa a partir do topo da página. O Y final é pageHeight - topOffset. */
+  topOffset: number;
   size: number;
   /** Limite visual do campo para impedir invasão do campo paralelo. */
   maxWidth: number;
@@ -45,75 +46,76 @@ type HeaderMap = Record<HeaderFieldKey, HeaderFieldPosition>;
 
 // Mapeamento fixo do cabeçalho do arquivo "Checklist Novo - 135 itens -EM BRANCO.pdf".
 // A ordem abaixo replica o grid visual do template: 5 linhas x 2 colunas.
-// Não usar height/getSize, offset, percentuais ou cálculo relativo neste bloco.
+// No pdf-lib, (0,0) fica no canto inferior esquerdo; por isso o Y é calculado
+// exclusivamente como page.getHeight() - topOffset para ancorar no topo real.
 const HEADER_FIELD_MAP: HeaderMap = {
   veiculoAnoModelo: {
     label: "Veiculo/ Ano modelo:",
-    x: 155,
-    y: 724,
+    x: 145,
+    topOffset: 118,
     size: 10,
-    maxWidth: 170,
+    maxWidth: 185,
   },
   chassi: {
     label: "Chassi:",
     x: 385,
-    y: 724,
+    topOffset: 118,
     size: 10,
     maxWidth: 160,
   },
   km: {
     label: "Quilometragem atual:",
-    x: 165,
-    y: 704,
+    x: 160,
+    topOffset: 138,
     size: 10,
     maxWidth: 120,
   },
   katashiki: {
     label: "Katashiki:",
     x: 385,
-    y: 704,
+    topOffset: 138,
     size: 10,
     maxWidth: 160,
   },
   dn: {
     label: "DN:",
     x: 85,
-    y: 684,
+    topOffset: 158,
     size: 10,
     maxWidth: 75,
   },
   nomeDistribuidor: {
     label: "Nome do distribuidor:",
     x: 430,
-    y: 684,
+    topOffset: 158,
     size: 10,
     maxWidth: 115,
   },
   avaliadorResponsavel: {
     label: "Avaliador Responsável:",
     x: 185,
-    y: 664,
+    topOffset: 178,
     size: 10,
     maxWidth: 135,
   },
   tecnicoResponsavel: {
     label: "Técnico Responsável:",
     x: 430,
-    y: 664,
+    topOffset: 178,
     size: 10,
     maxWidth: 115,
   },
   data: {
     label: "Data:",
     x: 90,
-    y: 644,
+    topOffset: 198,
     size: 10,
     maxWidth: 85,
   },
   hora: {
     label: "Hora:",
     x: 360,
-    y: 644,
+    topOffset: 198,
     size: 10,
     maxWidth: 70,
   },
@@ -184,6 +186,7 @@ export async function gerarChecklistPreenchido(
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const page = doc.getPage(0);
+  const pageHeight = page.getHeight();
 
   const black = rgb(0, 0, 0);
   const normalizeSingleLine = (text: string): string => text.replace(/\s+/g, " ").trim();
@@ -208,7 +211,7 @@ export async function gerarChecklistPreenchido(
     if (!value) return;
     page.drawText(value, {
       x: pos.x,
-      y: pos.y,
+      y: pageHeight - pos.topOffset,
       size: pos.size,
       font,
       color: black,
