@@ -13,6 +13,22 @@ import { supabase } from "@/integrations/supabase/client";
 export type TemplateTipo = "tcuv" | "tsim";
 export type TemplateGrupo = "hev" | "utilitario" | "passeio";
 
+/** Nomes dos campos AcroForm que o sistema preenche no cabeçalho. */
+export const CAMPOS_ESPERADOS_TEMPLATE: readonly string[] = [
+  "veiculo",
+  "chassi",
+  "km",
+  "dn",
+  "distribuidor",
+  "avaliador",
+  "tecnico",
+  "data01",
+  "data02",
+  "data03",
+  "hora",
+  "minuto",
+] as const;
+
 export interface ChecklistHeaderData {
   modelo: string; // usado para roteamento (ex.: "Hilux SRX")
   marca?: string; // opcional: "Lexus", "Toyota"
