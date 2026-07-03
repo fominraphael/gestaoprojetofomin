@@ -742,11 +742,24 @@ function EnvioToyotaTab() {
   }
 
   async function baixarUrl(url: string): Promise<ArrayBuffer | null> {
+    // Tenta fetch direto no browser (funciona quando o host aceita CORS).
     try {
       const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.arrayBuffer();
+      if (res.ok) return await res.arrayBuffer();
     } catch {
+      /* CORS ou rede — tenta via server function */
+    }
+    // Fallback: baixa via server function (bypass de CORS).
+    try {
+      const { fetchRemotePdf } = await import("@/lib/remote-pdf.functions");
+      const out = await fetchRemotePdf({ data: { url } });
+      const bin = atob(out.base64);
+      const buf = new ArrayBuffer(bin.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+      return buf;
+    } catch (e) {
+      console.warn("[dossie] Falha ao baixar laudo por URL:", e);
       return null;
     }
   }
@@ -777,6 +790,7 @@ function EnvioToyotaTab() {
         hora,
       },
       v.checklist_itens ?? undefined,
+      { testModeAutoCheck: true, skipMarcacoesPages: true },
     );
   }
 
@@ -786,12 +800,9 @@ function EnvioToyotaTab() {
       const { mesclarPdfs } = await import("@/lib/pdf-utils");
       const pdfs: ArrayBuffer[] = [];
 
-      // 1º) Check-list — usa o PDF já gerado no Pós-Vendas (com marcações);
-      //     se não existir, gera on-the-fly a partir do template + marcações salvas.
+      // 1º) Check-list — SEMPRE preenche sobre o Template Oficial (TCUV/TSIM)
+      //     carimbando "X" em todas as checkboxes (modo homologação).
       let clBytes: ArrayBuffer | null = null;
-      if (v.checklist_pdf_path) {
-        clBytes = await baixarBytes(v.checklist_pdf_path);
-      }
       if (!clBytes) {
         try {
           const cl = await gerarPdfChecklist(v);
