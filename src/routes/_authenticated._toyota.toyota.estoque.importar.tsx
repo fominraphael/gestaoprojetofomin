@@ -387,6 +387,7 @@ function GosystemImporter() {
         : /reprovado|recusado/i.test(r.resultadoLaudo)
           ? "reprovado"
           : r.resultadoLaudo || null,
+      laudo_url: r.laudoUrl || null,
       fonte_importacao: "gosystem",
       status_aprovacao: "analise",
       dados_originais: r.raw,
