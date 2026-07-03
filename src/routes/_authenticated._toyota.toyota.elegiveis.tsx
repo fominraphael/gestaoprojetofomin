@@ -742,11 +742,24 @@ function EnvioToyotaTab() {
   }
 
   async function baixarUrl(url: string): Promise<ArrayBuffer | null> {
+    // Tenta fetch direto no browser (funciona quando o host aceita CORS).
     try {
       const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.arrayBuffer();
+      if (res.ok) return await res.arrayBuffer();
     } catch {
+      /* CORS ou rede — tenta via server function */
+    }
+    // Fallback: baixa via server function (bypass de CORS).
+    try {
+      const { fetchRemotePdf } = await import("@/lib/remote-pdf.functions");
+      const out = await fetchRemotePdf({ data: { url } });
+      const bin = atob(out.base64);
+      const buf = new ArrayBuffer(bin.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+      return buf;
+    } catch (e) {
+      console.warn("[dossie] Falha ao baixar laudo por URL:", e);
       return null;
     }
   }
