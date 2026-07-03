@@ -765,8 +765,13 @@ function EnvioToyotaTab() {
   }
 
   async function gerarPdfChecklist(v: VeiculoEnvio): Promise<Uint8Array> {
-    const { gerarChecklistPreenchido, detectarTipoTemplate, formatarDataHora } =
-      await import("@/lib/checklist-template");
+    const {
+      gerarChecklistPreenchido,
+      detectarTipoTemplate,
+      formatarDataHora,
+      formatarModeloComAno,
+      formatarKm,
+    } = await import("@/lib/checklist-template");
     const tipo = detectarTipoTemplate(v.elegibilidade);
     if (!tipo) {
       throw new Error(
@@ -774,13 +779,13 @@ function EnvioToyotaTab() {
       );
     }
     const { data, hora } = formatarDataHora(v.posvendas_finalizado_em);
-    const km = v.posvendas_km != null ? v.posvendas_km.toLocaleString("pt-BR") : "";
+    const km = formatarKm(v.posvendas_km);
     const responsavel = v.posvendas_finalizado_por ?? "";
     return gerarChecklistPreenchido(
       tipo,
       {
         modelo: v.modelo ?? "",
-        veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
+        veiculoAnoModelo: formatarModeloComAno(v.modelo, v.ano_modelo),
         chassi: v.chassi,
         km,
         dn: v.toyota_filiais?.dealer_number ?? "",
@@ -792,6 +797,7 @@ function EnvioToyotaTab() {
       },
     );
   }
+
 
   async function gerarDossie(v: VeiculoEnvio) {
     setGerando(v.id);
