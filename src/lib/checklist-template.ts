@@ -111,13 +111,20 @@ export async function gerarChecklistPreenchido(
   const page = doc.getPage(0);
 
   const coords = COORDS[tipo];
+  const { height } = page.getSize();
   const black = rgb(0, 0, 0);
   const draw = (
     text: string,
-    pos: { x: number; y: number; size: number },
+    pos: { x: number; offsetTop: number; size: number },
   ) => {
     if (!text) return;
-    page.drawText(text, { x: pos.x, y: pos.y, size: pos.size, font, color: black });
+    page.drawText(text, {
+      x: pos.x,
+      y: height - pos.offsetTop,
+      size: pos.size,
+      font,
+      color: black,
+    });
   };
 
   draw(dados.veiculoAnoModelo, coords.veiculoAnoModelo);
