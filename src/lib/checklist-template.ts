@@ -111,15 +111,38 @@ export async function gerarChecklistPreenchido(
     }
   };
 
-  setField("veiculo", dados.veiculoAnoModelo);
-  setField("chassi", dados.chassi);
-  setField("km", dados.km);
-  setField("dn", dados.dn);
-  setField("distribuidor", dados.nomeDistribuidor);
-  setField("avaliador", dados.avaliadorResponsavel);
-  setField("tecnico", dados.tecnicoResponsavel);
-  setField("data", dados.data);
-  setField("hora", dados.hora);
+  try {
+    setField("veiculo", dados.veiculoAnoModelo);
+    setField("chassi", dados.chassi);
+    setField("km", dados.km);
+    setField("dn", dados.dn);
+    setField("distribuidor", dados.nomeDistribuidor);
+    setField("avaliador", dados.avaliadorResponsavel);
+    setField("tecnico", dados.tecnicoResponsavel);
+
+    // Tratamento da Data (Separando DD, MM e YYYY)
+    const dataString = dados.data || "";
+    const dataParts = dataString.includes("/")
+      ? dataString.split("/")
+      : dataString.split("-");
+    if (dataParts.length >= 3) {
+      const isAnoPrimeiro = dataParts[0].length === 4;
+      setField("data01", isAnoPrimeiro ? dataParts[2] : dataParts[0]); // Dia
+      setField("data02", dataParts[1]); // Mês
+      setField("data03", isAnoPrimeiro ? dataParts[0] : dataParts[2]); // Ano
+    }
+
+    // Tratamento da Hora (Separando HH e MM)
+    const horaString = dados.hora || "";
+    const horaParts = horaString.split(":");
+    if (horaParts.length >= 2) {
+      setField("hora", horaParts[0]); // Hora
+      setField("minuto", horaParts[1]); // Minuto
+    }
+  } catch (error) {
+    console.error("Erro ao preencher um dos campos do cabeçalho:", error);
+  }
+
 
   try {
     form.flatten();
