@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ChecklistHeaderData {
   veiculoAnoModelo: string; // "Corolla Altis 2023/2024"
   chassi: string;
+  katashiki: string;
   km: string; // "45.230"
   dn: string; // Dealer Number da filial
   nomeDistribuidor: string; // Nome BI Toyota da filial
@@ -27,34 +28,109 @@ export interface ChecklistHeaderData {
  */
 export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
 
-// Coordenadas absolutas por template em pontos (pt); size em pt.
-// Não usar height/getSize nem qualquer cálculo: estes Y fixos assumem A4
-// padrão (~842pt), conforme alinhamento solicitado para o cabeçalho Toyota.
-// Katashiki é ignorado propositalmente.
-const COORDS = {
-  tcuv: {
-    veiculoAnoModelo:     { x: 140, y: 700, size: 10 },
-    chassi:               { x: 360, y: 700, size: 10 },
-    km:                   { x: 140, y: 680, size: 10 },
-    dn:                   { x: 260, y: 680, size: 10 },
-    nomeDistribuidor:     { x: 440, y: 680, size: 10 },
-    avaliadorResponsavel: { x: 140, y: 660, size: 10 },
-    tecnicoResponsavel:   { x: 360, y: 660, size: 10 },
-    data:                 { x: 90,  y: 640, size: 10 },
-    hora:                 { x: 220, y: 640, size: 10 },
+type HeaderFieldKey = keyof ChecklistHeaderData;
+
+interface HeaderFieldPosition {
+  /** Rótulo exato do PDF oficial usado como contrato do mapeamento. */
+  label: string;
+  /** Coordenadas absolutas em pontos na Página 1. Não dependem de height/offset. */
+  x: number;
+  y: number;
+  size: number;
+  /** Limite visual do campo para impedir invasão do campo paralelo. */
+  maxWidth: number;
+}
+
+type HeaderMap = Record<HeaderFieldKey, HeaderFieldPosition>;
+
+// Mapeamento fixo do cabeçalho do arquivo "Checklist Novo - 135 itens -EM BRANCO.pdf".
+// A ordem abaixo replica o grid visual do template: 5 linhas x 2 colunas.
+// Não usar height/getSize, offset, percentuais ou cálculo relativo neste bloco.
+const HEADER_FIELD_MAP: HeaderMap = {
+  veiculoAnoModelo: {
+    label: "Veiculo/ Ano modelo:",
+    x: 155,
+    y: 724,
+    size: 10,
+    maxWidth: 170,
   },
-  tsim: {
-    veiculoAnoModelo:     { x: 140, y: 700, size: 10 },
-    chassi:               { x: 360, y: 700, size: 10 },
-    km:                   { x: 140, y: 680, size: 10 },
-    dn:                   { x: 260, y: 680, size: 10 },
-    nomeDistribuidor:     { x: 440, y: 680, size: 10 },
-    avaliadorResponsavel: { x: 140, y: 660, size: 10 },
-    tecnicoResponsavel:   { x: 360, y: 660, size: 10 },
-    data:                 { x: 90,  y: 640, size: 10 },
-    hora:                 { x: 220, y: 640, size: 10 },
+  chassi: {
+    label: "Chassi:",
+    x: 385,
+    y: 724,
+    size: 10,
+    maxWidth: 160,
+  },
+  km: {
+    label: "Quilometragem atual:",
+    x: 165,
+    y: 704,
+    size: 10,
+    maxWidth: 120,
+  },
+  katashiki: {
+    label: "Katashiki:",
+    x: 385,
+    y: 704,
+    size: 10,
+    maxWidth: 160,
+  },
+  dn: {
+    label: "DN:",
+    x: 85,
+    y: 684,
+    size: 10,
+    maxWidth: 75,
+  },
+  nomeDistribuidor: {
+    label: "Nome do distribuidor:",
+    x: 430,
+    y: 684,
+    size: 10,
+    maxWidth: 115,
+  },
+  avaliadorResponsavel: {
+    label: "Avaliador Responsável:",
+    x: 185,
+    y: 664,
+    size: 10,
+    maxWidth: 135,
+  },
+  tecnicoResponsavel: {
+    label: "Técnico Responsável:",
+    x: 430,
+    y: 664,
+    size: 10,
+    maxWidth: 115,
+  },
+  data: {
+    label: "Data:",
+    x: 90,
+    y: 644,
+    size: 10,
+    maxWidth: 85,
+  },
+  hora: {
+    label: "Hora:",
+    x: 360,
+    y: 644,
+    size: 10,
+    maxWidth: 70,
   },
 } as const;
+
+const HEADER_FIELD_ORDER: HeaderFieldKey[] = [
+  "veiculoAnoModelo",
+  "km",
+  "dn",
+  "avaliadorResponsavel",
+  "data",
+  "chassi",
+  "katashiki",
+  "nomeDistribuidor",
+  "tecnicoResponsavel",
+  "hora",
+];
 
 export type TemplateTipo = "tcuv" | "tsim";
 
@@ -109,14 +185,28 @@ export async function gerarChecklistPreenchido(
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   const page = doc.getPage(0);
 
-  const coords = COORDS[tipo];
   const black = rgb(0, 0, 0);
+  const normalizeSingleLine = (text: string): string => text.replace(/\s+/g, " ").trim();
+  const truncateToWidth = (text: string, maxWidth: number, size: number): string => {
+    const clean = normalizeSingleLine(text);
+    if (!clean || font.widthOfTextAtSize(clean, size) <= maxWidth) return clean;
+
+    const ellipsis = "...";
+    let end = clean.length;
+    while (end > 0) {
+      const candidate = `${clean.slice(0, end).trimEnd()}${ellipsis}`;
+      if (font.widthOfTextAtSize(candidate, size) <= maxWidth) return candidate;
+      end -= 1;
+    }
+    return "";
+  };
   const draw = (
     text: string,
-    pos: { x: number; y: number; size: number },
+    pos: HeaderFieldPosition,
   ) => {
-    if (!text) return;
-    page.drawText(text, {
+    const value = truncateToWidth(text, pos.maxWidth, pos.size);
+    if (!value) return;
+    page.drawText(value, {
       x: pos.x,
       y: pos.y,
       size: pos.size,
@@ -125,42 +215,21 @@ export async function gerarChecklistPreenchido(
     });
   };
 
-  draw(dados.veiculoAnoModelo, coords.veiculoAnoModelo);
-  draw(dados.chassi, coords.chassi);
-  draw(dados.km, coords.km);
-  draw(dados.dn, coords.dn);
-  draw(dados.nomeDistribuidor, coords.nomeDistribuidor);
-  draw(dados.avaliadorResponsavel, coords.avaliadorResponsavel);
-  draw(dados.tecnicoResponsavel, coords.tecnicoResponsavel);
-  draw(dados.data, coords.data);
-  draw(dados.hora, coords.hora);
+  HEADER_FIELD_ORDER.forEach((field) => draw(dados[field], HEADER_FIELD_MAP[field]));
 
   // MODO DE TESTE (homologação): marca automaticamente TODAS as checkboxes
   // do formulário original do template Toyota, simulando aprovação 100%.
-  // Também tenta preencher campos de texto do AcroForm com dados equivalentes.
+  // Não preenche TextFields do AcroForm aqui para não competir com o mapeamento
+  // absoluto fixo do cabeçalho da Página 1.
   if (opts?.testModeAutoCheck) {
     try {
       const form = doc.getForm();
       const fields = form.getFields();
-      const { PDFCheckBox, PDFTextField } = await import("pdf-lib");
+      const { PDFCheckBox } = await import("pdf-lib");
       for (const f of fields) {
         try {
           if (f instanceof PDFCheckBox) {
             f.check();
-          } else if (f instanceof PDFTextField) {
-            const name = f.getName().toLowerCase();
-            if (name.includes("chassi")) f.setText(dados.chassi);
-            else if (name.includes("km") || name.includes("hodo")) f.setText(dados.km);
-            else if (name.includes("data")) f.setText(dados.data);
-            else if (name.includes("hora")) f.setText(dados.hora);
-            else if (name.includes("dn") || name.includes("dealer")) f.setText(dados.dn);
-            else if (name.includes("distribuid") || name.includes("concession"))
-              f.setText(dados.nomeDistribuidor);
-            else if (name.includes("modelo") || name.includes("veic"))
-              f.setText(dados.veiculoAnoModelo);
-            else if (name.includes("avaliador")) f.setText(dados.avaliadorResponsavel);
-            else if (name.includes("tecnico") || name.includes("técnico") || name.includes("responsav"))
-              f.setText(dados.tecnicoResponsavel);
           }
         } catch {
           // campo com estado inesperado — ignora e segue
