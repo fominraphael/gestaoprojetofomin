@@ -271,6 +271,7 @@ function GosystemImporter() {
             anoModelo: anoMod,
             quilometragem: km,
             resultadoLaudo: laudo,
+            laudoUrl,
             statusCautelar: mapStatusLaudo(laudo),
             elegibilidade: classificarElegibilidadeGosystem(anoFab),
             duplicado: false,
