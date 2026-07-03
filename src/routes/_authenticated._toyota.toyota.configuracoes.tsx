@@ -33,6 +33,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { DiagnosticoCamposTemplate } from "@/components/toyota/DiagnosticoCamposTemplate";
 
 export const Route = createFileRoute("/_authenticated/_toyota/toyota/configuracoes")({
   errorComponent: ModuleErrorBoundary,
@@ -649,6 +650,9 @@ function TemplatesChecklistCard() {
                         </span>
                       </Button>
                     </label>
+                    {ok && (
+                      <DiagnosticoCamposTemplate tipo={tipo} grupo={grupo} disabled={isUp} />
+                    )}
                   </div>
                 );
               })}
