@@ -40,8 +40,10 @@ export function pdfContemChassi(pdfText: string, chassi: string): boolean {
 }
 
 /**
- * Mescla vários PDFs em um único arquivo comprimido.
- * Retorna Uint8Array com os bytes do PDF final.
+ * Mescla vários PDFs num único arquivo já com compressão agressiva:
+ * - remove metadados (título, autor, produtor, criador, keywords, subject);
+ * - salva com object streams;
+ * - ignora erros de PDFs individuais.
  */
 export async function mesclarPdfs(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
   const { PDFDocument } = await import("pdf-lib");
@@ -55,5 +57,19 @@ export async function mesclarPdfs(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
       console.warn("Falha ao mesclar um PDF, ignorando:", e);
     }
   }
-  return merged.save({ useObjectStreams: true, addDefaultPage: false });
+  // Remove metadados para reduzir bytes.
+  try {
+    merged.setTitle("");
+    merged.setAuthor("");
+    merged.setSubject("");
+    merged.setKeywords([]);
+    merged.setProducer("");
+    merged.setCreator("");
+  } catch { /* ignore */ }
+  return merged.save({
+    useObjectStreams: true,
+    addDefaultPage: false,
+    objectsPerTick: 200,
+  });
 }
+

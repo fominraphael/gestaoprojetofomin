@@ -87,7 +87,7 @@ export const MODULES: ModuleDef[] = [
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
       { to: "/toyota/painel-geral", label: "Painel Geral", icon: LayoutDashboard },
-      { to: "/toyota/painel", label: "Painel de Certificação", icon: GitBranch },
+      { to: "/toyota/painel", label: "Dashboard", icon: GitBranch },
       { to: "/toyota/estoque/importar", label: "Importações", icon: Upload },
       { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck },
       { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck },
