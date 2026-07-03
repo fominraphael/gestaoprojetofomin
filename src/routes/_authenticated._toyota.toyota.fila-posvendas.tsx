@@ -442,7 +442,7 @@ function FilaPosVendas() {
                     {v.checklist_data?.preenchido_em ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     ) : (
-                      <ListChecks className="h-3.5 w-3.5" />
+                      <FileText className="h-3.5 w-3.5" />
                     )}
                     Checklist
                   </span>
