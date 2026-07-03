@@ -171,7 +171,8 @@ function FilaPosVendas() {
           data: dataStr,
           hora,
         },
-        marcacoes,
+        undefined,
+        { skipMarcacoesPages: true },
       );
 
       const path = `toyota/checklists/${aberto.id}/${Date.now()}-checklist.pdf`;
