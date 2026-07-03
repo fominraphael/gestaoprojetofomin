@@ -183,3 +183,41 @@ export function formatarDataHora(iso: string | null): { data: string; hora: stri
     hora: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
   };
 }
+
+/**
+ * Remove versão/motorização do modelo, mantendo apenas o nome principal.
+ * Ex.: "COROLLA CROSS XRE 2.0 16V FLEX" → "COROLLA CROSS"
+ *      "HILUX SRX 2.8 4X4 AUT" → "HILUX SRX" (SRX é 3ª palavra, mantida como parte do trim curto)
+ * Regra: para no primeiro token que casa com marcador de versão/motor
+ * (números, "1.8", "2.0", "16V", "FLEX", "AUT", "CVT", "TB", "4X4", "HYBRID", "HEV").
+ */
+export function formatarModeloCurto(modelo: string | null | undefined): string {
+  if (!modelo) return "";
+  const stopRe = /^(\d|\d+[.,]\d+|\d+V|FLEX|AUT|AUTOM|CVT|MT|TB|TURBO|4X4|4X2|HYBRID|HEV|HÍBRIDO|HIBRIDO|GASOLINA|DIESEL|H\d)$/i;
+  const tokens = modelo.trim().split(/\s+/);
+  const out: string[] = [];
+  for (const t of tokens) {
+    if (stopRe.test(t)) break;
+    out.push(t);
+    if (out.length >= 3) break; // no máximo 3 tokens (nome + variante curta)
+  }
+  return (out.length ? out.join(" ") : tokens.slice(0, 2).join(" ")).trim();
+}
+
+/** "COROLLA CROSS" + 2026 → "COROLLA CROSS / 2026" */
+export function formatarModeloComAno(
+  modelo: string | null | undefined,
+  ano: number | string | null | undefined,
+): string {
+  const curto = formatarModeloCurto(modelo);
+  if (!ano) return curto;
+  return curto ? `${curto} / ${ano}` : String(ano);
+}
+
+/** Formata número de KM com separador de milhar pt-BR. 12110 → "12.110" */
+export function formatarKm(km: number | string | null | undefined): string {
+  if (km == null || km === "") return "";
+  const n = typeof km === "number" ? km : Number(String(km).replace(/\D/g, ""));
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return new Intl.NumberFormat("pt-BR").format(n);
+}
