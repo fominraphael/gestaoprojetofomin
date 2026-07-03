@@ -130,10 +130,8 @@ function FilaPosVendas() {
       toast.error("Elegibilidade do veículo não corresponde a TCUV ou TSIM.");
       return;
     }
-    if (!tudoMarcado) {
-      toast.error("Marque todos os itens do check-list antes de salvar.");
-      return;
-    }
+    // Não há mais marcação de itens em tela: o Template PDF já vem pré-preenchido.
+
     const kmNum = Number(km.replace(/\D/g, ""));
     if (!kmNum || kmNum <= 0) {
       toast.error("Informe a quilometragem atual antes de salvar o check-list.");
