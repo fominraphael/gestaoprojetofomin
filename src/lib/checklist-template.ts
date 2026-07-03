@@ -27,33 +27,32 @@ export interface ChecklistHeaderData {
  */
 export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
 
-// Coordenadas por template. Ajuste conforme o PDF oficial recebido.
-// x,y em pontos (pt); size em pt.
-// Offsets a partir do TOPO da página. No desenho fazemos y = height - offsetTop
-// para ancorar o cabeçalho no topo, já que no pdf-lib Y=0 é o rodapé.
+// Coordenadas absolutas por template em pontos (pt); size em pt.
+// Não usar height/getSize nem qualquer cálculo: estes Y fixos assumem A4
+// padrão (~842pt), conforme alinhamento solicitado para o cabeçalho Toyota.
 // Katashiki é ignorado propositalmente.
 const COORDS = {
   tcuv: {
-    veiculoAnoModelo:     { x: 140, offsetTop: 220, size: 10 },
-    chassi:               { x: 360, offsetTop: 220, size: 10 },
-    km:                   { x: 140, offsetTop: 240, size: 10 },
-    dn:                   { x: 260, offsetTop: 240, size: 10 },
-    nomeDistribuidor:     { x: 440, offsetTop: 240, size: 10 },
-    avaliadorResponsavel: { x: 140, offsetTop: 260, size: 10 },
-    tecnicoResponsavel:   { x: 360, offsetTop: 260, size: 10 },
-    data:                 { x: 90,  offsetTop: 280, size: 10 },
-    hora:                 { x: 220, offsetTop: 280, size: 10 },
+    veiculoAnoModelo:     { x: 140, y: 700, size: 10 },
+    chassi:               { x: 360, y: 700, size: 10 },
+    km:                   { x: 140, y: 680, size: 10 },
+    dn:                   { x: 260, y: 680, size: 10 },
+    nomeDistribuidor:     { x: 440, y: 680, size: 10 },
+    avaliadorResponsavel: { x: 140, y: 660, size: 10 },
+    tecnicoResponsavel:   { x: 360, y: 660, size: 10 },
+    data:                 { x: 90,  y: 640, size: 10 },
+    hora:                 { x: 220, y: 640, size: 10 },
   },
   tsim: {
-    veiculoAnoModelo:     { x: 140, offsetTop: 220, size: 10 },
-    chassi:               { x: 360, offsetTop: 220, size: 10 },
-    km:                   { x: 140, offsetTop: 240, size: 10 },
-    dn:                   { x: 260, offsetTop: 240, size: 10 },
-    nomeDistribuidor:     { x: 440, offsetTop: 240, size: 10 },
-    avaliadorResponsavel: { x: 140, offsetTop: 260, size: 10 },
-    tecnicoResponsavel:   { x: 360, offsetTop: 260, size: 10 },
-    data:                 { x: 90,  offsetTop: 280, size: 10 },
-    hora:                 { x: 220, offsetTop: 280, size: 10 },
+    veiculoAnoModelo:     { x: 140, y: 700, size: 10 },
+    chassi:               { x: 360, y: 700, size: 10 },
+    km:                   { x: 140, y: 680, size: 10 },
+    dn:                   { x: 260, y: 680, size: 10 },
+    nomeDistribuidor:     { x: 440, y: 680, size: 10 },
+    avaliadorResponsavel: { x: 140, y: 660, size: 10 },
+    tecnicoResponsavel:   { x: 360, y: 660, size: 10 },
+    data:                 { x: 90,  y: 640, size: 10 },
+    hora:                 { x: 220, y: 640, size: 10 },
   },
 } as const;
 
@@ -111,16 +110,15 @@ export async function gerarChecklistPreenchido(
   const page = doc.getPage(0);
 
   const coords = COORDS[tipo];
-  const { height } = page.getSize();
   const black = rgb(0, 0, 0);
   const draw = (
     text: string,
-    pos: { x: number; offsetTop: number; size: number },
+    pos: { x: number; y: number; size: number },
   ) => {
     if (!text) return;
     page.drawText(text, {
       x: pos.x,
-      y: height - pos.offsetTop,
+      y: pos.y,
       size: pos.size,
       font,
       color: black,
