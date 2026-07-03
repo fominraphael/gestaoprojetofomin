@@ -29,30 +29,31 @@ export type MarcacoesMap = Record<string, "" | "✓" | "N/A">;
 
 // Coordenadas por template. Ajuste conforme o PDF oficial recebido.
 // x,y em pontos (pt); size em pt.
-// Mapeamento estrito de coordenadas do cabeçalho do template Toyota (A4 retrato, 595x842pt).
-// pdf-lib: Y=0 é o rodapé. Katashiki é ignorado propositalmente.
+// Offsets a partir do TOPO da página. No desenho fazemos y = height - offsetTop
+// para ancorar o cabeçalho no topo, já que no pdf-lib Y=0 é o rodapé.
+// Katashiki é ignorado propositalmente.
 const COORDS = {
   tcuv: {
-    veiculoAnoModelo:     { x: 150, y: 750, size: 10 },
-    chassi:               { x: 400, y: 750, size: 10 },
-    km:                   { x: 150, y: 730, size: 10 },
-    dn:                   { x: 150, y: 710, size: 10 },
-    nomeDistribuidor:     { x: 400, y: 710, size: 10 },
-    avaliadorResponsavel: { x: 150, y: 690, size: 10 },
-    tecnicoResponsavel:   { x: 400, y: 690, size: 10 },
-    data:                 { x: 150, y: 670, size: 10 },
-    hora:                 { x: 400, y: 670, size: 10 },
+    veiculoAnoModelo:     { x: 135, offsetTop: 135, size: 10 },
+    chassi:               { x: 390, offsetTop: 135, size: 10 },
+    km:                   { x: 135, offsetTop: 155, size: 10 },
+    dn:                   { x: 260, offsetTop: 155, size: 10 },
+    nomeDistribuidor:     { x: 440, offsetTop: 155, size: 10 },
+    avaliadorResponsavel: { x: 135, offsetTop: 175, size: 10 },
+    tecnicoResponsavel:   { x: 390, offsetTop: 175, size: 10 },
+    data:                 { x: 90,  offsetTop: 195, size: 10 },
+    hora:                 { x: 220, offsetTop: 195, size: 10 },
   },
   tsim: {
-    veiculoAnoModelo:     { x: 150, y: 750, size: 10 },
-    chassi:               { x: 400, y: 750, size: 10 },
-    km:                   { x: 150, y: 730, size: 10 },
-    dn:                   { x: 150, y: 710, size: 10 },
-    nomeDistribuidor:     { x: 400, y: 710, size: 10 },
-    avaliadorResponsavel: { x: 150, y: 690, size: 10 },
-    tecnicoResponsavel:   { x: 400, y: 690, size: 10 },
-    data:                 { x: 150, y: 670, size: 10 },
-    hora:                 { x: 400, y: 670, size: 10 },
+    veiculoAnoModelo:     { x: 135, offsetTop: 135, size: 10 },
+    chassi:               { x: 390, offsetTop: 135, size: 10 },
+    km:                   { x: 135, offsetTop: 155, size: 10 },
+    dn:                   { x: 260, offsetTop: 155, size: 10 },
+    nomeDistribuidor:     { x: 440, offsetTop: 155, size: 10 },
+    avaliadorResponsavel: { x: 135, offsetTop: 175, size: 10 },
+    tecnicoResponsavel:   { x: 390, offsetTop: 175, size: 10 },
+    data:                 { x: 90,  offsetTop: 195, size: 10 },
+    hora:                 { x: 220, offsetTop: 195, size: 10 },
   },
 } as const;
 
