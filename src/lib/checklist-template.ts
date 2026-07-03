@@ -86,6 +86,7 @@ export async function gerarChecklistPreenchido(
   tipo: TemplateTipo,
   dados: ChecklistHeaderData,
   marcacoes?: MarcacoesMap,
+  opts?: { testModeAutoCheck?: boolean; skipMarcacoesPages?: boolean },
 ): Promise<Uint8Array> {
   const path = await getTemplatePath(tipo);
   if (!path) {
