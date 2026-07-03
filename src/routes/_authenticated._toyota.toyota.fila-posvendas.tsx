@@ -71,7 +71,7 @@ function FilaPosVendas() {
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
   const [km, setKm] = useState("");
-  const [marcacoes, setMarcacoes] = useState<Record<string, "" | "✓" | "N/A">>({});
+  // Marcações removidas: o Template PDF já vem previamente preenchido.
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
