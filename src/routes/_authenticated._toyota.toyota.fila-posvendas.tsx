@@ -489,74 +489,21 @@ function FilaPosVendas() {
               </div>
 
               <div className="space-y-3 rounded-md border p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-semibold">
-                      Check-list digital {tipoChecklist ? `— ${tipoChecklist}` : ""}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Marque cada item como Conforme (✓) ou N/A. Todos os itens
-                      são obrigatórios.
-                    </p>
-                  </div>
-                  <Badge variant={tudoMarcado ? "default" : "outline"}>
-                    {totalMarcados}/{totalObrigatorios}
-                  </Badge>
+                <div>
+                  <Label className="text-sm font-semibold">
+                    Check-list {tipoChecklist ? `— ${tipoChecklist}` : ""}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    O Template PDF configurado já vem previamente preenchido/marcado.
+                    Ao salvar, o sistema apenas escreve os dados do cabeçalho
+                    (Veículo, Chassi, KM, DN, Distribuidor, Avaliador, Técnico,
+                    Data e Hora) sobre o arquivo original.
+                  </p>
                 </div>
 
-                {!tipoChecklist ? (
+                {!tipoChecklist && (
                   <div className="text-xs text-destructive">
                     Elegibilidade do veículo não corresponde a TCUV nem TSIM.
-                  </div>
-                ) : !modeloSecoes ? (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Carregando itens...
-                  </div>
-                ) : (
-                  <div className="max-h-72 overflow-y-auto space-y-4 pr-2">
-                    {modeloSecoes.map((sec, si) => (
-                      <div key={si} className="space-y-1.5">
-                        <div className="text-xs font-semibold text-primary">
-                          {sec.titulo}
-                        </div>
-                        {sec.itens.map((item, ii) => {
-                          const key = `${si}.${ii}`;
-                          const val = marcacoes[key] ?? "";
-                          return (
-                            <div
-                              key={key}
-                              className="flex items-center justify-between gap-2 text-xs border-b border-border/40 pb-1.5"
-                            >
-                              <span className="flex-1">{item}</span>
-                              <div className="flex gap-1 shrink-0">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={val === "✓" ? "default" : "outline"}
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() =>
-                                    setMarca(key, val === "✓" ? "" : "✓")
-                                  }
-                                >
-                                  ✓
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={val === "N/A" ? "secondary" : "outline"}
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() =>
-                                    setMarca(key, val === "N/A" ? "" : "N/A")
-                                  }
-                                >
-                                  N/A
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
                   </div>
                 )}
 
@@ -576,7 +523,7 @@ function FilaPosVendas() {
                   <Button
                     size="sm"
                     onClick={salvarChecklist}
-                    disabled={salvando || !tudoMarcado}
+                    disabled={salvando || !tipoChecklist || !Number(km.replace(/\D/g, ""))}
                   >
                     {salvando && (
                       <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
@@ -585,6 +532,7 @@ function FilaPosVendas() {
                   </Button>
                 </div>
               </div>
+
 
               <div className="space-y-2">
                 <Label className="text-sm">Health Check (PDF)</Label>
