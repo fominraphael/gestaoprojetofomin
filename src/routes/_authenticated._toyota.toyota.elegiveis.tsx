@@ -790,6 +790,7 @@ function EnvioToyotaTab() {
         hora,
       },
       v.checklist_itens ?? undefined,
+      { testModeAutoCheck: true, skipMarcacoesPages: true },
     );
   }
 
@@ -799,12 +800,9 @@ function EnvioToyotaTab() {
       const { mesclarPdfs } = await import("@/lib/pdf-utils");
       const pdfs: ArrayBuffer[] = [];
 
-      // 1º) Check-list — usa o PDF já gerado no Pós-Vendas (com marcações);
-      //     se não existir, gera on-the-fly a partir do template + marcações salvas.
+      // 1º) Check-list — SEMPRE preenche sobre o Template Oficial (TCUV/TSIM)
+      //     carimbando "X" em todas as checkboxes (modo homologação).
       let clBytes: ArrayBuffer | null = null;
-      if (v.checklist_pdf_path) {
-        clBytes = await baixarBytes(v.checklist_pdf_path);
-      }
       if (!clBytes) {
         try {
           const cl = await gerarPdfChecklist(v);
