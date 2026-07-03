@@ -127,11 +127,45 @@ export async function gerarChecklistPreenchido(
   draw(dados.data, coords.data);
   draw(dados.hora, coords.hora);
 
-  // Anexa páginas com marcações item-a-item. Enquanto não temos o mapa
-  // exato de coordenadas de cada checkbox no template oficial, as marcações
-  // preenchidas em tela são "carimbadas" em páginas anexas ao PDF base,
-  // garantindo rastreabilidade completa do que foi verificado.
-  if (marcacoes) {
+  // MODO DE TESTE (homologação): marca automaticamente TODAS as checkboxes
+  // do formulário original do template Toyota, simulando aprovação 100%.
+  // Também tenta preencher campos de texto do AcroForm com dados equivalentes.
+  if (opts?.testModeAutoCheck) {
+    try {
+      const form = doc.getForm();
+      const fields = form.getFields();
+      const { PDFCheckBox, PDFTextField } = await import("pdf-lib");
+      for (const f of fields) {
+        try {
+          if (f instanceof PDFCheckBox) {
+            f.check();
+          } else if (f instanceof PDFTextField) {
+            const name = f.getName().toLowerCase();
+            if (name.includes("chassi")) f.setText(dados.chassi);
+            else if (name.includes("km") || name.includes("hodo")) f.setText(dados.km);
+            else if (name.includes("data")) f.setText(dados.data);
+            else if (name.includes("hora")) f.setText(dados.hora);
+            else if (name.includes("dn") || name.includes("dealer")) f.setText(dados.dn);
+            else if (name.includes("distribuid") || name.includes("concession"))
+              f.setText(dados.nomeDistribuidor);
+            else if (name.includes("modelo") || name.includes("veic"))
+              f.setText(dados.veiculoAnoModelo);
+            else if (name.includes("avaliador")) f.setText(dados.avaliadorResponsavel);
+            else if (name.includes("tecnico") || name.includes("técnico") || name.includes("responsav"))
+              f.setText(dados.tecnicoResponsavel);
+          }
+        } catch {
+          // campo com estado inesperado — ignora e segue
+        }
+      }
+      // Preserva as marcações visíveis mesmo após flatten opcional
+      try { form.updateFieldAppearances(font); } catch { /* noop */ }
+    } catch (e) {
+      console.warn("[checklist] Template sem AcroForm ou falha ao marcar:", e);
+    }
+  }
+
+  if (marcacoes && !opts?.skipMarcacoesPages) {
     const { CHECKLIST_MODELOS } = await import("./toyota-checklist");
     const modelo = CHECKLIST_MODELOS[tipo.toUpperCase() as "TCUV" | "TSIM"];
     const pageW = 595;
