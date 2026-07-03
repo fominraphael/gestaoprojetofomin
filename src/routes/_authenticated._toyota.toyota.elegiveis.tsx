@@ -779,9 +779,9 @@ function EnvioToyotaTab() {
     return gerarChecklistPreenchido(
       tipo,
       {
+        modelo: v.modelo ?? "",
         veiculoAnoModelo: [v.modelo, v.ano_modelo].filter(Boolean).join(" "),
         chassi: v.chassi,
-        katashiki: "",
         km,
         dn: v.toyota_filiais?.dealer_number ?? "",
         nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
@@ -790,8 +790,6 @@ function EnvioToyotaTab() {
         data,
         hora,
       },
-      v.checklist_itens ?? undefined,
-      { testModeAutoCheck: true, skipMarcacoesPages: true },
     );
   }
 
