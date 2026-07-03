@@ -192,7 +192,7 @@ function FilaPosVendas() {
         .from("toyota_estoque_veiculos")
         .update({
           checklist_data: { observacoes: obs, preenchido_em: agora },
-          checklist_itens: marcacoes,
+          checklist_itens: null,
           checklist_pdf_path: path,
           posvendas_km: kmNum,
         })
