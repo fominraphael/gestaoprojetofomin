@@ -52,8 +52,10 @@ async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
 }
 
 /**
- * Compressão via Cloudmersive (1 requisição = 1 arquivo, sem cobrança por peso).
- * Requer CLOUDMERSIVE_API_KEY. Em caso de falha, retorna o buffer original.
+ * Compressão via Cloudmersive.
+ * O endpoint correto para PDFs com imagens é `optimize/reduce-file-size` com
+ * header `quality` entre 0.0 e 1.0; quanto menor, mais agressiva a recompressão
+ * das imagens internas. Não há endpoint `optimize/images` para PDF nessa API.
  */
 async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   const cloudmersiveKey = Deno.env.get("CLOUDMERSIVE_API_KEY");
@@ -62,20 +64,23 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     return bytes;
   }
 
-  // Passo 1: optimize/images — recomprime as imagens embutidas com qualidade baixa
-  // (é o que realmente reduz PDFs pesados de fotos, de 14MB para poucos MB).
-  // Passo 2: reduce-file-size — otimização estrutural adicional.
-  async function chamar(endpoint: string, buf: Uint8Array, extraHeaders: Record<string, string> = {}) {
+  async function chamar(buf: Uint8Array, quality: string): Promise<Uint8Array | null> {
     const file = new File([buf], "dossie.pdf", { type: "application/pdf" });
     const fd = new FormData();
     fd.append("inputFile", file);
-    const r = await fetch(`https://api.cloudmersive.com/convert/edit/pdf/${endpoint}`, {
+    const r = await fetch("https://api.cloudmersive.com/convert/edit/pdf/optimize/reduce-file-size", {
       method: "POST",
-      headers: { Apikey: cloudmersiveKey!, ...extraHeaders },
+      headers: {
+        Apikey: cloudmersiveKey!,
+        quality,
+      },
       body: fd,
     });
     if (!r.ok) {
-      console.error(`Cloudmersive ${endpoint} HTTP ${r.status}:`, (await r.text()).slice(0, 200));
+      console.error(
+        `Cloudmersive reduce-file-size quality=${quality} HTTP ${r.status}:`,
+        (await r.text()).slice(0, 500),
+      );
       return null;
     }
     return new Uint8Array(await r.arrayBuffer());
@@ -84,22 +89,20 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   try {
     console.log(`Iniciando compressão. Tamanho original: ${bytes.byteLength} bytes`);
 
-    // QualityRatio = 20 (agressivo). Ajustar entre 15-40 conforme necessidade.
-    let atual = bytes;
-    const step1 = await chamar("optimize/images", atual, { QualityRatio: "20" });
-    if (step1) {
-      console.log(`Após optimize/images: ${step1.byteLength} bytes`);
-      if (step1.byteLength < atual.byteLength) atual = step1;
+    let melhor = bytes;
+    for (const quality of ["0.0", "0.1", "0.2", "0.3"]) {
+      const comprimido = await chamar(bytes, quality);
+      if (!comprimido) continue;
+      console.log(`Após reduce-file-size quality=${quality}: ${comprimido.byteLength} bytes`);
+      if (comprimido.byteLength < melhor.byteLength) melhor = comprimido;
+      if (comprimido.byteLength <= STORAGE_MAX_DOSSIE_BYTES) {
+        console.log(`Compressão atingiu o limite Toyota com quality=${quality}.`);
+        return comprimido;
+      }
     }
 
-    const step2 = await chamar("optimize/reduce-file-size", atual);
-    if (step2) {
-      console.log(`Após reduce-file-size: ${step2.byteLength} bytes`);
-      if (step2.byteLength < atual.byteLength) atual = step2;
-    }
-
-    console.log(`Compressão finalizada. Tamanho final: ${atual.byteLength} bytes`);
-    return atual;
+    console.log(`Compressão finalizada. Melhor tamanho: ${melhor.byteLength} bytes`);
+    return melhor;
   } catch (error) {
     console.error("Erro na execução do fetch para a Cloudmersive:", error);
     return bytes;
@@ -157,8 +160,8 @@ async function processar(veiculo_id: string) {
   }
 
   if (merged.byteLength > STORAGE_MAX_DOSSIE_BYTES) {
-    console.warn(
-      `Dossiê final ainda acima de 3MB após compressão MAX: ${merged.byteLength} bytes. Fará upload assim mesmo.`,
+    throw new Error(
+      `Dossiê final ainda acima de 3MB após compressão Cloudmersive: ${merged.byteLength} bytes. Upload bloqueado para não enviar arquivo fora do limite Toyota.`,
     );
   }
 
