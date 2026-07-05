@@ -9,18 +9,20 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { findModuleByPath, userCanAccess } from "@/lib/modules";
+import { findModuleByPath, userCanAccess, navItemsForPerfil, perfilFromTipoUsuario } from "@/lib/modules";
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { logout, isAdmin, user } = useAuth();
   const userModules = user?.modulos || [];
+  const perfil = perfilFromTipoUsuario(user?.tipo_usuario);
   const activeModule = findModuleByPath(pathname);
   const visibleItems =
     activeModule && userCanAccess(activeModule, isAdmin, userModules)
-      ? activeModule.navItems ?? []
+      ? navItemsForPerfil(activeModule, isAdmin, perfil)
       : [];
+
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
