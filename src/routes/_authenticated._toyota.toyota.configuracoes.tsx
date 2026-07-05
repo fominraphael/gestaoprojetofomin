@@ -34,6 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { DiagnosticoCamposTemplate } from "@/components/toyota/DiagnosticoCamposTemplate";
+import { Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/_toyota/toyota/configuracoes")({
   errorComponent: ModuleErrorBoundary,
