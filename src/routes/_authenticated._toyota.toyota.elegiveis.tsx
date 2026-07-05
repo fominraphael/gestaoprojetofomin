@@ -863,9 +863,8 @@ function EnvioToyotaTab() {
   async function gerarDossie(v: VeiculoEnvio) {
     setGerando(v.id);
     try {
-      // Delega para a Edge Function `gerar-dossie`, que mescla os PDFs e
-      // aplica compressão MÁXIMA via Cloudmersive quando o arquivo passa de
-      // 3MB (mesma regra do fluxo automático disparado pelo Pós-Vendas).
+      // Delega para a Edge Function `gerar-dossie`, que apenas mescla os PDFs
+      // (checklist + laudo + health check) e salva o resultado.
       const { error: invokeErr } = await supabase.functions.invoke(
         "gerar-dossie",
         { body: { veiculo_id: v.id } },
@@ -874,14 +873,13 @@ function EnvioToyotaTab() {
         toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
-      toast.info("Gerando dossiê em segundo plano (comprimindo se necessário)...");
+      toast.info("Gerando dossiê em segundo plano...");
 
       // Polling: aguarda a edge function atualizar dossie_pdf_path.
       const dossieAntes = v.dossie_pdf_path;
       const inicio = Date.now();
       const TIMEOUT_MS = 90_000;
       let novoPath: string | null = null;
-      let caminhoFoiLimpo = false;
       while (Date.now() - inicio < TIMEOUT_MS) {
         await new Promise((r) => setTimeout(r, 3000));
         const { data } = await supabase
@@ -890,22 +888,12 @@ function EnvioToyotaTab() {
           .eq("id", v.id)
           .maybeSingle();
         const atual = (data?.dossie_pdf_path as string | null) ?? null;
-        if (!atual && dossieAntes) {
-          caminhoFoiLimpo = true;
-        }
         if (atual && atual !== dossieAntes) {
           novoPath = atual;
           break;
         }
       }
       if (!novoPath) {
-        if (caminhoFoiLimpo) {
-          toast.error(
-            "A compressão não conseguiu gerar um dossiê abaixo de 3MB. O arquivo antigo foi removido; reduza/substitua o Laudo Cautelar e gere novamente.",
-          );
-          await carregar();
-          return;
-        }
         toast.warning("Ainda gerando. Clique em atualizar em alguns instantes para consultar o resultado.");
         await carregar();
         return;
@@ -921,6 +909,7 @@ function EnvioToyotaTab() {
       setGerando(null);
     }
   }
+
 
   async function visualizarDossie(v: VeiculoEnvio) {
     if (!v.dossie_pdf_path) return;
