@@ -104,7 +104,7 @@ function ToyotaConfiguracoes() {
   async function carregar() {
     setLoading(true);
     try {
-      const [fRes, pRes] = await Promise.all([
+      const [fRes, pRes, uRes, vRes] = await Promise.all([
         supabase
           .from("toyota_filiais")
           .select("id, nome, dealer_number, nome_bi_toyota, ativo")
@@ -113,17 +113,72 @@ function ToyotaConfiguracoes() {
           .from("toyota_patios")
           .select("id, nome, ativo, filial_id")
           .order("nome"),
+        supabase
+          .from("profiles")
+          .select("id, username, tipo_usuario, ativo")
+          .order("username"),
+        supabase
+          .from("toyota_usuario_filial")
+          .select("user_id, filial_id"),
       ]);
       if (fRes.error) throw fRes.error;
       if (pRes.error) throw pRes.error;
+      if (uRes.error) throw uRes.error;
+      if (vRes.error) throw vRes.error;
       setFiliais((fRes.data ?? []) as Filial[]);
       setPatios((pRes.data ?? []) as Patio[]);
+      setUsuarios((uRes.data ?? []) as UsuarioSimples[]);
+      setVinculos((vRes.data ?? []) as { user_id: string; filial_id: string }[]);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao carregar dados.");
     } finally {
       setLoading(false);
     }
   }
+
+  function abrirVinculos(f: Filial) {
+    const selecionados = new Set(
+      vinculos.filter((v) => v.filial_id === f.id).map((v) => v.user_id),
+    );
+    setVincularFilial(f);
+    setVincularSelecionados(selecionados);
+    setVincularBusca("");
+  }
+
+  async function salvarVinculos() {
+    if (!vincularFilial) return;
+    setSaving(true);
+    try {
+      const atuais = new Set(
+        vinculos.filter((v) => v.filial_id === vincularFilial.id).map((v) => v.user_id),
+      );
+      const paraAdicionar = [...vincularSelecionados].filter((id) => !atuais.has(id));
+      const paraRemover = [...atuais].filter((id) => !vincularSelecionados.has(id));
+
+      if (paraAdicionar.length > 0) {
+        const { error } = await supabase.from("toyota_usuario_filial").insert(
+          paraAdicionar.map((user_id) => ({ user_id, filial_id: vincularFilial.id })),
+        );
+        if (error) throw error;
+      }
+      if (paraRemover.length > 0) {
+        const { error } = await supabase
+          .from("toyota_usuario_filial")
+          .delete()
+          .eq("filial_id", vincularFilial.id)
+          .in("user_id", paraRemover);
+        if (error) throw error;
+      }
+      toast.success("Vínculos atualizados.");
+      setVincularFilial(null);
+      await carregar();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar vínculos.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
 
   useEffect(() => {
     carregar();
