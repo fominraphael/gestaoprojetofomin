@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { baixarPdf, gerarPdfVeiculo } from "@/lib/pdf-veiculo";
+import { formatarModeloComAno, formatarKm } from "@/lib/checklist-template";
 
 interface Props {
   veiculoId: string;
