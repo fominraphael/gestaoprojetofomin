@@ -103,15 +103,16 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
-      { to: "/toyota/painel-geral", label: "Painel Geral", icon: LayoutDashboard },
-      { to: "/toyota/painel", label: "Dashboard", icon: GitBranch },
-      { to: "/toyota/estoque/importar", label: "Importações", icon: Upload },
-      { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck },
-      { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck },
-      { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench },
-      { to: "/toyota/regras", label: "Regras do Sistema", icon: ListChecks },
-      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
+      { to: "/toyota/painel-geral", label: "Painel Geral", icon: LayoutDashboard, perfis: ["Administrador", "Preparador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/painel", label: "Dashboard", icon: GitBranch, perfis: ["Administrador", "Preparador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/estoque/importar", label: "Importações", icon: Upload, perfis: ["Administrador"] },
+      { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck, perfis: ["Administrador"] },
+      { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck, perfis: ["Administrador", "Preparador"] },
+      { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench, perfis: ["Administrador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/regras", label: "Regras do Sistema", icon: ListChecks, perfis: ["Administrador"] },
+      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings, perfis: ["Administrador"] },
     ],
+
   },
 ];
 
