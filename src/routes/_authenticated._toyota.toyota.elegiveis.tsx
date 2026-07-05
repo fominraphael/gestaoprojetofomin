@@ -693,6 +693,9 @@ interface VeiculoEnvio {
   checklist_itens: Record<string, "" | "✓" | "N/A"> | null;
   codigo_tcuv: string | null;
   dossie_pdf_path: string | null;
+  dossie_storage?: {
+    metadata: { size?: number; contentLength?: number } | null;
+  } | null;
   posvendas_km: number | null;
   posvendas_finalizado_em: string | null;
   posvendas_finalizado_por: string | null;
@@ -715,6 +718,21 @@ function EnvioToyotaTab() {
   const [recusaMotivo, setRecusaMotivo] = useState("");
   const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
+  const obterTamanhoDossie = async (path: string): Promise<number> => {
+    const { data, error } = await supabase.storage
+      .from("documentos")
+      .createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) return 0;
+    try {
+      const res = await fetch(data.signedUrl, { method: "HEAD" });
+      const contentLength = res.headers.get("content-length");
+      return contentLength ? Number(contentLength) : 0;
+    } catch (e) {
+      console.warn("[EnvioToyotaTab] falha ao consultar tamanho do dossiê", e);
+      return 0;
+    }
+  };
+
   const carregar = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -728,7 +746,16 @@ function EnvioToyotaTab() {
       console.error("[EnvioToyotaTab] carregar", error);
       toast.error(`Falha ao carregar envios: ${error.message}`);
     }
-    setVeiculos((data ?? []) as unknown as VeiculoEnvio[]);
+    const base = (data ?? []) as unknown as VeiculoEnvio[];
+    const comTamanho = await Promise.all(
+      base.map(async (v) => ({
+        ...v,
+        dossie_storage: v.dossie_pdf_path
+          ? { metadata: { size: await obterTamanhoDossie(v.dossie_pdf_path) } }
+          : null,
+      })),
+    );
+    setVeiculos(comTamanho);
     setLoading(false);
   };
 
@@ -1060,7 +1087,11 @@ function VeiculoEnvioCard({
   const healthPresente = !!v.health_check_pdf_path;
   const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
-  const dossieOk = !!v.dossie_pdf_path;
+  const dossieBytes = Number(
+    v.dossie_storage?.metadata?.size ?? v.dossie_storage?.metadata?.contentLength ?? 0,
+  );
+  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes > MAX_DOSSIE_BYTES;
+  const dossieOk = !!v.dossie_pdf_path && !dossieAcimaLimite;
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
@@ -1075,6 +1106,10 @@ function VeiculoEnvioCard({
           <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
           {dossieOk ? (
             <Badge className="bg-emerald-100 text-emerald-700">Dossiê gerado</Badge>
+          ) : dossieAcimaLimite ? (
+            <Badge variant="outline" className="border-red-300 text-red-700">
+              Dossiê acima de 3MB
+            </Badge>
           ) : (
             <Badge variant="outline" className="border-amber-300 text-amber-700">
               Dossiê pendente
@@ -1155,11 +1190,11 @@ function VeiculoEnvioCard({
             )}
             {gerando
               ? "Gerando..."
-              : dossieOk
+              : v.dossie_pdf_path
                 ? "Regerar Dossiê"
                 : "Gerar Dossiê"}
           </Button>
-          {dossieOk && (
+          {!!v.dossie_pdf_path && (
             <Button
               size="sm"
               variant="secondary"
@@ -1205,7 +1240,9 @@ function VeiculoEnvioCard({
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">
-            Gere o Dossiê para liberar o envio final e o Código TCUV.
+            {dossieAcimaLimite
+              ? `Dossiê atual tem ${(dossieBytes / 1024 / 1024).toFixed(1)}MB. Regerar é obrigatório para liberar o envio final.`
+              : "Gere o Dossiê para liberar o envio final e o Código TCUV."}
           </span>
         )}
       </div>
