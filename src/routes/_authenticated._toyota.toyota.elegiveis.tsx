@@ -718,6 +718,21 @@ function EnvioToyotaTab() {
   const [recusaMotivo, setRecusaMotivo] = useState("");
   const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
+  const obterTamanhoDossie = async (path: string): Promise<number> => {
+    const { data, error } = await supabase.storage
+      .from("documentos")
+      .createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) return 0;
+    try {
+      const res = await fetch(data.signedUrl, { method: "HEAD" });
+      const contentLength = res.headers.get("content-length");
+      return contentLength ? Number(contentLength) : 0;
+    } catch (e) {
+      console.warn("[EnvioToyotaTab] falha ao consultar tamanho do dossiê", e);
+      return 0;
+    }
+  };
+
   const carregar = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -732,32 +747,15 @@ function EnvioToyotaTab() {
       toast.error(`Falha ao carregar envios: ${error.message}`);
     }
     const base = (data ?? []) as unknown as VeiculoEnvio[];
-    const paths = base.map((v) => v.dossie_pdf_path).filter(Boolean) as string[];
-    let tamanhos = new Map<string, number>();
-    if (paths.length > 0) {
-      const { data: objetos, error: objErr } = await supabase
-        .schema("storage")
-        .from("objects")
-        .select("name,metadata")
-        .eq("bucket_id", "documentos")
-        .in("name", paths);
-      if (objErr) {
-        console.warn("[EnvioToyotaTab] falha ao consultar tamanho dos dossiês", objErr);
-      } else {
-        tamanhos = new Map(
-          (objetos ?? []).map((obj) => {
-            const meta = obj.metadata as { size?: number; contentLength?: number } | null;
-            return [obj.name as string, Number(meta?.size ?? meta?.contentLength ?? 0)] as const;
-          }),
-        );
-      }
-    }
-    setVeiculos(base.map((v) => ({
-      ...v,
-      dossie_storage: v.dossie_pdf_path
-        ? { metadata: { size: tamanhos.get(v.dossie_pdf_path) ?? 0 } }
-        : null,
-    })));
+    const comTamanho = await Promise.all(
+      base.map(async (v) => ({
+        ...v,
+        dossie_storage: v.dossie_pdf_path
+          ? { metadata: { size: await obterTamanhoDossie(v.dossie_pdf_path) } }
+          : null,
+      })),
+    );
+    setVeiculos(comTamanho);
     setLoading(false);
   };
 
