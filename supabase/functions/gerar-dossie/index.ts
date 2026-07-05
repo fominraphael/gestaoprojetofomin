@@ -1,0 +1,231 @@
+// Edge Function: gerar-dossie
+// Mescla checklist + laudo cautelar + health check de um veículo, comprime via
+// iLovePDF se necessário e salva em storage atualizando dossie_pdf_path.
+// Chamada em fire-and-forget a partir do frontend (Pós-Vendas → Análise Central).
+
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
+
+const MAX_DOSSIE_BYTES = 2.8 * 1024 * 1024; // 2.8 MB — dispara compressão externa
+const BUCKET = "documentos";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+interface Payload {
+  veiculo_id: string;
+}
+
+async function baixar(supabase: ReturnType<typeof createClient>, path: string): Promise<ArrayBuffer | null> {
+  const { data, error } = await supabase.storage.from(BUCKET).download(path);
+  if (error || !data) {
+    console.warn("Falha ao baixar", path, error?.message);
+    return null;
+  }
+  return await data.arrayBuffer();
+}
+
+async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
+  const out = await PDFDocument.create();
+  for (const buf of pdfs) {
+    try {
+      const src = await PDFDocument.load(buf, { ignoreEncryption: true });
+      const pages = await out.copyPages(src, src.getPageIndices());
+      pages.forEach((p) => out.addPage(p));
+    } catch (e) {
+      console.warn("PDF inválido ignorado:", (e as Error).message);
+    }
+  }
+  out.setTitle("");
+  out.setAuthor("");
+  out.setSubject("");
+  out.setKeywords([]);
+  out.setProducer("");
+  out.setCreator("");
+  return await out.save({ useObjectStreams: true, addDefaultPage: false });
+}
+
+/**
+ * Compressão via iLovePDF (fluxo: auth → start → upload → process → download).
+ * Requer PDF_COMPRESSION_API_KEY (project public key da iLovePDF).
+ * Se a env não estiver configurada, retorna o buffer original sem falhar.
+ */
+async function comprimirIlovePdf(bytes: Uint8Array): Promise<Uint8Array> {
+  const apiKey = Deno.env.get("PDF_COMPRESSION_API_KEY");
+  if (!apiKey) {
+    console.warn("PDF_COMPRESSION_API_KEY ausente — pulando compressão externa.");
+    return bytes;
+  }
+
+  try {
+    // 1) auth → obtém JWT
+    const authRes = await fetch("https://api.ilovepdf.com/v1/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ public_key: apiKey }),
+    });
+    if (!authRes.ok) throw new Error(`auth ${authRes.status}`);
+    const { token } = (await authRes.json()) as { token: string };
+
+    // 2) start compress → obtém server + task
+    const startRes = await fetch("https://api.ilovepdf.com/v1/start/compress", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!startRes.ok) throw new Error(`start ${startRes.status}`);
+    const { server, task } = (await startRes.json()) as {
+      server: string;
+      task: string;
+    };
+
+    // 3) upload
+    const form = new FormData();
+    form.append("task", task);
+    form.append("file", new Blob([bytes], { type: "application/pdf" }), "dossie.pdf");
+    const upRes = await fetch(`https://${server}/v1/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (!upRes.ok) throw new Error(`upload ${upRes.status}`);
+    const { server_filename } = (await upRes.json()) as { server_filename: string };
+
+    // 4) process
+    const procRes = await fetch(`https://${server}/v1/process`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        task,
+        tool: "compress",
+        compression_level: "recommended",
+        files: [{ server_filename, filename: "dossie.pdf" }],
+      }),
+    });
+    if (!procRes.ok) throw new Error(`process ${procRes.status}`);
+
+    // 5) download
+    const dlRes = await fetch(`https://${server}/v1/download/${task}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!dlRes.ok) throw new Error(`download ${dlRes.status}`);
+    const finalBuf = new Uint8Array(await dlRes.arrayBuffer());
+    console.log(
+      `iLovePDF: ${bytes.byteLength} → ${finalBuf.byteLength} bytes`,
+    );
+    return finalBuf;
+  } catch (e) {
+    console.error("Falha na compressão iLovePDF:", (e as Error).message);
+    return bytes;
+  }
+}
+
+async function processar(veiculo_id: string) {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  const { data: v, error } = await supabase
+    .from("toyota_estoque_veiculos")
+    .select(
+      "id,checklist_pdf_path,laudo_arquivo_path,laudo_url,health_check_pdf_path",
+    )
+    .eq("id", veiculo_id)
+    .maybeSingle();
+  if (error || !v) {
+    console.error("Veículo não encontrado:", error?.message);
+    return;
+  }
+
+  const pdfs: ArrayBuffer[] = [];
+  if (v.checklist_pdf_path) {
+    const b = await baixar(supabase, v.checklist_pdf_path);
+    if (b) pdfs.push(b);
+  }
+  if (v.laudo_arquivo_path) {
+    const b = await baixar(supabase, v.laudo_arquivo_path);
+    if (b) pdfs.push(b);
+  } else if (v.laudo_url) {
+    try {
+      const r = await fetch(v.laudo_url);
+      if (r.ok) pdfs.push(await r.arrayBuffer());
+    } catch (e) {
+      console.warn("Falha baixando laudo_url:", (e as Error).message);
+    }
+  }
+  if (v.health_check_pdf_path) {
+    const b = await baixar(supabase, v.health_check_pdf_path);
+    if (b) pdfs.push(b);
+  }
+  if (pdfs.length === 0) {
+    console.warn("Nenhum PDF disponível para veículo", veiculo_id);
+    return;
+  }
+
+  let merged = await mesclar(pdfs);
+  console.log(`Merge: ${merged.byteLength} bytes`);
+
+  if (merged.byteLength > MAX_DOSSIE_BYTES) {
+    merged = await comprimirIlovePdf(merged);
+  }
+
+  const path = `toyota/dossies/${veiculo_id}/${Date.now()}.pdf`;
+  const { error: upErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, new Blob([merged], { type: "application/pdf" }), {
+      upsert: true,
+      contentType: "application/pdf",
+    });
+  if (upErr) {
+    console.error("Upload falhou:", upErr.message);
+    return;
+  }
+  const { error: updErr } = await supabase
+    .from("toyota_estoque_veiculos")
+    .update({
+      dossie_pdf_path: path,
+      dossie_enviado_em: new Date().toISOString(),
+    })
+    .eq("id", veiculo_id);
+  if (updErr) console.error("Update falhou:", updErr.message);
+  else console.log("Dossiê pronto:", path);
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+  try {
+    const { veiculo_id } = (await req.json()) as Payload;
+    if (!veiculo_id) {
+      return new Response(JSON.stringify({ error: "veiculo_id ausente" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fire-and-forget no worker: responde 202 na hora, processa em background.
+    // deno-lint-ignore no-explicit-any
+    (globalThis as any).EdgeRuntime?.waitUntil?.(processar(veiculo_id));
+
+    return new Response(
+      JSON.stringify({ ok: true, veiculo_id, status: "processing" }),
+      {
+        status: 202,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  } catch (e) {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
