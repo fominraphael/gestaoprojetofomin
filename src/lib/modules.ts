@@ -19,10 +19,26 @@ import {
 
 
 
+/**
+ * Perfis específicos do módulo Toyota (definidos em `profiles.tipo_usuario`).
+ * Administrador tem acesso a tudo; demais perfis são restritos por rota.
+ */
+export type PerfilToyota = "Administrador" | "Preparador" | "Consultor Pós-Vendas" | "Outro";
+
+export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilToyota {
+  const t = (tipo ?? "").trim().toLowerCase();
+  if (t === "administrador") return "Administrador";
+  if (t === "preparador") return "Preparador";
+  if (t === "consultor pós-vendas" || t === "consultor pos-vendas" || t === "consultor de pós-vendas" || t === "consultor de pos-vendas") return "Consultor Pós-Vendas";
+  return "Outro";
+}
+
 export interface ModuleNavItem {
   to: string;
   label: string;
   icon: LucideIcon;
+  /** Perfis Toyota que podem enxergar este item. Admin do sistema (isAdmin) ignora. */
+  perfis?: PerfilToyota[];
 }
 
 export interface ModuleDef {
@@ -44,6 +60,7 @@ export interface ModuleDef {
   gradient?: string;
   iconBg?: string;
 }
+
 
 export const MODULES: ModuleDef[] = [
   {
@@ -86,15 +103,16 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
-      { to: "/toyota/painel-geral", label: "Painel Geral", icon: LayoutDashboard },
-      { to: "/toyota/painel", label: "Dashboard", icon: GitBranch },
-      { to: "/toyota/estoque/importar", label: "Importações", icon: Upload },
-      { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck },
-      { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck },
-      { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench },
-      { to: "/toyota/regras", label: "Regras do Sistema", icon: ListChecks },
-      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings },
+      { to: "/toyota/painel-geral", label: "Painel Geral", icon: LayoutDashboard, perfis: ["Administrador", "Preparador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/painel", label: "Dashboard", icon: GitBranch, perfis: ["Administrador", "Preparador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/estoque/importar", label: "Importações", icon: Upload, perfis: ["Administrador"] },
+      { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck, perfis: ["Administrador"] },
+      { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck, perfis: ["Administrador", "Preparador"] },
+      { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench, perfis: ["Administrador", "Consultor Pós-Vendas"] },
+      { to: "/toyota/regras", label: "Regras do Sistema", icon: ListChecks, perfis: ["Administrador"] },
+      { to: "/toyota/configuracoes", label: "Configurações", icon: Settings, perfis: ["Administrador"] },
     ],
+
   },
 ];
 
@@ -142,3 +160,34 @@ export function userCanAccess(
   }
   return isAdmin;
 }
+
+/**
+ * Retorna os nav items visíveis dado o perfil Toyota do usuário.
+ * Administradores do sistema (`isAdmin`) veem tudo, independente do perfil.
+ */
+export function navItemsForPerfil(
+  mod: ModuleDef,
+  isAdmin: boolean,
+  perfil: PerfilToyota,
+): ModuleNavItem[] {
+  const items = mod.navItems ?? [];
+  if (isAdmin || perfil === "Administrador") return items;
+  return items.filter((it) => !it.perfis || it.perfis.includes(perfil));
+}
+
+/** Retorna true se o perfil pode acessar a rota exata (usado por route guards). */
+export function perfilPodeAcessarRota(
+  pathname: string,
+  isAdmin: boolean,
+  perfil: PerfilToyota,
+): boolean {
+  if (isAdmin || perfil === "Administrador") return true;
+  const mod = findModuleByPath(pathname);
+  if (!mod) return true;
+  const item = (mod.navItems ?? []).find(
+    (n) => pathname === n.to || pathname.startsWith(n.to + "/"),
+  );
+  if (!item || !item.perfis) return true;
+  return item.perfis.includes(perfil);
+}
+

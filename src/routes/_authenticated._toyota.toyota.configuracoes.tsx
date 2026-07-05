@@ -34,6 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { DiagnosticoCamposTemplate } from "@/components/toyota/DiagnosticoCamposTemplate";
+import { Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/_toyota/toyota/configuracoes")({
   errorComponent: ModuleErrorBoundary,
@@ -55,11 +57,26 @@ interface Patio {
   filial_id: string | null;
 }
 
+interface UsuarioSimples {
+  id: string;
+  username: string | null;
+  tipo_usuario: string | null;
+  ativo: boolean;
+}
+
+
 function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [patios, setPatios] = useState<Patio[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioSimples[]>([]);
+  const [vinculos, setVinculos] = useState<{ user_id: string; filial_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [vincularFilial, setVincularFilial] = useState<Filial | null>(null);
+  const [vincularSelecionados, setVincularSelecionados] = useState<Set<string>>(new Set());
+  const [vincularBusca, setVincularBusca] = useState("");
+
 
   const [filialModalOpen, setFilialModalOpen] = useState(false);
   const [editingFilial, setEditingFilial] = useState<Filial | null>(null);
@@ -87,7 +104,7 @@ function ToyotaConfiguracoes() {
   async function carregar() {
     setLoading(true);
     try {
-      const [fRes, pRes] = await Promise.all([
+      const [fRes, pRes, uRes, vRes] = await Promise.all([
         supabase
           .from("toyota_filiais")
           .select("id, nome, dealer_number, nome_bi_toyota, ativo")
@@ -96,17 +113,72 @@ function ToyotaConfiguracoes() {
           .from("toyota_patios")
           .select("id, nome, ativo, filial_id")
           .order("nome"),
+        supabase
+          .from("profiles")
+          .select("id, username, tipo_usuario, ativo")
+          .order("username"),
+        supabase
+          .from("toyota_usuario_filial")
+          .select("user_id, filial_id"),
       ]);
       if (fRes.error) throw fRes.error;
       if (pRes.error) throw pRes.error;
+      if (uRes.error) throw uRes.error;
+      if (vRes.error) throw vRes.error;
       setFiliais((fRes.data ?? []) as Filial[]);
       setPatios((pRes.data ?? []) as Patio[]);
+      setUsuarios((uRes.data ?? []) as UsuarioSimples[]);
+      setVinculos((vRes.data ?? []) as { user_id: string; filial_id: string }[]);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao carregar dados.");
     } finally {
       setLoading(false);
     }
   }
+
+  function abrirVinculos(f: Filial) {
+    const selecionados = new Set(
+      vinculos.filter((v) => v.filial_id === f.id).map((v) => v.user_id),
+    );
+    setVincularFilial(f);
+    setVincularSelecionados(selecionados);
+    setVincularBusca("");
+  }
+
+  async function salvarVinculos() {
+    if (!vincularFilial) return;
+    setSaving(true);
+    try {
+      const atuais = new Set(
+        vinculos.filter((v) => v.filial_id === vincularFilial.id).map((v) => v.user_id),
+      );
+      const paraAdicionar = [...vincularSelecionados].filter((id) => !atuais.has(id));
+      const paraRemover = [...atuais].filter((id) => !vincularSelecionados.has(id));
+
+      if (paraAdicionar.length > 0) {
+        const { error } = await supabase.from("toyota_usuario_filial").insert(
+          paraAdicionar.map((user_id) => ({ user_id, filial_id: vincularFilial.id })),
+        );
+        if (error) throw error;
+      }
+      if (paraRemover.length > 0) {
+        const { error } = await supabase
+          .from("toyota_usuario_filial")
+          .delete()
+          .eq("filial_id", vincularFilial.id)
+          .in("user_id", paraRemover);
+        if (error) throw error;
+      }
+      toast.success("Vínculos atualizados.");
+      setVincularFilial(null);
+      await carregar();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao salvar vínculos.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
 
   useEffect(() => {
     carregar();
@@ -259,6 +331,7 @@ function ToyotaConfiguracoes() {
                 <TableHead>Dealer Number</TableHead>
                 <TableHead>Nome BI Toyota</TableHead>
                 <TableHead>Pátios</TableHead>
+                <TableHead>Usuários</TableHead>
                 <TableHead>Status</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -266,25 +339,41 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filiais.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Nenhuma filial cadastrada.
                   </TableCell>
                 </TableRow>
               ) : (
                 filiais.map((f) => {
                   const count = patios.filter((p) => p.filial_id === f.id).length;
+                  const usuariosCount = vinculos.filter((v) => v.filial_id === f.id).length;
                   return (
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
                       <TableCell className="font-mono text-xs">{f.dealer_number ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{f.nome_bi_toyota ?? "—"}</TableCell>
                       <TableCell>{count}</TableCell>
+                      <TableCell>
+                        {isAdmin ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => abrirVinculos(f)}
+                            className="h-7 gap-1.5"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            {usuariosCount} vinculado{usuariosCount === 1 ? "" : "s"}
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{usuariosCount}</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={f.ativo ? "default" : "secondary"}>
                           {f.ativo ? "Ativo" : "Inativo"}
@@ -301,6 +390,7 @@ function ToyotaConfiguracoes() {
                             </Button>
                           </div>
                         </TableCell>
+
                       )}
                     </TableRow>
                   );
@@ -492,11 +582,96 @@ function ToyotaConfiguracoes() {
         </DialogContent>
       </Dialog>
 
+      {/* Modal Vincular Usuários à Filial */}
+      <Dialog open={!!vincularFilial} onOpenChange={(v) => !v && setVincularFilial(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Vincular usuários — {vincularFilial?.nome ?? ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Preparadores e Consultores de Pós-Vendas só verão carros das
+              filiais em que estão vinculados. Administradores veem tudo,
+              independentemente destes vínculos.
+            </p>
+            <Input
+              placeholder="Buscar por usuário..."
+              value={vincularBusca}
+              onChange={(e) => setVincularBusca(e.target.value)}
+            />
+            <div className="max-h-80 overflow-y-auto border rounded-md divide-y">
+              {usuarios
+                .filter((u) => {
+                  const q = vincularBusca.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    (u.username ?? "").toLowerCase().includes(q) ||
+                    (u.tipo_usuario ?? "").toLowerCase().includes(q)
+                  );
+                })
+                .map((u) => {
+                  const checked = vincularSelecionados.has(u.id);
+                  return (
+                    <label
+                      key={u.id}
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          setVincularSelecionados((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(u.id);
+                            else next.delete(u.id);
+                            return next;
+                          });
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {u.username ?? "—"}
+                          {!u.ativo && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              (inativo)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {u.tipo_usuario ?? "—"}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              {usuarios.length === 0 && (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  Nenhum usuário encontrado.
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {vincularSelecionados.size} usuário{vincularSelecionados.size === 1 ? "" : "s"} selecionado{vincularSelecionados.size === 1 ? "" : "s"}.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVincularFilial(null)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarVinculos} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar vínculos"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {isAdmin && <TemplatesChecklistCard />}
-      
+
     </div>
   );
 }
+
 
 // ============================================================================
 // Templates de Check-list (Upload de .txt com Base64 pré-marcado)
