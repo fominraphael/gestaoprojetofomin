@@ -582,11 +582,96 @@ function ToyotaConfiguracoes() {
         </DialogContent>
       </Dialog>
 
+      {/* Modal Vincular Usuários à Filial */}
+      <Dialog open={!!vincularFilial} onOpenChange={(v) => !v && setVincularFilial(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Vincular usuários — {vincularFilial?.nome ?? ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Preparadores e Consultores de Pós-Vendas só verão carros das
+              filiais em que estão vinculados. Administradores veem tudo,
+              independentemente destes vínculos.
+            </p>
+            <Input
+              placeholder="Buscar por usuário..."
+              value={vincularBusca}
+              onChange={(e) => setVincularBusca(e.target.value)}
+            />
+            <div className="max-h-80 overflow-y-auto border rounded-md divide-y">
+              {usuarios
+                .filter((u) => {
+                  const q = vincularBusca.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    (u.username ?? "").toLowerCase().includes(q) ||
+                    (u.tipo_usuario ?? "").toLowerCase().includes(q)
+                  );
+                })
+                .map((u) => {
+                  const checked = vincularSelecionados.has(u.id);
+                  return (
+                    <label
+                      key={u.id}
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          setVincularSelecionados((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(u.id);
+                            else next.delete(u.id);
+                            return next;
+                          });
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {u.username ?? "—"}
+                          {!u.ativo && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              (inativo)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {u.tipo_usuario ?? "—"}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              {usuarios.length === 0 && (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  Nenhum usuário encontrado.
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {vincularSelecionados.size} usuário{vincularSelecionados.size === 1 ? "" : "s"} selecionado{vincularSelecionados.size === 1 ? "" : "s"}.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVincularFilial(null)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarVinculos} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar vínculos"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {isAdmin && <TemplatesChecklistCard />}
-      
+
     </div>
   );
 }
+
 
 // ============================================================================
 // Templates de Check-list (Upload de .txt com Base64 pré-marcado)
