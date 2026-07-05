@@ -331,6 +331,7 @@ function ToyotaConfiguracoes() {
                 <TableHead>Dealer Number</TableHead>
                 <TableHead>Nome BI Toyota</TableHead>
                 <TableHead>Pátios</TableHead>
+                <TableHead>Usuários</TableHead>
                 <TableHead>Status</TableHead>
                 {isAdmin && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
@@ -338,25 +339,41 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filiais.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Nenhuma filial cadastrada.
                   </TableCell>
                 </TableRow>
               ) : (
                 filiais.map((f) => {
                   const count = patios.filter((p) => p.filial_id === f.id).length;
+                  const usuariosCount = vinculos.filter((v) => v.filial_id === f.id).length;
                   return (
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
                       <TableCell className="font-mono text-xs">{f.dealer_number ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{f.nome_bi_toyota ?? "—"}</TableCell>
                       <TableCell>{count}</TableCell>
+                      <TableCell>
+                        {isAdmin ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => abrirVinculos(f)}
+                            className="h-7 gap-1.5"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            {usuariosCount} vinculado{usuariosCount === 1 ? "" : "s"}
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{usuariosCount}</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={f.ativo ? "default" : "secondary"}>
                           {f.ativo ? "Ativo" : "Inativo"}
@@ -373,6 +390,7 @@ function ToyotaConfiguracoes() {
                             </Button>
                           </div>
                         </TableCell>
+
                       )}
                     </TableRow>
                   );
