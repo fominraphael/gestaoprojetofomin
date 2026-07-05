@@ -1140,20 +1140,38 @@ function VeiculoEnvioCard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onGerar}
-          disabled={gerando || !podeGerar}
-          title={podeGerar ? undefined : "Anexe Laudo e Health Check antes de gerar o Dossiê"}
-        >
-          {gerando ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <FileStack className="w-3.5 h-3.5" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onGerar}
+            disabled={gerando || !podeGerar}
+            title={podeGerar ? undefined : "Anexe Laudo e Health Check antes de gerar o Dossiê"}
+          >
+            {gerando ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <FileStack className="w-3.5 h-3.5" />
+            )}
+            {gerando
+              ? "Gerando..."
+              : dossieOk
+                ? "Regerar Dossiê"
+                : "Gerar Dossiê"}
+          </Button>
+          {dossieOk && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onVisualizar}
+              disabled={gerando}
+              title="Abrir o dossiê comprimido"
+            >
+              <FileStack className="w-3.5 h-3.5" />
+              Visualizar Dossiê
+            </Button>
           )}
-          {dossieOk ? "Regerar Dossiê" : "Gerar Dossiê"}
-        </Button>
+        </div>
 
         {dossieOk ? (
           <div className="flex flex-wrap items-center gap-2">
