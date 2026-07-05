@@ -1037,6 +1037,7 @@ interface VeiculoEnvioCardProps {
   tcuvValue: string;
   onTcuvChange: (val: string) => void;
   onGerar: () => void;
+  onVisualizar: () => void;
   onSalvarTcuv: () => void;
   onRecusar: () => void;
   onRefresh: () => void | Promise<void>;
@@ -1049,6 +1050,7 @@ function VeiculoEnvioCard({
   tcuvValue,
   onTcuvChange,
   onGerar,
+  onVisualizar,
   onSalvarTcuv,
   onRecusar,
   onRefresh,
