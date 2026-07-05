@@ -140,7 +140,7 @@ async function processar(veiculo_id: string) {
   console.log(`Merge: ${merged.byteLength} bytes`);
 
   if (merged.byteLength > MAX_DOSSIE_BYTES) {
-    merged = await comprimirIlovePdf(merged);
+    merged = await comprimirCloudmersive(merged);
   }
 
   const path = `toyota/dossies/${veiculo_id}/${Date.now()}.pdf`;
