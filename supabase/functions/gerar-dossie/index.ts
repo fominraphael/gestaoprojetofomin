@@ -1,13 +1,14 @@
 // Edge Function: gerar-dossie
 // Mescla checklist + laudo cautelar + health check de um veículo, comprime via
-// iLovePDF se necessário e salva em storage atualizando dossie_pdf_path.
+// Cloudmersive se necessário e salva em storage atualizando dossie_pdf_path.
 // Chamada em fire-and-forget a partir do frontend (Pós-Vendas → Análise Central).
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
-const MAX_DOSSIE_BYTES = 3040870; // ~2.9 MB — dispara compressão externa
+const MAX_DOSSIE_BYTES = 2900000; // 2.9 MB — dispara compressão externa
+const STORAGE_MAX_DOSSIE_BYTES = 3145728; // 3 MB — limite de segurança antes do upload
 const BUCKET = "documentos";
 
 const corsHeaders = {
@@ -57,17 +58,16 @@ async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
 async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   const cloudmersiveKey = Deno.env.get("CLOUDMERSIVE_API_KEY");
   if (!cloudmersiveKey) {
-    console.warn("CLOUDMERSIVE_API_KEY ausente — pulando compressão externa.");
+    console.error("ERRO CRÍTICO: Chave CLOUDMERSIVE_API_KEY não encontrada nos Secrets.");
     return bytes;
   }
 
   try {
+    console.log(`Iniciando compressão. Tamanho original: ${bytes.byteLength} bytes`);
+
+    const file = new File([bytes], "dossie.pdf", { type: "application/pdf" });
     const formData = new FormData();
-    formData.append(
-      "inputFile",
-      new Blob([bytes], { type: "application/pdf" }),
-      "dossie.pdf",
-    );
+    formData.append("inputFile", file);
 
     const response = await fetch(
       "https://api.cloudmersive.com/convert/edit/pdf/optimize/document",
@@ -81,14 +81,15 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     if (response.ok) {
       const finalBuf = new Uint8Array(await response.arrayBuffer());
       console.log(
-        `Cloudmersive: ${bytes.byteLength} → ${finalBuf.byteLength} bytes`,
+        `Compressão concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
       );
       return finalBuf;
     }
-    console.warn("Falha na compressão da Cloudmersive. Status:", response.status);
+    const errorText = await response.text();
+    console.error(`Falha na API Cloudmersive. HTTP ${response.status}:`, errorText);
     return bytes;
   } catch (error) {
-    console.error("Erro ao contactar a API de compressão:", (error as Error).message);
+    console.error("Erro na execução do fetch para a Cloudmersive:", error);
     return bytes;
   }
 }
@@ -141,6 +142,12 @@ async function processar(veiculo_id: string) {
 
   if (merged.byteLength > MAX_DOSSIE_BYTES) {
     merged = await comprimirCloudmersive(merged);
+  }
+
+  if (merged.byteLength > STORAGE_MAX_DOSSIE_BYTES) {
+    throw new Error(
+      "O Dossiê gerado excedeu o limite máximo de 3MB. Reduza o tamanho das fotos do Laudo Cautelar e tente novamente.",
+    );
   }
 
   const path = `toyota/dossies/${veiculo_id}/${Date.now()}.pdf`;
