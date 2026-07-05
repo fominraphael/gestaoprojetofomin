@@ -74,11 +74,13 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
       new Blob([buf], { type: "application/pdf" }),
       "dossie.pdf",
     );
+    fd.append("quality", quality);
     const r = await fetch("https://api.cloudmersive.com/convert/edit/pdf/optimize/reduce-file-size", {
       method: "POST",
       headers: {
         Apikey: cloudmersiveKey!,
         quality,
+        Accept: "application/octet-stream",
       },
       body: fd,
     });
@@ -99,7 +101,8 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
 
   let melhor = bytes;
   const qualidades = ["0.3", "0.15", "0.08", "0.03", "0.0"];
-  for (const quality of qualidades) {
+  for (const [index, quality] of qualidades.entries()) {
+    if (index > 0) await new Promise((resolve) => setTimeout(resolve, 1100));
     const comprimido = await chamar(melhor, quality);
     console.log(
       `Cloudmersive quality=${quality}: entrada=${melhor.byteLength} bytes, saída=${comprimido.byteLength} bytes`,
@@ -115,6 +118,7 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   }
 
   for (let tentativa = 1; tentativa <= 3 && melhor.byteLength > STORAGE_MAX_DOSSIE_BYTES; tentativa++) {
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     const antes = melhor.byteLength;
     const comprimido = await chamar(melhor, "0.0");
     console.log(
