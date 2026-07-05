@@ -19,10 +19,26 @@ import {
 
 
 
+/**
+ * Perfis específicos do módulo Toyota (definidos em `profiles.tipo_usuario`).
+ * Administrador tem acesso a tudo; demais perfis são restritos por rota.
+ */
+export type PerfilToyota = "Administrador" | "Preparador" | "Consultor Pós-Vendas" | "Outro";
+
+export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilToyota {
+  const t = (tipo ?? "").trim().toLowerCase();
+  if (t === "administrador") return "Administrador";
+  if (t === "preparador") return "Preparador";
+  if (t === "consultor pós-vendas" || t === "consultor pos-vendas" || t === "consultor de pós-vendas" || t === "consultor de pos-vendas") return "Consultor Pós-Vendas";
+  return "Outro";
+}
+
 export interface ModuleNavItem {
   to: string;
   label: string;
   icon: LucideIcon;
+  /** Perfis Toyota que podem enxergar este item. Admin do sistema (isAdmin) ignora. */
+  perfis?: PerfilToyota[];
 }
 
 export interface ModuleDef {
@@ -44,6 +60,7 @@ export interface ModuleDef {
   gradient?: string;
   iconBg?: string;
 }
+
 
 export const MODULES: ModuleDef[] = [
   {
