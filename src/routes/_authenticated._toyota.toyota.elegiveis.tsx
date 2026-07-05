@@ -1266,13 +1266,10 @@ function VeiculoEnvioCard({
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">
-            {dossieAcimaLimite
-              ? `Dossiê atual tem ${formatarBytes(dossieBytes)}. Regerar é obrigatório para liberar o envio final.`
-              : v.dossie_pdf_path
-                ? "Não foi possível validar o tamanho do dossiê. Clique em atualizar antes de concluir."
-              : "Gere o Dossiê para liberar o envio final e o Código TCUV."}
+            Gere o Dossiê para liberar o envio final e o Código TCUV.
           </span>
         )}
+
       </div>
     </div>
   );
