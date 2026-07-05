@@ -1113,12 +1113,8 @@ function VeiculoEnvioCard({
   const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
   const dossieBytes = v.tamanhos?.dossie ?? null;
-  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes !== null && dossieBytes > MAX_DOSSIE_BYTES;
-  const dossieOk =
-    !!v.dossie_pdf_path &&
-    dossieBytes !== null &&
-    dossieBytes > 0 &&
-    dossieBytes <= MAX_DOSSIE_BYTES;
+  const dossieOk = !!v.dossie_pdf_path;
+
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
