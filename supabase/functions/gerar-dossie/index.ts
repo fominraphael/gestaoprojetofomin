@@ -7,7 +7,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
-const MAX_DOSSIE_BYTES = 2.8 * 1024 * 1024; // 2.8 MB — dispara compressão externa
+const MAX_DOSSIE_BYTES = 3040870; // ~2.9 MB — dispara compressão externa
 const BUCKET = "documentos";
 
 const corsHeaders = {
@@ -56,10 +56,18 @@ async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
  * Se a env não estiver configurada, retorna o buffer original sem falhar.
  */
 async function comprimirIlovePdf(bytes: Uint8Array): Promise<Uint8Array> {
-  const apiKey = Deno.env.get("PDF_COMPRESSION_API_KEY");
-  if (!apiKey) {
-    console.warn("PDF_COMPRESSION_API_KEY ausente — pulando compressão externa.");
+  const publicKey =
+    Deno.env.get("ILOVEPDF_PUBLIC_KEY") ??
+    Deno.env.get("PDF_COMPRESSION_API_KEY");
+  const secretKey = Deno.env.get("ILOVEPDF_SECRET_KEY");
+  if (!publicKey) {
+    console.warn("ILOVEPDF_PUBLIC_KEY ausente — pulando compressão externa.");
     return bytes;
+  }
+  if (secretKey) {
+    // secretKey só é usada para assinar JWT localmente (opcional); a auth
+    // via /v1/auth com public_key é suficiente para o fluxo REST.
+    console.log("ILOVEPDF_SECRET_KEY presente (não requerida no fluxo REST).");
   }
 
   try {
@@ -67,7 +75,7 @@ async function comprimirIlovePdf(bytes: Uint8Array): Promise<Uint8Array> {
     const authRes = await fetch("https://api.ilovepdf.com/v1/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ public_key: apiKey }),
+      body: JSON.stringify({ public_key: publicKey }),
     });
     if (!authRes.ok) throw new Error(`auth ${authRes.status}`);
     const { token } = (await authRes.json()) as { token: string };
