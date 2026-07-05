@@ -493,7 +493,7 @@ function ToyotaConfiguracoes() {
       </Dialog>
 
       {isAdmin && <TemplatesChecklistCard />}
-      {isAdmin && <IntegracaoIlovePdfCard />}
+      
     </div>
   );
 }
