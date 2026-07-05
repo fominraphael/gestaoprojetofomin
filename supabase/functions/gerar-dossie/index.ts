@@ -106,6 +106,17 @@ async function processar(veiculo_id: string) {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  const { error: clearErr } = await supabase
+    .from("toyota_estoque_veiculos")
+    .update({
+      dossie_pdf_path: null,
+      dossie_enviado_em: null,
+    })
+    .eq("id", veiculo_id);
+  if (clearErr) {
+    console.error("Falha ao limpar dossiê anterior antes da regeração:", clearErr.message);
+  }
+
   const { data: v, error } = await supabase
     .from("toyota_estoque_veiculos")
     .select(
@@ -192,8 +203,14 @@ serve(async (req) => {
     }
 
     // Fire-and-forget no worker: responde 202 na hora, processa em background.
+    // Importante: erros precisam ser capturados aqui para aparecerem nos logs;
+    // caso contrário a tela pode parecer que manteve o arquivo antigo.
     // deno-lint-ignore no-explicit-any
-    (globalThis as any).EdgeRuntime?.waitUntil?.(processar(veiculo_id));
+    (globalThis as any).EdgeRuntime?.waitUntil?.(
+      processar(veiculo_id).catch((error) => {
+        console.error("Falha ao gerar dossiê em segundo plano:", error?.message ?? error);
+      }),
+    );
 
     return new Response(
       JSON.stringify({ ok: true, veiculo_id, status: "processing" }),
