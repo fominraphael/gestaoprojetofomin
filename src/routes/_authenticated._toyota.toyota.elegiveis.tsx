@@ -712,7 +712,7 @@ interface VeiculoEnvio {
   } | null;
 }
 
-const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
+
 
 function formatarBytes(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return "Tamanho indisponível";
