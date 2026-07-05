@@ -731,9 +731,10 @@ function IntegracaoIlovePdfCard() {
           </p>
         </div>
 
-        <presentation-actions>
-          <presentation-open-backend>Abrir Backend</presentation-open-backend>
-        </presentation-actions>
+        <p className="text-xs text-muted-foreground">
+          O painel de secrets fica no <strong>Backend</strong> do projeto
+          (menu lateral do editor Lovable).
+        </p>
       </CardContent>
     </Card>
   );
