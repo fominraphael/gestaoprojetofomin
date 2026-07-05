@@ -803,101 +803,68 @@ function EnvioToyotaTab() {
   async function gerarDossie(v: VeiculoEnvio) {
     setGerando(v.id);
     try {
-      const { mesclarPdfs } = await import("@/lib/pdf-utils");
-      const pdfs: ArrayBuffer[] = [];
-
-      // 1º) Check-list — SEMPRE preenche sobre o Template Oficial (TCUV/TSIM)
-      //     carimbando "X" em todas as checkboxes (modo homologação).
-      let clBytes: ArrayBuffer | null = null;
-      if (!clBytes) {
-        try {
-          const cl = await gerarPdfChecklist(v);
-          const buf = new ArrayBuffer(cl.byteLength);
-          new Uint8Array(buf).set(cl);
-          clBytes = buf;
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : "Falha ao gerar check-list.";
-          toast.error(msg);
-          return;
-        }
-      }
-      if (clBytes) pdfs.push(clBytes);
-
-      // 2º) Laudo Cautelar
-      if (v.laudo_arquivo_path) {
-        const b = await baixarBytes(v.laudo_arquivo_path);
-        if (b) pdfs.push(b);
-      } else if (v.laudo_url) {
-        const b = await baixarUrl(v.laudo_url);
-        if (b) pdfs.push(b);
-      }
-
-      // 3º) Health Check
-      if (v.health_check_pdf_path) {
-        const b = await baixarBytes(v.health_check_pdf_path);
-        if (b) pdfs.push(b);
-      }
-
-      if (pdfs.length === 0) {
-        toast.error("Nenhum documento disponível para gerar o dossiê.");
+      // Delega para a Edge Function `gerar-dossie`, que mescla os PDFs e
+      // aplica compressão MÁXIMA via Cloudmersive quando o arquivo passa de
+      // 3MB (mesma regra do fluxo automático disparado pelo Pós-Vendas).
+      const { error: invokeErr } = await supabase.functions.invoke(
+        "gerar-dossie",
+        { body: { veiculo_id: v.id } },
+      );
+      if (invokeErr) {
+        toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
+      toast.info("Gerando dossiê em segundo plano (comprimindo se necessário)...");
 
-      let merged = await mesclarPdfs(pdfs);
-      // Compressão: se ultrapassar 3MB, refaz a mesclagem com object streams
-      // e sem metadados, tentando enquadrar no limite da Toyota.
-      if (merged.byteLength > MAX_DOSSIE_BYTES) {
-        try {
-          const { PDFDocument } = await import("pdf-lib");
-          const compact = await PDFDocument.load(merged, { ignoreEncryption: true });
-          compact.setTitle("");
-          compact.setAuthor("");
-          compact.setSubject("");
-          compact.setKeywords([]);
-          compact.setProducer("");
-          compact.setCreator("");
-          merged = await compact.save({ useObjectStreams: true, addDefaultPage: false });
-        } catch (e) {
-          console.warn("Falha na compressão adicional:", e);
+      // Polling: aguarda a edge function atualizar dossie_pdf_path.
+      const dossieAntes = v.dossie_pdf_path;
+      const inicio = Date.now();
+      const TIMEOUT_MS = 90_000;
+      let novoPath: string | null = null;
+      while (Date.now() - inicio < TIMEOUT_MS) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const { data } = await supabase
+          .from("toyota_estoque_veiculos")
+          .select("dossie_pdf_path")
+          .eq("id", v.id)
+          .maybeSingle();
+        const atual = (data?.dossie_pdf_path as string | null) ?? null;
+        if (atual && atual !== dossieAntes) {
+          novoPath = atual;
+          break;
         }
       }
-
-      const excedeu = merged.byteLength > MAX_DOSSIE_BYTES;
-
-      const path = `toyota/dossies/${v.id}/${Date.now()}.pdf`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, new Blob([merged as unknown as BlobPart], { type: "application/pdf" }), {
-          upsert: true,
-          contentType: "application/pdf",
-        });
-      if (upErr) {
-        toast.error(upErr.message);
+      if (!novoPath) {
+        toast.warning(
+          "Ainda gerando... A tela será atualizada automaticamente quando ficar pronto.",
+        );
+        await carregar();
         return;
       }
-      await supabase
-        .from("toyota_estoque_veiculos")
-        .update({ dossie_pdf_path: path, dossie_enviado_em: new Date().toISOString() })
-        .eq("id", v.id);
 
       const { data: signed } = await supabase.storage
         .from("documentos")
-        .createSignedUrl(path, 600);
+        .createSignedUrl(novoPath, 600);
       if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-
-      const sizeMb = (merged.byteLength / 1024 / 1024).toFixed(2);
-      if (excedeu) {
-        toast.warning(
-          `Dossiê gerado (${sizeMb}MB) — excede o limite de 3MB da Toyota mesmo após compressão. Otimize os PDFs originais.`,
-        );
-      } else {
-        toast.success(`Dossiê gerado com sucesso (${sizeMb}MB).`);
-      }
+      toast.success("Dossiê gerado com sucesso.");
       await carregar();
     } finally {
       setGerando(null);
     }
   }
+
+  async function visualizarDossie(v: VeiculoEnvio) {
+    if (!v.dossie_pdf_path) return;
+    const { data: signed, error } = await supabase.storage
+      .from("documentos")
+      .createSignedUrl(v.dossie_pdf_path, 600);
+    if (error || !signed?.signedUrl) {
+      toast.error("Não foi possível abrir o dossiê.");
+      return;
+    }
+    window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
 
   async function salvarTcuv(v: VeiculoEnvio) {
     const codigo = (tcuvInput[v.id] ?? "").trim();
