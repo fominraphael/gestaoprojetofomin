@@ -642,6 +642,35 @@ export type Database = {
           },
         ]
       }
+      toyota_usuario_filial: {
+        Row: {
+          created_at: string
+          filial_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filial_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filial_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toyota_usuario_filial_filial_id_fkey1"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       toyota_usuario_patio: {
         Row: {
           created_at: string
@@ -811,6 +840,10 @@ export type Database = {
       }
     }
     Functions: {
+      has_filial: {
+        Args: { _filial_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
