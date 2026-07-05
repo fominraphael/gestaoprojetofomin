@@ -493,7 +493,7 @@ function ToyotaConfiguracoes() {
       </Dialog>
 
       {isAdmin && <TemplatesChecklistCard />}
-      {isAdmin && <IntegracaoIlovePdfCard />}
+      
     </div>
   );
 }
@@ -665,72 +665,6 @@ function TemplatesChecklistCard() {
   );
 }
 
-// ============================================================================
-// Card de integração Cloudmersive (compressão de dossiê)
-// ============================================================================
-function IntegracaoIlovePdfCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <FileText className="w-4 h-4" /> Integração Cloudmersive (compressão do Dossiê)
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <p className="text-muted-foreground">
-          Quando o dossiê mesclado ultrapassa 3&nbsp;MB, a Edge Function{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">gerar-dossie</code>{" "}
-          envia o arquivo para a API da Cloudmersive e salva somente a versão
-          comprimida dentro do limite Toyota. As chaves ficam guardadas como
-          <strong> secrets do backend</strong> —
-          nunca em banco ou no frontend.
-        </p>
-
-        <div className="rounded-md border bg-muted/40 p-3 space-y-2 text-xs">
-          <div>
-            <strong>Public Key</strong> → secret{" "}
-            <code className="rounded bg-background px-1 py-0.5">
-              CLOUDMERSIVE_API_KEY
-            </code>{" "}
-            <Badge variant="secondary" className="ml-1">Em uso</Badge>
-          </div>
-          <div>
-            <strong>Regra de segurança</strong> → se a Cloudmersive não retornar um
-            PDF abaixo de 3&nbsp;MB, o upload do dossiê é bloqueado para não enviar
-            arquivo fora do limite.
-          </div>
-        </div>
-
-        <div className="space-y-1 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Como atualizar a chave:</p>
-          <ol className="list-decimal pl-5 space-y-1">
-            <li>
-              Gere uma API Key ativa no painel da Cloudmersive.
-            </li>
-            <li>
-              Abra o painel do Backend e localize{" "}
-              <strong>Edge Functions → Secrets</strong>.
-            </li>
-            <li>
-              Edite <code>CLOUDMERSIVE_API_KEY</code> colando a chave da
-              Cloudmersive.
-            </li>
-          </ol>
-          <p>
-            Como alternativa, peça ao assistente “atualizar chave Cloudmersive” — um
-            formulário seguro é aberto no chat para você colar o valor sem ele
-            passar pelo código.
-          </p>
-        </div>
-
-        <p className="text-xs text-muted-foreground">
-          O painel de secrets fica no <strong>Backend</strong> do projeto
-          (menu lateral do editor Lovable).
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
 
 
 

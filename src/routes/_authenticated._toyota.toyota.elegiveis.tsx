@@ -712,7 +712,7 @@ interface VeiculoEnvio {
   } | null;
 }
 
-const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
+
 
 function formatarBytes(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return "Tamanho indisponível";
@@ -863,9 +863,8 @@ function EnvioToyotaTab() {
   async function gerarDossie(v: VeiculoEnvio) {
     setGerando(v.id);
     try {
-      // Delega para a Edge Function `gerar-dossie`, que mescla os PDFs e
-      // aplica compressão MÁXIMA via Cloudmersive quando o arquivo passa de
-      // 3MB (mesma regra do fluxo automático disparado pelo Pós-Vendas).
+      // Delega para a Edge Function `gerar-dossie`, que apenas mescla os PDFs
+      // (checklist + laudo + health check) e salva o resultado.
       const { error: invokeErr } = await supabase.functions.invoke(
         "gerar-dossie",
         { body: { veiculo_id: v.id } },
@@ -874,14 +873,13 @@ function EnvioToyotaTab() {
         toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
-      toast.info("Gerando dossiê em segundo plano (comprimindo se necessário)...");
+      toast.info("Gerando dossiê em segundo plano...");
 
       // Polling: aguarda a edge function atualizar dossie_pdf_path.
       const dossieAntes = v.dossie_pdf_path;
       const inicio = Date.now();
       const TIMEOUT_MS = 90_000;
       let novoPath: string | null = null;
-      let caminhoFoiLimpo = false;
       while (Date.now() - inicio < TIMEOUT_MS) {
         await new Promise((r) => setTimeout(r, 3000));
         const { data } = await supabase
@@ -890,22 +888,12 @@ function EnvioToyotaTab() {
           .eq("id", v.id)
           .maybeSingle();
         const atual = (data?.dossie_pdf_path as string | null) ?? null;
-        if (!atual && dossieAntes) {
-          caminhoFoiLimpo = true;
-        }
         if (atual && atual !== dossieAntes) {
           novoPath = atual;
           break;
         }
       }
       if (!novoPath) {
-        if (caminhoFoiLimpo) {
-          toast.error(
-            "A compressão não conseguiu gerar um dossiê abaixo de 3MB. O arquivo antigo foi removido; reduza/substitua o Laudo Cautelar e gere novamente.",
-          );
-          await carregar();
-          return;
-        }
         toast.warning("Ainda gerando. Clique em atualizar em alguns instantes para consultar o resultado.");
         await carregar();
         return;
@@ -921,6 +909,7 @@ function EnvioToyotaTab() {
       setGerando(null);
     }
   }
+
 
   async function visualizarDossie(v: VeiculoEnvio) {
     if (!v.dossie_pdf_path) return;
@@ -1123,13 +1112,9 @@ function VeiculoEnvioCard({
   const healthPresente = !!v.health_check_pdf_path;
   const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
-  const dossieBytes = v.tamanhos?.dossie ?? null;
-  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes !== null && dossieBytes > MAX_DOSSIE_BYTES;
-  const dossieOk =
-    !!v.dossie_pdf_path &&
-    dossieBytes !== null &&
-    dossieBytes > 0 &&
-    dossieBytes <= MAX_DOSSIE_BYTES;
+
+  const dossieOk = !!v.dossie_pdf_path;
+
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
@@ -1144,15 +1129,12 @@ function VeiculoEnvioCard({
           <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
           {dossieOk ? (
             <Badge className="bg-emerald-100 text-emerald-700">Dossiê gerado</Badge>
-          ) : dossieAcimaLimite ? (
-            <Badge variant="outline" className="border-red-300 text-red-700">
-              Dossiê acima de 3MB
-            </Badge>
           ) : (
             <Badge variant="outline" className="border-amber-300 text-amber-700">
               Dossiê pendente
             </Badge>
           )}
+
         </div>
       </div>
 
@@ -1284,13 +1266,10 @@ function VeiculoEnvioCard({
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">
-            {dossieAcimaLimite
-              ? `Dossiê atual tem ${formatarBytes(dossieBytes)}. Regerar é obrigatório para liberar o envio final.`
-              : v.dossie_pdf_path
-                ? "Não foi possível validar o tamanho do dossiê. Clique em atualizar antes de concluir."
-              : "Gere o Dossiê para liberar o envio final e o Código TCUV."}
+            Gere o Dossiê para liberar o envio final e o Código TCUV.
           </span>
         )}
+
       </div>
     </div>
   );
