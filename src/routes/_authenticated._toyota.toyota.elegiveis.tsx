@@ -736,6 +736,18 @@ function EnvioToyotaTab() {
     carregar();
   }, []);
 
+  // Auto-refresh a cada 5s enquanto houver dossiê pendente (job da edge
+  // function ainda rodando em segundo plano após o Pós-Vendas enviar).
+  useEffect(() => {
+    const pendentes = veiculos.some((v) => !v.dossie_pdf_path);
+    if (!pendentes) return;
+    const id = setInterval(() => {
+      carregar();
+    }, 5000);
+    return () => clearInterval(id);
+  }, [veiculos]);
+
+
   async function baixarBytes(path: string): Promise<ArrayBuffer | null> {
     const { data, error } = await supabase.storage.from("documentos").download(path);
     if (error || !data) return null;
