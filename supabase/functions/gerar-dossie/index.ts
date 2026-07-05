@@ -148,8 +148,8 @@ async function processar(veiculo_id: string) {
   }
 
   if (merged.byteLength > STORAGE_MAX_DOSSIE_BYTES) {
-    throw new Error(
-      "O Dossiê gerado excedeu o limite máximo de 3MB. Reduza o tamanho das fotos do Laudo Cautelar e tente novamente.",
+    console.warn(
+      `Dossiê final ainda acima de 3MB após compressão MAX: ${merged.byteLength} bytes. Fará upload assim mesmo.`,
     );
   }
 
