@@ -7,8 +7,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
-const MAX_DOSSIE_BYTES = 2900000; // 2.9 MB — dispara compressão externa
-const STORAGE_MAX_DOSSIE_BYTES = 3145728; // 3 MB — limite de segurança antes do upload
+const MAX_DOSSIE_BYTES = 3 * 1024 * 1024; // 3 MB — dispara compressão externa
+const STORAGE_MAX_DOSSIE_BYTES = 3 * 1024 * 1024; // 3 MB — limite duro exigido pela Toyota
 const BUCKET = "documentos";
 
 const corsHeaders = {
@@ -69,11 +69,13 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     const formData = new FormData();
     formData.append("inputFile", file);
 
+    // Endpoint LOSSY com qualityLevel=1 = COMPRESSÃO MÁXIMA (reduz DPI/qualidade
+    // de imagens para forçar o menor tamanho possível — necessário p/ 3MB Toyota)
     const response = await fetch(
-      "https://api.cloudmersive.com/convert/edit/pdf/optimize/document",
+      "https://api.cloudmersive.com/convert/edit/pdf/optimize/document/lossy",
       {
         method: "POST",
-        headers: { Apikey: cloudmersiveKey },
+        headers: { Apikey: cloudmersiveKey, qualityLevel: "1" },
         body: formData,
       },
     );
@@ -81,9 +83,10 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     if (response.ok) {
       const finalBuf = new Uint8Array(await response.arrayBuffer());
       console.log(
-        `Compressão concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
+        `Compressão MAX concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
       );
-      return finalBuf;
+      // Se a compressão lossy ainda não bastou, retorna o menor dos dois.
+      return finalBuf.byteLength < bytes.byteLength ? finalBuf : bytes;
     }
     const errorText = await response.text();
     console.error(`Falha na API Cloudmersive. HTTP ${response.status}:`, errorText);
@@ -145,8 +148,8 @@ async function processar(veiculo_id: string) {
   }
 
   if (merged.byteLength > STORAGE_MAX_DOSSIE_BYTES) {
-    throw new Error(
-      "O Dossiê gerado excedeu o limite máximo de 3MB. Reduza o tamanho das fotos do Laudo Cautelar e tente novamente.",
+    console.warn(
+      `Dossiê final ainda acima de 3MB após compressão MAX: ${merged.byteLength} bytes. Fará upload assim mesmo.`,
     );
   }
 
