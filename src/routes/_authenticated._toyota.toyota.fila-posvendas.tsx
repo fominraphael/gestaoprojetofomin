@@ -56,11 +56,21 @@ interface Veiculo {
   health_check_uploaded_at: string | null;
   posvendas_km: number | null;
   filial_destino_id: string | null;
+  tamanhos?: {
+    checklist: number | null;
+    health: number | null;
+  };
 }
 
 interface FilialInfo {
   dealer_number: string | null;
   nome_bi_toyota: string | null;
+}
+
+function formatarBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return "Tamanho indisponível";
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function FilaPosVendas() {
@@ -90,9 +100,33 @@ function FilaPosVendas() {
       toast.error("Erro ao carregar fila");
       setVeiculos([]);
     } else {
-      setVeiculos((data ?? []) as Veiculo[]);
+      const base = (data ?? []) as Veiculo[];
+      const comTamanhos = await Promise.all(
+        base.map(async (v) => ({
+          ...v,
+          tamanhos: {
+            checklist: v.checklist_pdf_path ? await obterTamanhoStorage(v.checklist_pdf_path) : null,
+            health: v.health_check_pdf_path ? await obterTamanhoStorage(v.health_check_pdf_path) : null,
+          },
+        })),
+      );
+      setVeiculos(comTamanhos);
     }
     setLoading(false);
+  };
+
+  const obterTamanhoStorage = async (path: string): Promise<number | null> => {
+    const { data, error } = await supabase.storage
+      .from("documentos")
+      .createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) return null;
+    try {
+      const res = await fetch(data.signedUrl, { method: "HEAD" });
+      const contentLength = res.headers.get("content-length");
+      return contentLength ? Number(contentLength) : null;
+    } catch {
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -201,6 +235,7 @@ function FilaPosVendas() {
         return;
       }
       toast.success("Check-list preenchido e PDF gerado.");
+      const checklistBytes = await obterTamanhoStorage(path);
       await carregar();
       setAberto((cur) =>
         cur
@@ -210,6 +245,10 @@ function FilaPosVendas() {
               checklist_itens: null,
               checklist_pdf_path: path,
               posvendas_km: kmNum,
+              tamanhos: {
+                checklist: checklistBytes,
+                health: cur.tamanhos?.health ?? null,
+              },
             }
           : cur,
       );
@@ -271,6 +310,7 @@ function FilaPosVendas() {
         return;
       }
       toast.success("Health Check anexado (chassi validado).");
+      const healthBytes = await obterTamanhoStorage(path);
       await carregar();
       setAberto((cur) =>
         cur
@@ -278,6 +318,10 @@ function FilaPosVendas() {
               ...cur,
               health_check_pdf_path: path,
               health_check_uploaded_at: new Date().toISOString(),
+              tamanhos: {
+                checklist: cur.tamanhos?.checklist ?? null,
+                health: healthBytes,
+              },
             }
           : cur,
       );
@@ -409,7 +453,7 @@ function FilaPosVendas() {
                     ) : (
                       <FileText className="h-3.5 w-3.5" />
                     )}
-                    Checklist
+                    Checklist {v.checklist_pdf_path ? `· ${formatarBytes(v.tamanhos?.checklist)}` : ""}
                   </span>
                   <span className="flex items-center gap-1">
                     {v.health_check_pdf_path ? (
@@ -417,7 +461,7 @@ function FilaPosVendas() {
                     ) : (
                       <FileText className="h-3.5 w-3.5" />
                     )}
-                    Health Check
+                    Health Check {v.health_check_pdf_path ? `· ${formatarBytes(v.tamanhos?.health)}` : ""}
                   </span>
                 </div>
               </CardContent>
@@ -523,7 +567,7 @@ function FilaPosVendas() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
                     {aberto.checklist_pdf_path
-                      ? `PDF salvo em ${aberto.checklist_data?.preenchido_em ? new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"}`
+                      ? `PDF salvo em ${aberto.checklist_data?.preenchido_em ? new Date(aberto.checklist_data.preenchido_em).toLocaleString("pt-BR") : "—"} · ${formatarBytes(aberto.tamanhos?.checklist)}`
                       : "Ainda não salvo"}
                   </span>
                   <Button
@@ -556,7 +600,7 @@ function FilaPosVendas() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground truncate">
                     {aberto.health_check_pdf_path
-                      ? `Anexado em ${aberto.health_check_uploaded_at ? new Date(aberto.health_check_uploaded_at).toLocaleString("pt-BR") : "—"}`
+                      ? `Anexado em ${aberto.health_check_uploaded_at ? new Date(aberto.health_check_uploaded_at).toLocaleString("pt-BR") : "—"} · ${formatarBytes(aberto.tamanhos?.health)}`
                       : "Nenhum PDF anexado"}
                   </span>
                   <Button

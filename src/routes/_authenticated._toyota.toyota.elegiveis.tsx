@@ -696,6 +696,12 @@ interface VeiculoEnvio {
   dossie_storage?: {
     metadata: { size?: number; contentLength?: number } | null;
   } | null;
+  tamanhos?: {
+    checklist: number | null;
+    laudo: number | null;
+    health: number | null;
+    dossie: number | null;
+  };
   posvendas_km: number | null;
   posvendas_finalizado_em: string | null;
   posvendas_finalizado_por: string | null;
@@ -708,6 +714,12 @@ interface VeiculoEnvio {
 
 const MAX_DOSSIE_BYTES = 3 * 1024 * 1024;
 
+function formatarBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return "Tamanho indisponível";
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function EnvioToyotaTab() {
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<VeiculoEnvio[]>([]);
@@ -718,18 +730,28 @@ function EnvioToyotaTab() {
   const [recusaMotivo, setRecusaMotivo] = useState("");
   const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
-  const obterTamanhoDossie = async (path: string): Promise<number> => {
+  const obterTamanhoStorage = async (path: string): Promise<number | null> => {
     const { data, error } = await supabase.storage
       .from("documentos")
       .createSignedUrl(path, 60);
-    if (error || !data?.signedUrl) return 0;
+    if (error || !data?.signedUrl) return null;
     try {
       const res = await fetch(data.signedUrl, { method: "HEAD" });
       const contentLength = res.headers.get("content-length");
-      return contentLength ? Number(contentLength) : 0;
+      return contentLength ? Number(contentLength) : null;
     } catch (e) {
-      console.warn("[EnvioToyotaTab] falha ao consultar tamanho do dossiê", e);
-      return 0;
+      console.warn("[EnvioToyotaTab] falha ao consultar tamanho do arquivo", e);
+      return null;
+    }
+  };
+
+  const obterTamanhoUrl = async (url: string): Promise<number | null> => {
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      const contentLength = res.headers.get("content-length");
+      return contentLength ? Number(contentLength) : null;
+    } catch {
+      return null;
     }
   };
 
@@ -748,12 +770,23 @@ function EnvioToyotaTab() {
     }
     const base = (data ?? []) as unknown as VeiculoEnvio[];
     const comTamanho = await Promise.all(
-      base.map(async (v) => ({
-        ...v,
-        dossie_storage: v.dossie_pdf_path
-          ? { metadata: { size: await obterTamanhoDossie(v.dossie_pdf_path) } }
-          : null,
-      })),
+      base.map(async (v) => {
+        const [checklist, laudo, health, dossie] = await Promise.all([
+          v.checklist_pdf_path ? obterTamanhoStorage(v.checklist_pdf_path) : null,
+          v.laudo_arquivo_path
+            ? obterTamanhoStorage(v.laudo_arquivo_path)
+            : v.laudo_url
+              ? obterTamanhoUrl(v.laudo_url)
+              : null,
+          v.health_check_pdf_path ? obterTamanhoStorage(v.health_check_pdf_path) : null,
+          v.dossie_pdf_path ? obterTamanhoStorage(v.dossie_pdf_path) : null,
+        ]);
+        return {
+          ...v,
+          dossie_storage: dossie ? { metadata: { size: dossie } } : null,
+          tamanhos: { checklist, laudo, health, dossie },
+        };
+      }),
     );
     setVeiculos(comTamanho);
     setLoading(false);
@@ -762,18 +795,6 @@ function EnvioToyotaTab() {
   useEffect(() => {
     carregar();
   }, []);
-
-  // Auto-refresh a cada 5s enquanto houver dossiê pendente (job da edge
-  // function ainda rodando em segundo plano após o Pós-Vendas enviar).
-  useEffect(() => {
-    const pendentes = veiculos.some((v) => !v.dossie_pdf_path);
-    if (!pendentes) return;
-    const id = setInterval(() => {
-      carregar();
-    }, 5000);
-    return () => clearInterval(id);
-  }, [veiculos]);
-
 
   async function baixarBytes(path: string): Promise<ArrayBuffer | null> {
     const { data, error } = await supabase.storage.from("documentos").download(path);
@@ -885,9 +906,7 @@ function EnvioToyotaTab() {
           await carregar();
           return;
         }
-        toast.warning(
-          "Ainda gerando... A tela será atualizada automaticamente quando ficar pronto.",
-        );
+        toast.warning("Ainda gerando. Clique em atualizar em alguns instantes para consultar o resultado.");
         await carregar();
         return;
       }
@@ -1007,6 +1026,12 @@ function EnvioToyotaTab() {
           Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê.
           O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado.
         </p>
+        <div className="pt-3">
+          <Button size="sm" variant="outline" onClick={carregar} disabled={loading}>
+            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            Atualizar lista
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {veiculos.map((v) => (
@@ -1098,11 +1123,13 @@ function VeiculoEnvioCard({
   const healthPresente = !!v.health_check_pdf_path;
   const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
-  const dossieBytes = Number(
-    v.dossie_storage?.metadata?.size ?? v.dossie_storage?.metadata?.contentLength ?? 0,
-  );
-  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes > MAX_DOSSIE_BYTES;
-  const dossieOk = !!v.dossie_pdf_path && !dossieAcimaLimite;
+  const dossieBytes = v.tamanhos?.dossie ?? null;
+  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes !== null && dossieBytes > MAX_DOSSIE_BYTES;
+  const dossieOk =
+    !!v.dossie_pdf_path &&
+    dossieBytes !== null &&
+    dossieBytes > 0 &&
+    dossieBytes <= MAX_DOSSIE_BYTES;
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
@@ -1134,6 +1161,7 @@ function VeiculoEnvioCard({
           label="Check-list"
           descricao="Gerado a partir do template TCUV/TSIM"
           presente={checklistPresente}
+          tamanhoBytes={v.tamanhos?.checklist}
           onVisualizar={
             v.checklist_pdf_path
               ? () => abrirPathStorage(v.checklist_pdf_path!)
@@ -1155,6 +1183,7 @@ function VeiculoEnvioCard({
                 : "Não anexado"
           }
           presente={laudoPresente}
+          tamanhoBytes={v.tamanhos?.laudo}
           onVisualizar={
             v.laudo_arquivo_path
               ? () => abrirPathStorage(v.laudo_arquivo_path!)
@@ -1172,6 +1201,7 @@ function VeiculoEnvioCard({
           label="Health Check"
           descricao="Revisão Toyota"
           presente={healthPresente}
+          tamanhoBytes={v.tamanhos?.health}
           onVisualizar={
             v.health_check_pdf_path
               ? () => abrirPathStorage(v.health_check_pdf_path!)
@@ -1217,6 +1247,9 @@ function VeiculoEnvioCard({
               Visualizar Dossiê
             </Button>
           )}
+          {!!v.dossie_pdf_path && (
+            <Badge variant="outline">Dossiê: {formatarBytes(v.tamanhos?.dossie)}</Badge>
+          )}
         </div>
 
         {dossieOk ? (
@@ -1252,7 +1285,9 @@ function VeiculoEnvioCard({
         ) : (
           <span className="text-xs text-muted-foreground">
             {dossieAcimaLimite
-              ? `Dossiê atual tem ${(dossieBytes / 1024 / 1024).toFixed(1)}MB. Regerar é obrigatório para liberar o envio final.`
+              ? `Dossiê atual tem ${formatarBytes(dossieBytes)}. Regerar é obrigatório para liberar o envio final.`
+              : v.dossie_pdf_path
+                ? "Não foi possível validar o tamanho do dossiê. Clique em atualizar antes de concluir."
               : "Gere o Dossiê para liberar o envio final e o Código TCUV."}
           </span>
         )}
@@ -1265,12 +1300,14 @@ function DocumentoSlot({
   label,
   descricao,
   presente,
+  tamanhoBytes,
   onVisualizar,
   onSubstituir,
 }: {
   label: string;
   descricao: string;
   presente: boolean;
+  tamanhoBytes?: number | null;
   onVisualizar?: () => void;
   onSubstituir: (file: File) => void | Promise<void>;
 }) {
@@ -1286,6 +1323,7 @@ function DocumentoSlot({
         )}
       </div>
       <div className="text-xs text-muted-foreground">{descricao}</div>
+      <div className="text-xs font-medium">{formatarBytes(tamanhoBytes)}</div>
       <div className="flex gap-2">
         <Button
           size="sm"
