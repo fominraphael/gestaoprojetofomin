@@ -302,6 +302,7 @@ function FilaPosVendas() {
       return;
     }
     setEnviando(true);
+    const veiculoId = aberto.id;
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
       .update({
@@ -311,15 +312,21 @@ function FilaPosVendas() {
         posvendas_finalizado_em: new Date().toISOString(),
         posvendas_finalizado_por: user?.username ?? null,
       })
-      .eq("id", aberto.id);
+      .eq("id", veiculoId);
     setEnviando(false);
     if (error) {
       toast.error("Erro ao enviar para Central");
       return;
     }
-    toast.success("Enviado para Análise Central");
+    toast.success("Enviado para Análise Central. O dossiê está sendo gerado em segundo plano.");
     setAberto(null);
     carregar();
+
+    // Fire-and-forget: dispara a Edge Function que mescla + comprime o dossiê
+    // no servidor. Não aguarda a resposta para liberar a UI imediatamente.
+    void supabase.functions
+      .invoke("gerar-dossie", { body: { veiculo_id: veiculoId } })
+      .catch((e) => console.warn("Falha ao disparar gerar-dossie:", e));
   };
 
   return (
