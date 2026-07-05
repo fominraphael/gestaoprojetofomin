@@ -1129,15 +1129,12 @@ function VeiculoEnvioCard({
           <Badge variant="outline">{v.elegibilidade ?? "—"}</Badge>
           {dossieOk ? (
             <Badge className="bg-emerald-100 text-emerald-700">Dossiê gerado</Badge>
-          ) : dossieAcimaLimite ? (
-            <Badge variant="outline" className="border-red-300 text-red-700">
-              Dossiê acima de 3MB
-            </Badge>
           ) : (
             <Badge variant="outline" className="border-amber-300 text-amber-700">
               Dossiê pendente
             </Badge>
           )}
+
         </div>
       </div>
 
