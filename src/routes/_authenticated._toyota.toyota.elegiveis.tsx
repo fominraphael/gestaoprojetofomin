@@ -982,6 +982,7 @@ function EnvioToyotaTab() {
               setTcuvInput((p) => ({ ...p, [v.id]: val }))
             }
             onGerar={() => gerarDossie(v)}
+            onVisualizar={() => visualizarDossie(v)}
             onSalvarTcuv={() => salvarTcuv(v)}
             onRecusar={() => {
               setRecusaVeic(v);
