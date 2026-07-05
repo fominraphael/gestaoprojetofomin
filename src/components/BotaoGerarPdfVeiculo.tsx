@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { baixarPdf, gerarPdfVeiculo } from "@/lib/pdf-veiculo";
+import { formatarModeloComAno, formatarKm } from "@/lib/checklist-template";
 
 interface Props {
   veiculoId: string;
@@ -48,9 +49,9 @@ export function BotaoGerarPdfVeiculo({
       };
 
       const bytes = await gerarPdfVeiculo({
-        veiculo: [veiculo.modelo, veiculo.ano_modelo].filter(Boolean).join(" / "),
+        veiculo: formatarModeloComAno(veiculo.modelo, veiculo.ano_modelo),
         chassi: veiculo.chassi ?? "",
-        km: veiculo.quilometragem?.toLocaleString("pt-BR") ?? "",
+        km: formatarKm(veiculo.quilometragem),
         dn: filial.dealer_number ?? "",
         distribuidor: filial.nome_bi_toyota ?? filial.nome ?? "",
         avaliador,
