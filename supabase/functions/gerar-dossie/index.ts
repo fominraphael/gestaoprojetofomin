@@ -69,11 +69,13 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     const formData = new FormData();
     formData.append("inputFile", file);
 
+    // Endpoint LOSSY com qualityLevel=1 = COMPRESSÃO MÁXIMA (reduz DPI/qualidade
+    // de imagens para forçar o menor tamanho possível — necessário p/ 3MB Toyota)
     const response = await fetch(
-      "https://api.cloudmersive.com/convert/edit/pdf/optimize/document",
+      "https://api.cloudmersive.com/convert/edit/pdf/optimize/document/lossy",
       {
         method: "POST",
-        headers: { Apikey: cloudmersiveKey },
+        headers: { Apikey: cloudmersiveKey, qualityLevel: "1" },
         body: formData,
       },
     );
@@ -81,9 +83,10 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     if (response.ok) {
       const finalBuf = new Uint8Array(await response.arrayBuffer());
       console.log(
-        `Compressão concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
+        `Compressão MAX concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
       );
-      return finalBuf;
+      // Se a compressão lossy ainda não bastou, retorna o menor dos dois.
+      return finalBuf.byteLength < bytes.byteLength ? finalBuf : bytes;
     }
     const errorText = await response.text();
     console.error(`Falha na API Cloudmersive. HTTP ${response.status}:`, errorText);
