@@ -51,85 +51,44 @@ async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
 }
 
 /**
- * Compressão via iLovePDF (fluxo: auth → start → upload → process → download).
- * Requer PDF_COMPRESSION_API_KEY (project public key da iLovePDF).
- * Se a env não estiver configurada, retorna o buffer original sem falhar.
+ * Compressão via Cloudmersive (1 requisição = 1 arquivo, sem cobrança por peso).
+ * Requer CLOUDMERSIVE_API_KEY. Em caso de falha, retorna o buffer original.
  */
-async function comprimirIlovePdf(bytes: Uint8Array): Promise<Uint8Array> {
-  const publicKey =
-    Deno.env.get("ILOVEPDF_PUBLIC_KEY") ??
-    Deno.env.get("PDF_COMPRESSION_API_KEY");
-  const secretKey = Deno.env.get("ILOVEPDF_SECRET_KEY");
-  if (!publicKey) {
-    console.warn("ILOVEPDF_PUBLIC_KEY ausente — pulando compressão externa.");
+async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
+  const cloudmersiveKey = Deno.env.get("CLOUDMERSIVE_API_KEY");
+  if (!cloudmersiveKey) {
+    console.warn("CLOUDMERSIVE_API_KEY ausente — pulando compressão externa.");
     return bytes;
-  }
-  if (secretKey) {
-    // secretKey só é usada para assinar JWT localmente (opcional); a auth
-    // via /v1/auth com public_key é suficiente para o fluxo REST.
-    console.log("ILOVEPDF_SECRET_KEY presente (não requerida no fluxo REST).");
   }
 
   try {
-    // 1) auth → obtém JWT
-    const authRes = await fetch("https://api.ilovepdf.com/v1/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ public_key: publicKey }),
-    });
-    if (!authRes.ok) throw new Error(`auth ${authRes.status}`);
-    const { token } = (await authRes.json()) as { token: string };
-
-    // 2) start compress → obtém server + task
-    const startRes = await fetch("https://api.ilovepdf.com/v1/start/compress", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!startRes.ok) throw new Error(`start ${startRes.status}`);
-    const { server, task } = (await startRes.json()) as {
-      server: string;
-      task: string;
-    };
-
-    // 3) upload
-    const form = new FormData();
-    form.append("task", task);
-    form.append("file", new Blob([bytes], { type: "application/pdf" }), "dossie.pdf");
-    const upRes = await fetch(`https://${server}/v1/upload`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
-    if (!upRes.ok) throw new Error(`upload ${upRes.status}`);
-    const { server_filename } = (await upRes.json()) as { server_filename: string };
-
-    // 4) process
-    const procRes = await fetch(`https://${server}/v1/process`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        task,
-        tool: "compress",
-        compression_level: "recommended",
-        files: [{ server_filename, filename: "dossie.pdf" }],
-      }),
-    });
-    if (!procRes.ok) throw new Error(`process ${procRes.status}`);
-
-    // 5) download
-    const dlRes = await fetch(`https://${server}/v1/download/${task}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!dlRes.ok) throw new Error(`download ${dlRes.status}`);
-    const finalBuf = new Uint8Array(await dlRes.arrayBuffer());
-    console.log(
-      `iLovePDF: ${bytes.byteLength} → ${finalBuf.byteLength} bytes`,
+    const formData = new FormData();
+    formData.append(
+      "inputFile",
+      new Blob([bytes], { type: "application/pdf" }),
+      "dossie.pdf",
     );
-    return finalBuf;
-  } catch (e) {
-    console.error("Falha na compressão iLovePDF:", (e as Error).message);
+
+    const response = await fetch(
+      "https://api.cloudmersive.com/convert/edit/pdf/optimize/document",
+      {
+        method: "POST",
+        headers: { Apikey: cloudmersiveKey },
+        body: formData,
+      },
+    );
+
+    if (response.ok) {
+      const finalBuf = new Uint8Array(await response.arrayBuffer());
+      console.log(
+        `Cloudmersive: ${bytes.byteLength} → ${finalBuf.byteLength} bytes`,
+      );
+      return finalBuf;
+    }
+    console.warn("Falha na compressão da Cloudmersive. Status:", response.status);
+    return bytes;
+  } catch (error) {
+    console.error("Erro ao contactar a API de compressão:", (error as Error).message);
     return bytes;
   }
 }
@@ -181,7 +140,7 @@ async function processar(veiculo_id: string) {
   console.log(`Merge: ${merged.byteLength} bytes`);
 
   if (merged.byteLength > MAX_DOSSIE_BYTES) {
-    merged = await comprimirIlovePdf(merged);
+    merged = await comprimirCloudmersive(merged);
   }
 
   const path = `toyota/dossies/${veiculo_id}/${Date.now()}.pdf`;
