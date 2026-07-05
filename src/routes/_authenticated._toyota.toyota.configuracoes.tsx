@@ -57,6 +57,14 @@ interface Patio {
   filial_id: string | null;
 }
 
+interface UsuarioSimples {
+  id: string;
+  username: string | null;
+  tipo_usuario: string | null;
+  ativo: boolean;
+}
+
+
 function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
   const [filiais, setFiliais] = useState<Filial[]>([]);
