@@ -493,6 +493,7 @@ function ToyotaConfiguracoes() {
       </Dialog>
 
       {isAdmin && <TemplatesChecklistCard />}
+      {isAdmin && <IntegracaoIlovePdfCard />}
     </div>
   );
 }
@@ -663,5 +664,80 @@ function TemplatesChecklistCard() {
     </Card>
   );
 }
+
+// ============================================================================
+// Card de integração iLovePDF (compressão de dossiê)
+// ============================================================================
+function IntegracaoIlovePdfCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <FileText className="w-4 h-4" /> Integração iLovePDF (compressão do Dossiê)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-muted-foreground">
+          Quando o dossiê mesclado ultrapassa 2,8&nbsp;MB, a Edge Function{" "}
+          <code className="rounded bg-muted px-1 py-0.5 text-xs">gerar-dossie</code>{" "}
+          envia o arquivo para a API da iLovePDF e salva a versão comprimida.
+          As chaves ficam guardadas como <strong>secrets do backend</strong> —
+          nunca em banco ou no frontend.
+        </p>
+
+        <div className="rounded-md border bg-muted/40 p-3 space-y-2 text-xs">
+          <div>
+            <strong>Public Key</strong> → secret{" "}
+            <code className="rounded bg-background px-1 py-0.5">
+              PDF_COMPRESSION_API_KEY
+            </code>{" "}
+            <Badge variant="secondary" className="ml-1">Em uso</Badge>
+          </div>
+          <div>
+            <strong>Secret Key</strong> → opcional; usada apenas para gerar JWTs
+            assinados localmente. O fluxo atual usa a Public Key via{" "}
+            <code>/v1/auth</code> e não precisa da Secret Key.
+          </div>
+        </div>
+
+        <div className="space-y-1 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Como atualizar as chaves:</p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>
+              Gere as chaves em{" "}
+              <a
+                href="https://developer.ilovepdf.com/user/projects"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                developer.ilovepdf.com/user/projects
+              </a>
+              .
+            </li>
+            <li>
+              Abra o painel do Backend e localize{" "}
+              <strong>Edge Functions → Secrets</strong>.
+            </li>
+            <li>
+              Edite <code>PDF_COMPRESSION_API_KEY</code> colando a{" "}
+              <strong>Public Key</strong> do projeto iLovePDF.
+            </li>
+          </ol>
+          <p>
+            Como alternativa, peça ao assistente “atualizar chave iLovePDF” — um
+            formulário seguro é aberto no chat para você colar o valor sem ele
+            passar pelo código.
+          </p>
+        </div>
+
+        <presentation-actions>
+          <presentation-open-backend>Abrir Backend</presentation-open-backend>
+        </presentation-actions>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 
