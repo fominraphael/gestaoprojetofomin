@@ -160,3 +160,34 @@ export function userCanAccess(
   }
   return isAdmin;
 }
+
+/**
+ * Retorna os nav items visíveis dado o perfil Toyota do usuário.
+ * Administradores do sistema (`isAdmin`) veem tudo, independente do perfil.
+ */
+export function navItemsForPerfil(
+  mod: ModuleDef,
+  isAdmin: boolean,
+  perfil: PerfilToyota,
+): ModuleNavItem[] {
+  const items = mod.navItems ?? [];
+  if (isAdmin || perfil === "Administrador") return items;
+  return items.filter((it) => !it.perfis || it.perfis.includes(perfil));
+}
+
+/** Retorna true se o perfil pode acessar a rota exata (usado por route guards). */
+export function perfilPodeAcessarRota(
+  pathname: string,
+  isAdmin: boolean,
+  perfil: PerfilToyota,
+): boolean {
+  if (isAdmin || perfil === "Administrador") return true;
+  const mod = findModuleByPath(pathname);
+  if (!mod) return true;
+  const item = (mod.navItems ?? []).find(
+    (n) => pathname === n.to || pathname.startsWith(n.to + "/"),
+  );
+  if (!item || !item.perfis) return true;
+  return item.perfis.includes(perfil);
+}
+
