@@ -89,20 +89,11 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   try {
     console.log(`Iniciando compressão. Tamanho original: ${bytes.byteLength} bytes`);
 
-    let melhor = bytes;
-    for (const quality of ["0.0", "0.1", "0.2", "0.3"]) {
-      const comprimido = await chamar(bytes, quality);
-      if (!comprimido) continue;
-      console.log(`Após reduce-file-size quality=${quality}: ${comprimido.byteLength} bytes`);
-      if (comprimido.byteLength < melhor.byteLength) melhor = comprimido;
-      if (comprimido.byteLength <= STORAGE_MAX_DOSSIE_BYTES) {
-        console.log(`Compressão atingiu o limite Toyota com quality=${quality}.`);
-        return comprimido;
-      }
-    }
+    const comprimido = await chamar(bytes, "0.0");
+    if (!comprimido) return bytes;
 
-    console.log(`Compressão finalizada. Melhor tamanho: ${melhor.byteLength} bytes`);
-    return melhor;
+    console.log(`Após reduce-file-size quality=0.0: ${comprimido.byteLength} bytes`);
+    return comprimido.byteLength < bytes.byteLength ? comprimido : bytes;
   } catch (error) {
     console.error("Erro na execução do fetch para a Cloudmersive:", error);
     return bytes;
