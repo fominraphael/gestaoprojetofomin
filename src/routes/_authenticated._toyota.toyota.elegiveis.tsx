@@ -860,6 +860,7 @@ function EnvioToyotaTab() {
       const inicio = Date.now();
       const TIMEOUT_MS = 90_000;
       let novoPath: string | null = null;
+      let caminhoFoiLimpo = false;
       while (Date.now() - inicio < TIMEOUT_MS) {
         await new Promise((r) => setTimeout(r, 3000));
         const { data } = await supabase
@@ -868,12 +869,22 @@ function EnvioToyotaTab() {
           .eq("id", v.id)
           .maybeSingle();
         const atual = (data?.dossie_pdf_path as string | null) ?? null;
+        if (!atual && dossieAntes) {
+          caminhoFoiLimpo = true;
+        }
         if (atual && atual !== dossieAntes) {
           novoPath = atual;
           break;
         }
       }
       if (!novoPath) {
+        if (caminhoFoiLimpo) {
+          toast.error(
+            "A compressão não conseguiu gerar um dossiê abaixo de 3MB. O arquivo antigo foi removido; reduza/substitua o Laudo Cautelar e gere novamente.",
+          );
+          await carregar();
+          return;
+        }
         toast.warning(
           "Ainda gerando... A tela será atualizada automaticamente quando ficar pronto.",
         );
