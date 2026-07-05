@@ -61,7 +61,14 @@ function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [patios, setPatios] = useState<Patio[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioSimples[]>([]);
+  const [vinculos, setVinculos] = useState<{ user_id: string; filial_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [vincularFilial, setVincularFilial] = useState<Filial | null>(null);
+  const [vincularSelecionados, setVincularSelecionados] = useState<Set<string>>(new Set());
+  const [vincularBusca, setVincularBusca] = useState("");
+
 
   const [filialModalOpen, setFilialModalOpen] = useState(false);
   const [editingFilial, setEditingFilial] = useState<Filial | null>(null);
