@@ -1123,9 +1123,13 @@ function VeiculoEnvioCard({
   const healthPresente = !!v.health_check_pdf_path;
   const checklistPresente = !!v.checklist_pdf_path || !!v.checklist_data?.preenchido_em;
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
-  const dossieBytes = Number(v.tamanhos?.dossie ?? 0);
-  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes > MAX_DOSSIE_BYTES;
-  const dossieOk = !!v.dossie_pdf_path && !dossieAcimaLimite;
+  const dossieBytes = v.tamanhos?.dossie ?? null;
+  const dossieAcimaLimite = !!v.dossie_pdf_path && dossieBytes !== null && dossieBytes > MAX_DOSSIE_BYTES;
+  const dossieOk =
+    !!v.dossie_pdf_path &&
+    dossieBytes !== null &&
+    dossieBytes > 0 &&
+    dossieBytes <= MAX_DOSSIE_BYTES;
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
@@ -1282,6 +1286,8 @@ function VeiculoEnvioCard({
           <span className="text-xs text-muted-foreground">
             {dossieAcimaLimite
               ? `Dossiê atual tem ${(dossieBytes / 1024 / 1024).toFixed(1)}MB. Regerar é obrigatório para liberar o envio final.`
+              : v.dossie_pdf_path
+                ? "Não foi possível validar o tamanho do dossiê. Clique em atualizar antes de concluir."
               : "Gere o Dossiê para liberar o envio final e o Código TCUV."}
           </span>
         )}
