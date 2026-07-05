@@ -193,15 +193,23 @@ export function formatarDataHora(iso: string | null): { data: string; hora: stri
  */
 export function formatarModeloCurto(modelo: string | null | undefined): string {
   if (!modelo) return "";
-  const stopRe = /^(\d|\d+[.,]\d+|\d+V|FLEX|AUT|AUTOM|CVT|MT|TB|TURBO|4X4|4X2|HYBRID|HEV|HÍBRIDO|HIBRIDO|GASOLINA|DIESEL|H\d)$/i;
-  const tokens = modelo.trim().split(/\s+/);
-  const out: string[] = [];
-  for (const t of tokens) {
-    if (stopRe.test(t)) break;
-    out.push(t);
-    if (out.length >= 3) break; // no máximo 3 tokens (nome + variante curta)
+  const nome = modelo.toUpperCase();
+
+  // 1. Modelos compostos (verificar antes dos simples)
+  if (nome.includes("COROLLA CROSS")) return "COROLLA CROSS";
+  if (nome.includes("HILUX SW4")) return "HILUX SW4";
+  if (nome.includes("SW4")) return "SW4";
+
+  // 2. Modelos simples conhecidos
+  const modelosConhecidos = [
+    "COROLLA", "HILUX", "YARIS", "ETIOS", "RAV4", "PRIUS", "CAMRY",
+  ];
+  for (const m of modelosConhecidos) {
+    if (nome.includes(m)) return m;
   }
-  return (out.length ? out.join(" ") : tokens.slice(0, 2).join(" ")).trim();
+
+  // 3. Fallback: duas primeiras palavras
+  return nome.split(/\s+/).slice(0, 2).join(" ").trim();
 }
 
 /** "COROLLA CROSS" + 2026 → "COROLLA CROSS / 2026" */
