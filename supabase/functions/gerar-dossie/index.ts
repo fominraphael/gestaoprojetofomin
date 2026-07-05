@@ -53,21 +53,27 @@ async function mesclar(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
 
 /**
  * Compressão via Cloudmersive.
- * O endpoint correto para PDFs com imagens é `optimize/reduce-file-size` com
- * header `quality` entre 0.0 e 1.0; quanto menor, mais agressiva a recompressão
- * das imagens internas. Não há endpoint `optimize/images` para PDF nessa API.
+ * Endpoint oficial: POST /convert/edit/pdf/optimize/reduce-file-size
+ * - multipart field: inputFile
+ * - header: quality, entre 0.0 e 1.0; quanto menor, mais agressivo.
+ * A API não possui parâmetro de tamanho alvo. Por isso fazemos tentativas em
+ * cadeia, sempre reenviando o menor PDF retornado, até ficar <= 3MB ou parar de
+ * reduzir. Se o plano da API rejeitar arquivos grandes, falhamos de forma
+ * explícita e não salvamos o dossiê pesado.
  */
 async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
   const cloudmersiveKey = Deno.env.get("CLOUDMERSIVE_API_KEY");
   if (!cloudmersiveKey) {
-    console.error("ERRO CRÍTICO: Chave CLOUDMERSIVE_API_KEY não encontrada nos Secrets.");
-    return bytes;
+    throw new Error("Chave CLOUDMERSIVE_API_KEY não encontrada nos Secrets.");
   }
 
-  async function chamar(buf: Uint8Array, quality: string): Promise<Uint8Array | null> {
-    const file = new File([buf], "dossie.pdf", { type: "application/pdf" });
+  async function chamar(buf: Uint8Array, quality: string): Promise<Uint8Array> {
     const fd = new FormData();
-    fd.append("inputFile", file);
+    fd.append(
+      "inputFile",
+      new Blob([buf], { type: "application/pdf" }),
+      "dossie.pdf",
+    );
     const r = await fetch("https://api.cloudmersive.com/convert/edit/pdf/optimize/reduce-file-size", {
       method: "POST",
       headers: {
@@ -77,27 +83,48 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
       body: fd,
     });
     if (!r.ok) {
-      console.error(
-        `Cloudmersive reduce-file-size quality=${quality} HTTP ${r.status}:`,
-        (await r.text()).slice(0, 500),
+      const errorText = (await r.text()).slice(0, 800);
+      throw new Error(
+        `Cloudmersive reduce-file-size quality=${quality} HTTP ${r.status}: ${errorText}`,
       );
-      return null;
     }
-    return new Uint8Array(await r.arrayBuffer());
+    const out = new Uint8Array(await r.arrayBuffer());
+    if (out.byteLength === 0) {
+      throw new Error(`Cloudmersive retornou arquivo vazio na quality=${quality}.`);
+    }
+    return out;
   }
 
-  try {
-    console.log(`Iniciando compressão. Tamanho original: ${bytes.byteLength} bytes`);
+  console.log(`Iniciando compressão Cloudmersive. Tamanho original: ${bytes.byteLength} bytes`);
 
-    const comprimido = await chamar(bytes, "0.0");
-    if (!comprimido) return bytes;
+  let melhor = bytes;
+  const qualidades = ["0.3", "0.15", "0.08", "0.03", "0.0"];
+  for (const quality of qualidades) {
+    const comprimido = await chamar(melhor, quality);
+    console.log(
+      `Cloudmersive quality=${quality}: entrada=${melhor.byteLength} bytes, saída=${comprimido.byteLength} bytes`,
+    );
 
-    console.log(`Após reduce-file-size quality=0.0: ${comprimido.byteLength} bytes`);
-    return comprimido.byteLength < bytes.byteLength ? comprimido : bytes;
-  } catch (error) {
-    console.error("Erro na execução do fetch para a Cloudmersive:", error);
-    return bytes;
+    if (comprimido.byteLength < melhor.byteLength) {
+      melhor = comprimido;
+    }
+    if (melhor.byteLength <= STORAGE_MAX_DOSSIE_BYTES) {
+      console.log(`Dossiê comprimido abaixo de 3MB: ${melhor.byteLength} bytes`);
+      return melhor;
+    }
   }
+
+  for (let tentativa = 1; tentativa <= 3 && melhor.byteLength > STORAGE_MAX_DOSSIE_BYTES; tentativa++) {
+    const antes = melhor.byteLength;
+    const comprimido = await chamar(melhor, "0.0");
+    console.log(
+      `Cloudmersive reforço ${tentativa} quality=0.0: entrada=${antes} bytes, saída=${comprimido.byteLength} bytes`,
+    );
+    if (comprimido.byteLength >= antes) break;
+    melhor = comprimido;
+  }
+
+  return melhor;
 }
 
 async function processar(veiculo_id: string) {
