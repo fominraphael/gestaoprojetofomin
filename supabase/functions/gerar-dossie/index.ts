@@ -62,34 +62,44 @@ async function comprimirCloudmersive(bytes: Uint8Array): Promise<Uint8Array> {
     return bytes;
   }
 
+  // Passo 1: optimize/images — recomprime as imagens embutidas com qualidade baixa
+  // (é o que realmente reduz PDFs pesados de fotos, de 14MB para poucos MB).
+  // Passo 2: reduce-file-size — otimização estrutural adicional.
+  async function chamar(endpoint: string, buf: Uint8Array, extraHeaders: Record<string, string> = {}) {
+    const file = new File([buf], "dossie.pdf", { type: "application/pdf" });
+    const fd = new FormData();
+    fd.append("inputFile", file);
+    const r = await fetch(`https://api.cloudmersive.com/convert/edit/pdf/${endpoint}`, {
+      method: "POST",
+      headers: { Apikey: cloudmersiveKey!, ...extraHeaders },
+      body: fd,
+    });
+    if (!r.ok) {
+      console.error(`Cloudmersive ${endpoint} HTTP ${r.status}:`, (await r.text()).slice(0, 200));
+      return null;
+    }
+    return new Uint8Array(await r.arrayBuffer());
+  }
+
   try {
     console.log(`Iniciando compressão. Tamanho original: ${bytes.byteLength} bytes`);
 
-    const file = new File([bytes], "dossie.pdf", { type: "application/pdf" });
-    const formData = new FormData();
-    formData.append("inputFile", file);
-
-    // Endpoint correto de compressão agressiva da Cloudmersive.
-    // "reduce-file-size" recomprime imagens embutidas e é o mais eficaz p/ atingir 3MB.
-    const response = await fetch(
-      "https://api.cloudmersive.com/convert/edit/pdf/optimize/reduce-file-size",
-      {
-        method: "POST",
-        headers: { Apikey: cloudmersiveKey },
-        body: formData,
-      },
-    );
-
-    if (response.ok) {
-      const finalBuf = new Uint8Array(await response.arrayBuffer());
-      console.log(
-        `Compressão MAX concluída! Novo tamanho: ${finalBuf.byteLength} bytes`,
-      );
-      return finalBuf.byteLength < bytes.byteLength ? finalBuf : bytes;
+    // QualityRatio = 20 (agressivo). Ajustar entre 15-40 conforme necessidade.
+    let atual = bytes;
+    const step1 = await chamar("optimize/images", atual, { QualityRatio: "20" });
+    if (step1) {
+      console.log(`Após optimize/images: ${step1.byteLength} bytes`);
+      if (step1.byteLength < atual.byteLength) atual = step1;
     }
-    const errorText = await response.text();
-    console.error(`Falha na API Cloudmersive. HTTP ${response.status}:`, errorText);
-    return bytes;
+
+    const step2 = await chamar("optimize/reduce-file-size", atual);
+    if (step2) {
+      console.log(`Após reduce-file-size: ${step2.byteLength} bytes`);
+      if (step2.byteLength < atual.byteLength) atual = step2;
+    }
+
+    console.log(`Compressão finalizada. Tamanho final: ${atual.byteLength} bytes`);
+    return atual;
   } catch (error) {
     console.error("Erro na execução do fetch para a Cloudmersive:", error);
     return bytes;
