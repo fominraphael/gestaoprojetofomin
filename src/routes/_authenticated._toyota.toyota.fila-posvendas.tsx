@@ -235,6 +235,7 @@ function FilaPosVendas() {
         return;
       }
       toast.success("Check-list preenchido e PDF gerado.");
+      const checklistBytes = await obterTamanhoStorage(path);
       await carregar();
       setAberto((cur) =>
         cur
@@ -244,6 +245,10 @@ function FilaPosVendas() {
               checklist_itens: null,
               checklist_pdf_path: path,
               posvendas_km: kmNum,
+              tamanhos: {
+                checklist: checklistBytes,
+                health: cur.tamanhos?.health ?? null,
+              },
             }
           : cur,
       );
@@ -305,6 +310,7 @@ function FilaPosVendas() {
         return;
       }
       toast.success("Health Check anexado (chassi validado).");
+      const healthBytes = await obterTamanhoStorage(path);
       await carregar();
       setAberto((cur) =>
         cur
@@ -312,6 +318,10 @@ function FilaPosVendas() {
               ...cur,
               health_check_pdf_path: path,
               health_check_uploaded_at: new Date().toISOString(),
+              tamanhos: {
+                checklist: cur.tamanhos?.checklist ?? null,
+                health: healthBytes,
+              },
             }
           : cur,
       );
