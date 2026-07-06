@@ -160,7 +160,7 @@ function ProjetosPage() {
   const [fPrio, setFPrio] = useState<Prioridade | "all">("all");
   const [fCat, setFCat] = useState<Categoria | "all">("all");
   const [fProjeto, setFProjeto] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("sequencia");
+  const [sortKey, setSortKey] = useState<SortKey>("prioridade");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [colunasVisiveis, setColunasVisiveis] = useState<ColId[]>(() => carregarColunas());
 
@@ -277,7 +277,7 @@ function ProjetosPage() {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(k);
-      setSortDir(k === "titulo" || k === "categoria" || k === "sequencia" ? "asc" : "desc");
+      setSortDir(k === "titulo" || k === "categoria" || k === "prioridade" ? "asc" : "desc");
     }
   }
 
