@@ -89,6 +89,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
       setForm({
         codigo: tarefa.codigo ?? "",
         titulo: tarefa.titulo,
+        subtitulo: tarefa.subtitulo ?? "",
         descricao_como: tarefa.descricao_como ?? "",
         descricao_porque: tarefa.descricao_porque ?? "",
         projeto: tarefa.projeto ?? "",
