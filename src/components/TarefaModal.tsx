@@ -98,6 +98,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: tarefa.responsaveis ?? "",
         status: tarefa.status,
         prioridade: tarefa.prioridade ?? "nenhuma",
+        ordem: tarefa.ordem != null ? String(tarefa.ordem) : "",
         inicio_previsto: tarefa.inicio_previsto ?? "",
         estimativa_dias:
           tarefa.estimativa_dias != null ? String(tarefa.estimativa_dias) : "",
