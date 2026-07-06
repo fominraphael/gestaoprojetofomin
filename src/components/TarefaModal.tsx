@@ -134,6 +134,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: form.responsaveis || null,
         status: form.status,
         prioridade: form.prioridade === "nenhuma" ? null : form.prioridade,
+        ordem: form.ordem.trim() === "" ? null : parseInt(form.ordem, 10),
         estimativa_dias: diasNum != null && !Number.isNaN(diasNum) ? diasNum : null,
         inicio_real: form.inicio_real || null,
         fim_real: form.fim_real || null,
