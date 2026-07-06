@@ -90,8 +90,8 @@ function ProjetosPage() {
   const [fPrio, setFPrio] = useState<Prioridade | "all">("all");
   const [fCat, setFCat] = useState<Categoria | "all">("all");
   const [fProjeto, setFProjeto] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("updated_at");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("sequencia");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const projetos = useMemo(() => {
     const set = new Set<string>();
