@@ -294,22 +294,6 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
 
           <div>
             <Label>Prioridade</Label>
-            <Select
-              value={form.prioridade}
-              onValueChange={(v) => setForm({ ...form, prioridade: v as Prioridade | "nenhuma" })}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nenhuma">Sem prioridade</SelectItem>
-                {PRIORIDADES.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Ordem de execução</Label>
             <Input
               type="number"
               min={1}
@@ -321,6 +305,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               Menor número aparece primeiro na fila.
             </p>
           </div>
+
 
 
           <div>
