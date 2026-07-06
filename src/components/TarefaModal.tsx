@@ -216,6 +216,18 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             />
           </div>
 
+          <div className="col-span-2">
+            <Label>Subtítulo</Label>
+            <Input
+              value={form.subtitulo}
+              onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+              placeholder="Resumo breve exibido abaixo do título na listagem"
+              maxLength={200}
+            />
+          </div>
+
+
+
           <div>
             <Label>Código</Label>
             <Input
