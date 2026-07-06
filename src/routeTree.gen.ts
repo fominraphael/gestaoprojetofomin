@@ -20,6 +20,7 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated.admin.usuarios'
 import { Route as AuthenticatedGestaoSolicitacoesRouteImport } from './routes/_authenticated._gestao.solicitacoes'
 import { Route as AuthenticatedGestaoRoadmapRouteImport } from './routes/_authenticated._gestao.roadmap'
+import { Route as AuthenticatedGestaoProjetosRouteImport } from './routes/_authenticated._gestao.projetos'
 import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_authenticated._gestao.historico'
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
@@ -87,6 +88,12 @@ const AuthenticatedGestaoRoadmapRoute =
   AuthenticatedGestaoRoadmapRouteImport.update({
     id: '/roadmap',
     path: '/roadmap',
+    getParentRoute: () => AuthenticatedGestaoRoute,
+  } as any)
+const AuthenticatedGestaoProjetosRoute =
+  AuthenticatedGestaoProjetosRouteImport.update({
+    id: '/projetos',
+    path: '/projetos',
     getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
 const AuthenticatedGestaoHistoricoRoute =
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/projetos': typeof AuthenticatedGestaoProjetosRoute
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -206,6 +214,7 @@ export interface FileRoutesByTo {
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/projetos': typeof AuthenticatedGestaoProjetosRoute
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/_authenticated/_gestao/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/_authenticated/_gestao/historico': typeof AuthenticatedGestaoHistoricoRoute
+  '/_authenticated/_gestao/projetos': typeof AuthenticatedGestaoProjetosRoute
   '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/backlog'
     | '/dashboard'
     | '/historico'
+    | '/projetos'
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/backlog'
     | '/dashboard'
     | '/historico'
+    | '/projetos'
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
@@ -309,6 +321,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/backlog'
     | '/_authenticated/_gestao/dashboard'
     | '/_authenticated/_gestao/historico'
+    | '/_authenticated/_gestao/projetos'
     | '/_authenticated/_gestao/roadmap'
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/roadmap'
       fullPath: '/roadmap'
       preLoaderRoute: typeof AuthenticatedGestaoRoadmapRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
+    }
+    '/_authenticated/_gestao/projetos': {
+      id: '/_authenticated/_gestao/projetos'
+      path: '/projetos'
+      fullPath: '/projetos'
+      preLoaderRoute: typeof AuthenticatedGestaoProjetosRouteImport
       parentRoute: typeof AuthenticatedGestaoRoute
     }
     '/_authenticated/_gestao/historico': {
@@ -532,6 +552,7 @@ interface AuthenticatedGestaoRouteChildren {
   AuthenticatedGestaoBacklogRoute: typeof AuthenticatedGestaoBacklogRoute
   AuthenticatedGestaoDashboardRoute: typeof AuthenticatedGestaoDashboardRoute
   AuthenticatedGestaoHistoricoRoute: typeof AuthenticatedGestaoHistoricoRoute
+  AuthenticatedGestaoProjetosRoute: typeof AuthenticatedGestaoProjetosRoute
   AuthenticatedGestaoRoadmapRoute: typeof AuthenticatedGestaoRoadmapRoute
   AuthenticatedGestaoSolicitacoesRoute: typeof AuthenticatedGestaoSolicitacoesRoute
 }
@@ -540,6 +561,7 @@ const AuthenticatedGestaoRouteChildren: AuthenticatedGestaoRouteChildren = {
   AuthenticatedGestaoBacklogRoute: AuthenticatedGestaoBacklogRoute,
   AuthenticatedGestaoDashboardRoute: AuthenticatedGestaoDashboardRoute,
   AuthenticatedGestaoHistoricoRoute: AuthenticatedGestaoHistoricoRoute,
+  AuthenticatedGestaoProjetosRoute: AuthenticatedGestaoProjetosRoute,
   AuthenticatedGestaoRoadmapRoute: AuthenticatedGestaoRoadmapRoute,
   AuthenticatedGestaoSolicitacoesRoute: AuthenticatedGestaoSolicitacoesRoute,
 }
@@ -611,13 +633,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
