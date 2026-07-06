@@ -64,6 +64,7 @@ const empty = (cat: Categoria): FormState => ({
   responsaveis: "",
   status: "Não iniciada",
   prioridade: "nenhuma",
+  ordem: "",
   inicio_previsto: today(),
   estimativa_dias: "",
   inicio_real: "",
