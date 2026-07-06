@@ -99,6 +99,17 @@ function ProjetosPage() {
     return Array.from(set).sort();
   }, [tarefas]);
 
+  // Sequência global: posição de cada tarefa "Não iniciada" na fila de execução
+  // (independe dos filtros — o #N é uma propriedade da tarefa, não da view).
+  const sequenciaPorId = useMemo(() => {
+    const naoIniciadas = tarefas
+      .filter((t) => t.status === "Não iniciada" && t.categoria !== "historico")
+      .sort(compararSequencia);
+    const map = new Map<string, number>();
+    naoIniciadas.forEach((t, i) => map.set(t.id, i + 1));
+    return map;
+  }, [tarefas]);
+
   const filtradas = useMemo(() => {
     const q = busca.trim().toLowerCase();
     let list = tarefas.filter((t) => {
@@ -120,6 +131,16 @@ function ProjetosPage() {
     list = [...list].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
+        case "sequencia": {
+          // Não iniciadas primeiro (na sequência), depois o resto.
+          const sa = sequenciaPorId.get(a.id);
+          const sb = sequenciaPorId.get(b.id);
+          if (sa && sb) cmp = sa - sb;
+          else if (sa) cmp = -1;
+          else if (sb) cmp = 1;
+          else cmp = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+          break;
+        }
         case "titulo":
           cmp = a.titulo.localeCompare(b.titulo);
           break;
@@ -142,7 +163,7 @@ function ProjetosPage() {
       return cmp * dir;
     });
     return list;
-  }, [tarefas, busca, fStatus, fPrio, fCat, fProjeto, sortKey, sortDir]);
+  }, [tarefas, busca, fStatus, fPrio, fCat, fProjeto, sortKey, sortDir, sequenciaPorId]);
 
   const contagem = useMemo(() => {
     return {
