@@ -297,19 +297,29 @@ function ProjetosPage() {
             <tbody className="divide-y divide-border">
               {filtradas.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <td colSpan={7} className="text-center py-12 text-muted-foreground">
                     Nenhuma tarefa encontrada.
                   </td>
                 </tr>
               ) : (
                 filtradas.map((t) => {
                   const risco = isEmRisco(t);
+                  const seq = sequenciaPorId.get(t.id);
                   return (
                     <tr
                       key={t.id}
                       onClick={() => setModal({ open: true, tarefa: t })}
                       className="cursor-pointer hover:bg-muted/40 transition-colors"
                     >
+                      <td className="px-4 py-3 text-center">
+                        {seq ? (
+                          <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-md bg-primary/10 text-primary text-xs font-semibold tabular-nums">
+                            {seq}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-start gap-2">
                           <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusDot[t.status]}`} />
