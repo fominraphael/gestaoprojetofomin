@@ -41,6 +41,7 @@ type FormState = {
   responsaveis: string;
   status: Status;
   prioridade: Prioridade | "nenhuma";
+  ordem: string;
   inicio_previsto: string;
   estimativa_dias: string;
   inicio_real: string;
