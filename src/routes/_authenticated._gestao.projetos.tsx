@@ -285,6 +285,7 @@ function ProjetosPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
+                <Th onClick={() => toggleSort("sequencia")} active={sortKey === "sequencia"} dir={sortDir}>#</Th>
                 <Th onClick={() => toggleSort("titulo")} active={sortKey === "titulo"} dir={sortDir}>Tarefa</Th>
                 <Th onClick={() => toggleSort("categoria")} active={sortKey === "categoria"} dir={sortDir}>Categoria</Th>
                 <Th onClick={() => toggleSort("status")} active={sortKey === "status"} dir={sortDir}>Status</Th>
