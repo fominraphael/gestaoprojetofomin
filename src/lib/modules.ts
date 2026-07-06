@@ -70,7 +70,7 @@ export const MODULES: ModuleDef[] = [
     description:
       "Dashboard, backlog, roadmap e acompanhamento de tarefas e atividades.",
     icon: LayoutDashboard,
-    href: "/dashboard",
+    href: "/projetos",
     requiredModule: "gestao",
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
