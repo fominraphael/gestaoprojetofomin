@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/projetos")({
   errorComponent: ModuleErrorBoundary,
 });
 
-type SortKey = "updated_at" | "titulo" | "status" | "prioridade" | "fim_previsto" | "categoria";
+type SortKey = "sequencia" | "updated_at" | "titulo" | "status" | "prioridade" | "fim_previsto" | "categoria";
 type SortDir = "asc" | "desc";
 
 const CATEGORIAS: { value: Categoria; label: string }[] = [
@@ -53,6 +53,23 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
   { value: "solicitacao", label: "Solicitação" },
   { value: "historico", label: "Lixeira" },
 ];
+
+/**
+ * Sequência de execução: ordena tarefas "Não iniciada" para responder
+ * "qual devo começar primeiro?". Critérios em cascata:
+ *   1. Prioridade (Alta > Média > Baixa > sem prio)
+ *   2. Prazo mais próximo (fim_previsto asc, nulos por último)
+ *   3. Mais antiga primeiro (created_at asc)
+ */
+function compararSequencia(a: Tarefa, b: Tarefa): number {
+  const pa = a.prioridade ? PRIO_RANK[a.prioridade] : 0;
+  const pb = b.prioridade ? PRIO_RANK[b.prioridade] : 0;
+  if (pa !== pb) return pb - pa;
+  const fa = a.fim_previsto ?? "\uffff";
+  const fb = b.fim_previsto ?? "\uffff";
+  if (fa !== fb) return fa.localeCompare(fb);
+  return a.created_at.localeCompare(b.created_at);
+}
 
 const PRIO_RANK: Record<Prioridade, number> = { Alta: 3, Média: 2, Baixa: 1 };
 const STATUS_RANK: Record<Status, number> = {
@@ -73,13 +90,24 @@ function ProjetosPage() {
   const [fPrio, setFPrio] = useState<Prioridade | "all">("all");
   const [fCat, setFCat] = useState<Categoria | "all">("all");
   const [fProjeto, setFProjeto] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("updated_at");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("sequencia");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const projetos = useMemo(() => {
     const set = new Set<string>();
     tarefas.forEach((t) => t.projeto && set.add(t.projeto));
     return Array.from(set).sort();
+  }, [tarefas]);
+
+  // Sequência global: posição de cada tarefa "Não iniciada" na fila de execução
+  // (independe dos filtros — o #N é uma propriedade da tarefa, não da view).
+  const sequenciaPorId = useMemo(() => {
+    const naoIniciadas = tarefas
+      .filter((t) => t.status === "Não iniciada" && t.categoria !== "historico")
+      .sort(compararSequencia);
+    const map = new Map<string, number>();
+    naoIniciadas.forEach((t, i) => map.set(t.id, i + 1));
+    return map;
   }, [tarefas]);
 
   const filtradas = useMemo(() => {
@@ -103,6 +131,16 @@ function ProjetosPage() {
     list = [...list].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
+        case "sequencia": {
+          // Não iniciadas primeiro (na sequência), depois o resto.
+          const sa = sequenciaPorId.get(a.id);
+          const sb = sequenciaPorId.get(b.id);
+          if (sa && sb) cmp = sa - sb;
+          else if (sa) cmp = -1;
+          else if (sb) cmp = 1;
+          else cmp = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+          break;
+        }
         case "titulo":
           cmp = a.titulo.localeCompare(b.titulo);
           break;
@@ -125,7 +163,7 @@ function ProjetosPage() {
       return cmp * dir;
     });
     return list;
-  }, [tarefas, busca, fStatus, fPrio, fCat, fProjeto, sortKey, sortDir]);
+  }, [tarefas, busca, fStatus, fPrio, fCat, fProjeto, sortKey, sortDir, sequenciaPorId]);
 
   const contagem = useMemo(() => {
     return {
@@ -247,6 +285,7 @@ function ProjetosPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
+                <Th onClick={() => toggleSort("sequencia")} active={sortKey === "sequencia"} dir={sortDir}>#</Th>
                 <Th onClick={() => toggleSort("titulo")} active={sortKey === "titulo"} dir={sortDir}>Tarefa</Th>
                 <Th onClick={() => toggleSort("categoria")} active={sortKey === "categoria"} dir={sortDir}>Categoria</Th>
                 <Th onClick={() => toggleSort("status")} active={sortKey === "status"} dir={sortDir}>Status</Th>
@@ -258,19 +297,29 @@ function ProjetosPage() {
             <tbody className="divide-y divide-border">
               {filtradas.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <td colSpan={7} className="text-center py-12 text-muted-foreground">
                     Nenhuma tarefa encontrada.
                   </td>
                 </tr>
               ) : (
                 filtradas.map((t) => {
                   const risco = isEmRisco(t);
+                  const seq = sequenciaPorId.get(t.id);
                   return (
                     <tr
                       key={t.id}
                       onClick={() => setModal({ open: true, tarefa: t })}
                       className="cursor-pointer hover:bg-muted/40 transition-colors"
                     >
+                      <td className="px-4 py-3 text-center">
+                        {seq ? (
+                          <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-md bg-primary/10 text-primary text-xs font-semibold tabular-nums">
+                            {seq}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-start gap-2">
                           <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusDot[t.status]}`} />
