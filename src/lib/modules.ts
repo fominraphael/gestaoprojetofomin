@@ -13,6 +13,7 @@ import {
   GitBranch,
   Wrench,
   Truck,
+  FolderKanban,
   type LucideIcon,
 } from "lucide-react";
 
@@ -75,6 +76,7 @@ export const MODULES: ModuleDef[] = [
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/projetos", label: "Projetos", icon: FolderKanban },
       { to: "/backlog", label: "Backlog", icon: KanbanSquare },
       { to: "/roadmap", label: "Roadmap", icon: Map },
       { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
