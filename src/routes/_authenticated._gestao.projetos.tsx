@@ -81,7 +81,6 @@ interface Coluna {
 }
 
 const COLUNAS: Coluna[] = [
-  { id: "sequencia", label: "#", sortable: true },
   { id: "titulo", label: "Tarefa", sortable: true },
   { id: "categoria", label: "Categoria", sortable: true },
   { id: "status", label: "Status", sortable: true },
@@ -102,7 +101,6 @@ const COLUNAS: Coluna[] = [
 ];
 
 const COLUNAS_PADRAO: ColId[] = [
-  "sequencia",
   "titulo",
   "categoria",
   "status",
@@ -162,7 +160,7 @@ function ProjetosPage() {
   const [fPrio, setFPrio] = useState<Prioridade | "all">("all");
   const [fCat, setFCat] = useState<Categoria | "all">("all");
   const [fProjeto, setFProjeto] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("sequencia");
+  const [sortKey, setSortKey] = useState<SortKey>("prioridade");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [colunasVisiveis, setColunasVisiveis] = useState<ColId[]>(() => carregarColunas());
 
@@ -238,11 +236,12 @@ function ProjetosPage() {
         case "status":
           cmp = STATUS_RANK[a.status] - STATUS_RANK[b.status];
           break;
-        case "prioridade":
-          cmp =
-            (a.prioridade ? PRIO_RANK[a.prioridade] : 0) -
-            (b.prioridade ? PRIO_RANK[b.prioridade] : 0);
+        case "prioridade": {
+          const oa = a.ordem ?? Number.POSITIVE_INFINITY;
+          const ob = b.ordem ?? Number.POSITIVE_INFINITY;
+          cmp = oa - ob;
           break;
+        }
         case "fim_previsto":
         case "inicio_previsto":
           cmp = (a[sortKey] ?? "\uffff").localeCompare(b[sortKey] ?? "\uffff");
@@ -278,7 +277,7 @@ function ProjetosPage() {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(k);
-      setSortDir(k === "titulo" || k === "categoria" || k === "sequencia" ? "asc" : "desc");
+      setSortDir(k === "titulo" || k === "categoria" || k === "prioridade" ? "asc" : "desc");
     }
   }
 
@@ -356,9 +355,9 @@ function ProjetosPage() {
           </span>
         );
       case "prioridade":
-        return t.prioridade ? (
-          <span className={`text-xs px-2 py-0.5 rounded-md ${prioColor[t.prioridade]}`}>
-            {t.prioridade}
+        return t.ordem != null ? (
+          <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-md bg-primary/10 text-primary text-xs font-semibold tabular-nums">
+            {t.ordem}
           </span>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
