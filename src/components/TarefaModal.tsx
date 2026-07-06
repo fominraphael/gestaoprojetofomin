@@ -41,6 +41,7 @@ type FormState = {
   responsaveis: string;
   status: Status;
   prioridade: Prioridade | "nenhuma";
+  ordem: string;
   inicio_previsto: string;
   estimativa_dias: string;
   inicio_real: string;
@@ -63,6 +64,7 @@ const empty = (cat: Categoria): FormState => ({
   responsaveis: "",
   status: "Não iniciada",
   prioridade: "nenhuma",
+  ordem: "",
   inicio_previsto: today(),
   estimativa_dias: "",
   inicio_real: "",
@@ -96,6 +98,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: tarefa.responsaveis ?? "",
         status: tarefa.status,
         prioridade: tarefa.prioridade ?? "nenhuma",
+        ordem: tarefa.ordem != null ? String(tarefa.ordem) : "",
         inicio_previsto: tarefa.inicio_previsto ?? "",
         estimativa_dias:
           tarefa.estimativa_dias != null ? String(tarefa.estimativa_dias) : "",
@@ -131,6 +134,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         responsaveis: form.responsaveis || null,
         status: form.status,
         prioridade: form.prioridade === "nenhuma" ? null : form.prioridade,
+        ordem: form.ordem.trim() === "" ? null : parseInt(form.ordem, 10),
         estimativa_dias: diasNum != null && !Number.isNaN(diasNum) ? diasNum : null,
         inicio_real: form.inicio_real || null,
         fim_real: form.fim_real || null,
@@ -303,6 +307,21 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <Label>Ordem de execução</Label>
+            <Input
+              type="number"
+              min={1}
+              value={form.ordem}
+              onChange={(e) => setForm({ ...form, ordem: e.target.value })}
+              placeholder="1, 2, 3…"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Menor número aparece primeiro na fila.
+            </p>
+          </div>
+
 
           <div>
             <Label>Categoria</Label>
