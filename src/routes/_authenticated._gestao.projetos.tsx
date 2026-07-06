@@ -196,7 +196,7 @@ function ProjetosPage() {
     busca || fStatus !== "all" || fPrio !== "all" || fCat !== "all" || fProjeto !== "all";
 
   return (
-    <div className="p-8 max-w-[1400px]">
+    <div className="p-8 w-full">
       <header className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projetos</h1>
@@ -325,6 +325,11 @@ function ProjetosPage() {
                           <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusDot[t.status]}`} />
                           <div className="min-w-0">
                             <div className="font-medium truncate">{t.titulo}</div>
+                            {t.subtitulo && (
+                              <div className="text-xs text-foreground/70 truncate mt-0.5">
+                                {t.subtitulo}
+                              </div>
+                            )}
                             <div className="text-xs text-muted-foreground truncate">
                               {t.projeto ?? "Sem projeto"}
                               {t.codigo ? ` · ${t.codigo}` : ""}

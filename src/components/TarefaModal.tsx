@@ -34,6 +34,7 @@ interface Props {
 type FormState = {
   codigo: string;
   titulo: string;
+  subtitulo: string;
   descricao_como: string;
   descricao_porque: string;
   projeto: string;
@@ -55,6 +56,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const empty = (cat: Categoria): FormState => ({
   codigo: "",
   titulo: "",
+  subtitulo: "",
   descricao_como: "",
   descricao_porque: "",
   projeto: "",
@@ -87,6 +89,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
       setForm({
         codigo: tarefa.codigo ?? "",
         titulo: tarefa.titulo,
+        subtitulo: tarefa.subtitulo ?? "",
         descricao_como: tarefa.descricao_como ?? "",
         descricao_porque: tarefa.descricao_porque ?? "",
         projeto: tarefa.projeto ?? "",
@@ -121,6 +124,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
       const basePayload = {
         codigo: form.codigo || null,
         titulo: form.titulo,
+        subtitulo: form.subtitulo || null,
         descricao_como: form.descricao_como || null,
         descricao_porque: form.descricao_porque || null,
         projeto: form.projeto || null,
@@ -211,6 +215,18 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               placeholder="O que precisa ser feito"
             />
           </div>
+
+          <div className="col-span-2">
+            <Label>Subtítulo</Label>
+            <Input
+              value={form.subtitulo}
+              onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+              placeholder="Resumo breve exibido abaixo do título na listagem"
+              maxLength={200}
+            />
+          </div>
+
+
 
           <div>
             <Label>Código</Label>

@@ -264,6 +264,7 @@ export type Database = {
           responsaveis: string | null
           solicitante: string | null
           status: Database["public"]["Enums"]["tarefa_status"]
+          subtitulo: string | null
           tags: string | null
           tipo: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
@@ -291,6 +292,7 @@ export type Database = {
           responsaveis?: string | null
           solicitante?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
+          subtitulo?: string | null
           tags?: string | null
           tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo: string
@@ -318,6 +320,7 @@ export type Database = {
           responsaveis?: string | null
           solicitante?: string | null
           status?: Database["public"]["Enums"]["tarefa_status"]
+          subtitulo?: string | null
           tags?: string | null
           tipo?: Database["public"]["Enums"]["tarefa_tipo"] | null
           titulo?: string
