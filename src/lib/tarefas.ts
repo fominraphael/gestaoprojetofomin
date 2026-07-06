@@ -18,6 +18,7 @@ export interface Tarefa {
   id: string;
   codigo: string | null;
   titulo: string;
+  subtitulo: string | null;
   descricao_como: string | null;
   descricao_porque: string | null;
   projeto: string | null;
