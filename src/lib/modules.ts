@@ -75,11 +75,7 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-slate-500/15 to-slate-700/15",
     iconBg: "from-slate-500 to-slate-700",
     navItems: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/projetos", label: "Projetos", icon: FolderKanban },
-      { to: "/backlog", label: "Backlog", icon: KanbanSquare },
-      { to: "/roadmap", label: "Roadmap", icon: Map },
-      { to: "/solicitacoes", label: "Solicitações", icon: Inbox },
       { to: "/historico", label: "Lixeira", icon: Archive },
     ],
   },
