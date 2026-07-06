@@ -309,6 +309,21 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
           </div>
 
           <div>
+            <Label>Ordem de execução</Label>
+            <Input
+              type="number"
+              min={1}
+              value={form.ordem}
+              onChange={(e) => setForm({ ...form, ordem: e.target.value })}
+              placeholder="1, 2, 3…"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Menor número aparece primeiro na fila.
+            </p>
+          </div>
+
+
+          <div>
             <Label>Categoria</Label>
             <Select
               value={form.categoria}
