@@ -34,6 +34,7 @@ interface Props {
 type FormState = {
   codigo: string;
   titulo: string;
+  subtitulo: string;
   descricao_como: string;
   descricao_porque: string;
   projeto: string;
