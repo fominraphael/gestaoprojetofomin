@@ -124,6 +124,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
       const basePayload = {
         codigo: form.codigo || null,
         titulo: form.titulo,
+        subtitulo: form.subtitulo || null,
         descricao_como: form.descricao_como || null,
         descricao_porque: form.descricao_porque || null,
         projeto: form.projeto || null,
