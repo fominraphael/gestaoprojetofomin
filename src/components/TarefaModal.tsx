@@ -56,6 +56,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const empty = (cat: Categoria): FormState => ({
   codigo: "",
   titulo: "",
+  subtitulo: "",
   descricao_como: "",
   descricao_porque: "",
   projeto: "",
