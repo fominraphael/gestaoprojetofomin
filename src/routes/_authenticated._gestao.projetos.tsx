@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/projetos")({
   errorComponent: ModuleErrorBoundary,
 });
 
-type SortKey = "updated_at" | "titulo" | "status" | "prioridade" | "fim_previsto" | "categoria";
+type SortKey = "sequencia" | "updated_at" | "titulo" | "status" | "prioridade" | "fim_previsto" | "categoria";
 type SortDir = "asc" | "desc";
 
 const CATEGORIAS: { value: Categoria; label: string }[] = [
@@ -53,6 +53,23 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
   { value: "solicitacao", label: "Solicitação" },
   { value: "historico", label: "Lixeira" },
 ];
+
+/**
+ * Sequência de execução: ordena tarefas "Não iniciada" para responder
+ * "qual devo começar primeiro?". Critérios em cascata:
+ *   1. Prioridade (Alta > Média > Baixa > sem prio)
+ *   2. Prazo mais próximo (fim_previsto asc, nulos por último)
+ *   3. Mais antiga primeiro (created_at asc)
+ */
+function compararSequencia(a: Tarefa, b: Tarefa): number {
+  const pa = a.prioridade ? PRIO_RANK[a.prioridade] : 0;
+  const pb = b.prioridade ? PRIO_RANK[b.prioridade] : 0;
+  if (pa !== pb) return pb - pa;
+  const fa = a.fim_previsto ?? "\uffff";
+  const fb = b.fim_previsto ?? "\uffff";
+  if (fa !== fb) return fa.localeCompare(fb);
+  return a.created_at.localeCompare(b.created_at);
+}
 
 const PRIO_RANK: Record<Prioridade, number> = { Alta: 3, Média: 2, Baixa: 1 };
 const STATUS_RANK: Record<Status, number> = {
