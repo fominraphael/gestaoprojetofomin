@@ -196,7 +196,7 @@ function ProjetosPage() {
     busca || fStatus !== "all" || fPrio !== "all" || fCat !== "all" || fProjeto !== "all";
 
   return (
-    <div className="p-8 max-w-[1400px]">
+    <div className="p-8 w-full">
       <header className="flex items-start justify-between mb-6 gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projetos</h1>
