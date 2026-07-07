@@ -189,42 +189,107 @@ function Dashboard() {
           <Loader2 className="w-5 h-5 animate-spin" />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard
-            titulo="Solicitados"
-            valor={contagens.solicitados}
-            icone={CheckCircle2}
-            cor="text-emerald-600"
-            legenda="Aprovados na Análise de Elegibilidade neste mês"
-          />
-          <StatCard
-            titulo="Preparador"
-            valor={contagens.preparador}
-            icone={Wrench}
-            cor="text-amber-600"
-            legenda="Parados no Preparador agora"
-          />
-          <StatCard
-            titulo="Pós-Vendas"
-            valor={contagens.posVendas}
-            icone={Building2}
-            cor="text-blue-600"
-            legenda="Na fila do Pós-Vendas agora"
-          />
-          <StatCard
-            titulo="Análise Central"
-            valor={contagens.analiseCentral}
-            icone={ShieldCheck}
-            cor="text-indigo-600"
-            legenda="Aguardando análise / retornos Toyota"
-          />
-          <StatCard
-            titulo="Enviados Toyota"
-            valor={contagens.enviadosToyota}
-            icone={Send}
-            cor="text-slate-700"
-            legenda="Dossiê enviado, aguardando retorno"
-          />
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Em andamento (agora)
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <StatCard
+                titulo="Preparador"
+                valor={contagens.preparador}
+                icone={Wrench}
+                cor="text-amber-600"
+                legenda="Parados no Preparador"
+              />
+              <StatCard
+                titulo="Pós-Vendas"
+                valor={contagens.posVendas}
+                icone={Building2}
+                cor="text-blue-600"
+                legenda="Na fila do Pós-Vendas"
+              />
+              <StatCard
+                titulo="Análise Central"
+                valor={contagens.analiseCentral}
+                icone={ShieldCheck}
+                cor="text-indigo-600"
+                legenda="Aguardando análise / retornos"
+              />
+              <StatCard
+                titulo="Enviados Toyota"
+                valor={contagens.enviadosToyota}
+                icone={Send}
+                cor="text-slate-700"
+                legenda="Aguardando retorno da Toyota"
+              />
+              <StatCard
+                titulo="Recusados Toyota"
+                valor={contagens.recusados}
+                icone={XCircle}
+                cor="text-red-600"
+                legenda="Aguardando reenvio"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              No mês selecionado
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <StatCard
+                titulo="Solicitados"
+                valor={contagens.solicitados}
+                icone={CheckCircle2}
+                cor="text-emerald-600"
+                legenda="Aprovados na Análise de Elegibilidade no mês"
+              />
+              <StatCard
+                titulo="Enviados à Toyota"
+                valor={contagens.enviadosToyotaMes}
+                icone={Send}
+                cor="text-indigo-600"
+                legenda="Último envio à Toyota no mês (inclui reenvios)"
+              />
+              <StatCard
+                titulo="Aprovados pela Toyota"
+                valor={contagens.aprovadosToyotaMes}
+                icone={Award}
+                cor="text-emerald-700"
+                legenda="Data de aprovação no mês"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Certificados e arquivamento
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <StatCard
+                titulo="Certificados emitidos"
+                valor={contagens.certificadosEmitidos}
+                icone={Award}
+                cor="text-emerald-700"
+                legenda="Aprovados com PDF do certificado anexado"
+              />
+              <StatCard
+                titulo="Aprovados sem certificado"
+                valor={contagens.certificadosPendentes}
+                icone={CheckCircle2}
+                cor="text-amber-600"
+                legenda="Aprovados aguardando upload do certificado"
+              />
+              <StatCard
+                titulo="Arquivados"
+                valor={contagens.arquivados}
+                icone={Archive}
+                cor="text-slate-600"
+                legenda="Processos arquivados"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
