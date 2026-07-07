@@ -61,6 +61,13 @@ interface Filial {
   nome: string;
 }
 
+interface Patio {
+  id: string;
+  nome: string;
+  filial_id: string | null;
+}
+
+
 interface Veiculo {
   id: string;
   chassi: string;
