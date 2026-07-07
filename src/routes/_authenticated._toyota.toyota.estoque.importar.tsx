@@ -955,7 +955,9 @@ function AcaoBadge({ a }: { a: BiRow["novoStatus"] }) {
   if (a === "certificado_toyota")
     return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Aprovar</Badge>;
   if (a === "reprovado_toyota")
-    return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Reprovar</Badge>;
+    return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Reenvio</Badge>;
+  if (a === "aguardando_analise_toyota")
+    return <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-100">Aguardando análise</Badge>;
   if (a === "nao_encontrado") return <Badge variant="secondary">Ignorar</Badge>;
   return <Badge variant="outline">Manter</Badge>;
 }
