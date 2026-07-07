@@ -637,7 +637,7 @@ function BiToyotaImporter() {
         raw: false,
       });
 
-      const parsed: Omit<BiRow, "encontrado" | "statusAtual" | "novoStatus">[] = data.map((r) => ({
+      const parsed: Omit<BiRow, "encontrado" | "ambiguo" | "vehicleId" | "statusAtual" | "novoStatus">[] = data.map((r) => ({
         codCertificacao: String(pick(r, ["cod.*certif", "codigo.*certif"]) ?? "").trim(),
         solicitacao: String(pick(r, ["solicitacao"]) ?? "").trim(),
         certificacao: String(pick(r, ["^certificacao$"]) ?? "").trim(),
@@ -653,37 +653,73 @@ function BiToyotaImporter() {
       }));
 
       const chassis = parsed.map((p) => p.chassi).filter(Boolean);
-      // Um mesmo chassi pode ter vários registros (reenvios Toyota).
-      // Indexamos por chassi → lista de {status, codigo_tcuv}.
-      const lookup = new Map<string, { status: string | null; codigo_tcuv: string | null }[]>();
+      // Um mesmo chassi pode ter múltiplos registros (compra/certificação em anos
+      // diferentes). Cada ciclo tem chassi_resumido próprio e, quando enviado à
+      // Toyota, um codigo_tcuv próprio. Indexamos por chassi → lista de candidatos
+      // e escolhemos o registro certo por: TCUV exato > registro ativo (não
+      // finalizado) único > candidato único.
+      type Cand = {
+        id: string;
+        status: string | null;
+        codigo_tcuv: string | null;
+        chassi_resumido: string | null;
+        created_at: string | null;
+      };
+      const lookup = new Map<string, Cand[]>();
       if (chassis.length > 0) {
         const { data: vehicles } = await supabase
           .from("toyota_estoque_veiculos")
-          .select("chassi, status_aprovacao, codigo_tcuv")
+          .select("id, chassi, status_aprovacao, codigo_tcuv, chassi_resumido, created_at")
           .in("chassi", chassis);
         (vehicles ?? []).forEach((v: any) => {
           const arr = lookup.get(v.chassi) ?? [];
-          arr.push({ status: v.status_aprovacao, codigo_tcuv: v.codigo_tcuv });
+          arr.push({
+            id: v.id,
+            status: v.status_aprovacao,
+            codigo_tcuv: v.codigo_tcuv,
+            chassi_resumido: v.chassi_resumido,
+            created_at: v.created_at,
+          });
           lookup.set(v.chassi, arr);
         });
       }
 
       const norm = (s: string) => s.trim().toLowerCase();
+      const TERMINAL = new Set(["certificado_toyota", "reprovado_toyota", "arquivado"]);
       const resolved: BiRow[] = parsed.map((p) => {
         const candidatos = lookup.get(p.chassi) ?? [];
         const tcuvPlanilha = norm(p.codCertificacao);
-        // Match preferencial: chassi + TCUV exatos. Fallback: chassi único.
-        let match = candidatos.find((c) => norm(c.codigo_tcuv ?? "") === tcuvPlanilha && tcuvPlanilha !== "");
-        if (!match && candidatos.length === 1) match = candidatos[0];
+        // 1) chassi + TCUV exatos (caminho ideal — permite múltiplas certificações do mesmo chassi)
+        let match: Cand | undefined = candidatos.find(
+          (c) => tcuvPlanilha !== "" && norm(c.codigo_tcuv ?? "") === tcuvPlanilha,
+        );
+        let ambiguo = false;
+        if (!match) {
+          if (candidatos.length === 1) {
+            match = candidatos[0];
+          } else if (candidatos.length > 1) {
+            // Sem TCUV na planilha: preferir o único registro ativo (não finalizado).
+            const ativos = candidatos.filter((c) => !TERMINAL.has(String(c.status)));
+            if (ativos.length === 1) match = ativos[0];
+            else ambiguo = true; // vários ativos ou nenhum → precisa do TCUV
+          }
+        }
         const encontrado = !!match;
         const status = match?.status ?? null;
         const aprov = p.certificadoAprovado.toLowerCase();
         let novo: BiRow["novoStatus"] = "manter";
-        if (!encontrado) novo = "nao_encontrado";
+        if (!encontrado) novo = ambiguo ? "manter" : "nao_encontrado";
         else if (/^sim$/i.test(aprov)) novo = "certificado_toyota";
         else if (/^n[ãa]o$/i.test(aprov)) novo = "reprovado_toyota";
         else novo = "aguardando_analise_toyota"; // vazio → aguarda análise Toyota
-        return { ...p, encontrado, statusAtual: status, novoStatus: novo };
+        return {
+          ...p,
+          encontrado,
+          ambiguo,
+          vehicleId: match?.id ?? null,
+          statusAtual: status,
+          novoStatus: novo,
+        };
       });
 
       setRows(resolved);
@@ -694,7 +730,13 @@ function BiToyotaImporter() {
           r.novoStatus === "reprovado_toyota" ||
           r.novoStatus === "aguardando_analise_toyota",
       ).length;
+      const ambiguos = resolved.filter((r) => r.ambiguo).length;
       toast.success(`${resolved.length} linhas · ${upd} atualizações pendentes`);
+      if (ambiguos > 0) {
+        toast.warning(
+          `${ambiguos} linha(s) com chassi que possui múltiplas certificações. Informe o Cód. Certificação (TCUV) na planilha para desambiguar.`,
+        );
+      }
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao ler arquivo.");
     } finally {
