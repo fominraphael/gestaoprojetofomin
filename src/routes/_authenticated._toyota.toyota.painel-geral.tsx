@@ -488,8 +488,96 @@ function DetalhesModal({
   );
 }
 
+type ColKey =
+  | "veiculo"
+  | "loja"
+  | "filial"
+  | "ano"
+  | "km"
+  | "aprovadoCentral"
+  | "enviadoPosvendas"
+  | "enviadoCentral"
+  | "envioToyota"
+  | "aprovadoToyota"
+  | "etapa"
+  | "laudo"
+  | "hc"
+  | "checklist"
+  | "dossie"
+  | "certificado"
+  | "tcuv"
+  | "acoes";
+
+const COLUMNS: { key: ColKey; label: string; align?: "right" }[] = [
+  { key: "veiculo", label: "Veículo" },
+  { key: "loja", label: "Loja" },
+  { key: "filial", label: "Filial" },
+  { key: "ano", label: "Ano/Modelo" },
+  { key: "km", label: "KM" },
+  { key: "aprovadoCentral", label: "Aprovado Central" },
+  { key: "enviadoPosvendas", label: "Prep. → Pós-Vendas" },
+  { key: "enviadoCentral", label: "Pós-Vendas → Central" },
+  { key: "envioToyota", label: "Central → Toyota" },
+  { key: "aprovadoToyota", label: "Aprovado Toyota" },
+  { key: "etapa", label: "Etapa" },
+  { key: "laudo", label: "Laudo" },
+  { key: "hc", label: "HC" },
+  { key: "checklist", label: "Check-list" },
+  { key: "dossie", label: "Dossiê" },
+  { key: "certificado", label: "Certificado" },
+  { key: "tcuv", label: "TCUV" },
+  { key: "acoes", label: "Ações", align: "right" },
+];
+
+const DEFAULT_COLS: ColKey[] = [
+  "veiculo",
+  "loja",
+  "filial",
+  "ano",
+  "km",
+  "aprovadoCentral",
+  "etapa",
+  "laudo",
+  "hc",
+  "checklist",
+  "dossie",
+  "certificado",
+  "tcuv",
+  "acoes",
+];
+
+interface ColPrefs {
+  order: ColKey[];
+  visible: ColKey[];
+}
+
+function loadColPrefs(userId: string | undefined): ColPrefs {
+  const fallback: ColPrefs = { order: COLUMNS.map((c) => c.key), visible: DEFAULT_COLS };
+  if (!userId || typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(`painel-geral-cols:${userId}`);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<ColPrefs>;
+    const validKeys = new Set(COLUMNS.map((c) => c.key));
+    const order = (parsed.order ?? []).filter((k): k is ColKey => validKeys.has(k as ColKey));
+    // append any new columns at the end
+    for (const c of COLUMNS) if (!order.includes(c.key)) order.push(c.key);
+    const visible = (parsed.visible ?? DEFAULT_COLS).filter((k): k is ColKey =>
+      validKeys.has(k as ColKey),
+    );
+    return { order, visible };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveColPrefs(userId: string | undefined, prefs: ColPrefs) {
+  if (!userId || typeof window === "undefined") return;
+  localStorage.setItem(`painel-geral-cols:${userId}`, JSON.stringify(prefs));
+}
+
 function PainelGeral() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [loading, setLoading] = useState(true);
