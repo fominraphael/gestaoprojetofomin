@@ -95,6 +95,10 @@ interface Row {
   enviado_toyota_em: string | null;
   retorno_toyota_em: string | null;
   observacao_toyota: string | null;
+  enviado_posvendas_em: string | null;
+  enviado_central_em: string | null;
+  ultimo_envio_toyota_em: string | null;
+  aprovado_toyota_em: string | null;
 }
 
 interface Filial {
