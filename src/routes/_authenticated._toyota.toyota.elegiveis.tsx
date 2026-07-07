@@ -1169,9 +1169,34 @@ function VeiculoEnvioCard({
               Dossiê pendente
             </Badge>
           )}
-
+          {mode === "recusados" && (
+            <Badge className="bg-red-100 text-red-700">Recusado Toyota</Badge>
+          )}
         </div>
       </div>
+
+      {mode === "recusados" && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm space-y-1">
+          <div className="font-semibold text-red-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" /> Retorno da Toyota
+          </div>
+          {v.codigo_tcuv && (
+            <div className="text-xs text-red-700">
+              Código enviado anteriormente: <span className="font-mono">{v.codigo_tcuv}</span>
+            </div>
+          )}
+          <div>
+            <span className="text-xs text-red-700 font-medium">Motivo: </span>
+            <span className="text-red-900">{v.motivo_reprovacao || "—"}</span>
+          </div>
+          {v.observacao_toyota && (
+            <div>
+              <span className="text-xs text-red-700 font-medium">Observação: </span>
+              <span className="text-red-900">{v.observacao_toyota}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-2 md:grid-cols-3">
         <DocumentoSlot
@@ -1301,10 +1326,14 @@ function VeiculoEnvioCard({
 
         <div className="flex flex-wrap items-center gap-2">
           <Input
-            placeholder="Código TCUV (ex: TCUV-2026-0001)"
+            placeholder={
+              mode === "recusados"
+                ? "NOVO Código TCUV (obrigatório reenvio)"
+                : "Código TCUV (ex: TCUV-2026-0001)"
+            }
             value={tcuvValue}
             onChange={(e) => onTcuvChange(e.target.value)}
-            className="w-56"
+            className="w-64"
           />
           <Button
             size="sm"
@@ -1316,8 +1345,24 @@ function VeiculoEnvioCard({
             ) : (
               <Send className="w-3.5 h-3.5" />
             )}
-            Enviar / Concluir
+            {mode === "recusados" ? "Reenviar Toyota" : "Enviar / Concluir"}
           </Button>
+          {mode === "recusados" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onArquivar}
+              disabled={arquivando}
+              className="border-slate-400 text-slate-700"
+            >
+              {arquivando ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Archive className="w-3.5 h-3.5" />
+              )}
+              Arquivar
+            </Button>
+          )}
         </div>
 
       </div>
