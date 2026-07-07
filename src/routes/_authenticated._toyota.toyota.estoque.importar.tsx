@@ -705,8 +705,7 @@ function BiToyotaImporter() {
         const { error } = await supabase
           .from("toyota_estoque_veiculos")
           .update({ status_aprovacao: "aprovado_toyota", retorno_toyota_em: now })
-          .in("chassi", aprovados.map((r) => r.chassi))
-          .eq("status_aprovacao", "enviado_toyota");
+          .in("chassi", aprovados.map((r) => r.chassi));
         if (error) throw error;
       }
       for (const r of reprovados) {
@@ -718,8 +717,7 @@ function BiToyotaImporter() {
             motivo_reprovacao: r.motivoReprovacao || null,
             observacao_toyota: r.observacao || null,
           })
-          .eq("chassi", r.chassi)
-          .eq("status_aprovacao", "enviado_toyota");
+          .eq("chassi", r.chassi);
         if (error) throw error;
       }
       toast.success(`${aprovados.length} aprovado(s) · ${reprovados.length} reprovado(s)`);
