@@ -254,7 +254,7 @@ function DetalhesModal({
       const payload: Record<string, unknown> = { [column]: path, ...(extra ?? {}) };
       const { error } = await supabase
         .from("toyota_estoque_veiculos")
-        .update(payload)
+        .update(payload as never)
         .eq("id", row.id);
       if (error) throw error;
       toast.success("Documento atualizado.");
@@ -280,7 +280,7 @@ function DetalhesModal({
     if (key === "certificado") payload.certificado_uploaded_at = null;
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
-      .update(payload)
+      .update(payload as never)
       .eq("id", row.id);
     setSaving(false);
     if (error) return toast.error(`Falha ao remover: ${error.message}`);
@@ -522,7 +522,7 @@ function PainelGeral() {
       const payload: Record<string, unknown> = { [column]: path, ...(extra ?? {}) };
       const { error } = await supabase
         .from("toyota_estoque_veiculos")
-        .update(payload)
+        .update(payload as never)
         .eq("id", target.id);
       if (error) throw error;
       toast.success("Certificado importado.");
