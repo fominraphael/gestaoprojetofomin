@@ -758,7 +758,7 @@ function BiToyotaImporter() {
       for (const r of aprovados) {
         const { error } = await supabase
           .from("toyota_estoque_veiculos")
-          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now })
+          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now, aprovado_toyota_em: now })
           .eq("id", r.vehicleId!);
         if (error) throw error;
       }
