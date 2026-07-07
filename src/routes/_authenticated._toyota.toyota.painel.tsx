@@ -33,7 +33,10 @@ interface VeiculoRow {
   status_aprovacao: string | null;
   aprovado_em: string | null;
   enviado_toyota_em: string | null;
+  ultimo_envio_toyota_em: string | null;
+  aprovado_toyota_em: string | null;
   retorno_toyota_em: string | null;
+  certificado_pdf_path: string | null;
 }
 
 /** Gera opções de mês/ano dos últimos 12 meses + próximos 2. */
