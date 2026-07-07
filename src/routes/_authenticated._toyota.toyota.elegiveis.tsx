@@ -99,7 +99,9 @@ function AnaliseElegiveis() {
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [filiais, setFiliais] = useState<Filial[]>([]);
+  const [patios, setPatios] = useState<Patio[]>([]);
   const [filtro, setFiltro] = useState("");
+
 
   // Aprovar
   const [aprovando, setAprovando] = useState<Veiculo | null>(null);
