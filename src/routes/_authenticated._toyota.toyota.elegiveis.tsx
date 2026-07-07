@@ -1060,9 +1060,10 @@ interface VeiculoEnvioCardProps {
   tcuvValue: string;
   onTcuvChange: (val: string) => void;
   onGerar: () => void;
+  onGerarSemCompressao: () => void;
+  onImportarManual: (file: File) => void | Promise<void>;
   onVisualizar: () => void;
   onSalvarTcuv: () => void;
-  onRecusar: () => void;
   onRefresh: () => void | Promise<void>;
 }
 
@@ -1073,9 +1074,10 @@ function VeiculoEnvioCard({
   tcuvValue,
   onTcuvChange,
   onGerar,
+  onGerarSemCompressao,
+  onImportarManual,
   onVisualizar,
   onSalvarTcuv,
-  onRecusar,
   onRefresh,
 }: VeiculoEnvioCardProps) {
   const laudoPresente = !!(v.laudo_arquivo_path || v.laudo_url);
