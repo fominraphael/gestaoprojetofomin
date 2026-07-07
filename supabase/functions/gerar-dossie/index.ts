@@ -311,7 +311,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
   try {
-    const { veiculo_id } = (await req.json()) as Payload;
+    const { veiculo_id, pular_compressao } = (await req.json()) as Payload;
     if (!veiculo_id) {
       return new Response(JSON.stringify({ error: "veiculo_id ausente" }), {
         status: 400,
@@ -321,7 +321,7 @@ serve(async (req) => {
 
     // deno-lint-ignore no-explicit-any
     (globalThis as any).EdgeRuntime?.waitUntil?.(
-      processar(veiculo_id).catch((error) => {
+      processar(veiculo_id, !!pular_compressao).catch((error) => {
         console.error("Falha ao gerar dossiê em segundo plano:", error?.message ?? error);
       }),
     );
