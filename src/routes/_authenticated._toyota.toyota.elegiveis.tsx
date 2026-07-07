@@ -34,6 +34,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -60,6 +67,13 @@ interface Filial {
   id: string;
   nome: string;
 }
+
+interface Patio {
+  id: string;
+  nome: string;
+  filial_id: string | null;
+}
+
 
 interface Veiculo {
   id: string;
@@ -92,7 +106,9 @@ function AnaliseElegiveis() {
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [filiais, setFiliais] = useState<Filial[]>([]);
+  const [patios, setPatios] = useState<Patio[]>([]);
   const [filtro, setFiltro] = useState("");
+
 
   // Aprovar
   const [aprovando, setAprovando] = useState<Veiculo | null>(null);
@@ -113,7 +129,7 @@ function AnaliseElegiveis() {
 
   async function carregar() {
     setLoading(true);
-    const [vRes, fRes] = await Promise.all([
+    const [vRes, fRes, pRes] = await Promise.all([
       supabase
         .from("toyota_estoque_veiculos")
         .select(
@@ -127,13 +143,21 @@ function AnaliseElegiveis() {
         .select("id, nome")
         .eq("ativo", true)
         .order("nome"),
+      supabase
+        .from("toyota_patios")
+        .select("id, nome, filial_id")
+        .eq("ativo", true)
+        .order("nome"),
     ]);
     if (vRes.error) toast.error("Falha ao carregar veículos.");
     if (fRes.error) toast.error("Falha ao carregar filiais.");
+    if (pRes.error) toast.error("Falha ao carregar pátios.");
     setVeiculos(((vRes.data ?? []) as unknown) as Veiculo[]);
     setFiliais((fRes.data ?? []) as Filial[]);
+    setPatios((pRes.data ?? []) as Patio[]);
     setLoading(false);
   }
+
 
   useEffect(() => {
     carregar();
@@ -304,6 +328,29 @@ function AnaliseElegiveis() {
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
+  async function alterarPatio(v: Veiculo, novoPatioId: string) {
+    if (novoPatioId === v.filial_id) return;
+    const patio = patios.find((p) => p.id === novoPatioId);
+    if (!patio) return;
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ filial_id: novoPatioId })
+      .eq("id", v.id);
+    if (error) {
+      toast.error(`Falha ao alterar pátio: ${error.message}`);
+      return;
+    }
+    setVeiculos((prev) =>
+      prev.map((x) =>
+        x.id === v.id
+          ? { ...x, filial_id: novoPatioId, filial: { nome: patio.nome, filial_id: patio.filial_id } }
+          : x,
+      ),
+    );
+    const filialNome = filiais.find((f) => f.id === patio.filial_id)?.nome ?? "—";
+    toast.success(`Pátio atualizado. Filial: ${filialNome}.`);
+  }
+
   async function arquivarVeiculo(v: Veiculo) {
     if (!confirm(`Arquivar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`)) return;
     const { data: userData } = await supabase.auth.getUser();
@@ -386,12 +433,13 @@ function AnaliseElegiveis() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Pátio</TableHead>
+                        <TableHead>Filial</TableHead>
                         <TableHead>Chassi</TableHead>
                         <TableHead>Placa</TableHead>
                         <TableHead>Modelo</TableHead>
                         <TableHead>Ano</TableHead>
                         <TableHead className="text-right">KM</TableHead>
-                        <TableHead>Pátio origem</TableHead>
                         <TableHead>Programa</TableHead>
                         <TableHead>Laudo</TableHead>
                         <TableHead>HSV</TableHead>
@@ -410,6 +458,26 @@ function AnaliseElegiveis() {
                         const aprovarHabilitado = podeAprovar(v);
                         return (
                           <TableRow key={v.id} className={v.retorno_toyota_em ? "bg-red-50/60" : ""}>
+                            <TableCell>
+                              <Select
+                                value={v.filial_id ?? ""}
+                                onValueChange={(id) => alterarPatio(v, id)}
+                              >
+                                <SelectTrigger className="h-8 w-[180px] text-xs">
+                                  <SelectValue placeholder="Selecionar pátio" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {patios.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.nome}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {filiais.find((f) => f.id === v.filial?.filial_id)?.nome ?? "—"}
+                            </TableCell>
                             <TableCell className="font-mono text-xs">
                               <div className="flex items-center gap-2">
                                 <span>{v.chassi}</span>
@@ -431,7 +499,6 @@ function AnaliseElegiveis() {
                             <TableCell className="text-right">
                               {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
                             </TableCell>
-                            <TableCell>{v.filial?.nome ?? "—"}</TableCell>
                             <TableCell>
                               {v.elegibilidade === "TCUV" ? (
                                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
