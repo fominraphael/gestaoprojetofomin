@@ -116,14 +116,44 @@ function Dashboard() {
       (r) =>
         !!r.enviado_toyota_em &&
         !finalizados.has(r.status_aprovacao ?? "") &&
-        r.status_aprovacao !== "analise", // retornos recusados já viram Análise Central
+        r.status_aprovacao !== "analise",
     ).length;
 
-    return { solicitados, preparador, posVendas, analiseCentral, enviadosToyota };
+    const enviadosToyotaMes = rows.filter((r) =>
+      dentroMes(r.ultimo_envio_toyota_em ?? r.enviado_toyota_em),
+    ).length;
+
+    const aprovadosToyotaMes = rows.filter((r) => dentroMes(r.aprovado_toyota_em)).length;
+
+    const recusados = rows.filter((r) => r.status_aprovacao === "reprovado_toyota").length;
+
+    const certificadosEmitidos = rows.filter(
+      (r) => r.status_aprovacao === "certificado_toyota" && !!r.certificado_pdf_path,
+    ).length;
+
+    const certificadosPendentes = rows.filter(
+      (r) => r.status_aprovacao === "certificado_toyota" && !r.certificado_pdf_path,
+    ).length;
+
+    const arquivados = rows.filter((r) => r.status_aprovacao === "arquivado").length;
+
+    return {
+      solicitados,
+      preparador,
+      posVendas,
+      analiseCentral,
+      enviadosToyota,
+      enviadosToyotaMes,
+      aprovadosToyotaMes,
+      recusados,
+      certificadosEmitidos,
+      certificadosPendentes,
+      arquivados,
+    };
   }, [rows, mes]);
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-[1400px] space-y-6">
+    <div className="w-full px-6 py-8 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-slate-100 p-2">
