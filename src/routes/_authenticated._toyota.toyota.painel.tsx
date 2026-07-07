@@ -79,7 +79,7 @@ function Dashboard() {
       const { data, error } = await supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "status_aprovacao,aprovado_em,enviado_toyota_em,retorno_toyota_em",
+          "status_aprovacao,aprovado_em,enviado_toyota_em,ultimo_envio_toyota_em,aprovado_toyota_em,retorno_toyota_em,certificado_pdf_path",
         );
       if (error) toast.error(`Falha ao carregar dashboard: ${error.message}`);
       setRows((data ?? []) as VeiculoRow[]);
