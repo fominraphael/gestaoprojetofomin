@@ -374,7 +374,9 @@ function DetalhesModal({
                       {isAdmin && (
                         <>
                           <input
-                            ref={(el) => (inputRefs.current[d.key] = el)}
+                            ref={(el) => {
+                              inputRefs.current[d.key] = el;
+                            }}
                             type="file"
                             accept="application/pdf,image/*"
                             className="hidden"
