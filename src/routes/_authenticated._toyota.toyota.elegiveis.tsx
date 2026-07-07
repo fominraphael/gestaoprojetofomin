@@ -1066,6 +1066,7 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
         codigo_tcuv: codigo,
         status_aprovacao: "aguardando_analise_toyota",
         enviado_toyota_em: now,
+        ultimo_envio_toyota_em: now,
         // Ao reenviar, limpa dados da recusa anterior.
         motivo_reprovacao: null,
         observacao_toyota: null,
