@@ -328,6 +328,29 @@ function AnaliseElegiveis() {
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
+  async function alterarPatio(v: Veiculo, novoPatioId: string) {
+    if (novoPatioId === v.filial_id) return;
+    const patio = patios.find((p) => p.id === novoPatioId);
+    if (!patio) return;
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ filial_id: novoPatioId })
+      .eq("id", v.id);
+    if (error) {
+      toast.error(`Falha ao alterar pátio: ${error.message}`);
+      return;
+    }
+    setVeiculos((prev) =>
+      prev.map((x) =>
+        x.id === v.id
+          ? { ...x, filial_id: novoPatioId, filial: { nome: patio.nome, filial_id: patio.filial_id } }
+          : x,
+      ),
+    );
+    const filialNome = filiais.find((f) => f.id === patio.filial_id)?.nome ?? "—";
+    toast.success(`Pátio atualizado. Filial: ${filialNome}.`);
+  }
+
   async function arquivarVeiculo(v: Veiculo) {
     if (!confirm(`Arquivar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`)) return;
     const { data: userData } = await supabase.auth.getUser();
