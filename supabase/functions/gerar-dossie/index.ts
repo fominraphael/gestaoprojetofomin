@@ -22,6 +22,7 @@ const corsHeaders = {
 
 interface Payload {
   veiculo_id: string;
+  pular_compressao?: boolean;
 }
 
 type SupabaseClient = ReturnType<typeof createClient>;
