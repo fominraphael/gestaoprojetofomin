@@ -8,6 +8,9 @@ import {
   Building2,
   ShieldCheck,
   Send,
+  Award,
+  XCircle,
+  Archive,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +33,10 @@ interface VeiculoRow {
   status_aprovacao: string | null;
   aprovado_em: string | null;
   enviado_toyota_em: string | null;
+  ultimo_envio_toyota_em: string | null;
+  aprovado_toyota_em: string | null;
   retorno_toyota_em: string | null;
+  certificado_pdf_path: string | null;
 }
 
 /** Gera opções de mês/ano dos últimos 12 meses + próximos 2. */
@@ -73,7 +79,7 @@ function Dashboard() {
       const { data, error } = await supabase
         .from("toyota_estoque_veiculos")
         .select(
-          "status_aprovacao,aprovado_em,enviado_toyota_em,retorno_toyota_em",
+          "status_aprovacao,aprovado_em,enviado_toyota_em,ultimo_envio_toyota_em,aprovado_toyota_em,retorno_toyota_em,certificado_pdf_path",
         );
       if (error) toast.error(`Falha ao carregar dashboard: ${error.message}`);
       setRows((data ?? []) as VeiculoRow[]);
@@ -110,14 +116,44 @@ function Dashboard() {
       (r) =>
         !!r.enviado_toyota_em &&
         !finalizados.has(r.status_aprovacao ?? "") &&
-        r.status_aprovacao !== "analise", // retornos recusados já viram Análise Central
+        r.status_aprovacao !== "analise",
     ).length;
 
-    return { solicitados, preparador, posVendas, analiseCentral, enviadosToyota };
+    const enviadosToyotaMes = rows.filter((r) =>
+      dentroMes(r.ultimo_envio_toyota_em ?? r.enviado_toyota_em),
+    ).length;
+
+    const aprovadosToyotaMes = rows.filter((r) => dentroMes(r.aprovado_toyota_em)).length;
+
+    const recusados = rows.filter((r) => r.status_aprovacao === "reprovado_toyota").length;
+
+    const certificadosEmitidos = rows.filter(
+      (r) => r.status_aprovacao === "certificado_toyota" && !!r.certificado_pdf_path,
+    ).length;
+
+    const certificadosPendentes = rows.filter(
+      (r) => r.status_aprovacao === "certificado_toyota" && !r.certificado_pdf_path,
+    ).length;
+
+    const arquivados = rows.filter((r) => r.status_aprovacao === "arquivado").length;
+
+    return {
+      solicitados,
+      preparador,
+      posVendas,
+      analiseCentral,
+      enviadosToyota,
+      enviadosToyotaMes,
+      aprovadosToyotaMes,
+      recusados,
+      certificadosEmitidos,
+      certificadosPendentes,
+      arquivados,
+    };
   }, [rows, mes]);
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-[1400px] space-y-6">
+    <div className="w-full px-6 py-8 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-slate-100 p-2">
@@ -153,42 +189,107 @@ function Dashboard() {
           <Loader2 className="w-5 h-5 animate-spin" />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard
-            titulo="Solicitados"
-            valor={contagens.solicitados}
-            icone={CheckCircle2}
-            cor="text-emerald-600"
-            legenda="Aprovados na Análise de Elegibilidade neste mês"
-          />
-          <StatCard
-            titulo="Preparador"
-            valor={contagens.preparador}
-            icone={Wrench}
-            cor="text-amber-600"
-            legenda="Parados no Preparador agora"
-          />
-          <StatCard
-            titulo="Pós-Vendas"
-            valor={contagens.posVendas}
-            icone={Building2}
-            cor="text-blue-600"
-            legenda="Na fila do Pós-Vendas agora"
-          />
-          <StatCard
-            titulo="Análise Central"
-            valor={contagens.analiseCentral}
-            icone={ShieldCheck}
-            cor="text-indigo-600"
-            legenda="Aguardando análise / retornos Toyota"
-          />
-          <StatCard
-            titulo="Enviados Toyota"
-            valor={contagens.enviadosToyota}
-            icone={Send}
-            cor="text-slate-700"
-            legenda="Dossiê enviado, aguardando retorno"
-          />
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Em andamento (agora)
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <StatCard
+                titulo="Preparador"
+                valor={contagens.preparador}
+                icone={Wrench}
+                cor="text-amber-600"
+                legenda="Parados no Preparador"
+              />
+              <StatCard
+                titulo="Pós-Vendas"
+                valor={contagens.posVendas}
+                icone={Building2}
+                cor="text-blue-600"
+                legenda="Na fila do Pós-Vendas"
+              />
+              <StatCard
+                titulo="Análise Central"
+                valor={contagens.analiseCentral}
+                icone={ShieldCheck}
+                cor="text-indigo-600"
+                legenda="Aguardando análise / retornos"
+              />
+              <StatCard
+                titulo="Enviados Toyota"
+                valor={contagens.enviadosToyota}
+                icone={Send}
+                cor="text-slate-700"
+                legenda="Aguardando retorno da Toyota"
+              />
+              <StatCard
+                titulo="Recusados Toyota"
+                valor={contagens.recusados}
+                icone={XCircle}
+                cor="text-red-600"
+                legenda="Aguardando reenvio"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              No mês selecionado
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <StatCard
+                titulo="Solicitados"
+                valor={contagens.solicitados}
+                icone={CheckCircle2}
+                cor="text-emerald-600"
+                legenda="Aprovados na Análise de Elegibilidade no mês"
+              />
+              <StatCard
+                titulo="Enviados à Toyota"
+                valor={contagens.enviadosToyotaMes}
+                icone={Send}
+                cor="text-indigo-600"
+                legenda="Último envio à Toyota no mês (inclui reenvios)"
+              />
+              <StatCard
+                titulo="Aprovados pela Toyota"
+                valor={contagens.aprovadosToyotaMes}
+                icone={Award}
+                cor="text-emerald-700"
+                legenda="Data de aprovação no mês"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+              Certificados e arquivamento
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <StatCard
+                titulo="Certificados emitidos"
+                valor={contagens.certificadosEmitidos}
+                icone={Award}
+                cor="text-emerald-700"
+                legenda="Aprovados com PDF do certificado anexado"
+              />
+              <StatCard
+                titulo="Aprovados sem certificado"
+                valor={contagens.certificadosPendentes}
+                icone={CheckCircle2}
+                cor="text-amber-600"
+                legenda="Aprovados aguardando upload do certificado"
+              />
+              <StatCard
+                titulo="Arquivados"
+                valor={contagens.arquivados}
+                icone={Archive}
+                cor="text-slate-600"
+                legenda="Processos arquivados"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

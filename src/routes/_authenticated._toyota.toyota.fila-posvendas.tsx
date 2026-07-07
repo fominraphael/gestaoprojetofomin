@@ -354,6 +354,7 @@ function FilaPosVendas() {
         motivo_reprovacao: null,
         posvendas_km: kmNum,
         posvendas_finalizado_em: new Date().toISOString(),
+        enviado_central_em: new Date().toISOString(),
         posvendas_finalizado_por: user?.username ?? null,
       })
       .eq("id", veiculoId);

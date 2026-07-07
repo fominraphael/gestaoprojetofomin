@@ -387,7 +387,7 @@ function AnaliseElegiveis() {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl space-y-6">
+    <div className="w-full px-6 py-8 space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Análise Central</h1>
         <p className="text-sm text-muted-foreground">
@@ -1066,6 +1066,7 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
         codigo_tcuv: codigo,
         status_aprovacao: "aguardando_analise_toyota",
         enviado_toyota_em: now,
+        ultimo_envio_toyota_em: now,
         // Ao reenviar, limpa dados da recusa anterior.
         motivo_reprovacao: null,
         observacao_toyota: null,

@@ -90,7 +90,7 @@ function FilaPreparador() {
     setAcaoId(v.id);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
-      .update({ status_aprovacao: "em_posvendas" })
+      .update({ status_aprovacao: "em_posvendas", enviado_posvendas_em: new Date().toISOString() })
       .eq("id", v.id);
     setAcaoId(null);
     if (error) {
@@ -120,12 +120,12 @@ function FilaPreparador() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Chassi / Placa</TableHead>
-            <TableHead>Veículo</TableHead>
-            <TableHead>Elegibilidade</TableHead>
+            <TableHead className="whitespace-nowrap">Chassi / Placa</TableHead>
+            <TableHead className="whitespace-nowrap">Veículo</TableHead>
+            <TableHead className="whitespace-nowrap">Elegibilidade</TableHead>
             <TableHead>Orientações HSV</TableHead>
             {devolvido && <TableHead>Pendência da Central</TableHead>}
-            <TableHead className="text-right">Ação</TableHead>
+            <TableHead className="text-right whitespace-nowrap">Ação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -201,7 +201,7 @@ function FilaPreparador() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Truck className="h-6 w-6" /> Fila do Preparador
@@ -212,7 +212,7 @@ function FilaPreparador() {
         </p>
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative w-full max-w-lg">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por chassi, placa ou modelo..."
