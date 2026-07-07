@@ -458,6 +458,26 @@ function AnaliseElegiveis() {
                         const aprovarHabilitado = podeAprovar(v);
                         return (
                           <TableRow key={v.id} className={v.retorno_toyota_em ? "bg-red-50/60" : ""}>
+                            <TableCell>
+                              <Select
+                                value={v.filial_id ?? ""}
+                                onValueChange={(id) => alterarPatio(v, id)}
+                              >
+                                <SelectTrigger className="h-8 w-[180px] text-xs">
+                                  <SelectValue placeholder="Selecionar pátio" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {patios.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.nome}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {filiais.find((f) => f.id === v.filial?.filial_id)?.nome ?? "—"}
+                            </TableCell>
                             <TableCell className="font-mono text-xs">
                               <div className="flex items-center gap-2">
                                 <span>{v.chassi}</span>
@@ -479,7 +499,6 @@ function AnaliseElegiveis() {
                             <TableCell className="text-right">
                               {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
                             </TableCell>
-                            <TableCell>{v.filial?.nome ?? "—"}</TableCell>
                             <TableCell>
                               {v.elegibilidade === "TCUV" ? (
                                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
