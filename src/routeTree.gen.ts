@@ -28,7 +28,6 @@ import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
-import { Route as AuthenticatedToyotaToyotaRecusadosRouteImport } from './routes/_authenticated._toyota.toyota.recusados'
 import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
 import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
 import { Route as AuthenticatedToyotaToyotaFilaPreparadorRouteImport } from './routes/_authenticated._toyota.toyota.fila-preparador'
@@ -139,12 +138,6 @@ const AuthenticatedToyotaToyotaRegrasRoute =
     path: '/toyota/regras',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
-const AuthenticatedToyotaToyotaRecusadosRoute =
-  AuthenticatedToyotaToyotaRecusadosRouteImport.update({
-    id: '/toyota/recusados',
-    path: '/toyota/recusados',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
 const AuthenticatedToyotaToyotaPainelGeralRoute =
   AuthenticatedToyotaToyotaPainelGeralRouteImport.update({
     id: '/toyota/painel-geral',
@@ -207,7 +200,6 @@ export interface FileRoutesByFullPath {
   '/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
-  '/toyota/recusados': typeof AuthenticatedToyotaToyotaRecusadosRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -232,7 +224,6 @@ export interface FileRoutesByTo {
   '/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
-  '/toyota/recusados': typeof AuthenticatedToyotaToyotaRecusadosRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -262,7 +253,6 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/fila-preparador': typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/_authenticated/_toyota/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
-  '/_authenticated/_toyota/toyota/recusados': typeof AuthenticatedToyotaToyotaRecusadosRoute
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -289,7 +279,6 @@ export interface FileRouteTypes {
     | '/toyota/fila-preparador'
     | '/toyota/painel'
     | '/toyota/painel-geral'
-    | '/toyota/recusados'
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -314,7 +303,6 @@ export interface FileRouteTypes {
     | '/toyota/fila-preparador'
     | '/toyota/painel'
     | '/toyota/painel-geral'
-    | '/toyota/recusados'
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -343,7 +331,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/fila-preparador'
     | '/_authenticated/_toyota/toyota/painel'
     | '/_authenticated/_toyota/toyota/painel-geral'
-    | '/_authenticated/_toyota/toyota/recusados'
     | '/_authenticated/_toyota/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -494,13 +481,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToyotaToyotaRegrasRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
-    '/_authenticated/_toyota/toyota/recusados': {
-      id: '/_authenticated/_toyota/toyota/recusados'
-      path: '/toyota/recusados'
-      fullPath: '/toyota/recusados'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaRecusadosRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
     '/_authenticated/_toyota/toyota/painel-geral': {
       id: '/_authenticated/_toyota/toyota/painel-geral'
       path: '/toyota/painel-geral'
@@ -596,7 +576,6 @@ interface AuthenticatedToyotaRouteChildren {
   AuthenticatedToyotaToyotaFilaPreparadorRoute: typeof AuthenticatedToyotaToyotaFilaPreparadorRoute
   AuthenticatedToyotaToyotaPainelRoute: typeof AuthenticatedToyotaToyotaPainelRoute
   AuthenticatedToyotaToyotaPainelGeralRoute: typeof AuthenticatedToyotaToyotaPainelGeralRoute
-  AuthenticatedToyotaToyotaRecusadosRoute: typeof AuthenticatedToyotaToyotaRecusadosRoute
   AuthenticatedToyotaToyotaRegrasRoute: typeof AuthenticatedToyotaToyotaRegrasRoute
   AuthenticatedToyotaToyotaEstoqueImportarRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -613,8 +592,6 @@ const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
   AuthenticatedToyotaToyotaPainelRoute: AuthenticatedToyotaToyotaPainelRoute,
   AuthenticatedToyotaToyotaPainelGeralRoute:
     AuthenticatedToyotaToyotaPainelGeralRoute,
-  AuthenticatedToyotaToyotaRecusadosRoute:
-    AuthenticatedToyotaToyotaRecusadosRoute,
   AuthenticatedToyotaToyotaRegrasRoute: AuthenticatedToyotaToyotaRegrasRoute,
   AuthenticatedToyotaToyotaEstoqueImportarRoute:
     AuthenticatedToyotaToyotaEstoqueImportarRoute,
