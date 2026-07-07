@@ -768,6 +768,68 @@ function PainelGeral() {
                 <SelectItem value="com">Com certificado</SelectItem>
               </SelectContent>
             </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Settings2 className="w-4 h-4" />
+                  Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <span className="text-sm font-semibold">Configurar colunas</span>
+                  <button
+                    type="button"
+                    onClick={resetCols}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Restaurar padrão
+                  </button>
+                </div>
+                <div className="max-h-[420px] overflow-y-auto py-1">
+                  {colPrefs.order.map((key, idx) => {
+                    const col = COLUMNS.find((c) => c.key === key)!;
+                    const checked = visibleSet.has(key);
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent/40"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleCol(key)}
+                          id={`col-${key}`}
+                        />
+                        <label
+                          htmlFor={`col-${key}`}
+                          className="flex-1 text-sm cursor-pointer"
+                        >
+                          {col.label}
+                        </label>
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => moveCol(key, -1)}
+                          className="p-1 rounded hover:bg-accent disabled:opacity-30"
+                          title="Mover para cima"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === colPrefs.order.length - 1}
+                          onClick={() => moveCol(key, 1)}
+                          className="p-1 rounded hover:bg-accent disabled:opacity-30"
+                          title="Mover para baixo"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
         <CardContent>
@@ -784,19 +846,17 @@ function PainelGeral() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Loja</TableHead>
-                    <TableHead>Ano/Modelo</TableHead>
-                    <TableHead>KM</TableHead>
-                    <TableHead>Aprovado Central</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Laudo</TableHead>
-                    <TableHead>HC</TableHead>
-                    <TableHead>Check-list</TableHead>
-                    <TableHead>Dossiê</TableHead>
-                    <TableHead>Certificado</TableHead>
-                    <TableHead>TCUV</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    {orderedVisible.map((key) => {
+                      const col = COLUMNS.find((c) => c.key === key)!;
+                      return (
+                        <TableHead
+                          key={key}
+                          className={`whitespace-nowrap ${col.align === "right" ? "text-right" : ""}`}
+                        >
+                          {col.label}
+                        </TableHead>
+                      );
+                    })}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -811,176 +871,268 @@ function PainelGeral() {
                     const certOk = !!r.certificado_pdf_path;
                     const podeImportarCert =
                       isAdmin && r.status_aprovacao === "certificado_toyota";
+                    const cellFor = (key: ColKey) => {
+                      switch (key) {
+                        case "veiculo":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div className="font-medium">{r.modelo ?? "—"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {r.placa ?? "—"} ·{" "}
+                                <span className="font-mono">{r.chassi}</span>
+                              </div>
+                            </TableCell>
+                          );
+                        case "loja":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {r.toyota_patios?.nome ?? "—"}
+                            </TableCell>
+                          );
+                        case "filial": {
+                          const f = filiais.find((x) => x.id === r.toyota_patios?.filial_id);
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {f?.nome ?? "—"}
+                            </TableCell>
+                          );
+                        }
+                        case "ano":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtAno(r)}
+                            </TableCell>
+                          );
+                        case "km":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtKm(r.quilometragem)}
+                            </TableCell>
+                          );
+                        case "aprovadoCentral":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtDateShort(r.aprovado_em)}
+                            </TableCell>
+                          );
+                        case "enviadoPosvendas":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtDateShort(r.enviado_posvendas_em)}
+                            </TableCell>
+                          );
+                        case "enviadoCentral":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtDateShort(r.enviado_central_em)}
+                            </TableCell>
+                          );
+                        case "envioToyota":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtDateShort(r.ultimo_envio_toyota_em ?? r.enviado_toyota_em)}
+                            </TableCell>
+                          );
+                        case "aprovadoToyota":
+                          return (
+                            <TableCell key={key} className="text-sm whitespace-nowrap">
+                              {fmtDateShort(r.aprovado_toyota_em)}
+                            </TableCell>
+                          );
+                        case "etapa":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              {etapaBadge(r)}
+                            </TableCell>
+                          );
+                        case "laudo":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {docBadge(laudoOk)}
+                                {(r.laudo_url || r.laudo_arquivo_path) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => abrirLaudo(r)}
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        case "hc":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {docBadge(hcOk)}
+                                {hcOk && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => abrirPath(r.health_check_pdf_path)}
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        case "checklist":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {docBadge(checklistOk)}
+                                {checklistOk && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => abrirPath(r.checklist_pdf_path)}
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        case "dossie":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {dossieOk ? (
+                                  <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                    Pendente
+                                  </Badge>
+                                )}
+                                {dossieOk && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => abrirPath(r.dossie_pdf_path)}
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        case "certificado":
+                          return (
+                            <TableCell key={key} className="whitespace-nowrap">
+                              <div
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {certOk ? (
+                                  <>
+                                    <Badge className="bg-emerald-100 text-emerald-700">
+                                      <Award className="w-3 h-3 mr-1" />
+                                      Emitido
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => abrirPath(r.certificado_pdf_path)}
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </>
+                                ) : podeImportarCert ? (
+                                  <button
+                                    type="button"
+                                    className="text-xs px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50"
+                                    onClick={() => {
+                                      setCertUploadTarget(r);
+                                      setTimeout(() => certInputRef.current?.click(), 0);
+                                    }}
+                                    title="Importar certificado"
+                                  >
+                                    Pendente
+                                  </button>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-300 text-amber-700"
+                                    title={
+                                      r.status_aprovacao === "certificado_toyota"
+                                        ? "Somente administradores"
+                                        : "Disponível após aprovação da Toyota"
+                                    }
+                                  >
+                                    Pendente
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        case "tcuv":
+                          return (
+                            <TableCell key={key} className="font-mono text-xs whitespace-nowrap">
+                              {r.codigo_tcuv ?? "—"}
+                            </TableCell>
+                          );
+                        case "acoes":
+                          return (
+                            <TableCell
+                              key={key}
+                              className="text-right whitespace-nowrap"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0"
+                                  title="Detalhes"
+                                  onClick={() => setDetalhe(r)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                {isAdmin && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    title="Excluir veículo"
+                                    onClick={() => setExcluir(r)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        default:
+                          return null;
+                      }
+                    };
                     return (
                       <TableRow
                         key={r.id}
                         className="cursor-pointer"
                         onClick={() => setDetalhe(r)}
                       >
-                        <TableCell>
-                          <div className="font-medium">{r.modelo ?? "—"}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {r.placa ?? "—"} ·{" "}
-                            <span className="font-mono">{r.chassi}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{r.toyota_patios?.nome ?? "—"}</TableCell>
-                        <TableCell className="text-sm">{fmtAno(r)}</TableCell>
-                        <TableCell className="text-sm">{fmtKm(r.quilometragem)}</TableCell>
-                        <TableCell className="text-sm">{fmtDateShort(r.aprovado_em)}</TableCell>
-                        <TableCell>{etapaBadge(r)}</TableCell>
-                        <TableCell>
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {docBadge(laudoOk)}
-                            {(r.laudo_url || r.laudo_arquivo_path) && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => abrirLaudo(r)}
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {docBadge(hcOk)}
-                            {hcOk && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => abrirPath(r.health_check_pdf_path)}
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {docBadge(checklistOk)}
-                            {checklistOk && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => abrirPath(r.checklist_pdf_path)}
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {dossieOk ? (
-                              <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-amber-300 text-amber-700">
-                                Pendente
-                              </Badge>
-                            )}
-                            {dossieOk && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => abrirPath(r.dossie_pdf_path)}
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div
-                            className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {certOk ? (
-                              <>
-                                <Badge className="bg-emerald-100 text-emerald-700">
-                                  <Award className="w-3 h-3 mr-1" />
-                                  Emitido
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0"
-                                  onClick={() => abrirPath(r.certificado_pdf_path)}
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </Button>
-                              </>
-                            ) : podeImportarCert ? (
-                              <button
-                                type="button"
-                                className="text-xs px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50"
-                                onClick={() => {
-                                  setCertUploadTarget(r);
-                                  setTimeout(() => certInputRef.current?.click(), 0);
-                                }}
-                                title="Importar certificado"
-                              >
-                                Pendente
-                              </button>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="border-amber-300 text-amber-700"
-                                title={
-                                  r.status_aprovacao === "certificado_toyota"
-                                    ? "Somente administradores"
-                                    : "Disponível após aprovação da Toyota"
-                                }
-                              >
-                                Pendente
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {r.codigo_tcuv ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Detalhes"
-                              onClick={() => setDetalhe(r)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            {isAdmin && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Excluir veículo"
-                                onClick={() => setExcluir(r)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+                        {orderedVisible.map((k) => cellFor(k))}
                       </TableRow>
                     );
                   })}
