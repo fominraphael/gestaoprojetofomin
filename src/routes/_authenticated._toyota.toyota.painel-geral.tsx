@@ -96,12 +96,14 @@ interface Filial {
 }
 
 const ETAPA_LABEL: Record<string, { label: string; cls: string }> = {
-  analise: { label: "Análise Central", cls: "bg-blue-100 text-blue-700" },
-  pendente_preparacao: { label: "Preparador", cls: "bg-amber-100 text-amber-700" },
-  devolvido_preparador: { label: "Preparador (devolvido)", cls: "bg-amber-100 text-amber-700" },
-  em_posvendas: { label: "Pós-Vendas", cls: "bg-purple-100 text-purple-700" },
-  aguardando_analise_central: { label: "Envio Toyota", cls: "bg-indigo-100 text-indigo-700" },
-  certificado_toyota: { label: "Finalizado (TCUV)", cls: "bg-emerald-100 text-emerald-700" },
+  analise: { label: "Aguardando análise de elegibilidade", cls: "bg-blue-100 text-blue-700" },
+  pendente_preparacao: { label: "Aguardando Preparador", cls: "bg-amber-100 text-amber-700" },
+  devolvido_preparador: { label: "Aguardando Preparador (devolvido)", cls: "bg-amber-100 text-amber-700" },
+  em_posvendas: { label: "Aguardando Pós-Vendas", cls: "bg-purple-100 text-purple-700" },
+  aguardando_analise_central: { label: "Aguardando Central - Envio Toyota", cls: "bg-indigo-100 text-indigo-700" },
+  reprovado_toyota: { label: "Aguardando Central - Reenvio Toyota", cls: "bg-orange-100 text-orange-700" },
+  aguardando_analise_toyota: { label: "Aguardando análise Toyota", cls: "bg-sky-100 text-sky-700" },
+  certificado_toyota: { label: "Aprovado", cls: "bg-emerald-100 text-emerald-700" },
   arquivado: { label: "Arquivado", cls: "bg-slate-200 text-slate-700" },
   reprovado_admin: { label: "Reprovado", cls: "bg-red-100 text-red-700" },
 };

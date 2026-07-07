@@ -528,7 +528,7 @@ function AnaliseElegiveis() {
         </TabsContent>
 
         <TabsContent value="envio" className="space-y-4">
-          <EnvioToyotaTab />
+          <EnvioToyotaTab mode="envio" />
         </TabsContent>
       </Tabs>
 
@@ -710,6 +710,9 @@ interface VeiculoEnvio {
     dealer_number: string | null;
     nome_bi_toyota: string | null;
   } | null;
+  motivo_reprovacao?: string | null;
+  observacao_toyota?: string | null;
+  retorno_toyota_em?: string | null;
 }
 
 
@@ -720,12 +723,14 @@ function formatarBytes(bytes?: number | null): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function EnvioToyotaTab() {
+export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados" } = {}) {
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<VeiculoEnvio[]>([]);
   const [gerando, setGerando] = useState<string | null>(null);
   const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
   const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
+  const [arquivando, setArquivando] = useState<string | null>(null);
+  const statusFiltro = mode === "recusados" ? "reprovado_toyota" : "aguardando_analise_central";
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
     const { data, error } = await supabase.storage
@@ -757,9 +762,9 @@ function EnvioToyotaTab() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,checklist_itens,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,checklist_itens,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,motivo_reprovacao,observacao_toyota,retorno_toyota_em,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
       )
-      .eq("status_aprovacao", "aguardando_analise_central")
+      .eq("status_aprovacao", statusFiltro)
       .order("updated_at", { ascending: false });
     if (error) {
       console.error("[EnvioToyotaTab] carregar", error);
@@ -961,16 +966,62 @@ function EnvioToyotaTab() {
       return;
     }
     setSalvandoTcuv(v.id);
+    // Unicidade: cada envio/reenvio à Toyota exige um código TCUV inédito.
+    const { data: dup, error: dupErr } = await supabase
+      .from("toyota_estoque_veiculos")
+      .select("id, chassi")
+      .eq("codigo_tcuv", codigo)
+      .limit(1)
+      .maybeSingle();
+    if (dupErr) {
+      setSalvandoTcuv(null);
+      toast.error(`Falha ao validar código: ${dupErr.message}`);
+      return;
+    }
+    if (dup) {
+      setSalvandoTcuv(null);
+      toast.error(
+        dup.id === v.id
+          ? "Este código já foi usado neste veículo em envio anterior. Gere um novo código."
+          : `Código TCUV "${codigo}" já está em uso (chassi ${dup.chassi}). Informe um novo código.`,
+      );
+      return;
+    }
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
-      .update({ codigo_tcuv: codigo, status_aprovacao: "certificado_toyota" })
+      .update({
+        codigo_tcuv: codigo,
+        status_aprovacao: "aguardando_analise_toyota",
+        enviado_toyota_em: now,
+        // Ao reenviar, limpa dados da recusa anterior.
+        motivo_reprovacao: null,
+        observacao_toyota: null,
+        retorno_toyota_em: null,
+      })
       .eq("id", v.id);
     setSalvandoTcuv(null);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Código TCUV salvo. Processo finalizado.");
+    toast.success("Enviado à Toyota. Aguardando retorno na próxima importação da planilha.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
+  async function arquivarVeiculo(v: VeiculoEnvio) {
+    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele deixará de aparecer nos fluxos ativos.`)) return;
+    setArquivando(v.id);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ status_aprovacao: "arquivado" })
+      .eq("id", v.id);
+    setArquivando(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Veículo arquivado.");
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
@@ -986,7 +1037,9 @@ function EnvioToyotaTab() {
     return (
       <Card>
         <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          Nenhum veículo aguardando envio à Toyota.
+          {mode === "recusados"
+            ? "Nenhum veículo recusado pela Toyota no momento."
+            : "Nenhum veículo aguardando envio à Toyota."}
         </CardContent>
       </Card>
     );
@@ -1012,12 +1065,13 @@ function EnvioToyotaTab() {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          Aguardando envio à Toyota
+          {mode === "recusados" ? "Recusados pela Toyota" : "Aguardando envio à Toyota"}
           <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê.
-          O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado.
+          {mode === "recusados"
+            ? "Analise o motivo da recusa, ajuste os documentos e reenvie com um NOVO código TCUV, ou arquive o processo."
+            : "Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê. O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado."}
         </p>
         <div className="pt-3">
           <Button size="sm" variant="outline" onClick={carregar} disabled={loading}>
@@ -1031,9 +1085,11 @@ function EnvioToyotaTab() {
           <VeiculoEnvioCard
             key={v.id}
             v={v}
+            mode={mode}
             gerando={gerando === v.id}
             salvandoTcuv={salvandoTcuv === v.id}
-            tcuvValue={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
+            arquivando={arquivando === v.id}
+            tcuvValue={tcuvInput[v.id] ?? (mode === "recusados" ? "" : v.codigo_tcuv ?? "")}
             onTcuvChange={(val) =>
               setTcuvInput((p) => ({ ...p, [v.id]: val }))
             }
@@ -1042,6 +1098,7 @@ function EnvioToyotaTab() {
             onImportarManual={(file) => importarDossieManual(v, file)}
             onVisualizar={() => visualizarDossie(v)}
             onSalvarTcuv={() => salvarTcuv(v)}
+            onArquivar={() => arquivarVeiculo(v)}
             onRefresh={carregar}
           />
         ))}
@@ -1055,8 +1112,10 @@ function EnvioToyotaTab() {
 
 interface VeiculoEnvioCardProps {
   v: VeiculoEnvio;
+  mode: "envio" | "recusados";
   gerando: boolean;
   salvandoTcuv: boolean;
+  arquivando: boolean;
   tcuvValue: string;
   onTcuvChange: (val: string) => void;
   onGerar: () => void;
@@ -1064,13 +1123,16 @@ interface VeiculoEnvioCardProps {
   onImportarManual: (file: File) => void | Promise<void>;
   onVisualizar: () => void;
   onSalvarTcuv: () => void;
+  onArquivar: () => void;
   onRefresh: () => void | Promise<void>;
 }
 
 function VeiculoEnvioCard({
   v,
+  mode,
   gerando,
   salvandoTcuv,
+  arquivando,
   tcuvValue,
   onTcuvChange,
   onGerar,
@@ -1078,6 +1140,7 @@ function VeiculoEnvioCard({
   onImportarManual,
   onVisualizar,
   onSalvarTcuv,
+  onArquivar,
   onRefresh,
 }: VeiculoEnvioCardProps) {
   const laudoPresente = !!(v.laudo_arquivo_path || v.laudo_url);
@@ -1106,9 +1169,34 @@ function VeiculoEnvioCard({
               Dossiê pendente
             </Badge>
           )}
-
+          {mode === "recusados" && (
+            <Badge className="bg-red-100 text-red-700">Recusado Toyota</Badge>
+          )}
         </div>
       </div>
+
+      {mode === "recusados" && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm space-y-1">
+          <div className="font-semibold text-red-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" /> Retorno da Toyota
+          </div>
+          {v.codigo_tcuv && (
+            <div className="text-xs text-red-700">
+              Código enviado anteriormente: <span className="font-mono">{v.codigo_tcuv}</span>
+            </div>
+          )}
+          <div>
+            <span className="text-xs text-red-700 font-medium">Motivo: </span>
+            <span className="text-red-900">{v.motivo_reprovacao || "—"}</span>
+          </div>
+          {v.observacao_toyota && (
+            <div>
+              <span className="text-xs text-red-700 font-medium">Observação: </span>
+              <span className="text-red-900">{v.observacao_toyota}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-2 md:grid-cols-3">
         <DocumentoSlot
@@ -1238,10 +1326,14 @@ function VeiculoEnvioCard({
 
         <div className="flex flex-wrap items-center gap-2">
           <Input
-            placeholder="Código TCUV (ex: TCUV-2026-0001)"
+            placeholder={
+              mode === "recusados"
+                ? "NOVO Código TCUV (obrigatório reenvio)"
+                : "Código TCUV (ex: TCUV-2026-0001)"
+            }
             value={tcuvValue}
             onChange={(e) => onTcuvChange(e.target.value)}
-            className="w-56"
+            className="w-64"
           />
           <Button
             size="sm"
@@ -1253,8 +1345,24 @@ function VeiculoEnvioCard({
             ) : (
               <Send className="w-3.5 h-3.5" />
             )}
-            Enviar / Concluir
+            {mode === "recusados" ? "Reenviar Toyota" : "Enviar / Concluir"}
           </Button>
+          {mode === "recusados" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onArquivar}
+              disabled={arquivando}
+              className="border-slate-400 text-slate-700"
+            >
+              {arquivando ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Archive className="w-3.5 h-3.5" />
+              )}
+              Arquivar
+            </Button>
+          )}
         </div>
 
       </div>

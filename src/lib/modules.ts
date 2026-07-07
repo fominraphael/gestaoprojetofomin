@@ -13,6 +13,7 @@ import {
   GitBranch,
   Wrench,
   Truck,
+  AlertTriangle,
   FolderKanban,
   type LucideIcon,
 } from "lucide-react";
@@ -105,6 +106,7 @@ export const MODULES: ModuleDef[] = [
       { to: "/toyota/painel", label: "Dashboard", icon: GitBranch, perfis: ["Administrador", "Preparador", "Consultor Pós-Vendas"] },
       { to: "/toyota/estoque/importar", label: "Importações", icon: Upload, perfis: ["Administrador"] },
       { to: "/toyota/elegiveis", label: "Análise Central", icon: ShieldCheck, perfis: ["Administrador"] },
+      { to: "/toyota/recusados", label: "Recusados Toyota", icon: AlertTriangle, perfis: ["Administrador"] },
       { to: "/toyota/fila-preparador", label: "Fila do Preparador", icon: Truck, perfis: ["Administrador", "Preparador"] },
       { to: "/toyota/fila-posvendas", label: "Fila do Pós-Vendas", icon: Wrench, perfis: ["Administrador", "Consultor Pós-Vendas"] },
       { to: "/toyota/regras", label: "Regras do Sistema", icon: ListChecks, perfis: ["Administrador"] },
