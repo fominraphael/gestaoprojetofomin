@@ -726,9 +726,6 @@ function EnvioToyotaTab() {
   const [gerando, setGerando] = useState<string | null>(null);
   const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
   const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
-  const [recusaVeic, setRecusaVeic] = useState<VeiculoEnvio | null>(null);
-  const [recusaMotivo, setRecusaMotivo] = useState("");
-  const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
     const { data, error } = await supabase.storage
