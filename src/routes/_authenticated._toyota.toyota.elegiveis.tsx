@@ -1112,8 +1112,10 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
 
 interface VeiculoEnvioCardProps {
   v: VeiculoEnvio;
+  mode: "envio" | "recusados";
   gerando: boolean;
   salvandoTcuv: boolean;
+  arquivando: boolean;
   tcuvValue: string;
   onTcuvChange: (val: string) => void;
   onGerar: () => void;
@@ -1121,13 +1123,16 @@ interface VeiculoEnvioCardProps {
   onImportarManual: (file: File) => void | Promise<void>;
   onVisualizar: () => void;
   onSalvarTcuv: () => void;
+  onArquivar: () => void;
   onRefresh: () => void | Promise<void>;
 }
 
 function VeiculoEnvioCard({
   v,
+  mode,
   gerando,
   salvandoTcuv,
+  arquivando,
   tcuvValue,
   onTcuvChange,
   onGerar,
@@ -1135,6 +1140,7 @@ function VeiculoEnvioCard({
   onImportarManual,
   onVisualizar,
   onSalvarTcuv,
+  onArquivar,
   onRefresh,
 }: VeiculoEnvioCardProps) {
   const laudoPresente = !!(v.laudo_arquivo_path || v.laudo_url);
