@@ -13,7 +13,7 @@ import {
   GitBranch,
   Wrench,
   Truck,
-  AlertTriangle,
+  
   FolderKanban,
   type LucideIcon,
 } from "lucide-react";
