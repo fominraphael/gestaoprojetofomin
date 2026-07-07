@@ -596,6 +596,29 @@ function PainelGeral() {
       </Card>
 
       <DetalhesModal row={detalhe} onClose={() => setDetalhe(null)} />
+
+      <AlertDialog open={!!excluir} onOpenChange={(o) => !o && setExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir veículo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. O veículo{" "}
+              <span className="font-mono">{excluir?.chassi}</span> e seus registros
+              associados serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
