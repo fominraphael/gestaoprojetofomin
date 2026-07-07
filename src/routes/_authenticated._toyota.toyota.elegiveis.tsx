@@ -433,12 +433,13 @@ function AnaliseElegiveis() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Pátio</TableHead>
+                        <TableHead>Filial</TableHead>
                         <TableHead>Chassi</TableHead>
                         <TableHead>Placa</TableHead>
                         <TableHead>Modelo</TableHead>
                         <TableHead>Ano</TableHead>
                         <TableHead className="text-right">KM</TableHead>
-                        <TableHead>Pátio origem</TableHead>
                         <TableHead>Programa</TableHead>
                         <TableHead>Laudo</TableHead>
                         <TableHead>HSV</TableHead>
