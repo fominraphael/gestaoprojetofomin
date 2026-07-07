@@ -612,7 +612,7 @@ interface BiRow {
   // resolução
   encontrado: boolean;
   statusAtual: string | null;
-  novoStatus: "certificado_toyota" | "reprovado_toyota" | "manter" | "nao_encontrado";
+  novoStatus: "certificado_toyota" | "reprovado_toyota" | "aguardando_analise_toyota" | "manter" | "nao_encontrado";
 }
 
 function BiToyotaImporter() {
