@@ -1189,16 +1189,46 @@ function VeiculoEnvioCard({
                 ? "Regerar Dossiê"
                 : "Gerar Dossiê"}
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onGerarSemCompressao}
+            disabled={gerando || !podeGerar}
+            title="Une os 3 PDFs sem chamar a compressão externa. Útil quando o serviço de compressão falha."
+          >
+            <FileStack className="w-3.5 h-3.5" />
+            Unir sem compressão
+          </Button>
+          <label
+            className={
+              "inline-flex items-center gap-1 rounded-md border px-3 h-9 text-xs font-medium cursor-pointer hover:bg-slate-100 " +
+              (gerando ? "opacity-50 pointer-events-none" : "")
+            }
+            title="Importar um dossiê PDF já pronto (por exemplo, comprimido manualmente)"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Importar dossiê
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await onImportarManual(file);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
           {!!v.dossie_pdf_path && (
             <Button
               size="sm"
               variant="secondary"
               onClick={onVisualizar}
               disabled={gerando}
-              title="Abrir o dossiê comprimido"
+              title="Abrir / baixar o dossiê"
             >
-              <FileStack className="w-3.5 h-3.5" />
-              Visualizar Dossiê
+              <Eye className="w-3.5 h-3.5" />
+              Baixar Dossiê
             </Button>
           )}
           {!!v.dossie_pdf_path && (
@@ -1206,41 +1236,26 @@ function VeiculoEnvioCard({
           )}
         </div>
 
-        {dossieOk ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              placeholder="Código TCUV (ex: TCUV-2026-0001)"
-              value={tcuvValue}
-              onChange={(e) => onTcuvChange(e.target.value)}
-              className="w-56"
-            />
-            <Button
-              size="sm"
-              onClick={onSalvarTcuv}
-              disabled={salvandoTcuv || !tcuvValue.trim()}
-            >
-              {salvandoTcuv ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Send className="w-3.5 h-3.5" />
-              )}
-              Enviar / Concluir
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={onRecusar}
-              title="Registrar recusa da Toyota"
-            >
-              <AlertCircle className="w-3.5 h-3.5" />
-              Registrar Recusa
-            </Button>
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            Gere o Dossiê para liberar o envio final e o Código TCUV.
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Código TCUV (ex: TCUV-2026-0001)"
+            value={tcuvValue}
+            onChange={(e) => onTcuvChange(e.target.value)}
+            className="w-56"
+          />
+          <Button
+            size="sm"
+            onClick={onSalvarTcuv}
+            disabled={salvandoTcuv || !tcuvValue.trim()}
+          >
+            {salvandoTcuv ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            Enviar / Concluir
+          </Button>
+        </div>
 
       </div>
     </div>
