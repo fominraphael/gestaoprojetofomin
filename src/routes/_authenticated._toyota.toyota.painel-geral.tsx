@@ -15,7 +15,12 @@ import {
   Trash2,
   Upload,
   Award,
+  Settings2,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
