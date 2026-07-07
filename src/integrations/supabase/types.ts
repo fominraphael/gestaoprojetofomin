@@ -368,6 +368,8 @@ export type Database = {
           ano_modelo: number | null
           aprovado_em: string | null
           aprovado_por: string | null
+          certificado_pdf_path: string | null
+          certificado_uploaded_at: string | null
           chassi: string
           chassi_resumido: string | null
           checklist_data: Json | null
@@ -418,6 +420,8 @@ export type Database = {
           ano_modelo?: number | null
           aprovado_em?: string | null
           aprovado_por?: string | null
+          certificado_pdf_path?: string | null
+          certificado_uploaded_at?: string | null
           chassi: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
@@ -468,6 +472,8 @@ export type Database = {
           ano_modelo?: number | null
           aprovado_em?: string | null
           aprovado_por?: string | null
+          certificado_pdf_path?: string | null
+          certificado_uploaded_at?: string | null
           chassi?: string
           chassi_resumido?: string | null
           checklist_data?: Json | null
