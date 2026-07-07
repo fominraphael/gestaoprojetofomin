@@ -120,12 +120,12 @@ function FilaPreparador() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Chassi / Placa</TableHead>
-            <TableHead>Veículo</TableHead>
-            <TableHead>Elegibilidade</TableHead>
+            <TableHead className="whitespace-nowrap">Chassi / Placa</TableHead>
+            <TableHead className="whitespace-nowrap">Veículo</TableHead>
+            <TableHead className="whitespace-nowrap">Elegibilidade</TableHead>
             <TableHead>Orientações HSV</TableHead>
             {devolvido && <TableHead>Pendência da Central</TableHead>}
-            <TableHead className="text-right">Ação</TableHead>
+            <TableHead className="text-right whitespace-nowrap">Ação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
