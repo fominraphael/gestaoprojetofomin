@@ -590,6 +590,44 @@ function PainelGeral() {
   const [excluindo, setExcluindo] = useState(false);
   const certInputRef = useRef<HTMLInputElement | null>(null);
   const [certUploadTarget, setCertUploadTarget] = useState<Row | null>(null);
+  const [colPrefs, setColPrefs] = useState<ColPrefs>(() => loadColPrefs(user?.id));
+  useEffect(() => {
+    setColPrefs(loadColPrefs(user?.id));
+  }, [user?.id]);
+  const visibleSet = useMemo(() => new Set(colPrefs.visible), [colPrefs.visible]);
+  const orderedVisible = useMemo(
+    () => colPrefs.order.filter((k) => visibleSet.has(k)),
+    [colPrefs.order, visibleSet],
+  );
+  function toggleCol(key: ColKey) {
+    setColPrefs((p) => {
+      const next: ColPrefs = {
+        order: p.order,
+        visible: p.visible.includes(key)
+          ? p.visible.filter((k) => k !== key)
+          : [...p.visible, key],
+      };
+      saveColPrefs(user?.id, next);
+      return next;
+    });
+  }
+  function moveCol(key: ColKey, dir: -1 | 1) {
+    setColPrefs((p) => {
+      const idx = p.order.indexOf(key);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= p.order.length) return p;
+      const order = [...p.order];
+      [order[idx], order[target]] = [order[target], order[idx]];
+      const next = { order, visible: p.visible };
+      saveColPrefs(user?.id, next);
+      return next;
+    });
+  }
+  function resetCols() {
+    const next: ColPrefs = { order: COLUMNS.map((c) => c.key), visible: DEFAULT_COLS };
+    saveColPrefs(user?.id, next);
+    setColPrefs(next);
+  }
 
   async function confirmarExclusao() {
     if (!excluir) return;
