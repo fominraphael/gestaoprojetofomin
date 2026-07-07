@@ -269,7 +269,7 @@ async function processar(veiculo_id: string, pular_compressao = false) {
   let pdfFinalBytes = await mesclarDossie(documentos);
   console.log(`[dossie] Merge final: ${pdfFinalBytes.byteLength} bytes`);
 
-  if (pdfFinalBytes.byteLength > LIMITE_COMPRESSAO) {
+  if (!pular_compressao && pdfFinalBytes.byteLength > LIMITE_COMPRESSAO) {
     try {
       pdfFinalBytes = await comprimirCloudConvert(pdfFinalBytes);
     } catch (e) {
@@ -278,7 +278,7 @@ async function processar(veiculo_id: string, pular_compressao = false) {
     }
   }
 
-  if (pdfFinalBytes.byteLength > LIMITE_FINAL) {
+  if (!pular_compressao && pdfFinalBytes.byteLength > LIMITE_FINAL) {
     const tamanhoMB = (pdfFinalBytes.byteLength / 1024 / 1024).toFixed(2);
     throw new Error(
       `O Dossiê gerado ficou com ${tamanhoMB}MB, excedendo o limite de 3MB. A compressão falhou ou não reduziu o suficiente.`,
