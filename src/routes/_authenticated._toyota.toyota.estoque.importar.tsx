@@ -769,7 +769,7 @@ function BiToyotaImporter() {
     const total = rows.length;
     const aprov = rows.filter((r) => r.novoStatus === "certificado_toyota").length;
     const reprov = rows.filter((r) => r.novoStatus === "reprovado_toyota").length;
-    const aguard = rows.filter((r) => r.novoStatus === "manter" && r.encontrado).length;
+    const aguard = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota").length;
     const naoEnc = rows.filter((r) => !r.encontrado).length;
     return { total, aprov, reprov, aguard, naoEnc };
   }, [rows]);
