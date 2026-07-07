@@ -387,7 +387,7 @@ function AnaliseElegiveis() {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl space-y-6">
+    <div className="w-full px-6 py-8 space-y-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Análise Central</h1>
         <p className="text-sm text-muted-foreground">
