@@ -85,7 +85,7 @@ export function AppSidebar() {
           const active =
             item.to === "/dashboard"
               ? pathname === "/dashboard"
-              : pathname.startsWith(item.to);
+              : pathname === item.to || pathname.startsWith(item.to + "/");
           const Icon = item.icon;
           return (
             <Link

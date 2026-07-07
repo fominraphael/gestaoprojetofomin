@@ -352,6 +352,7 @@ function AnaliseElegiveis() {
         <TabsList>
           <TabsTrigger value="elegibilidade">Análise de Elegibilidade</TabsTrigger>
           <TabsTrigger value="envio">Envio Toyota</TabsTrigger>
+          <TabsTrigger value="recusados">Recusados Toyota</TabsTrigger>
         </TabsList>
 
         <TabsContent value="elegibilidade" className="space-y-4">
@@ -529,6 +530,10 @@ function AnaliseElegiveis() {
 
         <TabsContent value="envio" className="space-y-4">
           <EnvioToyotaTab mode="envio" />
+        </TabsContent>
+
+        <TabsContent value="recusados" className="space-y-4">
+          <EnvioToyotaTab mode="recusados" />
         </TabsContent>
       </Tabs>
 

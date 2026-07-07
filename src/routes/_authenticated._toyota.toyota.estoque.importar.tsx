@@ -612,7 +612,7 @@ interface BiRow {
   // resolução
   encontrado: boolean;
   statusAtual: string | null;
-  novoStatus: "certificado_toyota" | "reprovado_toyota" | "manter" | "nao_encontrado";
+  novoStatus: "certificado_toyota" | "reprovado_toyota" | "aguardando_analise_toyota" | "manter" | "nao_encontrado";
 }
 
 function BiToyotaImporter() {
@@ -667,22 +667,28 @@ function BiToyotaImporter() {
         const status = found?.status ?? null;
         const tcuvBanco = (found?.codigo_tcuv ?? "").trim().toLowerCase();
         const tcuvPlanilha = p.codCertificacao.trim().toLowerCase();
-        // Só cruza quando chassi encontrado E código TCUV bate com o cadastrado.
         const encontrado = status !== null;
-        const tcuvBate = encontrado && !!tcuvBanco && tcuvBanco === tcuvPlanilha;
+        // Cruza por chassi (obrigatório). TCUV só bloqueia quando ambos existirem e forem diferentes.
+        const tcuvBate =
+          encontrado && (!tcuvBanco || !tcuvPlanilha || tcuvBanco === tcuvPlanilha);
         const aprov = p.certificadoAprovado.toLowerCase();
         let novo: BiRow["novoStatus"] = "manter";
         if (!encontrado) novo = "nao_encontrado";
         else if (!tcuvBate) novo = "manter";
         else if (/^sim$/i.test(aprov)) novo = "certificado_toyota";
         else if (/^n[ãa]o$/i.test(aprov)) novo = "reprovado_toyota";
-        else novo = "manter"; // vazio → ainda em análise
+        else novo = "aguardando_analise_toyota"; // vazio → aguarda análise Toyota
         return { ...p, encontrado, statusAtual: status, novoStatus: novo };
       });
 
       setRows(resolved);
       setFileName(file.name);
-      const upd = resolved.filter((r) => r.novoStatus === "certificado_toyota" || r.novoStatus === "reprovado_toyota").length;
+      const upd = resolved.filter(
+        (r) =>
+          r.novoStatus === "certificado_toyota" ||
+          r.novoStatus === "reprovado_toyota" ||
+          r.novoStatus === "aguardando_analise_toyota",
+      ).length;
       toast.success(`${resolved.length} linhas · ${upd} atualizações pendentes`);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao ler arquivo.");
@@ -694,7 +700,8 @@ function BiToyotaImporter() {
   const aplicar = useCallback(async () => {
     const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota");
     const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota");
-    if (aprovados.length + reprovados.length === 0) {
+    const aguardando = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota");
+    if (aprovados.length + reprovados.length + aguardando.length === 0) {
       toast.error("Nenhuma atualização a aplicar.");
       return;
     }
@@ -720,7 +727,16 @@ function BiToyotaImporter() {
           .eq("chassi", r.chassi);
         if (error) throw error;
       }
-      toast.success(`${aprovados.length} aprovado(s) · ${reprovados.length} reprovado(s)`);
+      if (aguardando.length > 0) {
+        const { error } = await supabase
+          .from("toyota_estoque_veiculos")
+          .update({ status_aprovacao: "aguardando_analise_toyota" })
+          .in("chassi", aguardando.map((r) => r.chassi));
+        if (error) throw error;
+      }
+      toast.success(
+        `${aprovados.length} aprovado(s) · ${reprovados.length} reenvio · ${aguardando.length} em análise`,
+      );
       setRows([]);
       setFileName("");
     } catch (e: any) {
@@ -753,7 +769,7 @@ function BiToyotaImporter() {
     const total = rows.length;
     const aprov = rows.filter((r) => r.novoStatus === "certificado_toyota").length;
     const reprov = rows.filter((r) => r.novoStatus === "reprovado_toyota").length;
-    const aguard = rows.filter((r) => r.novoStatus === "manter" && r.encontrado).length;
+    const aguard = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota").length;
     const naoEnc = rows.filter((r) => !r.encontrado).length;
     return { total, aprov, reprov, aguard, naoEnc };
   }, [rows]);
@@ -939,7 +955,9 @@ function AcaoBadge({ a }: { a: BiRow["novoStatus"] }) {
   if (a === "certificado_toyota")
     return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Aprovar</Badge>;
   if (a === "reprovado_toyota")
-    return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Reprovar</Badge>;
+    return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Reenvio</Badge>;
+  if (a === "aguardando_analise_toyota")
+    return <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-100">Aguardando análise</Badge>;
   if (a === "nao_encontrado") return <Badge variant="secondary">Ignorar</Badge>;
   return <Badge variant="outline">Manter</Badge>;
 }
