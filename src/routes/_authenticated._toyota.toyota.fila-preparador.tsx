@@ -201,7 +201,7 @@ function FilaPreparador() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Truck className="h-6 w-6" /> Fila do Preparador
@@ -212,7 +212,7 @@ function FilaPreparador() {
         </p>
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative w-full max-w-lg">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por chassi, placa ou modelo..."
