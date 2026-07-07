@@ -651,25 +651,32 @@ function BiToyotaImporter() {
       }));
 
       const chassis = parsed.map((p) => p.chassi).filter(Boolean);
-      const lookup = new Map<string, string>();
+      const lookup = new Map<string, { status: string | null; codigo_tcuv: string | null }>();
       if (chassis.length > 0) {
         const { data: vehicles } = await supabase
           .from("toyota_estoque_veiculos")
-          .select("chassi, status_aprovacao")
+          .select("chassi, status_aprovacao, codigo_tcuv")
           .in("chassi", chassis);
-        (vehicles ?? []).forEach((v: any) => lookup.set(v.chassi, v.status_aprovacao));
+        (vehicles ?? []).forEach((v: any) =>
+          lookup.set(v.chassi, { status: v.status_aprovacao, codigo_tcuv: v.codigo_tcuv }),
+        );
       }
 
       const resolved: BiRow[] = parsed.map((p) => {
-        const status = lookup.get(p.chassi) ?? null;
+        const found = lookup.get(p.chassi);
+        const status = found?.status ?? null;
+        const tcuvBanco = (found?.codigo_tcuv ?? "").trim().toLowerCase();
+        const tcuvPlanilha = p.codCertificacao.trim().toLowerCase();
+        // Só cruza quando chassi encontrado E código TCUV bate com o cadastrado.
         const encontrado = status !== null;
+        const tcuvBate = encontrado && !!tcuvBanco && tcuvBanco === tcuvPlanilha;
         const aprov = p.certificadoAprovado.toLowerCase();
         let novo: BiRow["novoStatus"] = "manter";
         if (!encontrado) novo = "nao_encontrado";
-        else if (status !== "enviado_toyota") novo = "manter";
+        else if (!tcuvBate) novo = "manter";
         else if (/^sim$/i.test(aprov)) novo = "aprovado_toyota";
         else if (/^n[ãa]o$/i.test(aprov)) novo = "reprovado_toyota";
-        else novo = "manter";
+        else novo = "manter"; // vazio → ainda em análise
         return { ...p, encontrado, statusAtual: status, novoStatus: novo };
       });
 
@@ -698,8 +705,7 @@ function BiToyotaImporter() {
         const { error } = await supabase
           .from("toyota_estoque_veiculos")
           .update({ status_aprovacao: "aprovado_toyota", retorno_toyota_em: now })
-          .in("chassi", aprovados.map((r) => r.chassi))
-          .eq("status_aprovacao", "enviado_toyota");
+          .in("chassi", aprovados.map((r) => r.chassi));
         if (error) throw error;
       }
       for (const r of reprovados) {
@@ -711,8 +717,7 @@ function BiToyotaImporter() {
             motivo_reprovacao: r.motivoReprovacao || null,
             observacao_toyota: r.observacao || null,
           })
-          .eq("chassi", r.chassi)
-          .eq("status_aprovacao", "enviado_toyota");
+          .eq("chassi", r.chassi);
         if (error) throw error;
       }
       toast.success(`${aprovados.length} aprovado(s) · ${reprovados.length} reprovado(s)`);

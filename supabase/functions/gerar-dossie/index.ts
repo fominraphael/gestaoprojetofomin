@@ -22,6 +22,7 @@ const corsHeaders = {
 
 interface Payload {
   veiculo_id: string;
+  pular_compressao?: boolean;
 }
 
 type SupabaseClient = ReturnType<typeof createClient>;
@@ -215,7 +216,7 @@ async function comprimirCloudConvert(pdfBytes: Uint8Array): Promise<Uint8Array> 
   return out;
 }
 
-async function processar(veiculo_id: string) {
+async function processar(veiculo_id: string, pular_compressao = false) {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   const { error: clearErr } = await supabase
@@ -268,7 +269,7 @@ async function processar(veiculo_id: string) {
   let pdfFinalBytes = await mesclarDossie(documentos);
   console.log(`[dossie] Merge final: ${pdfFinalBytes.byteLength} bytes`);
 
-  if (pdfFinalBytes.byteLength > LIMITE_COMPRESSAO) {
+  if (!pular_compressao && pdfFinalBytes.byteLength > LIMITE_COMPRESSAO) {
     try {
       pdfFinalBytes = await comprimirCloudConvert(pdfFinalBytes);
     } catch (e) {
@@ -277,7 +278,7 @@ async function processar(veiculo_id: string) {
     }
   }
 
-  if (pdfFinalBytes.byteLength > LIMITE_FINAL) {
+  if (!pular_compressao && pdfFinalBytes.byteLength > LIMITE_FINAL) {
     const tamanhoMB = (pdfFinalBytes.byteLength / 1024 / 1024).toFixed(2);
     throw new Error(
       `O Dossiê gerado ficou com ${tamanhoMB}MB, excedendo o limite de 3MB. A compressão falhou ou não reduziu o suficiente.`,
@@ -310,7 +311,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
   try {
-    const { veiculo_id } = (await req.json()) as Payload;
+    const { veiculo_id, pular_compressao } = (await req.json()) as Payload;
     if (!veiculo_id) {
       return new Response(JSON.stringify({ error: "veiculo_id ausente" }), {
         status: 400,
@@ -320,7 +321,7 @@ serve(async (req) => {
 
     // deno-lint-ignore no-explicit-any
     (globalThis as any).EdgeRuntime?.waitUntil?.(
-      processar(veiculo_id).catch((error) => {
+      processar(veiculo_id, !!pular_compressao).catch((error) => {
         console.error("Falha ao gerar dossiê em segundo plano:", error?.message ?? error);
       }),
     );

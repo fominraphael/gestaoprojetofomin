@@ -726,9 +726,6 @@ function EnvioToyotaTab() {
   const [gerando, setGerando] = useState<string | null>(null);
   const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
   const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
-  const [recusaVeic, setRecusaVeic] = useState<VeiculoEnvio | null>(null);
-  const [recusaMotivo, setRecusaMotivo] = useState("");
-  const [salvandoRecusa, setSalvandoRecusa] = useState(false);
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
     const { data, error } = await supabase.storage
@@ -860,22 +857,23 @@ function EnvioToyotaTab() {
   }
 
 
-  async function gerarDossie(v: VeiculoEnvio) {
+  async function gerarDossie(v: VeiculoEnvio, pularCompressao = false) {
     setGerando(v.id);
     try {
-      // Delega para a Edge Function `gerar-dossie`, que apenas mescla os PDFs
-      // (checklist + laudo + health check) e salva o resultado.
       const { error: invokeErr } = await supabase.functions.invoke(
         "gerar-dossie",
-        { body: { veiculo_id: v.id } },
+        { body: { veiculo_id: v.id, pular_compressao: pularCompressao } },
       );
       if (invokeErr) {
         toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
-      toast.info("Gerando dossiê em segundo plano...");
+      toast.info(
+        pularCompressao
+          ? "Unindo PDFs sem compressão..."
+          : "Gerando dossiê em segundo plano...",
+      );
 
-      // Polling: aguarda a edge function atualizar dossie_pdf_path.
       const dossieAntes = v.dossie_pdf_path;
       const inicio = Date.now();
       const TIMEOUT_MS = 90_000;
@@ -903,12 +901,44 @@ function EnvioToyotaTab() {
         .from("documentos")
         .createSignedUrl(novoPath, 600);
       if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-      toast.success("Dossiê gerado com sucesso.");
+      toast.success(
+        pularCompressao
+          ? "PDFs unidos sem compressão. Baixe, comprima manualmente e reimporte se necessário."
+          : "Dossiê gerado com sucesso.",
+      );
       await carregar();
     } finally {
       setGerando(null);
     }
   }
+
+  async function importarDossieManual(v: VeiculoEnvio, file: File) {
+    setGerando(v.id);
+    try {
+      const path = `toyota/dossies/${v.id}/${Date.now()}-manual.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, file, { upsert: true, contentType: "application/pdf" });
+      if (upErr) {
+        toast.error(`Falha no upload: ${upErr.message}`);
+        return;
+      }
+      const { error: updErr } = await supabase
+        .from("toyota_estoque_veiculos")
+        .update({ dossie_pdf_path: path, dossie_enviado_em: new Date().toISOString() })
+        .eq("id", v.id);
+      if (updErr) {
+        toast.error(updErr.message);
+        return;
+      }
+      toast.success("Dossiê importado com sucesso.");
+      await carregar();
+    } finally {
+      setGerando(null);
+    }
+  }
+
+
 
 
   async function visualizarDossie(v: VeiculoEnvio) {
@@ -944,32 +974,6 @@ function EnvioToyotaTab() {
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
-  async function confirmarRecusa() {
-    if (!recusaVeic) return;
-    const motivo = recusaMotivo.trim();
-    if (!motivo) {
-      toast.error("Informe o motivo da recusa.");
-      return;
-    }
-    setSalvandoRecusa(true);
-    const { error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .update({
-        status_aprovacao: "analise",
-        retorno_toyota_em: new Date().toISOString(),
-        observacao_toyota: motivo,
-      })
-      .eq("id", recusaVeic.id);
-    setSalvandoRecusa(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Recusa registrada. Veículo retornou para a Análise Central.");
-    setVeiculos((prev) => prev.filter((x) => x.id !== recusaVeic.id));
-    setRecusaVeic(null);
-    setRecusaMotivo("");
-  }
 
   if (loading) {
     return (
@@ -1034,49 +1038,15 @@ function EnvioToyotaTab() {
               setTcuvInput((p) => ({ ...p, [v.id]: val }))
             }
             onGerar={() => gerarDossie(v)}
+            onGerarSemCompressao={() => gerarDossie(v, true)}
+            onImportarManual={(file) => importarDossieManual(v, file)}
             onVisualizar={() => visualizarDossie(v)}
             onSalvarTcuv={() => salvarTcuv(v)}
-            onRecusar={() => {
-              setRecusaVeic(v);
-              setRecusaMotivo("");
-            }}
             onRefresh={carregar}
           />
         ))}
       </CardContent>
     </Card>
-
-
-    <Dialog open={!!recusaVeic} onOpenChange={(o) => !o && setRecusaVeic(null)}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Registrar recusa da Toyota</DialogTitle>
-          <DialogDescription>
-            O veículo retornará para a <strong>Análise Central</strong> com destaque.
-            O Administrador poderá revisar e reenviar ou arquivar definitivamente.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-2">
-          <Label htmlFor="motivo-recusa">Motivo / observação da Toyota</Label>
-          <Textarea
-            id="motivo-recusa"
-            value={recusaMotivo}
-            onChange={(e) => setRecusaMotivo(e.target.value)}
-            placeholder="Ex.: pendência de documentação, item reprovado no check-list, etc."
-            rows={4}
-          />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setRecusaVeic(null)} disabled={salvandoRecusa}>
-            Cancelar
-          </Button>
-          <Button variant="destructive" onClick={confirmarRecusa} disabled={salvandoRecusa}>
-            {salvandoRecusa && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Confirmar recusa
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
     </>
   );
 }
@@ -1090,9 +1060,10 @@ interface VeiculoEnvioCardProps {
   tcuvValue: string;
   onTcuvChange: (val: string) => void;
   onGerar: () => void;
+  onGerarSemCompressao: () => void;
+  onImportarManual: (file: File) => void | Promise<void>;
   onVisualizar: () => void;
   onSalvarTcuv: () => void;
-  onRecusar: () => void;
   onRefresh: () => void | Promise<void>;
 }
 
@@ -1103,9 +1074,10 @@ function VeiculoEnvioCard({
   tcuvValue,
   onTcuvChange,
   onGerar,
+  onGerarSemCompressao,
+  onImportarManual,
   onVisualizar,
   onSalvarTcuv,
-  onRecusar,
   onRefresh,
 }: VeiculoEnvioCardProps) {
   const laudoPresente = !!(v.laudo_arquivo_path || v.laudo_url);
@@ -1217,16 +1189,46 @@ function VeiculoEnvioCard({
                 ? "Regerar Dossiê"
                 : "Gerar Dossiê"}
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onGerarSemCompressao}
+            disabled={gerando || !podeGerar}
+            title="Une os 3 PDFs sem chamar a compressão externa. Útil quando o serviço de compressão falha."
+          >
+            <FileStack className="w-3.5 h-3.5" />
+            Unir sem compressão
+          </Button>
+          <label
+            className={
+              "inline-flex items-center gap-1 rounded-md border px-3 h-9 text-xs font-medium cursor-pointer hover:bg-slate-100 " +
+              (gerando ? "opacity-50 pointer-events-none" : "")
+            }
+            title="Importar um dossiê PDF já pronto (por exemplo, comprimido manualmente)"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Importar dossiê
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await onImportarManual(file);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
           {!!v.dossie_pdf_path && (
             <Button
               size="sm"
               variant="secondary"
               onClick={onVisualizar}
               disabled={gerando}
-              title="Abrir o dossiê comprimido"
+              title="Abrir / baixar o dossiê"
             >
-              <FileStack className="w-3.5 h-3.5" />
-              Visualizar Dossiê
+              <Eye className="w-3.5 h-3.5" />
+              Baixar Dossiê
             </Button>
           )}
           {!!v.dossie_pdf_path && (
@@ -1234,41 +1236,26 @@ function VeiculoEnvioCard({
           )}
         </div>
 
-        {dossieOk ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              placeholder="Código TCUV (ex: TCUV-2026-0001)"
-              value={tcuvValue}
-              onChange={(e) => onTcuvChange(e.target.value)}
-              className="w-56"
-            />
-            <Button
-              size="sm"
-              onClick={onSalvarTcuv}
-              disabled={salvandoTcuv || !tcuvValue.trim()}
-            >
-              {salvandoTcuv ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Send className="w-3.5 h-3.5" />
-              )}
-              Enviar / Concluir
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={onRecusar}
-              title="Registrar recusa da Toyota"
-            >
-              <AlertCircle className="w-3.5 h-3.5" />
-              Registrar Recusa
-            </Button>
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            Gere o Dossiê para liberar o envio final e o Código TCUV.
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Código TCUV (ex: TCUV-2026-0001)"
+            value={tcuvValue}
+            onChange={(e) => onTcuvChange(e.target.value)}
+            className="w-56"
+          />
+          <Button
+            size="sm"
+            onClick={onSalvarTcuv}
+            disabled={salvandoTcuv || !tcuvValue.trim()}
+          >
+            {salvandoTcuv ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            Enviar / Concluir
+          </Button>
+        </div>
 
       </div>
     </div>

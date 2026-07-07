@@ -12,7 +12,18 @@ import {
   CheckCircle2,
   Clock,
   UserCircle,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -306,6 +317,25 @@ function PainelGeral() {
   const [etapa, setEtapa] = useState<string>("all");
   const [filialFiltro, setFilialFiltro] = useState<string>("all");
   const [detalhe, setDetalhe] = useState<Row | null>(null);
+  const [excluir, setExcluir] = useState<Row | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function confirmarExclusao() {
+    if (!excluir) return;
+    setExcluindo(true);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .delete()
+      .eq("id", excluir.id);
+    setExcluindo(false);
+    if (error) {
+      toast.error(`Falha ao excluir: ${error.message}`);
+      return;
+    }
+    toast.success("Veículo excluído.");
+    setRows((prev) => prev.filter((r) => r.id !== excluir.id));
+    setExcluir(null);
+  }
 
   useEffect(() => {
     (async () => {
@@ -534,9 +564,26 @@ function PainelGeral() {
                           {r.codigo_tcuv ?? "—"}
                         </TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <Button size="sm" variant="outline" onClick={() => setDetalhe(r)}>
-                            <Eye className="w-3.5 h-3.5" /> Detalhes
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Detalhes"
+                              onClick={() => setDetalhe(r)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Excluir veículo"
+                              onClick={() => setExcluir(r)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -549,6 +596,29 @@ function PainelGeral() {
       </Card>
 
       <DetalhesModal row={detalhe} onClose={() => setDetalhe(null)} />
+
+      <AlertDialog open={!!excluir} onOpenChange={(o) => !o && setExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir veículo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. O veículo{" "}
+              <span className="font-mono">{excluir?.chassi}</span> e seus registros
+              associados serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
