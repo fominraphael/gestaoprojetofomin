@@ -528,7 +528,7 @@ function AnaliseElegiveis() {
         </TabsContent>
 
         <TabsContent value="envio" className="space-y-4">
-          <EnvioToyotaTab />
+          <EnvioToyotaTab mode="envio" />
         </TabsContent>
       </Tabs>
 
@@ -710,6 +710,9 @@ interface VeiculoEnvio {
     dealer_number: string | null;
     nome_bi_toyota: string | null;
   } | null;
+  motivo_reprovacao?: string | null;
+  observacao_toyota?: string | null;
+  retorno_toyota_em?: string | null;
 }
 
 
@@ -720,12 +723,14 @@ function formatarBytes(bytes?: number | null): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function EnvioToyotaTab() {
+export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados" } = {}) {
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<VeiculoEnvio[]>([]);
   const [gerando, setGerando] = useState<string | null>(null);
   const [tcuvInput, setTcuvInput] = useState<Record<string, string>>({});
   const [salvandoTcuv, setSalvandoTcuv] = useState<string | null>(null);
+  const [arquivando, setArquivando] = useState<string | null>(null);
+  const statusFiltro = mode === "recusados" ? "reprovado_toyota" : "aguardando_analise_central";
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
     const { data, error } = await supabase.storage
@@ -757,9 +762,9 @@ function EnvioToyotaTab() {
     const { data, error } = await supabase
       .from("toyota_estoque_veiculos")
       .select(
-        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,checklist_itens,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
+        "id,chassi,placa,modelo,ano_modelo,elegibilidade,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,checklist_itens,codigo_tcuv,dossie_pdf_path,posvendas_km,posvendas_finalizado_em,posvendas_finalizado_por,filial_id,filial_destino_id,motivo_reprovacao,observacao_toyota,retorno_toyota_em,toyota_filiais:filial_destino_id(dealer_number,nome_bi_toyota)",
       )
-      .eq("status_aprovacao", "aguardando_analise_central")
+      .eq("status_aprovacao", statusFiltro)
       .order("updated_at", { ascending: false });
     if (error) {
       console.error("[EnvioToyotaTab] carregar", error);
@@ -961,16 +966,62 @@ function EnvioToyotaTab() {
       return;
     }
     setSalvandoTcuv(v.id);
+    // Unicidade: cada envio/reenvio à Toyota exige um código TCUV inédito.
+    const { data: dup, error: dupErr } = await supabase
+      .from("toyota_estoque_veiculos")
+      .select("id, chassi")
+      .eq("codigo_tcuv", codigo)
+      .limit(1)
+      .maybeSingle();
+    if (dupErr) {
+      setSalvandoTcuv(null);
+      toast.error(`Falha ao validar código: ${dupErr.message}`);
+      return;
+    }
+    if (dup) {
+      setSalvandoTcuv(null);
+      toast.error(
+        dup.id === v.id
+          ? "Este código já foi usado neste veículo em envio anterior. Gere um novo código."
+          : `Código TCUV "${codigo}" já está em uso (chassi ${dup.chassi}). Informe um novo código.`,
+      );
+      return;
+    }
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
-      .update({ codigo_tcuv: codigo, status_aprovacao: "certificado_toyota" })
+      .update({
+        codigo_tcuv: codigo,
+        status_aprovacao: "aguardando_analise_toyota",
+        enviado_toyota_em: now,
+        // Ao reenviar, limpa dados da recusa anterior.
+        motivo_reprovacao: null,
+        observacao_toyota: null,
+        retorno_toyota_em: null,
+      })
       .eq("id", v.id);
     setSalvandoTcuv(null);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Código TCUV salvo. Processo finalizado.");
+    toast.success("Enviado à Toyota. Aguardando retorno na próxima importação da planilha.");
+    setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
+  }
+
+  async function arquivarVeiculo(v: VeiculoEnvio) {
+    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele deixará de aparecer nos fluxos ativos.`)) return;
+    setArquivando(v.id);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .update({ status_aprovacao: "arquivado" })
+      .eq("id", v.id);
+    setArquivando(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Veículo arquivado.");
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
