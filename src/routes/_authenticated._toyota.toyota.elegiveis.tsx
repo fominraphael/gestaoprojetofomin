@@ -122,7 +122,7 @@ function AnaliseElegiveis() {
 
   async function carregar() {
     setLoading(true);
-    const [vRes, fRes] = await Promise.all([
+    const [vRes, fRes, pRes] = await Promise.all([
       supabase
         .from("toyota_estoque_veiculos")
         .select(
@@ -136,13 +136,21 @@ function AnaliseElegiveis() {
         .select("id, nome")
         .eq("ativo", true)
         .order("nome"),
+      supabase
+        .from("toyota_patios")
+        .select("id, nome, filial_id")
+        .eq("ativo", true)
+        .order("nome"),
     ]);
     if (vRes.error) toast.error("Falha ao carregar veículos.");
     if (fRes.error) toast.error("Falha ao carregar filiais.");
+    if (pRes.error) toast.error("Falha ao carregar pátios.");
     setVeiculos(((vRes.data ?? []) as unknown) as Veiculo[]);
     setFiliais((fRes.data ?? []) as Filial[]);
+    setPatios((pRes.data ?? []) as Patio[]);
     setLoading(false);
   }
+
 
   useEffect(() => {
     carregar();
