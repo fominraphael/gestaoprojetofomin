@@ -368,6 +368,7 @@ export type Database = {
           ano_modelo: number | null
           aprovado_em: string | null
           aprovado_por: string | null
+          aprovado_toyota_em: string | null
           certificado_pdf_path: string | null
           certificado_uploaded_at: string | null
           chassi: string
@@ -381,6 +382,8 @@ export type Database = {
           dossie_enviado_em: string | null
           dossie_pdf_path: string | null
           elegibilidade: string | null
+          enviado_central_em: string | null
+          enviado_posvendas_em: string | null
           enviado_toyota_em: string | null
           external_id: string | null
           filial_destino_id: string | null
@@ -412,6 +415,7 @@ export type Database = {
           retorno_toyota_em: string | null
           status_aprovacao: string
           status_cautelar: string | null
+          ultimo_envio_toyota_em: string | null
           updated_at: string
           user_id: string | null
         }
@@ -420,6 +424,7 @@ export type Database = {
           ano_modelo?: number | null
           aprovado_em?: string | null
           aprovado_por?: string | null
+          aprovado_toyota_em?: string | null
           certificado_pdf_path?: string | null
           certificado_uploaded_at?: string | null
           chassi: string
@@ -433,6 +438,8 @@ export type Database = {
           dossie_enviado_em?: string | null
           dossie_pdf_path?: string | null
           elegibilidade?: string | null
+          enviado_central_em?: string | null
+          enviado_posvendas_em?: string | null
           enviado_toyota_em?: string | null
           external_id?: string | null
           filial_destino_id?: string | null
@@ -464,6 +471,7 @@ export type Database = {
           retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
+          ultimo_envio_toyota_em?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -472,6 +480,7 @@ export type Database = {
           ano_modelo?: number | null
           aprovado_em?: string | null
           aprovado_por?: string | null
+          aprovado_toyota_em?: string | null
           certificado_pdf_path?: string | null
           certificado_uploaded_at?: string | null
           chassi?: string
@@ -485,6 +494,8 @@ export type Database = {
           dossie_enviado_em?: string | null
           dossie_pdf_path?: string | null
           elegibilidade?: string | null
+          enviado_central_em?: string | null
+          enviado_posvendas_em?: string | null
           enviado_toyota_em?: string | null
           external_id?: string | null
           filial_destino_id?: string | null
@@ -516,6 +527,7 @@ export type Database = {
           retorno_toyota_em?: string | null
           status_aprovacao?: string
           status_cautelar?: string | null
+          ultimo_envio_toyota_em?: string | null
           updated_at?: string
           user_id?: string | null
         }
