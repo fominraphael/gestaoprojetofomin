@@ -572,7 +572,7 @@ function PainelGeral() {
   }, [rows, busca, etapa, filialFiltro, certFiltro]);
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-[1400px] space-y-6">
+    <div className="w-full px-6 py-8 space-y-6">
       <header className="flex items-center gap-3">
         <div className="rounded-lg bg-slate-100 p-2">
           <LayoutDashboard className="h-5 w-5 text-slate-700" />
