@@ -317,6 +317,25 @@ function PainelGeral() {
   const [etapa, setEtapa] = useState<string>("all");
   const [filialFiltro, setFilialFiltro] = useState<string>("all");
   const [detalhe, setDetalhe] = useState<Row | null>(null);
+  const [excluir, setExcluir] = useState<Row | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function confirmarExclusao() {
+    if (!excluir) return;
+    setExcluindo(true);
+    const { error } = await supabase
+      .from("toyota_estoque_veiculos")
+      .delete()
+      .eq("id", excluir.id);
+    setExcluindo(false);
+    if (error) {
+      toast.error(`Falha ao excluir: ${error.message}`);
+      return;
+    }
+    toast.success("Veículo excluído.");
+    setRows((prev) => prev.filter((r) => r.id !== excluir.id));
+    setExcluir(null);
+  }
 
   useEffect(() => {
     (async () => {
