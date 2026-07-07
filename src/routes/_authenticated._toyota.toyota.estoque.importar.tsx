@@ -745,9 +745,9 @@ function BiToyotaImporter() {
   }, []);
 
   const aplicar = useCallback(async () => {
-    const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota");
-    const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota");
-    const aguardando = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota");
+    const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota" && r.vehicleId);
+    const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota" && r.vehicleId);
+    const aguardando = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota" && r.vehicleId);
     if (aprovados.length + reprovados.length + aguardando.length === 0) {
       toast.error("Nenhuma atualização a aplicar.");
       return;
@@ -755,39 +755,30 @@ function BiToyotaImporter() {
     setSaving(true);
     try {
       const now = new Date().toISOString();
-      const matchQuery = (q: any, r: BiRow) => {
-        q = q.eq("chassi", r.chassi);
-        if (r.codCertificacao.trim()) q = q.eq("codigo_tcuv", r.codCertificacao.trim());
-        return q;
-      };
       for (const r of aprovados) {
-        const { error } = await matchQuery(
-          supabase
-            .from("toyota_estoque_veiculos")
-            .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now }),
-          r,
-        );
+        const { error } = await supabase
+          .from("toyota_estoque_veiculos")
+          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now })
+          .eq("id", r.vehicleId!);
         if (error) throw error;
       }
       for (const r of reprovados) {
-        const { error } = await matchQuery(
-          supabase.from("toyota_estoque_veiculos").update({
+        const { error } = await supabase
+          .from("toyota_estoque_veiculos")
+          .update({
             status_aprovacao: "reprovado_toyota",
             retorno_toyota_em: now,
             motivo_reprovacao: r.motivoReprovacao || null,
             observacao_toyota: r.observacao || null,
-          }),
-          r,
-        );
+          })
+          .eq("id", r.vehicleId!);
         if (error) throw error;
       }
       for (const r of aguardando) {
-        const { error } = await matchQuery(
-          supabase
-            .from("toyota_estoque_veiculos")
-            .update({ status_aprovacao: "aguardando_analise_toyota" }),
-          r,
-        );
+        const { error } = await supabase
+          .from("toyota_estoque_veiculos")
+          .update({ status_aprovacao: "aguardando_analise_toyota" })
+          .eq("id", r.vehicleId!);
         if (error) throw error;
       }
       toast.success(
