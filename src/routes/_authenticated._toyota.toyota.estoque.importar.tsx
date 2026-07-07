@@ -700,7 +700,8 @@ function BiToyotaImporter() {
   const aplicar = useCallback(async () => {
     const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota");
     const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota");
-    if (aprovados.length + reprovados.length === 0) {
+    const aguardando = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota");
+    if (aprovados.length + reprovados.length + aguardando.length === 0) {
       toast.error("Nenhuma atualização a aplicar.");
       return;
     }
@@ -726,7 +727,16 @@ function BiToyotaImporter() {
           .eq("chassi", r.chassi);
         if (error) throw error;
       }
-      toast.success(`${aprovados.length} aprovado(s) · ${reprovados.length} reprovado(s)`);
+      if (aguardando.length > 0) {
+        const { error } = await supabase
+          .from("toyota_estoque_veiculos")
+          .update({ status_aprovacao: "aguardando_analise_toyota" })
+          .in("chassi", aguardando.map((r) => r.chassi));
+        if (error) throw error;
+      }
+      toast.success(
+        `${aprovados.length} aprovado(s) · ${reprovados.length} reenvio · ${aguardando.length} em análise`,
+      );
       setRows([]);
       setFileName("");
     } catch (e: any) {
