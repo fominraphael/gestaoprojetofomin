@@ -860,22 +860,23 @@ function EnvioToyotaTab() {
   }
 
 
-  async function gerarDossie(v: VeiculoEnvio) {
+  async function gerarDossie(v: VeiculoEnvio, pularCompressao = false) {
     setGerando(v.id);
     try {
-      // Delega para a Edge Function `gerar-dossie`, que apenas mescla os PDFs
-      // (checklist + laudo + health check) e salva o resultado.
       const { error: invokeErr } = await supabase.functions.invoke(
         "gerar-dossie",
-        { body: { veiculo_id: v.id } },
+        { body: { veiculo_id: v.id, pular_compressao: pularCompressao } },
       );
       if (invokeErr) {
         toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
-      toast.info("Gerando dossiê em segundo plano...");
+      toast.info(
+        pularCompressao
+          ? "Unindo PDFs sem compressão..."
+          : "Gerando dossiê em segundo plano...",
+      );
 
-      // Polling: aguarda a edge function atualizar dossie_pdf_path.
       const dossieAntes = v.dossie_pdf_path;
       const inicio = Date.now();
       const TIMEOUT_MS = 90_000;
@@ -903,12 +904,44 @@ function EnvioToyotaTab() {
         .from("documentos")
         .createSignedUrl(novoPath, 600);
       if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-      toast.success("Dossiê gerado com sucesso.");
+      toast.success(
+        pularCompressao
+          ? "PDFs unidos sem compressão. Baixe, comprima manualmente e reimporte se necessário."
+          : "Dossiê gerado com sucesso.",
+      );
       await carregar();
     } finally {
       setGerando(null);
     }
   }
+
+  async function importarDossieManual(v: VeiculoEnvio, file: File) {
+    setGerando(v.id);
+    try {
+      const path = `toyota/dossies/${v.id}/${Date.now()}-manual.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, file, { upsert: true, contentType: "application/pdf" });
+      if (upErr) {
+        toast.error(`Falha no upload: ${upErr.message}`);
+        return;
+      }
+      const { error: updErr } = await supabase
+        .from("toyota_estoque_veiculos")
+        .update({ dossie_pdf_path: path, dossie_enviado_em: new Date().toISOString() })
+        .eq("id", v.id);
+      if (updErr) {
+        toast.error(updErr.message);
+        return;
+      }
+      toast.success("Dossiê importado com sucesso.");
+      await carregar();
+    } finally {
+      setGerando(null);
+    }
+  }
+
+
 
 
   async function visualizarDossie(v: VeiculoEnvio) {
