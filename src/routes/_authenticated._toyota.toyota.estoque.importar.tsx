@@ -711,30 +711,39 @@ function BiToyotaImporter() {
     setSaving(true);
     try {
       const now = new Date().toISOString();
-      if (aprovados.length > 0) {
-        const { error } = await supabase
-          .from("toyota_estoque_veiculos")
-          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now })
-          .in("chassi", aprovados.map((r) => r.chassi));
+      const matchQuery = (q: any, r: BiRow) => {
+        q = q.eq("chassi", r.chassi);
+        if (r.codCertificacao.trim()) q = q.eq("codigo_tcuv", r.codCertificacao.trim());
+        return q;
+      };
+      for (const r of aprovados) {
+        const { error } = await matchQuery(
+          supabase
+            .from("toyota_estoque_veiculos")
+            .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now }),
+          r,
+        );
         if (error) throw error;
       }
       for (const r of reprovados) {
-        const { error } = await supabase
-          .from("toyota_estoque_veiculos")
-          .update({
+        const { error } = await matchQuery(
+          supabase.from("toyota_estoque_veiculos").update({
             status_aprovacao: "reprovado_toyota",
             retorno_toyota_em: now,
             motivo_reprovacao: r.motivoReprovacao || null,
             observacao_toyota: r.observacao || null,
-          })
-          .eq("chassi", r.chassi);
+          }),
+          r,
+        );
         if (error) throw error;
       }
-      if (aguardando.length > 0) {
-        const { error } = await supabase
-          .from("toyota_estoque_veiculos")
-          .update({ status_aprovacao: "aguardando_analise_toyota" })
-          .in("chassi", aguardando.map((r) => r.chassi));
+      for (const r of aguardando) {
+        const { error } = await matchQuery(
+          supabase
+            .from("toyota_estoque_veiculos")
+            .update({ status_aprovacao: "aguardando_analise_toyota" }),
+          r,
+        );
         if (error) throw error;
       }
       toast.success(
