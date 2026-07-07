@@ -611,6 +611,8 @@ interface BiRow {
   observacao: string;
   // resolução
   encontrado: boolean;
+  ambiguo: boolean;
+  vehicleId: string | null;
   statusAtual: string | null;
   novoStatus: "certificado_toyota" | "reprovado_toyota" | "aguardando_analise_toyota" | "manter" | "nao_encontrado";
 }
