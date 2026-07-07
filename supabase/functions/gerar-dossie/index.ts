@@ -216,7 +216,7 @@ async function comprimirCloudConvert(pdfBytes: Uint8Array): Promise<Uint8Array> 
   return out;
 }
 
-async function processar(veiculo_id: string) {
+async function processar(veiculo_id: string, pular_compressao = false) {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   const { error: clearErr } = await supabase
