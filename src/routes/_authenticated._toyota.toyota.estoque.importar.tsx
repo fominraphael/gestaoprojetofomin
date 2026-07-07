@@ -683,7 +683,12 @@ function BiToyotaImporter() {
 
       setRows(resolved);
       setFileName(file.name);
-      const upd = resolved.filter((r) => r.novoStatus === "certificado_toyota" || r.novoStatus === "reprovado_toyota").length;
+      const upd = resolved.filter(
+        (r) =>
+          r.novoStatus === "certificado_toyota" ||
+          r.novoStatus === "reprovado_toyota" ||
+          r.novoStatus === "aguardando_analise_toyota",
+      ).length;
       toast.success(`${resolved.length} linhas · ${upd} atualizações pendentes`);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao ler arquivo.");
