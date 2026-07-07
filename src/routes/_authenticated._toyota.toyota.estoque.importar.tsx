@@ -667,16 +667,17 @@ function BiToyotaImporter() {
         const status = found?.status ?? null;
         const tcuvBanco = (found?.codigo_tcuv ?? "").trim().toLowerCase();
         const tcuvPlanilha = p.codCertificacao.trim().toLowerCase();
-        // Só cruza quando chassi encontrado E código TCUV bate com o cadastrado.
         const encontrado = status !== null;
-        const tcuvBate = encontrado && !!tcuvBanco && tcuvBanco === tcuvPlanilha;
+        // Cruza por chassi (obrigatório). TCUV só bloqueia quando ambos existirem e forem diferentes.
+        const tcuvBate =
+          encontrado && (!tcuvBanco || !tcuvPlanilha || tcuvBanco === tcuvPlanilha);
         const aprov = p.certificadoAprovado.toLowerCase();
         let novo: BiRow["novoStatus"] = "manter";
         if (!encontrado) novo = "nao_encontrado";
         else if (!tcuvBate) novo = "manter";
         else if (/^sim$/i.test(aprov)) novo = "certificado_toyota";
         else if (/^n[ãa]o$/i.test(aprov)) novo = "reprovado_toyota";
-        else novo = "manter"; // vazio → ainda em análise
+        else novo = "aguardando_analise_toyota"; // vazio → aguarda análise Toyota
         return { ...p, encontrado, statusAtual: status, novoStatus: novo };
       });
 
