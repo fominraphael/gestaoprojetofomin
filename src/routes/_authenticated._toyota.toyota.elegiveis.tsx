@@ -977,32 +977,6 @@ function EnvioToyotaTab() {
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
 
-  async function confirmarRecusa() {
-    if (!recusaVeic) return;
-    const motivo = recusaMotivo.trim();
-    if (!motivo) {
-      toast.error("Informe o motivo da recusa.");
-      return;
-    }
-    setSalvandoRecusa(true);
-    const { error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .update({
-        status_aprovacao: "analise",
-        retorno_toyota_em: new Date().toISOString(),
-        observacao_toyota: motivo,
-      })
-      .eq("id", recusaVeic.id);
-    setSalvandoRecusa(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Recusa registrada. Veículo retornou para a Análise Central.");
-    setVeiculos((prev) => prev.filter((x) => x.id !== recusaVeic.id));
-    setRecusaVeic(null);
-    setRecusaMotivo("");
-  }
 
   if (loading) {
     return (
