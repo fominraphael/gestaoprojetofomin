@@ -531,6 +531,10 @@ function AnaliseElegiveis() {
         <TabsContent value="envio" className="space-y-4">
           <EnvioToyotaTab mode="envio" />
         </TabsContent>
+
+        <TabsContent value="recusados" className="space-y-4">
+          <EnvioToyotaTab mode="recusados" />
+        </TabsContent>
       </Tabs>
 
 
