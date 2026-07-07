@@ -8,6 +8,9 @@ import {
   Building2,
   ShieldCheck,
   Send,
+  Award,
+  XCircle,
+  Archive,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card, CardContent } from "@/components/ui/card";
