@@ -674,7 +674,7 @@ function BiToyotaImporter() {
         let novo: BiRow["novoStatus"] = "manter";
         if (!encontrado) novo = "nao_encontrado";
         else if (!tcuvBate) novo = "manter";
-        else if (/^sim$/i.test(aprov)) novo = "aprovado_toyota";
+        else if (/^sim$/i.test(aprov)) novo = "certificado_toyota";
         else if (/^n[ãa]o$/i.test(aprov)) novo = "reprovado_toyota";
         else novo = "manter"; // vazio → ainda em análise
         return { ...p, encontrado, statusAtual: status, novoStatus: novo };
@@ -682,7 +682,7 @@ function BiToyotaImporter() {
 
       setRows(resolved);
       setFileName(file.name);
-      const upd = resolved.filter((r) => r.novoStatus === "aprovado_toyota" || r.novoStatus === "reprovado_toyota").length;
+      const upd = resolved.filter((r) => r.novoStatus === "certificado_toyota" || r.novoStatus === "reprovado_toyota").length;
       toast.success(`${resolved.length} linhas · ${upd} atualizações pendentes`);
     } catch (e: any) {
       toast.error(e.message ?? "Falha ao ler arquivo.");
@@ -692,7 +692,7 @@ function BiToyotaImporter() {
   }, []);
 
   const aplicar = useCallback(async () => {
-    const aprovados = rows.filter((r) => r.novoStatus === "aprovado_toyota");
+    const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota");
     const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota");
     if (aprovados.length + reprovados.length === 0) {
       toast.error("Nenhuma atualização a aplicar.");
@@ -704,7 +704,7 @@ function BiToyotaImporter() {
       if (aprovados.length > 0) {
         const { error } = await supabase
           .from("toyota_estoque_veiculos")
-          .update({ status_aprovacao: "aprovado_toyota", retorno_toyota_em: now })
+          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now })
           .in("chassi", aprovados.map((r) => r.chassi));
         if (error) throw error;
       }
@@ -751,7 +751,7 @@ function BiToyotaImporter() {
 
   const resumo = useMemo(() => {
     const total = rows.length;
-    const aprov = rows.filter((r) => r.novoStatus === "aprovado_toyota").length;
+    const aprov = rows.filter((r) => r.novoStatus === "certificado_toyota").length;
     const reprov = rows.filter((r) => r.novoStatus === "reprovado_toyota").length;
     const aguard = rows.filter((r) => r.novoStatus === "manter" && r.encontrado).length;
     const naoEnc = rows.filter((r) => !r.encontrado).length;
