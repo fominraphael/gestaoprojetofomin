@@ -90,7 +90,7 @@ function FilaPreparador() {
     setAcaoId(v.id);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
-      .update({ status_aprovacao: "em_posvendas" })
+      .update({ status_aprovacao: "em_posvendas", enviado_posvendas_em: new Date().toISOString() })
       .eq("id", v.id);
     setAcaoId(null);
     if (error) {
