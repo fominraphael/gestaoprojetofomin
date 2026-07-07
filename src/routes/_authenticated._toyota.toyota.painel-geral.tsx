@@ -547,7 +547,7 @@ function PainelGeral() {
         supabase
           .from("toyota_estoque_veiculos")
           .select(
-            "id,chassi,placa,modelo,ano_modelo,ano_fabricacao,quilometragem,status_aprovacao,elegibilidade,resultado_laudo,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,dossie_pdf_path,certificado_pdf_path,certificado_uploaded_at,codigo_tcuv,filial_id,importado_em,aprovado_em,aprovado_por,hsv_analisado_em,hsv_analisado_por,posvendas_finalizado_em,posvendas_finalizado_por,dossie_enviado_em,enviado_toyota_em,retorno_toyota_em,observacao_toyota,toyota_patios:filial_id(nome,filial_id)",
+            "id,chassi,placa,modelo,ano_modelo,ano_fabricacao,quilometragem,status_aprovacao,elegibilidade,resultado_laudo,laudo_url,laudo_arquivo_path,health_check_pdf_path,checklist_data,checklist_pdf_path,dossie_pdf_path,certificado_pdf_path,certificado_uploaded_at,codigo_tcuv,filial_id,importado_em,aprovado_em,aprovado_por,hsv_analisado_em,hsv_analisado_por,posvendas_finalizado_em,posvendas_finalizado_por,dossie_enviado_em,enviado_toyota_em,retorno_toyota_em,observacao_toyota,enviado_posvendas_em,enviado_central_em,ultimo_envio_toyota_em,aprovado_toyota_em,toyota_patios:filial_id(nome,filial_id)",
           )
           .order("updated_at", { ascending: false }),
         supabase.from("toyota_filiais").select("id,nome").eq("ativo", true).order("nome"),
