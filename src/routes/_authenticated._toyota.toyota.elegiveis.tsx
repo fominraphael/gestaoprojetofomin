@@ -1037,7 +1037,9 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     return (
       <Card>
         <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          Nenhum veículo aguardando envio à Toyota.
+          {mode === "recusados"
+            ? "Nenhum veículo recusado pela Toyota no momento."
+            : "Nenhum veículo aguardando envio à Toyota."}
         </CardContent>
       </Card>
     );
@@ -1063,12 +1065,13 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          Aguardando envio à Toyota
+          {mode === "recusados" ? "Recusados pela Toyota" : "Aguardando envio à Toyota"}
           <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê.
-          O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado.
+          {mode === "recusados"
+            ? "Analise o motivo da recusa, ajuste os documentos e reenvie com um NOVO código TCUV, ou arquive o processo."
+            : "Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê. O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado."}
         </p>
         <div className="pt-3">
           <Button size="sm" variant="outline" onClick={carregar} disabled={loading}>
@@ -1082,9 +1085,11 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
           <VeiculoEnvioCard
             key={v.id}
             v={v}
+            mode={mode}
             gerando={gerando === v.id}
             salvandoTcuv={salvandoTcuv === v.id}
-            tcuvValue={tcuvInput[v.id] ?? v.codigo_tcuv ?? ""}
+            arquivando={arquivando === v.id}
+            tcuvValue={tcuvInput[v.id] ?? (mode === "recusados" ? "" : v.codigo_tcuv ?? "")}
             onTcuvChange={(val) =>
               setTcuvInput((p) => ({ ...p, [v.id]: val }))
             }
@@ -1093,6 +1098,7 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
             onImportarManual={(file) => importarDossieManual(v, file)}
             onVisualizar={() => visualizarDossie(v)}
             onSalvarTcuv={() => salvarTcuv(v)}
+            onArquivar={() => arquivarVeiculo(v)}
             onRefresh={carregar}
           />
         ))}
