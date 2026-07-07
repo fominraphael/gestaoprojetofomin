@@ -564,9 +564,26 @@ function PainelGeral() {
                           {r.codigo_tcuv ?? "—"}
                         </TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <Button size="sm" variant="outline" onClick={() => setDetalhe(r)}>
-                            <Eye className="w-3.5 h-3.5" /> Detalhes
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Detalhes"
+                              onClick={() => setDetalhe(r)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Excluir veículo"
+                              onClick={() => setExcluir(r)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
