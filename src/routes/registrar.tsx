@@ -13,6 +13,8 @@ function RegistrarPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailRecuperacao, setEmailRecuperacao] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,12 @@ function RegistrarPage() {
       setError("A senha deve ter pelo menos 4 caracteres.");
       return;
     }
+    const emailRec = emailRecuperacao.trim();
+    if (!emailRec || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRec)) {
+      setError("Informe um e-mail de recuperação válido.");
+      return;
+    }
+
     // Validação de campos dinâmicos obrigatórios
     if (tipoAtual) {
       for (const f of tipoAtual.campos_schema) {
@@ -82,7 +90,9 @@ function RegistrarPage() {
         tipo_usuario: tipoSelecionado,
         campos_customizados: campos,
         cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
+        email_recuperacao: emailRec,
       });
+
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Erro ao solicitar conta.");
@@ -184,6 +194,27 @@ function RegistrarPage() {
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
+
+              <div>
+                <label htmlFor="reg-email-rec" className="block text-sm font-medium text-foreground mb-1.5">
+                  E-mail de recuperação <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="reg-email-rec"
+                  type="email"
+                  value={emailRecuperacao}
+                  onChange={(e) => setEmailRecuperacao(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  autoComplete="email"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usado para receber o código de recuperação em "Esqueci minha senha".
+                </p>
+              </div>
+
+
 
               {tipos.length > 0 && (
                 <div>
