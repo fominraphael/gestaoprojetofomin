@@ -37,6 +37,7 @@ import { Route as AuthenticatedToyotaToyotaFilaPosvendasRouteImport } from './ro
 import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
 import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
 import { Route as AuthenticatedComprasComprasNovoRouteImport } from './routes/_authenticated._compras.compras.novo'
+import { Route as AuthenticatedComprasComprasIdRouteImport } from './routes/_authenticated._compras.compras.$id'
 import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
 
 const RegistrarRoute = RegistrarRouteImport.update({
@@ -193,6 +194,12 @@ const AuthenticatedComprasComprasNovoRoute =
     path: '/compras/novo',
     getParentRoute: () => AuthenticatedComprasRoute,
   } as any)
+const AuthenticatedComprasComprasIdRoute =
+  AuthenticatedComprasComprasIdRouteImport.update({
+    id: '/compras/$id',
+    path: '/compras/$id',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
 const AuthenticatedToyotaToyotaEstoqueImportarRoute =
   AuthenticatedToyotaToyotaEstoqueImportarRouteImport.update({
     id: '/toyota/estoque/importar',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
@@ -239,6 +247,7 @@ export interface FileRoutesByTo {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
@@ -271,6 +280,7 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/_compras/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/_authenticated/_compras/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/_authenticated/_toyota/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/compras/$id'
     | '/compras/novo'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/compras/$id'
     | '/compras/novo'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
@@ -356,6 +368,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/roadmap'
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
+    | '/_authenticated/_compras/compras/$id'
     | '/_authenticated/_compras/compras/novo'
     | '/_authenticated/_toyota/toyota/configuracoes'
     | '/_authenticated/_toyota/toyota/elegiveis'
@@ -577,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComprasComprasNovoRouteImport
       parentRoute: typeof AuthenticatedComprasRoute
     }
+    '/_authenticated/_compras/compras/$id': {
+      id: '/_authenticated/_compras/compras/$id'
+      path: '/compras/$id'
+      fullPath: '/compras/$id'
+      preLoaderRoute: typeof AuthenticatedComprasComprasIdRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
     '/_authenticated/_toyota/toyota/estoque/importar': {
       id: '/_authenticated/_toyota/toyota/estoque/importar'
       path: '/toyota/estoque/importar'
@@ -588,11 +608,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedComprasRouteChildren {
+  AuthenticatedComprasComprasIdRoute: typeof AuthenticatedComprasComprasIdRoute
   AuthenticatedComprasComprasNovoRoute: typeof AuthenticatedComprasComprasNovoRoute
   AuthenticatedComprasComprasIndexRoute: typeof AuthenticatedComprasComprasIndexRoute
 }
 
 const AuthenticatedComprasRouteChildren: AuthenticatedComprasRouteChildren = {
+  AuthenticatedComprasComprasIdRoute: AuthenticatedComprasComprasIdRoute,
   AuthenticatedComprasComprasNovoRoute: AuthenticatedComprasComprasNovoRoute,
   AuthenticatedComprasComprasIndexRoute: AuthenticatedComprasComprasIndexRoute,
 }
