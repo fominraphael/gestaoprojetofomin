@@ -110,7 +110,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
+    let username = identifier.trim();
+    if (username.includes("@")) {
+      const { data, error: rpcErr } = await supabase.rpc(
+        "get_username_by_recovery_email",
+        { _email: username },
+      );
+      if (rpcErr) throw rpcErr;
+      if (!data) throw new Error("Usuário ou senha incorretos.");
+      username = data as string;
+    }
     const email = usernameToEmail(username);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
