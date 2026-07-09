@@ -195,6 +195,27 @@ function RegistrarPage() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="reg-email-rec" className="block text-sm font-medium text-foreground mb-1.5">
+                  E-mail de recuperação <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="reg-email-rec"
+                  type="email"
+                  value={emailRecuperacao}
+                  onChange={(e) => setEmailRecuperacao(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  autoComplete="email"
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Usado para receber o código de recuperação em "Esqueci minha senha".
+                </p>
+              </div>
+
+
+
               {tipos.length > 0 && (
                 <div>
                   <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
