@@ -141,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tipo_usuario: tipo,
           campos_customizados: campos,
           cnpj,
+          email_recuperacao: extras?.email_recuperacao ?? null,
           modulos: ["gestao"],
           status: "pending",
           ativo: true,
@@ -148,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     });
+
     if (error) throw error;
   };
 
