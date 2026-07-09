@@ -17,6 +17,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedToyotaRouteImport } from './routes/_authenticated._toyota'
 import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
+import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated._compras'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated.admin.usuarios'
 import { Route as AuthenticatedGestaoSolicitacoesRouteImport } from './routes/_authenticated._gestao.solicitacoes'
 import { Route as AuthenticatedGestaoRoadmapRouteImport } from './routes/_authenticated._gestao.roadmap'
@@ -25,6 +26,7 @@ import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
+import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
@@ -34,6 +36,8 @@ import { Route as AuthenticatedToyotaToyotaFilaPreparadorRouteImport } from './r
 import { Route as AuthenticatedToyotaToyotaFilaPosvendasRouteImport } from './routes/_authenticated._toyota.toyota.fila-posvendas'
 import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
 import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
+import { Route as AuthenticatedComprasComprasNovoRouteImport } from './routes/_authenticated._compras.compras.novo'
+import { Route as AuthenticatedComprasComprasIdRouteImport } from './routes/_authenticated._compras.compras.$id'
 import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
 
 const RegistrarRoute = RegistrarRouteImport.update({
@@ -70,6 +74,10 @@ const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
 } as any)
 const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
   id: '/_documentos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedComprasRoute = AuthenticatedComprasRouteImport.update({
+  id: '/_compras',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminUsuariosRoute =
@@ -119,6 +127,12 @@ const AuthenticatedDocumentosDocumentosRoute =
     id: '/documentos',
     path: '/documentos',
     getParentRoute: () => AuthenticatedDocumentosRoute,
+  } as any)
+const AuthenticatedComprasComprasIndexRoute =
+  AuthenticatedComprasComprasIndexRouteImport.update({
+    id: '/compras/',
+    path: '/compras/',
+    getParentRoute: () => AuthenticatedComprasRoute,
   } as any)
 const ApiPublicHooksNotificarVencimentosTestRoute =
   ApiPublicHooksNotificarVencimentosTestRouteImport.update({
@@ -174,6 +188,18 @@ const AuthenticatedToyotaToyotaConfiguracoesRoute =
     path: '/toyota/configuracoes',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
+const AuthenticatedComprasComprasNovoRoute =
+  AuthenticatedComprasComprasNovoRouteImport.update({
+    id: '/compras/novo',
+    path: '/compras/novo',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
+const AuthenticatedComprasComprasIdRoute =
+  AuthenticatedComprasComprasIdRouteImport.update({
+    id: '/compras/$id',
+    path: '/compras/$id',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
 const AuthenticatedToyotaToyotaEstoqueImportarRoute =
   AuthenticatedToyotaToyotaEstoqueImportarRouteImport.update({
     id: '/toyota/estoque/importar',
@@ -194,6 +220,8 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
+  '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
@@ -203,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesByTo {
@@ -218,6 +247,8 @@ export interface FileRoutesByTo {
   '/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
+  '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
@@ -227,6 +258,7 @@ export interface FileRoutesByTo {
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/compras': typeof AuthenticatedComprasComprasIndexRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRoutesById {
@@ -235,6 +267,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/registrar': typeof RegistrarRoute
+  '/_authenticated/_compras': typeof AuthenticatedComprasRouteWithChildren
   '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/_gestao': typeof AuthenticatedGestaoRouteWithChildren
   '/_authenticated/_toyota': typeof AuthenticatedToyotaRouteWithChildren
@@ -247,6 +280,8 @@ export interface FileRoutesById {
   '/_authenticated/_gestao/roadmap': typeof AuthenticatedGestaoRoadmapRoute
   '/_authenticated/_gestao/solicitacoes': typeof AuthenticatedGestaoSolicitacoesRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/_compras/compras/$id': typeof AuthenticatedComprasComprasIdRoute
+  '/_authenticated/_compras/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
   '/_authenticated/_toyota/toyota/elegiveis': typeof AuthenticatedToyotaToyotaElegiveisRoute
   '/_authenticated/_toyota/toyota/fila-posvendas': typeof AuthenticatedToyotaToyotaFilaPosvendasRoute
@@ -256,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/_authenticated/_compras/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 export interface FileRouteTypes {
@@ -273,6 +309,8 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/compras/$id'
+    | '/compras/novo'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
     | '/toyota/fila-posvendas'
@@ -282,6 +320,7 @@ export interface FileRouteTypes {
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/compras/'
     | '/toyota/estoque/importar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -297,6 +336,8 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/solicitacoes'
     | '/admin/usuarios'
+    | '/compras/$id'
+    | '/compras/novo'
     | '/toyota/configuracoes'
     | '/toyota/elegiveis'
     | '/toyota/fila-posvendas'
@@ -306,6 +347,7 @@ export interface FileRouteTypes {
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/compras'
     | '/toyota/estoque/importar'
   id:
     | '__root__'
@@ -313,6 +355,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/recuperar-senha'
     | '/registrar'
+    | '/_authenticated/_compras'
     | '/_authenticated/_documentos'
     | '/_authenticated/_gestao'
     | '/_authenticated/_toyota'
@@ -325,6 +368,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_gestao/roadmap'
     | '/_authenticated/_gestao/solicitacoes'
     | '/_authenticated/admin/usuarios'
+    | '/_authenticated/_compras/compras/$id'
+    | '/_authenticated/_compras/compras/novo'
     | '/_authenticated/_toyota/toyota/configuracoes'
     | '/_authenticated/_toyota/toyota/elegiveis'
     | '/_authenticated/_toyota/toyota/fila-posvendas'
@@ -334,6 +379,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/_authenticated/_compras/compras/'
     | '/_authenticated/_toyota/toyota/estoque/importar'
   fileRoutesById: FileRoutesById
 }
@@ -404,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_compras': {
+      id: '/_authenticated/_compras'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedComprasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/usuarios': {
       id: '/_authenticated/admin/usuarios'
       path: '/admin/usuarios'
@@ -459,6 +512,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/documentos'
       preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
       parentRoute: typeof AuthenticatedDocumentosRoute
+    }
+    '/_authenticated/_compras/compras/': {
+      id: '/_authenticated/_compras/compras/'
+      path: '/compras'
+      fullPath: '/compras/'
+      preLoaderRoute: typeof AuthenticatedComprasComprasIndexRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
     }
     '/api/public/hooks/notificar-vencimentos-test': {
       id: '/api/public/hooks/notificar-vencimentos-test'
@@ -523,6 +583,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
+    '/_authenticated/_compras/compras/novo': {
+      id: '/_authenticated/_compras/compras/novo'
+      path: '/compras/novo'
+      fullPath: '/compras/novo'
+      preLoaderRoute: typeof AuthenticatedComprasComprasNovoRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/_authenticated/_compras/compras/$id': {
+      id: '/_authenticated/_compras/compras/$id'
+      path: '/compras/$id'
+      fullPath: '/compras/$id'
+      preLoaderRoute: typeof AuthenticatedComprasComprasIdRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
     '/_authenticated/_toyota/toyota/estoque/importar': {
       id: '/_authenticated/_toyota/toyota/estoque/importar'
       path: '/toyota/estoque/importar'
@@ -532,6 +606,21 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedComprasRouteChildren {
+  AuthenticatedComprasComprasIdRoute: typeof AuthenticatedComprasComprasIdRoute
+  AuthenticatedComprasComprasNovoRoute: typeof AuthenticatedComprasComprasNovoRoute
+  AuthenticatedComprasComprasIndexRoute: typeof AuthenticatedComprasComprasIndexRoute
+}
+
+const AuthenticatedComprasRouteChildren: AuthenticatedComprasRouteChildren = {
+  AuthenticatedComprasComprasIdRoute: AuthenticatedComprasComprasIdRoute,
+  AuthenticatedComprasComprasNovoRoute: AuthenticatedComprasComprasNovoRoute,
+  AuthenticatedComprasComprasIndexRoute: AuthenticatedComprasComprasIndexRoute,
+}
+
+const AuthenticatedComprasRouteWithChildren =
+  AuthenticatedComprasRoute._addFileChildren(AuthenticatedComprasRouteChildren)
 
 interface AuthenticatedDocumentosRouteChildren {
   AuthenticatedDocumentosDocumentosRoute: typeof AuthenticatedDocumentosDocumentosRoute
@@ -601,6 +690,7 @@ const AuthenticatedToyotaRouteWithChildren =
   AuthenticatedToyotaRoute._addFileChildren(AuthenticatedToyotaRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedComprasRoute: typeof AuthenticatedComprasRouteWithChildren
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
   AuthenticatedToyotaRoute: typeof AuthenticatedToyotaRouteWithChildren
@@ -609,6 +699,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedComprasRoute: AuthenticatedComprasRouteWithChildren,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
   AuthenticatedToyotaRoute: AuthenticatedToyotaRouteWithChildren,
@@ -633,13 +724,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -14,6 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
+      compras_chamados: {
+        Row: {
+          ano_modelo: string | null
+          campos_liberados: string[] | null
+          cancelado_em: string | null
+          chassi: string | null
+          codigo_avaliacao_nbs: string | null
+          concluido_em: string | null
+          cor_externa: string | null
+          cpf_cnpj: string
+          created_at: string
+          criado_por: string
+          estado_uf: string
+          filial_id: string | null
+          id: string
+          loja_estoque: string | null
+          modelo: string | null
+          motivo_cancelamento: string | null
+          motivo_pendencia: string | null
+          nf_observacao: string | null
+          nf_status: string | null
+          nome: string
+          observacao_cancelamento: string | null
+          observacao_compra: string | null
+          observacao_pendencia: string | null
+          placa: string
+          renavam: string | null
+          status: string
+          tipo_compra: string
+          tipo_pessoa: string
+          updated_at: string
+          valor_avaliado: number | null
+        }
+        Insert: {
+          ano_modelo?: string | null
+          campos_liberados?: string[] | null
+          cancelado_em?: string | null
+          chassi?: string | null
+          codigo_avaliacao_nbs?: string | null
+          concluido_em?: string | null
+          cor_externa?: string | null
+          cpf_cnpj: string
+          created_at?: string
+          criado_por: string
+          estado_uf: string
+          filial_id?: string | null
+          id?: string
+          loja_estoque?: string | null
+          modelo?: string | null
+          motivo_cancelamento?: string | null
+          motivo_pendencia?: string | null
+          nf_observacao?: string | null
+          nf_status?: string | null
+          nome: string
+          observacao_cancelamento?: string | null
+          observacao_compra?: string | null
+          observacao_pendencia?: string | null
+          placa: string
+          renavam?: string | null
+          status?: string
+          tipo_compra: string
+          tipo_pessoa: string
+          updated_at?: string
+          valor_avaliado?: number | null
+        }
+        Update: {
+          ano_modelo?: string | null
+          campos_liberados?: string[] | null
+          cancelado_em?: string | null
+          chassi?: string | null
+          codigo_avaliacao_nbs?: string | null
+          concluido_em?: string | null
+          cor_externa?: string | null
+          cpf_cnpj?: string
+          created_at?: string
+          criado_por?: string
+          estado_uf?: string
+          filial_id?: string | null
+          id?: string
+          loja_estoque?: string | null
+          modelo?: string | null
+          motivo_cancelamento?: string | null
+          motivo_pendencia?: string | null
+          nf_observacao?: string | null
+          nf_status?: string | null
+          nome?: string
+          observacao_cancelamento?: string | null
+          observacao_compra?: string | null
+          observacao_pendencia?: string | null
+          placa?: string
+          renavam?: string | null
+          status?: string
+          tipo_compra?: string
+          tipo_pessoa?: string
+          updated_at?: string
+          valor_avaliado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_chamados_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compras_debitos: {
+        Row: {
+          chamado_id: string
+          comprovante_path: string | null
+          created_at: string
+          id: string
+          observacao: string | null
+          status: string
+          tipo: string
+        }
+        Insert: {
+          chamado_id: string
+          comprovante_path?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          status: string
+          tipo: string
+        }
+        Update: {
+          chamado_id?: string
+          comprovante_path?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          status?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_debitos_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "compras_chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compras_documentos: {
+        Row: {
+          categoria: string
+          chamado_id: string
+          created_at: string
+          descricao: string | null
+          enviado_por: string | null
+          id: string
+          storage_path: string
+        }
+        Insert: {
+          categoria: string
+          chamado_id: string
+          created_at?: string
+          descricao?: string | null
+          enviado_por?: string | null
+          id?: string
+          storage_path: string
+        }
+        Update: {
+          categoria?: string
+          chamado_id?: string
+          created_at?: string
+          descricao?: string | null
+          enviado_por?: string | null
+          id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_documentos_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "compras_chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compras_historico: {
+        Row: {
+          acao: string
+          anexo_path: string | null
+          autor_id: string | null
+          chamado_id: string
+          created_at: string
+          id: string
+          motivo: string | null
+          observacao: string | null
+        }
+        Insert: {
+          acao: string
+          anexo_path?: string | null
+          autor_id?: string | null
+          chamado_id: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+        }
+        Update: {
+          acao?: string
+          anexo_path?: string | null
+          autor_id?: string | null
+          chamado_id?: string
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          observacao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_historico_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "compras_chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_arquivo: {
         Row: {
           arquivo_nome: string

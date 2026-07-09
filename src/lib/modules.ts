@@ -15,8 +15,12 @@ import {
   Truck,
   
   FolderKanban,
+  ShoppingCart,
+  ClipboardList,
+  PlusCircle,
   type LucideIcon,
 } from "lucide-react";
+
 
 
 
@@ -113,7 +117,24 @@ export const MODULES: ModuleDef[] = [
     ],
 
   },
+  {
+    id: "compras",
+    label: "Compras Seminovos",
+    description:
+      "Chamados de compra de seminovos: formulário, documentação por estado, análise Central e aprovações.",
+    icon: ShoppingCart,
+    href: "/compras",
+    requiredModule: "compras",
+    gradient: "from-slate-500/15 to-slate-700/15",
+    iconBg: "from-slate-500 to-slate-700",
+    navItems: [
+      { to: "/compras", label: "Chamados", icon: ClipboardList },
+      { to: "/compras/novo", label: "Novo chamado", icon: PlusCircle },
+    ],
+  },
 ];
+
+
 
 /** All routes owned by registered modules (entry + sidebar nav items). */
 export const MODULE_ROUTES: string[] = Array.from(
