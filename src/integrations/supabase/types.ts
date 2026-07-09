@@ -1088,6 +1088,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_username_by_recovery_email: {
+        Args: { _email: string }
+        Returns: string
+      }
       has_filial: {
         Args: { _filial_id: string; _user_id: string }
         Returns: boolean
