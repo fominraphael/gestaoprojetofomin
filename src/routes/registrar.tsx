@@ -65,6 +65,12 @@ function RegistrarPage() {
       setError("A senha deve ter pelo menos 4 caracteres.");
       return;
     }
+    const emailRec = emailRecuperacao.trim();
+    if (!emailRec || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRec)) {
+      setError("Informe um e-mail de recuperação válido.");
+      return;
+    }
+
     // Validação de campos dinâmicos obrigatórios
     if (tipoAtual) {
       for (const f of tipoAtual.campos_schema) {
