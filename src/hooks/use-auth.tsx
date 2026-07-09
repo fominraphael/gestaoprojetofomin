@@ -30,8 +30,10 @@ interface AuthContextType {
       tipo_usuario?: string;
       campos_customizados?: Record<string, any>;
       cnpj?: string | null;
+      email_recuperacao?: string | null;
     },
   ) => Promise<void>;
+
   refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
