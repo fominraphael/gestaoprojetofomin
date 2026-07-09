@@ -90,7 +90,9 @@ function RegistrarPage() {
         tipo_usuario: tipoSelecionado,
         campos_customizados: campos,
         cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
+        email_recuperacao: emailRec,
       });
+
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Erro ao solicitar conta.");
