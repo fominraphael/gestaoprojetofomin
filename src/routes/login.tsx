@@ -58,14 +58,14 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
-                Usuário
+                Usuário ou e-mail de recuperação
               </label>
               <input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Seu nome de usuário"
+                placeholder="Usuário ou e-mail de recuperação"
                 required
                 autoComplete="username"
                 className="w-full px-4 py-2.5 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
