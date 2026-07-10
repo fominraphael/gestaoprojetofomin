@@ -5,6 +5,7 @@ export type TipoPessoa = "PF" | "PJ";
 export type TipoCompra = "somente_compra" | "troca_vu" | "troca_vn";
 export type StatusChamado =
   | "documentacao"
+  | "na_fila_central"
   | "em_analise"
   | "pendenciado"
   | "comprado"
@@ -12,6 +13,7 @@ export type StatusChamado =
 
 export const STATUS_LABEL: Record<StatusChamado, string> = {
   documentacao: "Em documentação",
+  na_fila_central: "Na fila (Central)",
   em_analise: "Em análise (Central)",
   pendenciado: "Pendenciado",
   comprado: "Comprado",

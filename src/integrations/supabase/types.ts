@@ -17,6 +17,8 @@ export type Database = {
       compras_chamados: {
         Row: {
           ano_modelo: string | null
+          assumido_em: string | null
+          assumido_por: string | null
           campos_liberados: string[] | null
           cancelado_em: string | null
           chassi: string | null
@@ -49,6 +51,8 @@ export type Database = {
         }
         Insert: {
           ano_modelo?: string | null
+          assumido_em?: string | null
+          assumido_por?: string | null
           campos_liberados?: string[] | null
           cancelado_em?: string | null
           chassi?: string | null
@@ -81,6 +85,8 @@ export type Database = {
         }
         Update: {
           ano_modelo?: string | null
+          assumido_em?: string | null
+          assumido_por?: string | null
           campos_liberados?: string[] | null
           cancelado_em?: string | null
           chassi?: string | null

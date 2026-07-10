@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,7 +21,7 @@ import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban } from "lucide-react";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
   errorComponent: ModuleErrorBoundary,
@@ -52,6 +51,8 @@ interface Chamado {
   observacao_compra: string | null;
   nf_status: string | null;
   nf_observacao: string | null;
+  assumido_por: string | null;
+  assumido_em: string | null;
   created_at: string;
 }
 
@@ -63,11 +64,11 @@ interface Documento {
   created_at: string;
 }
 interface Debito {
-  id: string;
+  id?: string;
   tipo: string;
   status: "pago" | "pendente";
-  comprovante_path: string | null;
-  observacao: string | null;
+  comprovante_path?: string | null;
+  observacao?: string | null;
 }
 interface HistoricoItem {
   id: string;
@@ -76,6 +77,8 @@ interface HistoricoItem {
   observacao: string | null;
   created_at: string;
 }
+
+interface PendingFile { file: File; categoria: string; }
 
 function DetalheChamado() {
   const { id } = useParams({ from: "/_authenticated/_compras/compras/$id" });
@@ -92,6 +95,14 @@ function DetalheChamado() {
   const [dialogo, setDialogo] = useState<null | "pendenciar" | "resolver" | "comprar" | "cancelar">(null);
   const [motivo, setMotivo] = useState("");
   const [observ, setObserv] = useState("");
+
+  const [modoAdmin, setModoAdmin] = useState<"visualizar" | "assumido" | null>(null);
+  const [askAdmin, setAskAdmin] = useState(false);
+  const askedRef = useRef(false);
+
+  const [pending, setPending] = useState<PendingFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -110,8 +121,23 @@ function DetalheChamado() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  // Pergunta ao admin quando entra em processo não concluído
+  useEffect(() => {
+    if (!chamado || !isAdmin || askedRef.current) return;
+    const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
+    if (finalizado) return;
+    if (chamado.assumido_por === user?.id) {
+      setModoAdmin("assumido");
+      askedRef.current = true;
+      return;
+    }
+    askedRef.current = true;
+    setAskAdmin(true);
+  }, [chamado, isAdmin, user?.id]);
+
   const isCriador = !!user && !!chamado && user.id === chamado.criado_por;
-  const isCentral = isAdmin; // perfil Central = admin nesta iteração
+  const isCentral = isAdmin;
+  const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
 
   const requisitos = useMemo(
     () => (chamado ? documentosRequeridos(chamado.estado_uf, chamado.tipo_pessoa) : []),
@@ -124,20 +150,64 @@ function DetalheChamado() {
     return map;
   }, [documentos]);
 
-  async function uploadDoc(categoria: string, file: File) {
+  const requisitosCategorias = useMemo(
+    () => requisitos.map((r) => ({ value: r.categoria, label: r.label })),
+    [requisitos],
+  );
+
+  async function assumir() {
     if (!chamado || !user) return;
-    const path = `compras/${chamado.id}/${categoria}-${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("documentos").upload(path, file);
-    if (upErr) { toast.error(upErr.message); return; }
-    const { error: insErr } = await supabase.from("compras_documentos").insert({
-      chamado_id: chamado.id, categoria, storage_path: path, enviado_por: user.id,
-    });
-    if (insErr) { toast.error(insErr.message); return; }
+    const novoStatus: StatusChamado = chamado.status === "na_fila_central" ? "em_analise" : chamado.status;
+    const { error } = await supabase
+      .from("compras_chamados")
+      .update({ assumido_por: user.id, assumido_em: new Date().toISOString(), status: novoStatus })
+      .eq("id", chamado.id);
+    if (error) { toast.error(error.message); return; }
     await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "documento_anexado", observacao: categoria, autor_id: user.id,
+      chamado_id: chamado.id, acao: "assumido", autor_id: user.id,
     });
-    toast.success("Documento anexado.");
+    setModoAdmin("assumido");
+    setAskAdmin(false);
+    toast.success("Processo assumido.");
     carregar();
+  }
+
+  function guessCategoria(name: string): string {
+    const lower = name.toLowerCase();
+    const match = requisitos.find((r) => lower.includes(r.categoria.split("_")[0]));
+    return match?.categoria ?? requisitos[0]?.categoria ?? "outros";
+  }
+
+  function addFiles(files: FileList | File[]) {
+    const arr = Array.from(files);
+    setPending((prev) => [
+      ...prev,
+      ...arr.map((f) => ({ file: f, categoria: guessCategoria(f.name) })),
+    ]);
+  }
+
+  async function enviarPending() {
+    if (!chamado || !user || pending.length === 0) return;
+    setUploading(true);
+    try {
+      for (const p of pending) {
+        const path = `compras/${chamado.id}/${p.categoria}-${Date.now()}-${p.file.name}`;
+        const { error: upErr } = await supabase.storage.from("documentos").upload(path, p.file);
+        if (upErr) { toast.error(`${p.file.name}: ${upErr.message}`); continue; }
+        const { error: insErr } = await supabase.from("compras_documentos").insert({
+          chamado_id: chamado.id, categoria: p.categoria, storage_path: path, enviado_por: user.id,
+        });
+        if (insErr) { toast.error(`${p.file.name}: ${insErr.message}`); continue; }
+        await supabase.from("compras_historico").insert({
+          chamado_id: chamado.id, acao: "documento_anexado", observacao: p.categoria, autor_id: user.id,
+        });
+      }
+      setPending([]);
+      toast.success("Documentos anexados.");
+      carregar();
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function abrirDoc(path: string) {
@@ -146,35 +216,49 @@ function DetalheChamado() {
     window.open(data.signedUrl, "_blank");
   }
 
-  async function marcarDebito(tipo: string, status: "pago" | "pendente", obs?: string) {
-    if (!chamado) return;
-    const { error } = await supabase.from("compras_debitos").upsert(
-      { chamado_id: chamado.id, tipo, status, observacao: obs ?? null },
-      { onConflict: "chamado_id,tipo" },
-    );
+  async function excluirDoc(doc: Documento) {
+    if (!confirm("Excluir este documento?")) return;
+    await supabase.storage.from("documentos").remove([doc.storage_path]);
+    const { error } = await supabase.from("compras_documentos").delete().eq("id", doc.id);
     if (error) { toast.error(error.message); return; }
-    carregar();
+    setDocumentos((prev) => prev.filter((d) => d.id !== doc.id));
   }
 
-  async function enviarParaAnalise() {
+  async function marcarDebito(tipo: string, status: "pago" | "pendente") {
+    if (!chamado) return;
+    // otimista — sem reload de tela
+    setDebitos((prev) => {
+      const idx = prev.findIndex((d) => d.tipo === tipo);
+      if (idx >= 0) {
+        const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy;
+      }
+      return [...prev, { tipo, status }];
+    });
+    const { error } = await supabase.from("compras_debitos").upsert(
+      { chamado_id: chamado.id, tipo, status },
+      { onConflict: "chamado_id,tipo" },
+    );
+    if (error) { toast.error(error.message); carregar(); }
+  }
+
+  async function enviarParaFila() {
     if (!chamado) return;
     const { error } = await supabase
       .from("compras_chamados")
-      .update({ status: "em_analise" })
+      .update({ status: "na_fila_central" })
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
     await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "enviado_analise", autor_id: user?.id,
+      chamado_id: chamado.id, acao: "enviado_fila_central", autor_id: user?.id,
     });
-    toast.success("Enviado para análise da Central.");
+    toast.success("Enviado para a fila da Central.");
     carregar();
   }
 
   async function confirmarAcao() {
     if (!chamado || !dialogo) return;
     if ((dialogo === "pendenciar" || dialogo === "cancelar") && !motivo) {
-      toast.error("Informe o motivo.");
-      return;
+      toast.error("Informe o motivo."); return;
     }
     const updates: any = {};
     let acao = "";
@@ -184,7 +268,7 @@ function DetalheChamado() {
       updates.observacao_pendencia = observ;
       acao = "pendenciado";
     } else if (dialogo === "resolver") {
-      updates.status = "em_analise";
+      updates.status = "na_fila_central";
       updates.motivo_pendencia = null;
       updates.observacao_pendencia = null;
       acao = "resolvido";
@@ -218,14 +302,16 @@ function DetalheChamado() {
   if (loading) return <div className="p-6">Carregando…</div>;
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
-  const podeEnviarAnalise = chamado.status === "documentacao" && (isCriador || isCentral);
-  const podePendenciar = isCentral && (chamado.status === "em_analise" || chamado.status === "documentacao");
-  const podeResolver = isCriador && chamado.status === "pendenciado";
-  const podeComprar = isCentral && chamado.status === "em_analise";
-  const podeCancelar = (isCentral || isCriador) && chamado.status !== "comprado" && chamado.status !== "cancelado";
+  const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
+  const podeAgirCentral = isCentral && (modoAdmin === "assumido" || !isAdmin) && !finalizado;
+  const podeEnviarFila = chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
+  const podePendenciar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central" || chamado.status === "documentacao");
+  const podeResolver = (isCriador || (isAdmin && !readOnlyAdmin)) && chamado.status === "pendenciado";
+  const podeComprar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central");
+  const podeCancelar = ((isCentral && !readOnlyAdmin) || isCriador) && !finalizado;
 
   return (
-    <div className="p-6 space-y-4 max-w-6xl mx-auto">
+    <div className="p-6 space-y-4 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })}>
@@ -238,7 +324,17 @@ function DetalheChamado() {
             </p>
           </div>
         </div>
-        <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+        <div className="flex items-center gap-2">
+          {readOnlyAdmin && (
+            <Badge variant="outline" className="text-xs gap-1"><EyeIcon className="w-3 h-3" /> Somente visualização</Badge>
+          )}
+          {isAdmin && modoAdmin === "visualizar" && !finalizado && (
+            <Button size="sm" variant="outline" onClick={assumir}>
+              <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
+            </Button>
+          )}
+          <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+        </div>
       </div>
 
       {chamado.status === "pendenciado" && (
@@ -280,79 +376,150 @@ function DetalheChamado() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Documentos ({chamado.estado_uf} • {chamado.tipo_pessoa})</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {requisitos.map((req) => {
-            const enviados = docsByCat[req.categoria] ?? [];
-            return (
-              <div key={req.categoria} className="flex items-center justify-between gap-3 border border-border rounded-md p-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {enviados.length > 0 ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{req.label}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {enviados.length} arquivo(s)
+        <CardHeader>
+          <CardTitle>Documentos ({chamado.estado_uf} • {chamado.tipo_pessoa})</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Dropzone */}
+          {!readOnlyAdmin && (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault(); setDragOver(false);
+                if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+              }}
+              className={`border-2 border-dashed rounded-md p-6 text-center text-sm transition-colors ${
+                dragOver ? "border-primary bg-primary/5" : "border-border"
+              }`}
+            >
+              <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+              <div>Arraste arquivos aqui ou</div>
+              <label className="inline-block mt-2">
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
+                />
+                <Button variant="outline" size="sm" asChild>
+                  <span className="cursor-pointer">Selecionar arquivos</span>
+                </Button>
+              </label>
+            </div>
+          )}
+
+          {/* Fila de pendentes */}
+          {pending.length > 0 && (
+            <div className="space-y-2 rounded-md border border-border p-3 bg-muted/20">
+              <div className="text-xs font-medium text-muted-foreground">
+                {pending.length} arquivo(s) para enviar — selecione a categoria de cada um
+              </div>
+              {pending.map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex-1 truncate text-sm">{p.file.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {(p.file.size / 1024).toFixed(0)} KB
+                  </div>
+                  <Select
+                    value={p.categoria}
+                    onValueChange={(v) => setPending((prev) => prev.map((x, j) => j === i ? { ...x, categoria: v } : x))}
+                  >
+                    <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {requisitosCategorias.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="sm" onClick={() => setPending((prev) => prev.filter((_, j) => j !== i))}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="ghost" size="sm" onClick={() => setPending([])}>Limpar</Button>
+                <Button size="sm" onClick={enviarPending} disabled={uploading}>
+                  {uploading ? "Enviando…" : `Enviar ${pending.length} arquivo(s)`}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Grade de requisitos */}
+          <div className="grid gap-2 md:grid-cols-2">
+            {requisitos.map((req) => {
+              const enviados = docsByCat[req.categoria] ?? [];
+              return (
+                <div key={req.categoria} className="flex items-start justify-between gap-3 border border-border rounded-md p-3">
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    {enviados.length > 0 ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium">{req.label}</div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {enviados.length} arquivo(s)
+                      </div>
+                      {enviados.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {enviados.map((d) => (
+                            <div key={d.id} className="inline-flex items-center gap-1 rounded bg-muted/40 px-1.5 py-0.5 text-xs">
+                              <button onClick={() => abrirDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1">
+                                <Eye className="w-3 h-3" /> ver
+                              </button>
+                              {!readOnlyAdmin && (
+                                <button onClick={() => excluirDoc(d)} className="text-red-400 hover:text-red-300">
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {enviados.map((d) => (
-                    <Button key={d.id} variant="ghost" size="sm" onClick={() => abrirDoc(d.storage_path)}>
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  ))}
-                  <label>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(req.categoria, f); e.target.value = ""; }}
-                    />
-                    <Button variant="outline" size="sm" asChild>
-                      <span className="cursor-pointer inline-flex items-center"><Upload className="w-4 h-4 mr-1" /> Enviar</span>
-                    </Button>
-                  </label>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Débitos / itens de checagem</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {TIPOS_DEBITO.map((t) => {
-            const atual = debitos.find((d) => d.tipo === t.key);
-            return (
-              <div key={t.key} className="flex items-center justify-between gap-3 border border-border rounded-md p-2">
-                <div className="text-sm font-medium">{t.label}</div>
-                <div className="flex items-center gap-2">
+        <CardContent>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {TIPOS_DEBITO.map((t) => {
+              const atual = debitos.find((d) => d.tipo === t.key);
+              return (
+                <div key={t.key} className="flex items-center justify-between gap-3 border border-border rounded-md p-2">
+                  <div className="text-sm font-medium">{t.label}</div>
                   <Select
                     value={atual?.status ?? ""}
                     onValueChange={(v) => marcarDebito(t.key, v as "pago" | "pendente")}
+                    disabled={readOnlyAdmin}
                   >
-                    <SelectTrigger className="w-40"><SelectValue placeholder="Marcar" /></SelectTrigger>
+                    <SelectTrigger className="w-36"><SelectValue placeholder="Marcar" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pago">Pago / OK</SelectItem>
                       <SelectItem value="pendente">Pendente</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Ações</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {podeEnviarAnalise && (
-            <Button onClick={enviarParaAnalise}>Enviar para análise Central</Button>
+          {podeEnviarFila && (
+            <Button onClick={enviarParaFila}>Enviar para a fila (Central)</Button>
           )}
           {podePendenciar && (
             <Button variant="outline" onClick={() => setDialogo("pendenciar")}>
@@ -373,6 +540,11 @@ function DetalheChamado() {
             <Button variant="destructive" onClick={() => setDialogo("cancelar")}>
               <Ban className="w-4 h-4 mr-2" /> Cancelar
             </Button>
+          )}
+          {readOnlyAdmin && (
+            <span className="text-xs text-muted-foreground self-center">
+              Assuma o processo para tomar ações.
+            </span>
           )}
         </CardContent>
       </Card>
@@ -400,6 +572,26 @@ function DetalheChamado() {
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogo Admin: visualizar ou assumir */}
+      <Dialog open={askAdmin} onOpenChange={setAskAdmin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Como deseja acessar este processo?</DialogTitle>
+            <DialogDescription>
+              Você pode apenas visualizar sem alterar nada, ou assumir o processo para tomar ações da Central.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setModoAdmin("visualizar"); setAskAdmin(false); }}>
+              <EyeIcon className="w-4 h-4 mr-2" /> Apenas visualizar
+            </Button>
+            <Button onClick={assumir}>
+              <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!dialogo} onOpenChange={(o) => !o && setDialogo(null)}>
         <DialogContent>

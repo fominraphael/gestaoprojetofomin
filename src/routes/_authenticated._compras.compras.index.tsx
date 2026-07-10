@@ -33,6 +33,7 @@ interface ChamadoRow {
 
 const STATUS_VARIANT: Record<StatusChamado, string> = {
   documentacao: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  na_fila_central: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
   em_analise: "bg-blue-500/15 text-blue-300 border-blue-500/30",
   pendenciado: "bg-amber-500/15 text-amber-300 border-amber-500/30",
   comprado: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
