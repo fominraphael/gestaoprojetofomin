@@ -335,16 +335,16 @@ function ComprasIndex() {
                     <button
                       className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
                       onClick={() => mover(r.id, -1)}
-                      disabled={idx === 0 || reordenando}
-                      title="Subir"
+                      disabled={idx === 0 || reordenando || sortBy !== "ordem"}
+                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Subir"}
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
                       onClick={() => mover(r.id, 1)}
-                      disabled={idx === filtered.length - 1 || reordenando}
-                      title="Descer"
+                      disabled={idx === filtered.length - 1 || reordenando || sortBy !== "ordem"}
+                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Descer"}
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
