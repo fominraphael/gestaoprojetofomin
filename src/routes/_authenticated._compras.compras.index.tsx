@@ -222,7 +222,20 @@ function ComprasIndex() {
     setColunasVisiveis((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
   }
 
-  const colsRender = COLUNAS.filter((c) => colunasVisiveis.includes(c.id));
+  function moverColuna(id: ColId, dir: -1 | 1) {
+    setColunasVisiveis((prev) => {
+      const i = prev.indexOf(id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
+  const colsRender = colunasVisiveis
+    .map((id) => COLUNAS.find((c) => c.id === id))
+    .filter(Boolean) as typeof COLUNAS;
 
   return (
     <div className="p-6 space-y-4 max-w-none">
