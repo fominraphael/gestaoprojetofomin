@@ -214,6 +214,7 @@ function NovoChamado() {
                   ))}
                 </SelectContent>
               </Select>
+            )}
           </div>
           <div>
 
