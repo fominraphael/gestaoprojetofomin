@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft } from "lucide-react";
 
-interface Cadastro { valor: string; label: string; }
+interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number }
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
@@ -26,25 +26,30 @@ function NovoChamado() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
-  const [lojas, setLojas] = useState<Cadastro[]>([]);
+  const [lojasAll, setLojasAll] = useState<Cadastro[]>([]);
   const [tiposCompra, setTiposCompra] = useState<Cadastro[]>([]);
+  const [estados, setEstados] = useState<Cadastro[]>([]);
+  const [camposExtrasCad, setCamposExtrasCad] = useState<Cadastro[]>([]);
+  const [camposExtras, setCamposExtras] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("compras_cadastros")
-        .select("categoria,valor,label")
-        .in("categoria", ["loja_estoque", "tipo_compra"])
+        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem")
+        .in("categoria", ["loja_estoque", "tipo_compra", "estado_uf", "campo_formulario"])
         .eq("ativo", true)
         .order("ordem");
       const all = (data as any[]) ?? [];
-      setLojas(all.filter((x) => x.categoria === "loja_estoque"));
+      setLojasAll(all.filter((x) => x.categoria === "loja_estoque"));
       setTiposCompra(all.filter((x) => x.categoria === "tipo_compra"));
+      setEstados(all.filter((x) => x.categoria === "estado_uf"));
+      setCamposExtrasCad(all.filter((x) => x.categoria === "campo_formulario"));
     })();
   }, []);
 
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("PF");
-  const [estadoUf, setEstadoUf] = useState<EstadoUF>("GO");
+  const [estadoUf, setEstadoUf] = useState<string>("GO");
   const [tipoCompra, setTipoCompra] = useState<TipoCompra>("somente_compra");
   const [form, setForm] = useState({
     nome: "",
@@ -60,6 +65,13 @@ function NovoChamado() {
     valor_avaliado: "",
     observacao: "",
   });
+
+  // Reset loja quando muda o estado (loja é vinculada ao estado)
+  useEffect(() => { setForm((s) => ({ ...s, loja_estoque: "" })); }, [estadoUf]);
+
+  const lojas = lojasAll.filter((l) => !l.uf || l.uf.toUpperCase() === estadoUf.toUpperCase());
+  const camposDoEstado = camposExtrasCad.filter((c) => !c.uf || c.uf.toUpperCase() === estadoUf.toUpperCase());
+
 
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
