@@ -291,24 +291,61 @@ function DetalheChamado() {
     const { error } = await supabase.from("compras_documentos").delete().eq("id", doc.id);
     if (error) { toast.error(error.message); return; }
     setDocumentos((prev) => prev.filter((d) => d.id !== doc.id));
+    await registrarHistorico({ acao: "documento_removido", campo: doc.categoria, observacao: doc.storage_path });
   }
 
   async function marcarDebito(tipo: string, status: "pago" | "pendente") {
     if (!chamado) return;
-    // otimista — sem reload de tela
+    if (status === "pendente") {
+      const label = TIPOS_DEBITO.find((t) => t.key === tipo)?.label ?? tipo;
+      setDebObs(""); setDebFile(null); setDebitoPend({ tipo, label });
+      return;
+    }
+    const anterior = debitos.find((d) => d.tipo === tipo)?.status ?? null;
     setDebitos((prev) => {
       const idx = prev.findIndex((d) => d.tipo === tipo);
-      if (idx >= 0) {
-        const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy;
-      }
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy; }
       return [...prev, { tipo, status }];
     });
     const { error } = await supabase.from("compras_debitos").upsert(
       { chamado_id: chamado.id, tipo, status },
       { onConflict: "chamado_id,tipo" },
     );
-    if (error) { toast.error(error.message); carregar(); }
+    if (error) { toast.error(error.message); carregar(); return; }
+    await registrarHistorico({ acao: "debito_marcado", campo: tipo, valor_antes: anterior, valor_depois: status });
   }
+
+  async function confirmarDebitoPendente() {
+    if (!chamado || !debitoPend) return;
+    if (!debFile) { toast.error("Anexo obrigatório ao marcar como pendente."); return; }
+    if (!debObs.trim()) { toast.error("Informe a observação da pendência."); return; }
+    setDebSaving(true);
+    try {
+      const path = `compras/${chamado.id}/debitos/${debitoPend.tipo}-${Date.now()}-${debFile.name}`;
+      const { error: upErr } = await supabase.storage.from("documentos").upload(path, debFile);
+      if (upErr) { toast.error(upErr.message); return; }
+      const anterior = debitos.find((d) => d.tipo === debitoPend.tipo)?.status ?? null;
+      const { error } = await supabase.from("compras_debitos").upsert(
+        { chamado_id: chamado.id, tipo: debitoPend.tipo, status: "pendente", comprovante_path: path, observacao: debObs.trim() },
+        { onConflict: "chamado_id,tipo" },
+      );
+      if (error) { toast.error(error.message); return; }
+      setDebitos((prev) => {
+        const idx = prev.findIndex((d) => d.tipo === debitoPend.tipo);
+        const item = { tipo: debitoPend.tipo, status: "pendente" as const, comprovante_path: path, observacao: debObs.trim() };
+        if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], ...item }; return copy; }
+        return [...prev, item];
+      });
+      await registrarHistorico({
+        acao: "debito_pendenciado", campo: debitoPend.tipo,
+        valor_antes: anterior, valor_depois: "pendente",
+        observacao: debObs.trim(), anexo_path: path,
+      });
+      toast.success("Pendência registrada.");
+      setDebitoPend(null);
+    } finally { setDebSaving(false); }
+  }
+
 
   async function enviarParaFila() {
     if (!chamado) return;
