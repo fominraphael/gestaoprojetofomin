@@ -432,7 +432,8 @@ function DetalheChamado() {
         mudancas.push({ campo: key as string, label, antes, depois });
       }
       if (mudancas.length === 0) { setEditOpen(false); return; }
-      const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
+      const { error } = await supabase.from("compras_chamados").update(updates as never).eq("id", chamado.id);
+
       if (error) { toast.error(error.message); return; }
       for (const m of mudancas) {
         await registrarHistorico({
