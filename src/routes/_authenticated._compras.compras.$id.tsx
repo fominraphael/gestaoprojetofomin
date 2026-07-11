@@ -354,9 +354,11 @@ function DetalheChamado() {
       .update({ status: "na_fila_central" })
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "enviado_fila_central", autor_id: user?.id,
+    await registrarHistorico({
+      acao: "enviado_fila_central", campo: "status",
+      valor_antes: chamado.status, valor_depois: "na_fila_central",
     });
+
     toast.success("Enviado para a fila da Central.");
     carregar();
   }
