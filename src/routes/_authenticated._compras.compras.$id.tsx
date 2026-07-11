@@ -138,6 +138,38 @@ function DetalheChamado() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
+  const [logOpen, setLogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string }>(null);
+  const [debObs, setDebObs] = useState("");
+  const [debFile, setDebFile] = useState<File | null>(null);
+  const [debSaving, setDebSaving] = useState(false);
+
+  const registrarHistorico = useCallback(
+    async (payload: {
+      acao: string; motivo?: string | null; observacao?: string | null;
+      campo?: string | null; valor_antes?: string | null; valor_depois?: string | null;
+      anexo_path?: string | null;
+    }) => {
+      await supabase.from("compras_historico").insert({
+        chamado_id: id,
+        autor_id: user?.id ?? null,
+        acao: payload.acao,
+        motivo: payload.motivo ?? null,
+        observacao: payload.observacao ?? null,
+        campo: payload.campo ?? null,
+        valor_antes: payload.valor_antes ?? null,
+        valor_depois: payload.valor_depois ?? null,
+        anexo_path: payload.anexo_path ?? null,
+      });
+    },
+    [id, user?.id],
+  );
+
+
   const carregar = useCallback(async () => {
     setLoading(true);
     const [c, d, deb, hist] = await Promise.all([
