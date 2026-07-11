@@ -47,14 +47,22 @@ function NovoChamado() {
 
   const salvar = async () => {
     if (!user) return;
-    if (!form.placa.trim() || !form.nome.trim() || !form.cpf_cnpj.trim()) {
-      toast.error("Preencha placa, nome e CPF/CNPJ.");
+    const obrig: [string, string][] = [
+      ["nome", form.nome], ["cpf_cnpj", form.cpf_cnpj], ["placa", form.placa],
+      ["chassi", form.chassi], ["renavam", form.renavam], ["cor_externa", form.cor_externa],
+      ["modelo", form.modelo], ["ano_modelo", form.ano_modelo], ["loja_estoque", form.loja_estoque],
+      ["codigo_avaliacao_nbs", form.codigo_avaliacao_nbs], ["valor_avaliado", form.valor_avaliado],
+    ];
+    const faltando = obrig.filter(([, v]) => !v.trim()).map(([k]) => k);
+    if (faltando.length) {
+      toast.error(`Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`);
       return;
     }
     setSaving(true);
     try {
       // Bloqueio: já existe chamado ativo para essa placa?
       const placa = form.placa.trim().toUpperCase();
+
       const { data: existente } = await supabase
         .from("compras_chamados")
         .select("id, status")
