@@ -1103,9 +1103,10 @@ export type Database = {
       }
     }
     Functions: {
-      get_username_by_recovery_email: {
-        Args: { _email: string }
-        Returns: string
+      can_access_chamado: { Args: { _chamado_id: string }; Returns: boolean }
+      can_access_documentos_object: {
+        Args: { _name: string }
+        Returns: boolean
       }
       has_filial: {
         Args: { _filial_id: string; _user_id: string }
