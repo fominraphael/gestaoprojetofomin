@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      compras_cadastros: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          id: string
+          label: string
+          ordem: number
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          id?: string
+          label: string
+          ordem?: number
+          updated_at?: string
+          valor: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          id?: string
+          label?: string
+          ordem?: number
+          updated_at?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       compras_chamados: {
         Row: {
           ano_modelo: string | null
