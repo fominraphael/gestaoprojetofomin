@@ -265,6 +265,25 @@ function NovoChamado() {
         </CardContent>
       </Card>
 
+      {camposDoEstado.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Campos adicionais — {estadoUf}</CardTitle></CardHeader>
+          <CardContent className="grid md:grid-cols-3 gap-4">
+            {camposDoEstado.map((c) => (
+              <div key={c.valor}>
+                <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+                <Input
+                  type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
+                  value={camposExtras[c.valor] ?? ""}
+                  onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader><CardTitle>Tipo de compra</CardTitle></CardHeader>
         <CardContent className="space-y-4">
