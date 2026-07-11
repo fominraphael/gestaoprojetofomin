@@ -179,12 +179,18 @@ function NovoChamado() {
             </Select>
           </div>
           <div>
-            <Label>Estado (UF)</Label>
-            <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v as EstadoUF)}>
+            <Label>Estado (UF) *</Label>
+            <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="GO">Goiás</SelectItem>
-                <SelectItem value="ES">Espírito Santo</SelectItem>
+                {estados.length > 0 ? estados.map((e) => (
+                  <SelectItem key={e.valor} value={e.valor.toUpperCase()}>{e.label}</SelectItem>
+                )) : (
+                  <>
+                    <SelectItem value="GO">Goiás</SelectItem>
+                    <SelectItem value="ES">Espírito Santo</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
