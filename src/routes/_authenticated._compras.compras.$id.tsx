@@ -272,24 +272,38 @@ function DetalheChamado() {
   async function enviarPending() {
     if (!chamado || !user || pending.length === 0) return;
     setUploading(true);
+    let ok = 0, fail = 0;
     try {
       for (const p of pending) {
         const path = `compras/${chamado.id}/${p.categoria}-${Date.now()}-${p.file.name}`;
         const { error: upErr } = await supabase.storage.from("documentos").upload(path, p.file);
-        if (upErr) { toast.error(`${p.file.name}: ${upErr.message}`); continue; }
+        if (upErr) { fail++; toast.error(`${p.file.name}: ${upErr.message}`); continue; }
         const { error: insErr } = await supabase.from("compras_documentos").insert({
           chamado_id: chamado.id, categoria: p.categoria, storage_path: path, enviado_por: user.id,
         });
-        if (insErr) { toast.error(`${p.file.name}: ${insErr.message}`); continue; }
+        if (insErr) { fail++; toast.error(`${p.file.name}: ${insErr.message}`); continue; }
         await registrarHistorico({ acao: "documento_anexado", observacao: p.file.name, campo: p.categoria });
-
+        ok++;
       }
       setPending([]);
-      toast.success("Documentos anexados.");
+      if (ok > 0) toast.success(`${ok} documento(s) anexado(s)${fail ? ` — ${fail} falha(s)` : ""}.`);
+      else if (fail > 0) toast.error(`Falha ao enviar ${fail} arquivo(s).`);
       carregar();
     } finally {
       setUploading(false);
     }
+  }
+
+  async function alterarStatus(novo: StatusChamado) {
+    if (!chamado || novo === chamado.status) return;
+    const updates: any = { status: novo };
+    if (novo === "comprado") updates.concluido_em = new Date().toISOString();
+    if (novo === "cancelado") updates.cancelado_em = new Date().toISOString();
+    const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
+    if (error) { toast.error(error.message); return; }
+    await registrarHistorico({ acao: "status_alterado", campo: "status", valor_antes: chamado.status, valor_depois: novo });
+    toast.success("Status atualizado.");
+    carregar();
   }
 
   async function abrirDoc(path: string) {
@@ -485,7 +499,7 @@ function DetalheChamado() {
   const podeCancelar = ((isCentral && !readOnlyAdmin) || isCriador) && !finalizado;
 
   return (
-    <div className="p-6 space-y-4 max-w-[1400px] mx-auto">
+    <div className="p-4 md:p-6 space-y-4 w-full">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })}>
@@ -516,7 +530,18 @@ function DetalheChamado() {
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           )}
-          <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+          {(isAdmin || isCriador) && !finalizado ? (
+            <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
+              <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(STATUS_LABEL) as StatusChamado[]).map((s) => (
+                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+          )}
         </div>
       </div>
 
@@ -630,7 +655,7 @@ function DetalheChamado() {
           )}
 
           {/* Grade de requisitos */}
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {requisitos.map((req) => {
               const enviados = docsByCat[req.categoria] ?? [];
               return (
@@ -662,6 +687,25 @@ function DetalheChamado() {
                           ))}
                         </div>
                       )}
+                      {!readOnlyAdmin && (
+                        <label className="inline-block mt-2">
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files) {
+                                const arr = Array.from(e.target.files);
+                                setPending((prev) => [...prev, ...arr.map((f) => ({ file: f, categoria: req.categoria }))]);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          <span className="cursor-pointer text-xs text-primary hover:underline inline-flex items-center gap-1">
+                            <Upload className="w-3 h-3" /> Anexar
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -674,7 +718,7 @@ function DetalheChamado() {
       <Card>
         <CardHeader><CardTitle>Débitos / itens de checagem</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {TIPOS_DEBITO.map((t) => {
               const atual = debitos.find((d) => d.tipo === t.key);
               return (

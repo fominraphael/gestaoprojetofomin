@@ -224,7 +224,7 @@ function ConfiguracoesCompras() {
                   ) : (
                     <div className="space-y-2">
                       {list.map((i) => (
-                        <div key={i.id} className="grid md:grid-cols-[140px_1fr_80px_100px_100px_auto_auto] gap-2 items-center border border-border rounded-md p-2">
+                        <div key={i.id} className="grid md:grid-cols-[140px_1fr_90px_110px_110px_80px_90px_auto] gap-2 items-center border border-border rounded-md p-2">
                           <div className="text-xs font-mono text-muted-foreground truncate">{i.valor}</div>
                           <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} />
                           {t.usaUf ? (
@@ -246,6 +246,16 @@ function ConfiguracoesCompras() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          ) : <div />}
+                          {t.usaTipoCampo ? (
+                            <label className="flex items-center gap-1 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={i.obrigatorio}
+                                onChange={(e) => updateLocal(i.id, { obrigatorio: e.target.checked })}
+                              />
+                              Obrig.
+                            </label>
                           ) : <div />}
                           <Input type="number" value={i.ordem} onChange={(e) => updateLocal(i.id, { ordem: Number(e.target.value) })} />
                           <Button
