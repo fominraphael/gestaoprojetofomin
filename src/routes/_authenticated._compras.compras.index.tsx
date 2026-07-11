@@ -312,15 +312,40 @@ function ComprasIndex() {
               <Columns3 className="w-4 h-4 mr-1" /> Colunas
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-56">
-            <div className="text-xs font-medium mb-2 text-muted-foreground">Colunas visíveis</div>
-            <div className="space-y-1.5">
-              {COLUNAS.map((c) => (
-                <label key={c.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox checked={colunasVisiveis.includes(c.id)} onCheckedChange={() => toggleColuna(c.id)} />
-                  {c.label}
-                </label>
-              ))}
+          <PopoverContent align="end" className="w-72">
+            <div className="text-xs font-medium mb-2 text-muted-foreground">Colunas (visibilidade e ordem)</div>
+            <div className="space-y-1">
+              {[
+                ...colunasVisiveis
+                  .map((id) => COLUNAS.find((c) => c.id === id))
+                  .filter(Boolean) as typeof COLUNAS,
+                ...COLUNAS.filter((c) => !colunasVisiveis.includes(c.id)),
+              ].map((c) => {
+                const visivel = colunasVisiveis.includes(c.id);
+                const idx = colunasVisiveis.indexOf(c.id);
+                return (
+                  <div key={c.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={visivel} onCheckedChange={() => toggleColuna(c.id)} />
+                    <span className="flex-1">{c.label}</span>
+                    <button
+                      className="p-0.5 rounded hover:bg-accent disabled:opacity-20"
+                      onClick={() => moverColuna(c.id, -1)}
+                      disabled={!visivel || idx <= 0}
+                      title="Mover para esquerda"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      className="p-0.5 rounded hover:bg-accent disabled:opacity-20"
+                      onClick={() => moverColuna(c.id, 1)}
+                      disabled={!visivel || idx < 0 || idx >= colunasVisiveis.length - 1}
+                      title="Mover para direita"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </PopoverContent>
         </Popover>
