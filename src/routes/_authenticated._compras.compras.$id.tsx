@@ -502,7 +502,7 @@ function DetalheChamado() {
           <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
           </Button>
-          {isAdmin && !finalizado && (
+          {isAdmin && (
             <Button size="sm" variant="outline" onClick={abrirEdicao}>
               <Pencil className="w-4 h-4 mr-2" /> Editar dados
             </Button>
