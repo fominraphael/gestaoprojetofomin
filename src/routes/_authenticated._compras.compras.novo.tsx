@@ -117,7 +117,7 @@ function NovoChamado() {
         .insert({
           criado_por: user.id,
           tipo_pessoa: tipoPessoa,
-          estado_uf: estadoUf,
+          estado_uf: estadoUf as EstadoUF,
           tipo_compra: tipoCompra,
           nome: form.nome.trim(),
           cpf_cnpj: form.cpf_cnpj.trim(),
@@ -132,7 +132,8 @@ function NovoChamado() {
           valor_avaliado: form.valor_avaliado ? Number(form.valor_avaliado.replace(",", ".")) : null,
           observacao_compra: form.observacao.trim() || null,
           nf_status: tipoPessoa === "PJ" ? "aguardando_analise" : "nao_aplicavel",
-        })
+          campos_extras: camposExtras,
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
