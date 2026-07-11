@@ -214,8 +214,9 @@ function NovoChamado() {
                   ))}
                 </SelectContent>
               </Select>
-            )}
+          </div>
           <div>
+
             <Label>Nome / Razão social *</Label>
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
