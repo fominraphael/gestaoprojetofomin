@@ -47,14 +47,22 @@ function NovoChamado() {
 
   const salvar = async () => {
     if (!user) return;
-    if (!form.placa.trim() || !form.nome.trim() || !form.cpf_cnpj.trim()) {
-      toast.error("Preencha placa, nome e CPF/CNPJ.");
+    const obrig: [string, string][] = [
+      ["nome", form.nome], ["cpf_cnpj", form.cpf_cnpj], ["placa", form.placa],
+      ["chassi", form.chassi], ["renavam", form.renavam], ["cor_externa", form.cor_externa],
+      ["modelo", form.modelo], ["ano_modelo", form.ano_modelo], ["loja_estoque", form.loja_estoque],
+      ["codigo_avaliacao_nbs", form.codigo_avaliacao_nbs], ["valor_avaliado", form.valor_avaliado],
+    ];
+    const faltando = obrig.filter(([, v]) => !v.trim()).map(([k]) => k);
+    if (faltando.length) {
+      toast.error(`Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`);
       return;
     }
     setSaving(true);
     try {
       // Bloqueio: já existe chamado ativo para essa placa?
       const placa = form.placa.trim().toUpperCase();
+
       const { data: existente } = await supabase
         .from("compras_chamados")
         .select("id, status")
@@ -143,11 +151,11 @@ function NovoChamado() {
             </Select>
           </div>
           <div>
-            <Label>Nome / Razão social</Label>
+            <Label>Nome / Razão social *</Label>
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
           <div>
-            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"}</Label>
+            <Label>{tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
             <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
           </div>
         </CardContent>
@@ -161,35 +169,35 @@ function NovoChamado() {
             <Input value={form.placa} onChange={(e) => set("placa", e.target.value.toUpperCase())} />
           </div>
           <div>
-            <Label>Chassi</Label>
+            <Label>Chassi *</Label>
             <Input value={form.chassi} onChange={(e) => set("chassi", e.target.value.toUpperCase())} />
           </div>
           <div>
-            <Label>Renavam</Label>
+            <Label>Renavam *</Label>
             <Input value={form.renavam} onChange={(e) => set("renavam", e.target.value)} />
           </div>
           <div>
-            <Label>Modelo</Label>
+            <Label>Modelo *</Label>
             <Input value={form.modelo} onChange={(e) => set("modelo", e.target.value)} />
           </div>
           <div>
-            <Label>Ano/Modelo</Label>
+            <Label>Ano/Modelo *</Label>
             <Input value={form.ano_modelo} onChange={(e) => set("ano_modelo", e.target.value)} />
           </div>
           <div>
-            <Label>Cor externa</Label>
+            <Label>Cor externa *</Label>
             <Input value={form.cor_externa} onChange={(e) => set("cor_externa", e.target.value)} />
           </div>
           <div>
-            <Label>Loja de estoque</Label>
+            <Label>Loja de estoque *</Label>
             <Input value={form.loja_estoque} onChange={(e) => set("loja_estoque", e.target.value)} />
           </div>
           <div>
-            <Label>Código avaliação NBS</Label>
+            <Label>Código avaliação NBS *</Label>
             <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
           </div>
           <div>
-            <Label>Valor avaliado (R$)</Label>
+            <Label>Valor avaliado (R$) *</Label>
             <Input value={form.valor_avaliado} onChange={(e) => set("valor_avaliado", e.target.value)} placeholder="0,00" />
           </div>
         </CardContent>

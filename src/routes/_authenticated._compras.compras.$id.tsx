@@ -21,7 +21,9 @@ import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
   errorComponent: ModuleErrorBoundary,
@@ -75,10 +77,42 @@ interface HistoricoItem {
   acao: string;
   motivo: string | null;
   observacao: string | null;
+  campo: string | null;
+  valor_antes: string | null;
+  valor_depois: string | null;
+  autor_id: string | null;
   created_at: string;
 }
 
 interface PendingFile { file: File; categoria: string; }
+
+const CAMPOS_EDITAVEIS: { key: keyof EditForm; label: string; type?: "number" }[] = [
+  { key: "nome", label: "Nome / Razão social" },
+  { key: "cpf_cnpj", label: "CPF / CNPJ" },
+  { key: "placa", label: "Placa" },
+  { key: "chassi", label: "Chassi" },
+  { key: "modelo", label: "Modelo" },
+  { key: "ano_modelo", label: "Ano/Modelo" },
+  { key: "loja_estoque", label: "Loja de estoque" },
+  { key: "codigo_avaliacao_nbs", label: "Código avaliação NBS" },
+  { key: "valor_avaliado", label: "Valor avaliado", type: "number" },
+];
+
+type EditForm = {
+  nome: string; cpf_cnpj: string; placa: string; chassi: string;
+  modelo: string; ano_modelo: string; loja_estoque: string;
+  codigo_avaliacao_nbs: string; valor_avaliado: string;
+};
+
+function chamadoToEdit(c: Chamado): EditForm {
+  return {
+    nome: c.nome ?? "", cpf_cnpj: c.cpf_cnpj ?? "", placa: c.placa ?? "",
+    chassi: c.chassi ?? "", modelo: c.modelo ?? "", ano_modelo: c.ano_modelo ?? "",
+    loja_estoque: c.loja_estoque ?? "", codigo_avaliacao_nbs: c.codigo_avaliacao_nbs ?? "",
+    valor_avaliado: c.valor_avaliado != null ? String(c.valor_avaliado) : "",
+  };
+}
+
 
 function DetalheChamado() {
   const { id } = useParams({ from: "/_authenticated/_compras/compras/$id" });
@@ -103,6 +137,38 @@ function DetalheChamado() {
   const [pending, setPending] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  const [logOpen, setLogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string }>(null);
+  const [debObs, setDebObs] = useState("");
+  const [debFile, setDebFile] = useState<File | null>(null);
+  const [debSaving, setDebSaving] = useState(false);
+
+  const registrarHistorico = useCallback(
+    async (payload: {
+      acao: string; motivo?: string | null; observacao?: string | null;
+      campo?: string | null; valor_antes?: string | null; valor_depois?: string | null;
+      anexo_path?: string | null;
+    }) => {
+      await supabase.from("compras_historico").insert({
+        chamado_id: id,
+        autor_id: user?.id ?? null,
+        acao: payload.acao,
+        motivo: payload.motivo ?? null,
+        observacao: payload.observacao ?? null,
+        campo: payload.campo ?? null,
+        valor_antes: payload.valor_antes ?? null,
+        valor_depois: payload.valor_depois ?? null,
+        anexo_path: payload.anexo_path ?? null,
+      });
+    },
+    [id, user?.id],
+  );
+
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -163,9 +229,13 @@ function DetalheChamado() {
       .update({ assumido_por: user.id, assumido_em: new Date().toISOString(), status: novoStatus })
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "assumido", autor_id: user.id,
+    await registrarHistorico({
+      acao: "assumido",
+      valor_antes: chamado.status,
+      valor_depois: novoStatus,
+      campo: "status",
     });
+
     setModoAdmin("assumido");
     setAskAdmin(false);
     toast.success("Processo assumido.");
@@ -198,9 +268,8 @@ function DetalheChamado() {
           chamado_id: chamado.id, categoria: p.categoria, storage_path: path, enviado_por: user.id,
         });
         if (insErr) { toast.error(`${p.file.name}: ${insErr.message}`); continue; }
-        await supabase.from("compras_historico").insert({
-          chamado_id: chamado.id, acao: "documento_anexado", observacao: p.categoria, autor_id: user.id,
-        });
+        await registrarHistorico({ acao: "documento_anexado", observacao: p.file.name, campo: p.categoria });
+
       }
       setPending([]);
       toast.success("Documentos anexados.");
@@ -222,24 +291,61 @@ function DetalheChamado() {
     const { error } = await supabase.from("compras_documentos").delete().eq("id", doc.id);
     if (error) { toast.error(error.message); return; }
     setDocumentos((prev) => prev.filter((d) => d.id !== doc.id));
+    await registrarHistorico({ acao: "documento_removido", campo: doc.categoria, observacao: doc.storage_path });
   }
 
   async function marcarDebito(tipo: string, status: "pago" | "pendente") {
     if (!chamado) return;
-    // otimista — sem reload de tela
+    if (status === "pendente") {
+      const label = TIPOS_DEBITO.find((t) => t.key === tipo)?.label ?? tipo;
+      setDebObs(""); setDebFile(null); setDebitoPend({ tipo, label });
+      return;
+    }
+    const anterior = debitos.find((d) => d.tipo === tipo)?.status ?? null;
     setDebitos((prev) => {
       const idx = prev.findIndex((d) => d.tipo === tipo);
-      if (idx >= 0) {
-        const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy;
-      }
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy; }
       return [...prev, { tipo, status }];
     });
     const { error } = await supabase.from("compras_debitos").upsert(
       { chamado_id: chamado.id, tipo, status },
       { onConflict: "chamado_id,tipo" },
     );
-    if (error) { toast.error(error.message); carregar(); }
+    if (error) { toast.error(error.message); carregar(); return; }
+    await registrarHistorico({ acao: "debito_marcado", campo: tipo, valor_antes: anterior, valor_depois: status });
   }
+
+  async function confirmarDebitoPendente() {
+    if (!chamado || !debitoPend) return;
+    if (!debFile) { toast.error("Anexo obrigatório ao marcar como pendente."); return; }
+    if (!debObs.trim()) { toast.error("Informe a observação da pendência."); return; }
+    setDebSaving(true);
+    try {
+      const path = `compras/${chamado.id}/debitos/${debitoPend.tipo}-${Date.now()}-${debFile.name}`;
+      const { error: upErr } = await supabase.storage.from("documentos").upload(path, debFile);
+      if (upErr) { toast.error(upErr.message); return; }
+      const anterior = debitos.find((d) => d.tipo === debitoPend.tipo)?.status ?? null;
+      const { error } = await supabase.from("compras_debitos").upsert(
+        { chamado_id: chamado.id, tipo: debitoPend.tipo, status: "pendente", comprovante_path: path, observacao: debObs.trim() },
+        { onConflict: "chamado_id,tipo" },
+      );
+      if (error) { toast.error(error.message); return; }
+      setDebitos((prev) => {
+        const idx = prev.findIndex((d) => d.tipo === debitoPend.tipo);
+        const item = { tipo: debitoPend.tipo, status: "pendente" as const, comprovante_path: path, observacao: debObs.trim() };
+        if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], ...item }; return copy; }
+        return [...prev, item];
+      });
+      await registrarHistorico({
+        acao: "debito_pendenciado", campo: debitoPend.tipo,
+        valor_antes: anterior, valor_depois: "pendente",
+        observacao: debObs.trim(), anexo_path: path,
+      });
+      toast.success("Pendência registrada.");
+      setDebitoPend(null);
+    } finally { setDebSaving(false); }
+  }
+
 
   async function enviarParaFila() {
     if (!chamado) return;
@@ -248,9 +354,11 @@ function DetalheChamado() {
       .update({ status: "na_fila_central" })
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "enviado_fila_central", autor_id: user?.id,
+    await registrarHistorico({
+      acao: "enviado_fila_central", campo: "status",
+      valor_antes: chamado.status, valor_depois: "na_fila_central",
     });
+
     toast.success("Enviado para a fila da Central.");
     carregar();
   }
@@ -286,9 +394,11 @@ function DetalheChamado() {
     }
     const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao, motivo, observacao: observ, autor_id: user?.id,
+    await registrarHistorico({
+      acao, motivo, observacao: observ, campo: "status",
+      valor_antes: chamado.status, valor_depois: updates.status,
     });
+
     if (dialogo === "pendenciar" || dialogo === "resolver") {
       try {
         await notificar({ data: { chamadoId: chamado.id, tipo: dialogo === "pendenciar" ? "pendenciado" : "resolvido", motivo, observacao: observ } });
@@ -299,7 +409,46 @@ function DetalheChamado() {
     carregar();
   }
 
+  function abrirEdicao() {
+    if (!chamado) return;
+    setEditForm(chamadoToEdit(chamado));
+    setEditOpen(true);
+  }
+
+  async function salvarEdicaoAdmin() {
+    if (!chamado || !editForm) return;
+    setSavingEdit(true);
+    try {
+      const atual = chamadoToEdit(chamado);
+      const updates: Record<string, any> = {};
+      const mudancas: { campo: string; label: string; antes: string; depois: string }[] = [];
+      for (const { key, label, type } of CAMPOS_EDITAVEIS) {
+        const antes = atual[key] ?? "";
+        const depois = editForm[key] ?? "";
+        if (antes === depois) continue;
+        updates[key] = type === "number"
+          ? (depois ? Number(depois.replace(",", ".")) : null)
+          : (depois || null);
+        mudancas.push({ campo: key as string, label, antes, depois });
+      }
+      if (mudancas.length === 0) { setEditOpen(false); return; }
+      const { error } = await supabase.from("compras_chamados").update(updates as never).eq("id", chamado.id);
+
+      if (error) { toast.error(error.message); return; }
+      for (const m of mudancas) {
+        await registrarHistorico({
+          acao: "campo_alterado", campo: m.campo,
+          valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
+        });
+      }
+      toast.success(`${mudancas.length} campo(s) atualizado(s).`);
+      setEditOpen(false);
+      carregar();
+    } finally { setSavingEdit(false); }
+  }
+
   if (loading) return <div className="p-6">Carregando…</div>;
+
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
@@ -324,7 +473,16 @@ function DetalheChamado() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
+            <History className="w-4 h-4 mr-2" /> Log ({historico.length})
+          </Button>
+          {isAdmin && !finalizado && (
+            <Button size="sm" variant="outline" onClick={abrirEdicao}>
+              <Pencil className="w-4 h-4 mr-2" /> Editar dados
+            </Button>
+          )}
+
           {readOnlyAdmin && (
             <Badge variant="outline" className="text-xs gap-1"><EyeIcon className="w-3 h-3" /> Somente visualização</Badge>
           )}
@@ -549,29 +707,101 @@ function DetalheChamado() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
-        <CardContent>
+      {/* Dialog: Log de auditoria */}
+      <Dialog open={logOpen} onOpenChange={setLogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Log do chamado</DialogTitle>
+            <DialogDescription>Todas as ações e alterações registradas.</DialogDescription>
+          </DialogHeader>
           {historico.length === 0 ? (
             <div className="text-sm text-muted-foreground">Sem eventos.</div>
           ) : (
             <ul className="space-y-2 text-sm">
               {historico.map((h) => (
-                <li key={h.id} className="border-b border-border pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{h.acao}</span>
+                <li key={h.id} className="border border-border rounded-md p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{h.acao}{h.campo ? ` • ${h.campo}` : ""}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(h.created_at).toLocaleString("pt-BR")}
                     </span>
                   </div>
-                  {h.motivo && <div className="text-xs">Motivo: {h.motivo}</div>}
-                  {h.observacao && <div className="text-xs text-muted-foreground">{h.observacao}</div>}
+                  {(h.valor_antes !== null || h.valor_depois !== null) && (
+                    <div className="text-xs mt-1">
+                      <span className="text-muted-foreground line-through">{h.valor_antes ?? "—"}</span>
+                      {" → "}
+                      <span className="font-medium">{h.valor_depois ?? "—"}</span>
+                    </div>
+                  )}
+                  {h.motivo && <div className="text-xs mt-1">Motivo: {h.motivo}</div>}
+                  {h.observacao && <div className="text-xs text-muted-foreground mt-1">{h.observacao}</div>}
                 </li>
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edição admin */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar dados do chamado</DialogTitle>
+            <DialogDescription>Alterações ficam registradas no log com valor anterior e novo.</DialogDescription>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid md:grid-cols-2 gap-3">
+              {CAMPOS_EDITAVEIS.map(({ key, label, type }) => (
+                <div key={key}>
+                  <Label>{label}</Label>
+                  <Input
+                    type={type ?? "text"}
+                    value={editForm[key]}
+                    onChange={(e) => setEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              <XIcon className="w-4 h-4 mr-2" /> Cancelar
+            </Button>
+            <Button onClick={salvarEdicaoAdmin} disabled={savingEdit}>
+              <Save className="w-4 h-4 mr-2" /> {savingEdit ? "Salvando…" : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Pendência de débito (anexo obrigatório) */}
+      <Dialog open={!!debitoPend} onOpenChange={(o) => !o && setDebitoPend(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar {debitoPend?.label} como pendente</DialogTitle>
+            <DialogDescription>Anexo e observação são obrigatórios.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Observação *</Label>
+              <Textarea rows={3} value={debObs} onChange={(e) => setDebObs(e.target.value)} />
+            </div>
+            <div>
+              <Label>Anexo (comprovante) *</Label>
+              <Input type="file" onChange={(e) => setDebFile(e.target.files?.[0] ?? null)} />
+              {debFile && <div className="text-xs text-muted-foreground mt-1">{debFile.name}</div>}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDebitoPend(null)}>Cancelar</Button>
+            <Button onClick={confirmarDebitoPendente} disabled={debSaving}>
+              {debSaving ? "Salvando…" : "Confirmar pendência"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       {/* Diálogo Admin: visualizar ou assumir */}
       <Dialog open={askAdmin} onOpenChange={setAskAdmin}>

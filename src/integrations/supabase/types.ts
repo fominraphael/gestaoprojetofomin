@@ -208,31 +208,40 @@ export type Database = {
           acao: string
           anexo_path: string | null
           autor_id: string | null
+          campo: string | null
           chamado_id: string
           created_at: string
           id: string
           motivo: string | null
           observacao: string | null
+          valor_antes: string | null
+          valor_depois: string | null
         }
         Insert: {
           acao: string
           anexo_path?: string | null
           autor_id?: string | null
+          campo?: string | null
           chamado_id: string
           created_at?: string
           id?: string
           motivo?: string | null
           observacao?: string | null
+          valor_antes?: string | null
+          valor_depois?: string | null
         }
         Update: {
           acao?: string
           anexo_path?: string | null
           autor_id?: string | null
+          campo?: string | null
           chamado_id?: string
           created_at?: string
           id?: string
           motivo?: string | null
           observacao?: string | null
+          valor_antes?: string | null
+          valor_depois?: string | null
         }
         Relationships: [
           {
