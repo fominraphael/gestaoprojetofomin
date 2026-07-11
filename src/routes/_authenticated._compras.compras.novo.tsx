@@ -151,11 +151,11 @@ function NovoChamado() {
             </Select>
           </div>
           <div>
-            <Label>Nome / Razão social</Label>
+            <Label>Nome / Razão social *</Label>
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
           <div>
-            <Label>{tipoPessoa === "PF" ? "CPF" : "CNPJ"}</Label>
+            <Label>{tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
             <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
           </div>
         </CardContent>
@@ -169,31 +169,31 @@ function NovoChamado() {
             <Input value={form.placa} onChange={(e) => set("placa", e.target.value.toUpperCase())} />
           </div>
           <div>
-            <Label>Chassi</Label>
+            <Label>Chassi *</Label>
             <Input value={form.chassi} onChange={(e) => set("chassi", e.target.value.toUpperCase())} />
           </div>
           <div>
-            <Label>Renavam</Label>
+            <Label>Renavam *</Label>
             <Input value={form.renavam} onChange={(e) => set("renavam", e.target.value)} />
           </div>
           <div>
-            <Label>Modelo</Label>
+            <Label>Modelo *</Label>
             <Input value={form.modelo} onChange={(e) => set("modelo", e.target.value)} />
           </div>
           <div>
-            <Label>Ano/Modelo</Label>
+            <Label>Ano/Modelo *</Label>
             <Input value={form.ano_modelo} onChange={(e) => set("ano_modelo", e.target.value)} />
           </div>
           <div>
-            <Label>Cor externa</Label>
+            <Label>Cor externa *</Label>
             <Input value={form.cor_externa} onChange={(e) => set("cor_externa", e.target.value)} />
           </div>
           <div>
-            <Label>Loja de estoque</Label>
+            <Label>Loja de estoque *</Label>
             <Input value={form.loja_estoque} onChange={(e) => set("loja_estoque", e.target.value)} />
           </div>
           <div>
-            <Label>Código avaliação NBS</Label>
+            <Label>Código avaliação NBS *</Label>
             <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
           </div>
           <div>
