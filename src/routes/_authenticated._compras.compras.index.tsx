@@ -81,6 +81,7 @@ function ComprasIndex() {
   const [status, setStatus] = useState<string>("todos");
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes");
   const [reordenando, setReordenando] = useState(false);
+  const [sortBy, setSortBy] = useState<"ordem" | "criado_desc" | "criado_asc" | "placa" | "nome" | "valor_desc" | "valor_asc" | "status">("ordem");
 
   // Lookups
   const [lojasMap, setLojasMap] = useState<Record<string, string>>({});
