@@ -208,7 +208,25 @@ function NovoChamado() {
           </div>
           <div>
             <Label>Loja de estoque *</Label>
-            <Input value={form.loja_estoque} onChange={(e) => set("loja_estoque", e.target.value)} />
+            {lojas.length === 0 ? (
+              <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
+                Nenhuma loja cadastrada.{" "}
+                {isAdmin && (
+                  <Link to="/compras/configuracoes" className="underline">
+                    Cadastrar agora
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectContent>
+                  {lojas.map((l) => (
+                    <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>Código avaliação NBS *</Label>
