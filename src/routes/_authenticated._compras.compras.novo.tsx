@@ -88,6 +88,13 @@ function NovoChamado() {
       toast.error(`Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`);
       return;
     }
+    const camposObrigFalt = camposDoEstado
+      .filter((c) => c.obrigatorio && !(camposExtras[c.valor] ?? "").trim())
+      .map((c) => c.label);
+    if (camposObrigFalt.length) {
+      toast.error(`Preencha os campos obrigatórios do estado: ${camposObrigFalt.join(", ")}`);
+      return;
+    }
     setSaving(true);
     try {
       // Bloqueio: já existe chamado ativo para essa placa?
