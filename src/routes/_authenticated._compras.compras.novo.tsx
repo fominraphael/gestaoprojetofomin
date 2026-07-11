@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, Car, MapPin, ShoppingBag, ListPlus, Store } from "lucide-react";
 
 interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number }
 
@@ -154,19 +154,21 @@ function NovoChamado() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-4">
+    <div className="p-6 max-w-5xl mx-auto space-y-4">
       <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })}>
         <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
       </Button>
       <div>
-        <h1 className="text-2xl font-semibold">Novo chamado de compra</h1>
+        <h1 className="text-2xl font-semibold flex items-center gap-2">
+          <ShoppingBag className="w-5 h-5 text-primary" /> Novo chamado de compra
+        </h1>
         <p className="text-sm text-muted-foreground">
           Preencha os dados iniciais. Após salvar, você poderá anexar documentos e enviar para análise.
         </p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Cliente</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><MapPin className="w-4 h-4 text-primary" /> Localização e Cliente</CardTitle></CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-4">
           <div>
             <Label>Pessoa</Label>
