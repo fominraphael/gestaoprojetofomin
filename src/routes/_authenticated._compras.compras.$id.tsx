@@ -394,9 +394,11 @@ function DetalheChamado() {
     }
     const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao, motivo, observacao: observ, autor_id: user?.id,
+    await registrarHistorico({
+      acao, motivo, observacao: observ, campo: "status",
+      valor_antes: chamado.status, valor_depois: updates.status,
     });
+
     if (dialogo === "pendenciar" || dialogo === "resolver") {
       try {
         await notificar({ data: { chamadoId: chamado.id, tipo: dialogo === "pendenciar" ? "pendenciado" : "resolvido", motivo, observacao: observ } });
