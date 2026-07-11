@@ -197,7 +197,7 @@ function NovoChamado() {
             </Select>
           </div>
           <div className="md:col-span-2">
-            <Label>Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
+            <Label className="flex items-center gap-1"><Store className="w-3.5 h-3.5" /> Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
             {lojas.length === 0 ? (
               <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
                 Nenhuma loja cadastrada para {estadoUf}.{" "}
@@ -219,8 +219,7 @@ function NovoChamado() {
             )}
           </div>
           <div>
-
-            <Label>Nome / Razão social *</Label>
+            <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Nome / Razão social *</Label>
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
           <div>
@@ -231,7 +230,7 @@ function NovoChamado() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Veículo</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Car className="w-4 h-4 text-primary" /> Veículo</CardTitle></CardHeader>
         <CardContent className="grid md:grid-cols-3 gap-4">
           <div>
             <Label>Placa *</Label>
@@ -270,7 +269,7 @@ function NovoChamado() {
 
       {camposDoEstado.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Campos adicionais — {estadoUf}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ListPlus className="w-4 h-4 text-primary" /> Campos adicionais — {estadoUf}</CardTitle></CardHeader>
           <CardContent className="grid md:grid-cols-3 gap-4">
             {camposDoEstado.map((c) => (
               <div key={c.valor}>
@@ -288,7 +287,7 @@ function NovoChamado() {
 
 
       <Card>
-        <CardHeader><CardTitle>Tipo de compra</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShoppingBag className="w-4 h-4 text-primary" /> Tipo de compra</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
             <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
