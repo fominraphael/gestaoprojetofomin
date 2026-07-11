@@ -113,14 +113,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     let username = identifier.trim();
     if (username.includes("@")) {
-      const { data, error: rpcErr } = await supabase.rpc(
-        "get_username_by_recovery_email",
-        { _email: username },
+      const { lookupUsernameByRecoveryEmail } = await import(
+        "@/lib/recovery-lookup.functions"
       );
-      if (rpcErr) throw rpcErr;
-      if (!data) throw new Error("Usuário ou senha incorretos.");
-      username = data as string;
+      const res = await lookupUsernameByRecoveryEmail({ data: { email: username } });
+      if (!res.username) throw new Error("Usuário ou senha incorretos.");
+      username = res.username;
     }
+
     const email = usernameToEmail(username);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
