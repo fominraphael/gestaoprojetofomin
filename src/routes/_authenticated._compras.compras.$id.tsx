@@ -781,11 +781,39 @@ function DetalheChamado() {
                   <Label>{label}</Label>
                   <Input
                     type={type ?? "text"}
-                    value={editForm[key]}
+                    value={editForm[key] as string}
                     onChange={(e) => setEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
                   />
                 </div>
               ))}
+              <div>
+                <Label>Loja de estoque</Label>
+                <Select
+                  value={editForm.loja_estoque}
+                  onValueChange={(v) => setEditForm((f) => f ? { ...f, loja_estoque: v } : f)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>
+                    {lojas.map((l) => (
+                      <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) => setEditForm((f) => f ? { ...f, status: v as StatusChamado } : f)}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as StatusChamado[]).map((s) => (
+                      <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
