@@ -84,6 +84,7 @@ export type Database = {
           observacao_cancelamento: string | null
           observacao_compra: string | null
           observacao_pendencia: string | null
+          ordem: number | null
           placa: string
           renavam: string | null
           status: string
@@ -119,6 +120,7 @@ export type Database = {
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
+          ordem?: number | null
           placa: string
           renavam?: string | null
           status?: string
@@ -154,6 +156,7 @@ export type Database = {
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
+          ordem?: number | null
           placa?: string
           renavam?: string | null
           status?: string
