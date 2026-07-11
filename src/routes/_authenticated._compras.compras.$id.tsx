@@ -707,29 +707,101 @@ function DetalheChamado() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
-        <CardContent>
+      {/* Dialog: Log de auditoria */}
+      <Dialog open={logOpen} onOpenChange={setLogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Log do chamado</DialogTitle>
+            <DialogDescription>Todas as ações e alterações registradas.</DialogDescription>
+          </DialogHeader>
           {historico.length === 0 ? (
             <div className="text-sm text-muted-foreground">Sem eventos.</div>
           ) : (
             <ul className="space-y-2 text-sm">
               {historico.map((h) => (
-                <li key={h.id} className="border-b border-border pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{h.acao}</span>
+                <li key={h.id} className="border border-border rounded-md p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{h.acao}{h.campo ? ` • ${h.campo}` : ""}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(h.created_at).toLocaleString("pt-BR")}
                     </span>
                   </div>
-                  {h.motivo && <div className="text-xs">Motivo: {h.motivo}</div>}
-                  {h.observacao && <div className="text-xs text-muted-foreground">{h.observacao}</div>}
+                  {(h.valor_antes !== null || h.valor_depois !== null) && (
+                    <div className="text-xs mt-1">
+                      <span className="text-muted-foreground line-through">{h.valor_antes ?? "—"}</span>
+                      {" → "}
+                      <span className="font-medium">{h.valor_depois ?? "—"}</span>
+                    </div>
+                  )}
+                  {h.motivo && <div className="text-xs mt-1">Motivo: {h.motivo}</div>}
+                  {h.observacao && <div className="text-xs text-muted-foreground mt-1">{h.observacao}</div>}
                 </li>
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edição admin */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar dados do chamado</DialogTitle>
+            <DialogDescription>Alterações ficam registradas no log com valor anterior e novo.</DialogDescription>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid md:grid-cols-2 gap-3">
+              {CAMPOS_EDITAVEIS.map(({ key, label, type }) => (
+                <div key={key}>
+                  <Label>{label}</Label>
+                  <Input
+                    type={type ?? "text"}
+                    value={editForm[key]}
+                    onChange={(e) => setEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              <XIcon className="w-4 h-4 mr-2" /> Cancelar
+            </Button>
+            <Button onClick={salvarEdicaoAdmin} disabled={savingEdit}>
+              <Save className="w-4 h-4 mr-2" /> {savingEdit ? "Salvando…" : "Salvar alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Pendência de débito (anexo obrigatório) */}
+      <Dialog open={!!debitoPend} onOpenChange={(o) => !o && setDebitoPend(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar {debitoPend?.label} como pendente</DialogTitle>
+            <DialogDescription>Anexo e observação são obrigatórios.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Observação *</Label>
+              <Textarea rows={3} value={debObs} onChange={(e) => setDebObs(e.target.value)} />
+            </div>
+            <div>
+              <Label>Anexo (comprovante) *</Label>
+              <Input type="file" onChange={(e) => setDebFile(e.target.files?.[0] ?? null)} />
+              {debFile && <div className="text-xs text-muted-foreground mt-1">{debFile.name}</div>}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDebitoPend(null)}>Cancelar</Button>
+            <Button onClick={confirmarDebitoPendente} disabled={debSaving}>
+              {debSaving ? "Salvando…" : "Confirmar pendência"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       {/* Diálogo Admin: visualizar ou assumir */}
       <Dialog open={askAdmin} onOpenChange={setAskAdmin}>
