@@ -440,9 +440,21 @@ function DetalheChamado() {
         const depois = editForm[key] ?? "";
         if (antes === depois) continue;
         updates[key] = type === "number"
-          ? (depois ? Number(depois.replace(",", ".")) : null)
+          ? (depois ? Number(String(depois).replace(",", ".")) : null)
           : (depois || null);
-        mudancas.push({ campo: key as string, label, antes, depois });
+        mudancas.push({ campo: key as string, label, antes: String(antes), depois: String(depois) });
+      }
+      // Loja de estoque (select)
+      if ((editForm.loja_estoque ?? "") !== (atual.loja_estoque ?? "")) {
+        updates.loja_estoque = editForm.loja_estoque || null;
+        mudancas.push({ campo: "loja_estoque", label: "Loja de estoque", antes: atual.loja_estoque, depois: editForm.loja_estoque });
+      }
+      // Status (select)
+      if (editForm.status !== atual.status) {
+        updates.status = editForm.status;
+        if (editForm.status === "comprado") updates.concluido_em = new Date().toISOString();
+        if (editForm.status === "cancelado") updates.cancelado_em = new Date().toISOString();
+        mudancas.push({ campo: "status", label: "Status", antes: atual.status, depois: editForm.status });
       }
       if (mudancas.length === 0) { setEditOpen(false); return; }
       const { error } = await supabase.from("compras_chamados").update(updates as never).eq("id", chamado.id);
@@ -450,8 +462,8 @@ function DetalheChamado() {
       if (error) { toast.error(error.message); return; }
       for (const m of mudancas) {
         await registrarHistorico({
-          acao: "campo_alterado", campo: m.campo,
-          valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
+          acao: m.campo === "status" ? "status_alterado" : "campo_alterado",
+          campo: m.campo, valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
         });
       }
       toast.success(`${mudancas.length} campo(s) atualizado(s).`);
