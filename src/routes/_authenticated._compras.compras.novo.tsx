@@ -197,7 +197,7 @@ function NovoChamado() {
             <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
           </div>
           <div>
-            <Label>Valor avaliado (R$)</Label>
+            <Label>Valor avaliado (R$) *</Label>
             <Input value={form.valor_avaliado} onChange={(e) => set("valor_avaliado", e.target.value)} placeholder="0,00" />
           </div>
         </CardContent>
