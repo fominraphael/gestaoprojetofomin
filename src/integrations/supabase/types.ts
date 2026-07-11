@@ -21,7 +21,10 @@ export type Database = {
           created_at: string
           id: string
           label: string
+          obrigatorio: boolean
           ordem: number
+          tipo_campo: string | null
+          uf: string | null
           updated_at: string
           valor: string
         }
@@ -31,7 +34,10 @@ export type Database = {
           created_at?: string
           id?: string
           label: string
+          obrigatorio?: boolean
           ordem?: number
+          tipo_campo?: string | null
+          uf?: string | null
           updated_at?: string
           valor: string
         }
@@ -41,7 +47,10 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string
+          obrigatorio?: boolean
           ordem?: number
+          tipo_campo?: string | null
+          uf?: string | null
           updated_at?: string
           valor?: string
         }
@@ -52,6 +61,7 @@ export type Database = {
           ano_modelo: string | null
           assumido_em: string | null
           assumido_por: string | null
+          campos_extras: Json
           campos_liberados: string[] | null
           cancelado_em: string | null
           chassi: string | null
@@ -86,6 +96,7 @@ export type Database = {
           ano_modelo?: string | null
           assumido_em?: string | null
           assumido_por?: string | null
+          campos_extras?: Json
           campos_liberados?: string[] | null
           cancelado_em?: string | null
           chassi?: string | null
@@ -120,6 +131,7 @@ export type Database = {
           ano_modelo?: string | null
           assumido_em?: string | null
           assumido_por?: string | null
+          campos_extras?: Json
           campos_liberados?: string[] | null
           cancelado_em?: string | null
           chassi?: string | null

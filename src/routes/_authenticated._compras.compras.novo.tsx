@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft } from "lucide-react";
 
-interface Cadastro { valor: string; label: string; }
+interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number }
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
@@ -26,25 +26,30 @@ function NovoChamado() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
-  const [lojas, setLojas] = useState<Cadastro[]>([]);
+  const [lojasAll, setLojasAll] = useState<Cadastro[]>([]);
   const [tiposCompra, setTiposCompra] = useState<Cadastro[]>([]);
+  const [estados, setEstados] = useState<Cadastro[]>([]);
+  const [camposExtrasCad, setCamposExtrasCad] = useState<Cadastro[]>([]);
+  const [camposExtras, setCamposExtras] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("compras_cadastros")
-        .select("categoria,valor,label")
-        .in("categoria", ["loja_estoque", "tipo_compra"])
+        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem")
+        .in("categoria", ["loja_estoque", "tipo_compra", "estado_uf", "campo_formulario"])
         .eq("ativo", true)
         .order("ordem");
       const all = (data as any[]) ?? [];
-      setLojas(all.filter((x) => x.categoria === "loja_estoque"));
+      setLojasAll(all.filter((x) => x.categoria === "loja_estoque"));
       setTiposCompra(all.filter((x) => x.categoria === "tipo_compra"));
+      setEstados(all.filter((x) => x.categoria === "estado_uf"));
+      setCamposExtrasCad(all.filter((x) => x.categoria === "campo_formulario"));
     })();
   }, []);
 
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("PF");
-  const [estadoUf, setEstadoUf] = useState<EstadoUF>("GO");
+  const [estadoUf, setEstadoUf] = useState<string>("GO");
   const [tipoCompra, setTipoCompra] = useState<TipoCompra>("somente_compra");
   const [form, setForm] = useState({
     nome: "",
@@ -61,6 +66,13 @@ function NovoChamado() {
     observacao: "",
   });
 
+  // Reset loja quando muda o estado (loja é vinculada ao estado)
+  useEffect(() => { setForm((s) => ({ ...s, loja_estoque: "" })); }, [estadoUf]);
+
+  const lojas = lojasAll.filter((l) => !l.uf || l.uf.toUpperCase() === estadoUf.toUpperCase());
+  const camposDoEstado = camposExtrasCad.filter((c) => !c.uf || c.uf.toUpperCase() === estadoUf.toUpperCase());
+
+
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const salvar = async () => {
@@ -74,6 +86,13 @@ function NovoChamado() {
     const faltando = obrig.filter(([, v]) => !v.trim()).map(([k]) => k);
     if (faltando.length) {
       toast.error(`Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`);
+      return;
+    }
+    const camposObrigFalt = camposDoEstado
+      .filter((c) => c.obrigatorio && !(camposExtras[c.valor] ?? "").trim())
+      .map((c) => c.label);
+    if (camposObrigFalt.length) {
+      toast.error(`Preencha os campos obrigatórios do estado: ${camposObrigFalt.join(", ")}`);
       return;
     }
     setSaving(true);
@@ -98,7 +117,7 @@ function NovoChamado() {
         .insert({
           criado_por: user.id,
           tipo_pessoa: tipoPessoa,
-          estado_uf: estadoUf,
+          estado_uf: estadoUf as EstadoUF,
           tipo_compra: tipoCompra,
           nome: form.nome.trim(),
           cpf_cnpj: form.cpf_cnpj.trim(),
@@ -113,7 +132,8 @@ function NovoChamado() {
           valor_avaliado: form.valor_avaliado ? Number(form.valor_avaliado.replace(",", ".")) : null,
           observacao_compra: form.observacao.trim() || null,
           nf_status: tipoPessoa === "PJ" ? "aguardando_analise" : "nao_aplicavel",
-        })
+          campos_extras: camposExtras,
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -159,12 +179,18 @@ function NovoChamado() {
             </Select>
           </div>
           <div>
-            <Label>Estado (UF)</Label>
-            <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v as EstadoUF)}>
+            <Label>Estado (UF) *</Label>
+            <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="GO">Goiás</SelectItem>
-                <SelectItem value="ES">Espírito Santo</SelectItem>
+                {estados.length > 0 ? estados.map((e) => (
+                  <SelectItem key={e.valor} value={e.valor.toUpperCase()}>{e.label}</SelectItem>
+                )) : (
+                  <>
+                    <SelectItem value="GO">Goiás</SelectItem>
+                    <SelectItem value="ES">Espírito Santo</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -207,10 +233,10 @@ function NovoChamado() {
             <Input value={form.cor_externa} onChange={(e) => set("cor_externa", e.target.value)} />
           </div>
           <div>
-            <Label>Loja de estoque *</Label>
+            <Label>Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
             {lojas.length === 0 ? (
               <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
-                Nenhuma loja cadastrada.{" "}
+                Nenhuma loja cadastrada para {estadoUf}.{" "}
                 {isAdmin && (
                   <Link to="/compras/configuracoes" className="underline">
                     Cadastrar agora
@@ -219,7 +245,7 @@ function NovoChamado() {
               </div>
             ) : (
               <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
                 <SelectContent>
                   {lojas.map((l) => (
                     <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
@@ -238,6 +264,25 @@ function NovoChamado() {
           </div>
         </CardContent>
       </Card>
+
+      {camposDoEstado.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Campos adicionais — {estadoUf}</CardTitle></CardHeader>
+          <CardContent className="grid md:grid-cols-3 gap-4">
+            {camposDoEstado.map((c) => (
+              <div key={c.valor}>
+                <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+                <Input
+                  type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
+                  value={camposExtras[c.valor] ?? ""}
+                  onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
 
       <Card>
         <CardHeader><CardTitle>Tipo de compra</CardTitle></CardHeader>
