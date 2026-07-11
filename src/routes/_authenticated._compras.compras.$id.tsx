@@ -229,9 +229,13 @@ function DetalheChamado() {
       .update({ assumido_por: user.id, assumido_em: new Date().toISOString(), status: novoStatus })
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
-    await supabase.from("compras_historico").insert({
-      chamado_id: chamado.id, acao: "assumido", autor_id: user.id,
+    await registrarHistorico({
+      acao: "assumido",
+      valor_antes: chamado.status,
+      valor_depois: novoStatus,
+      campo: "status",
     });
+
     setModoAdmin("assumido");
     setAskAdmin(false);
     toast.success("Processo assumido.");
