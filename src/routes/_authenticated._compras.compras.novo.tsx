@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,15 +15,33 @@ import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft } from "lucide-react";
 
+interface Cadastro { valor: string; label: string; }
+
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
   component: NovoChamado,
 });
 
 function NovoChamado() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [lojas, setLojas] = useState<Cadastro[]>([]);
+  const [tiposCompra, setTiposCompra] = useState<Cadastro[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("compras_cadastros")
+        .select("categoria,valor,label")
+        .in("categoria", ["loja_estoque", "tipo_compra"])
+        .eq("ativo", true)
+        .order("ordem");
+      const all = (data as any[]) ?? [];
+      setLojas(all.filter((x) => x.categoria === "loja_estoque"));
+      setTiposCompra(all.filter((x) => x.categoria === "tipo_compra"));
+    })();
+  }, []);
 
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("PF");
   const [estadoUf, setEstadoUf] = useState<EstadoUF>("GO");
@@ -190,7 +208,25 @@ function NovoChamado() {
           </div>
           <div>
             <Label>Loja de estoque *</Label>
-            <Input value={form.loja_estoque} onChange={(e) => set("loja_estoque", e.target.value)} />
+            {lojas.length === 0 ? (
+              <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
+                Nenhuma loja cadastrada.{" "}
+                {isAdmin && (
+                  <Link to="/compras/configuracoes" className="underline">
+                    Cadastrar agora
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectContent>
+                  {lojas.map((l) => (
+                    <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>Código avaliação NBS *</Label>
@@ -209,8 +245,11 @@ function NovoChamado() {
           <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
             <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => (
-                <SelectItem key={k} value={k}>{TIPO_COMPRA_LABEL[k]}</SelectItem>
+              {(tiposCompra.length > 0
+                ? tiposCompra.map((t) => ({ valor: t.valor, label: t.label }))
+                : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({ valor: k, label: TIPO_COMPRA_LABEL[k] }))
+              ).map((t) => (
+                <SelectItem key={t.valor} value={t.valor}>{t.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>

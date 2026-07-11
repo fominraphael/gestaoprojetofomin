@@ -130,6 +130,7 @@ export const MODULES: ModuleDef[] = [
     navItems: [
       { to: "/compras", label: "Chamados", icon: ClipboardList },
       { to: "/compras/novo", label: "Novo chamado", icon: PlusCircle },
+      { to: "/compras/configuracoes", label: "Configurações", icon: Settings, perfis: ["Administrador"] },
     ],
   },
 ];

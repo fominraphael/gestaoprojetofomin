@@ -93,7 +93,6 @@ const CAMPOS_EDITAVEIS: { key: keyof EditForm; label: string; type?: "number" }[
   { key: "chassi", label: "Chassi" },
   { key: "modelo", label: "Modelo" },
   { key: "ano_modelo", label: "Ano/Modelo" },
-  { key: "loja_estoque", label: "Loja de estoque" },
   { key: "codigo_avaliacao_nbs", label: "Código avaliação NBS" },
   { key: "valor_avaliado", label: "Valor avaliado", type: "number" },
 ];
@@ -101,7 +100,7 @@ const CAMPOS_EDITAVEIS: { key: keyof EditForm; label: string; type?: "number" }[
 type EditForm = {
   nome: string; cpf_cnpj: string; placa: string; chassi: string;
   modelo: string; ano_modelo: string; loja_estoque: string;
-  codigo_avaliacao_nbs: string; valor_avaliado: string;
+  codigo_avaliacao_nbs: string; valor_avaliado: string; status: StatusChamado;
 };
 
 function chamadoToEdit(c: Chamado): EditForm {
@@ -110,6 +109,7 @@ function chamadoToEdit(c: Chamado): EditForm {
     chassi: c.chassi ?? "", modelo: c.modelo ?? "", ano_modelo: c.ano_modelo ?? "",
     loja_estoque: c.loja_estoque ?? "", codigo_avaliacao_nbs: c.codigo_avaliacao_nbs ?? "",
     valor_avaliado: c.valor_avaliado != null ? String(c.valor_avaliado) : "",
+    status: c.status,
   };
 }
 
@@ -147,6 +147,19 @@ function DetalheChamado() {
   const [debObs, setDebObs] = useState("");
   const [debFile, setDebFile] = useState<File | null>(null);
   const [debSaving, setDebSaving] = useState(false);
+  const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("compras_cadastros")
+        .select("valor,label")
+        .eq("categoria", "loja_estoque")
+        .eq("ativo", true)
+        .order("ordem");
+      setLojas((data as any) ?? []);
+    })();
+  }, []);
 
   const registrarHistorico = useCallback(
     async (payload: {
@@ -427,9 +440,21 @@ function DetalheChamado() {
         const depois = editForm[key] ?? "";
         if (antes === depois) continue;
         updates[key] = type === "number"
-          ? (depois ? Number(depois.replace(",", ".")) : null)
+          ? (depois ? Number(String(depois).replace(",", ".")) : null)
           : (depois || null);
-        mudancas.push({ campo: key as string, label, antes, depois });
+        mudancas.push({ campo: key as string, label, antes: String(antes), depois: String(depois) });
+      }
+      // Loja de estoque (select)
+      if ((editForm.loja_estoque ?? "") !== (atual.loja_estoque ?? "")) {
+        updates.loja_estoque = editForm.loja_estoque || null;
+        mudancas.push({ campo: "loja_estoque", label: "Loja de estoque", antes: atual.loja_estoque, depois: editForm.loja_estoque });
+      }
+      // Status (select)
+      if (editForm.status !== atual.status) {
+        updates.status = editForm.status;
+        if (editForm.status === "comprado") updates.concluido_em = new Date().toISOString();
+        if (editForm.status === "cancelado") updates.cancelado_em = new Date().toISOString();
+        mudancas.push({ campo: "status", label: "Status", antes: atual.status, depois: editForm.status });
       }
       if (mudancas.length === 0) { setEditOpen(false); return; }
       const { error } = await supabase.from("compras_chamados").update(updates as never).eq("id", chamado.id);
@@ -437,8 +462,8 @@ function DetalheChamado() {
       if (error) { toast.error(error.message); return; }
       for (const m of mudancas) {
         await registrarHistorico({
-          acao: "campo_alterado", campo: m.campo,
-          valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
+          acao: m.campo === "status" ? "status_alterado" : "campo_alterado",
+          campo: m.campo, valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
         });
       }
       toast.success(`${mudancas.length} campo(s) atualizado(s).`);
@@ -477,7 +502,7 @@ function DetalheChamado() {
           <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
           </Button>
-          {isAdmin && !finalizado && (
+          {isAdmin && (
             <Button size="sm" variant="outline" onClick={abrirEdicao}>
               <Pencil className="w-4 h-4 mr-2" /> Editar dados
             </Button>
@@ -756,11 +781,39 @@ function DetalheChamado() {
                   <Label>{label}</Label>
                   <Input
                     type={type ?? "text"}
-                    value={editForm[key]}
+                    value={editForm[key] as string}
                     onChange={(e) => setEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
                   />
                 </div>
               ))}
+              <div>
+                <Label>Loja de estoque</Label>
+                <Select
+                  value={editForm.loja_estoque}
+                  onValueChange={(v) => setEditForm((f) => f ? { ...f, loja_estoque: v } : f)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                  <SelectContent>
+                    {lojas.map((l) => (
+                      <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) => setEditForm((f) => f ? { ...f, status: v as StatusChamado } : f)}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as StatusChamado[]).map((s) => (
+                      <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
