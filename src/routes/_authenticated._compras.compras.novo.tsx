@@ -194,6 +194,27 @@ function NovoChamado() {
               </SelectContent>
             </Select>
           </div>
+          <div className="md:col-span-2">
+            <Label>Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
+            {lojas.length === 0 ? (
+              <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
+                Nenhuma loja cadastrada para {estadoUf}.{" "}
+                {isAdmin && (
+                  <Link to="/compras/configuracoes" className="underline">
+                    Cadastrar agora
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
+                <SelectContent>
+                  {lojas.map((l) => (
+                    <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           <div>
             <Label>Nome / Razão social *</Label>
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
