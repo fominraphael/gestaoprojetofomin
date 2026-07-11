@@ -473,7 +473,16 @@ function DetalheChamado() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
+            <History className="w-4 h-4 mr-2" /> Log ({historico.length})
+          </Button>
+          {isAdmin && !finalizado && (
+            <Button size="sm" variant="outline" onClick={abrirEdicao}>
+              <Pencil className="w-4 h-4 mr-2" /> Editar dados
+            </Button>
+          )}
+
           {readOnlyAdmin && (
             <Badge variant="outline" className="text-xs gap-1"><EyeIcon className="w-3 h-3" /> Somente visualização</Badge>
           )}
