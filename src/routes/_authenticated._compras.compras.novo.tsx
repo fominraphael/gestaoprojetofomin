@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,6 +14,8 @@ import {
 import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft } from "lucide-react";
+
+interface Cadastro { valor: string; label: string; }
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
