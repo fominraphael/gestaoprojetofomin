@@ -268,9 +268,8 @@ function DetalheChamado() {
           chamado_id: chamado.id, categoria: p.categoria, storage_path: path, enviado_por: user.id,
         });
         if (insErr) { toast.error(`${p.file.name}: ${insErr.message}`); continue; }
-        await supabase.from("compras_historico").insert({
-          chamado_id: chamado.id, acao: "documento_anexado", observacao: p.categoria, autor_id: user.id,
-        });
+        await registrarHistorico({ acao: "documento_anexado", observacao: p.file.name, campo: p.categoria });
+
       }
       setPending([]);
       toast.success("Documentos anexados.");
