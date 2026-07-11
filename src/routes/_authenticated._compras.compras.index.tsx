@@ -280,6 +280,19 @@ function ComprasIndex() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-56" title="Ordenar por"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ordem">Ordem manual (#)</SelectItem>
+            <SelectItem value="criado_desc">Mais recentes</SelectItem>
+            <SelectItem value="criado_asc">Mais antigos</SelectItem>
+            <SelectItem value="placa">Placa (A→Z)</SelectItem>
+            <SelectItem value="nome">Cliente (A→Z)</SelectItem>
+            <SelectItem value="valor_desc">Valor (maior)</SelectItem>
+            <SelectItem value="valor_asc">Valor (menor)</SelectItem>
+            <SelectItem value="status">Status</SelectItem>
+          </SelectContent>
+        </Select>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" title="Configurar colunas">
