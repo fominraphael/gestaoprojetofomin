@@ -233,10 +233,10 @@ function NovoChamado() {
             <Input value={form.cor_externa} onChange={(e) => set("cor_externa", e.target.value)} />
           </div>
           <div>
-            <Label>Loja de estoque *</Label>
+            <Label>Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
             {lojas.length === 0 ? (
               <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
-                Nenhuma loja cadastrada.{" "}
+                Nenhuma loja cadastrada para {estadoUf}.{" "}
                 {isAdmin && (
                   <Link to="/compras/configuracoes" className="underline">
                     Cadastrar agora
@@ -245,7 +245,7 @@ function NovoChamado() {
               </div>
             ) : (
               <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
                 <SelectContent>
                   {lojas.map((l) => (
                     <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
