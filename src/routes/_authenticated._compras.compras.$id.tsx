@@ -75,10 +75,42 @@ interface HistoricoItem {
   acao: string;
   motivo: string | null;
   observacao: string | null;
+  campo: string | null;
+  valor_antes: string | null;
+  valor_depois: string | null;
+  autor_id: string | null;
   created_at: string;
 }
 
 interface PendingFile { file: File; categoria: string; }
+
+const CAMPOS_EDITAVEIS: { key: keyof EditForm; label: string; type?: "number" }[] = [
+  { key: "nome", label: "Nome / Razão social" },
+  { key: "cpf_cnpj", label: "CPF / CNPJ" },
+  { key: "placa", label: "Placa" },
+  { key: "chassi", label: "Chassi" },
+  { key: "modelo", label: "Modelo" },
+  { key: "ano_modelo", label: "Ano/Modelo" },
+  { key: "loja_estoque", label: "Loja de estoque" },
+  { key: "codigo_avaliacao_nbs", label: "Código avaliação NBS" },
+  { key: "valor_avaliado", label: "Valor avaliado", type: "number" },
+];
+
+type EditForm = {
+  nome: string; cpf_cnpj: string; placa: string; chassi: string;
+  modelo: string; ano_modelo: string; loja_estoque: string;
+  codigo_avaliacao_nbs: string; valor_avaliado: string;
+};
+
+function chamadoToEdit(c: Chamado): EditForm {
+  return {
+    nome: c.nome ?? "", cpf_cnpj: c.cpf_cnpj ?? "", placa: c.placa ?? "",
+    chassi: c.chassi ?? "", modelo: c.modelo ?? "", ano_modelo: c.ano_modelo ?? "",
+    loja_estoque: c.loja_estoque ?? "", codigo_avaliacao_nbs: c.codigo_avaliacao_nbs ?? "",
+    valor_avaliado: c.valor_avaliado != null ? String(c.valor_avaliado) : "",
+  };
+}
+
 
 function DetalheChamado() {
   const { id } = useParams({ from: "/_authenticated/_compras/compras/$id" });
