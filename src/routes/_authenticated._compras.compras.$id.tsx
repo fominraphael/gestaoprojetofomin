@@ -147,6 +147,19 @@ function DetalheChamado() {
   const [debObs, setDebObs] = useState("");
   const [debFile, setDebFile] = useState<File | null>(null);
   const [debSaving, setDebSaving] = useState(false);
+  const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("compras_cadastros")
+        .select("valor,label")
+        .eq("categoria", "loja_estoque")
+        .eq("ativo", true)
+        .order("ordem");
+      setLojas((data as any) ?? []);
+    })();
+  }, []);
 
   const registrarHistorico = useCallback(
     async (payload: {
