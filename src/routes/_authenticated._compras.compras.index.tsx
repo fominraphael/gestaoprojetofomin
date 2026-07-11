@@ -81,6 +81,7 @@ function ComprasIndex() {
   const [status, setStatus] = useState<string>("todos");
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes");
   const [reordenando, setReordenando] = useState(false);
+  const [sortBy, setSortBy] = useState<"ordem" | "criado_desc" | "criado_asc" | "placa" | "nome" | "valor_desc" | "valor_asc" | "status">("ordem");
 
   // Lookups
   const [lojasMap, setLojasMap] = useState<Record<string, string>>({});
@@ -148,7 +149,7 @@ function ComprasIndex() {
   }, [rowsPorPeriodo]);
 
   const filtered = useMemo(() => {
-    return rowsPorPeriodo.filter((r) => {
+    const base = rowsPorPeriodo.filter((r) => {
       if (status !== "todos" && r.status !== status) return false;
       if (busca) {
         const q = busca.toLowerCase();
@@ -163,7 +164,27 @@ function ComprasIndex() {
       }
       return true;
     });
-  }, [rowsPorPeriodo, busca, status, solicitantes, lojasMap]);
+    const sorted = [...base];
+    const cmpDate = (a: string, b: string) => new Date(a).getTime() - new Date(b).getTime();
+    switch (sortBy) {
+      case "criado_desc": sorted.sort((a, b) => cmpDate(b.created_at, a.created_at)); break;
+      case "criado_asc": sorted.sort((a, b) => cmpDate(a.created_at, b.created_at)); break;
+      case "placa": sorted.sort((a, b) => (a.placa ?? "").localeCompare(b.placa ?? "")); break;
+      case "nome": sorted.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")); break;
+      case "valor_desc": sorted.sort((a, b) => (Number(b.valor_avaliado) || 0) - (Number(a.valor_avaliado) || 0)); break;
+      case "valor_asc": sorted.sort((a, b) => (Number(a.valor_avaliado) || 0) - (Number(b.valor_avaliado) || 0)); break;
+      case "status": sorted.sort((a, b) => a.status.localeCompare(b.status)); break;
+      case "ordem":
+      default:
+        sorted.sort((a, b) => {
+          const ao = a.ordem ?? Number.MAX_SAFE_INTEGER;
+          const bo = b.ordem ?? Number.MAX_SAFE_INTEGER;
+          if (ao !== bo) return ao - bo;
+          return cmpDate(b.created_at, a.created_at);
+        });
+    }
+    return sorted;
+  }, [rowsPorPeriodo, busca, status, solicitantes, lojasMap, sortBy]);
 
   async function mover(id: string, dir: -1 | 1) {
     const idx = filtered.findIndex((r) => r.id === id);
@@ -259,6 +280,19 @@ function ComprasIndex() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-56" title="Ordenar por"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ordem">Ordem manual (#)</SelectItem>
+            <SelectItem value="criado_desc">Mais recentes</SelectItem>
+            <SelectItem value="criado_asc">Mais antigos</SelectItem>
+            <SelectItem value="placa">Placa (A→Z)</SelectItem>
+            <SelectItem value="nome">Cliente (A→Z)</SelectItem>
+            <SelectItem value="valor_desc">Valor (maior)</SelectItem>
+            <SelectItem value="valor_asc">Valor (menor)</SelectItem>
+            <SelectItem value="status">Status</SelectItem>
+          </SelectContent>
+        </Select>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" title="Configurar colunas">
@@ -301,16 +335,16 @@ function ComprasIndex() {
                     <button
                       className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
                       onClick={() => mover(r.id, -1)}
-                      disabled={idx === 0 || reordenando}
-                      title="Subir"
+                      disabled={idx === 0 || reordenando || sortBy !== "ordem"}
+                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Subir"}
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
                       onClick={() => mover(r.id, 1)}
-                      disabled={idx === filtered.length - 1 || reordenando}
-                      title="Descer"
+                      disabled={idx === filtered.length - 1 || reordenando || sortBy !== "ordem"}
+                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Descer"}
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
