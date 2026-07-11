@@ -245,8 +245,11 @@ function NovoChamado() {
           <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
             <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => (
-                <SelectItem key={k} value={k}>{TIPO_COMPRA_LABEL[k]}</SelectItem>
+              {(tiposCompra.length > 0
+                ? tiposCompra.map((t) => ({ valor: t.valor, label: t.label }))
+                : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({ valor: k, label: TIPO_COMPRA_LABEL[k] }))
+              ).map((t) => (
+                <SelectItem key={t.valor} value={t.valor}>{t.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
