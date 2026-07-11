@@ -409,7 +409,45 @@ function DetalheChamado() {
     carregar();
   }
 
+  function abrirEdicao() {
+    if (!chamado) return;
+    setEditForm(chamadoToEdit(chamado));
+    setEditOpen(true);
+  }
+
+  async function salvarEdicaoAdmin() {
+    if (!chamado || !editForm) return;
+    setSavingEdit(true);
+    try {
+      const atual = chamadoToEdit(chamado);
+      const updates: Record<string, any> = {};
+      const mudancas: { campo: string; label: string; antes: string; depois: string }[] = [];
+      for (const { key, label, type } of CAMPOS_EDITAVEIS) {
+        const antes = atual[key] ?? "";
+        const depois = editForm[key] ?? "";
+        if (antes === depois) continue;
+        updates[key] = type === "number"
+          ? (depois ? Number(depois.replace(",", ".")) : null)
+          : (depois || null);
+        mudancas.push({ campo: key as string, label, antes, depois });
+      }
+      if (mudancas.length === 0) { setEditOpen(false); return; }
+      const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
+      if (error) { toast.error(error.message); return; }
+      for (const m of mudancas) {
+        await registrarHistorico({
+          acao: "campo_alterado", campo: m.campo,
+          valor_antes: m.antes, valor_depois: m.depois, observacao: m.label,
+        });
+      }
+      toast.success(`${mudancas.length} campo(s) atualizado(s).`);
+      setEditOpen(false);
+      carregar();
+    } finally { setSavingEdit(false); }
+  }
+
   if (loading) return <div className="p-6">Carregando…</div>;
+
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
