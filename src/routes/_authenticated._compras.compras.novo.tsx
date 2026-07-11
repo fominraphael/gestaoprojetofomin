@@ -23,9 +23,25 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
 });
 
 function NovoChamado() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [lojas, setLojas] = useState<Cadastro[]>([]);
+  const [tiposCompra, setTiposCompra] = useState<Cadastro[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("compras_cadastros")
+        .select("categoria,valor,label")
+        .in("categoria", ["loja_estoque", "tipo_compra"])
+        .eq("ativo", true)
+        .order("ordem");
+      const all = (data as any[]) ?? [];
+      setLojas(all.filter((x) => x.categoria === "loja_estoque"));
+      setTiposCompra(all.filter((x) => x.categoria === "tipo_compra"));
+    })();
+  }, []);
 
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("PF");
   const [estadoUf, setEstadoUf] = useState<EstadoUF>("GO");
