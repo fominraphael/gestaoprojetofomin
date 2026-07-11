@@ -272,24 +272,38 @@ function DetalheChamado() {
   async function enviarPending() {
     if (!chamado || !user || pending.length === 0) return;
     setUploading(true);
+    let ok = 0, fail = 0;
     try {
       for (const p of pending) {
         const path = `compras/${chamado.id}/${p.categoria}-${Date.now()}-${p.file.name}`;
         const { error: upErr } = await supabase.storage.from("documentos").upload(path, p.file);
-        if (upErr) { toast.error(`${p.file.name}: ${upErr.message}`); continue; }
+        if (upErr) { fail++; toast.error(`${p.file.name}: ${upErr.message}`); continue; }
         const { error: insErr } = await supabase.from("compras_documentos").insert({
           chamado_id: chamado.id, categoria: p.categoria, storage_path: path, enviado_por: user.id,
         });
-        if (insErr) { toast.error(`${p.file.name}: ${insErr.message}`); continue; }
+        if (insErr) { fail++; toast.error(`${p.file.name}: ${insErr.message}`); continue; }
         await registrarHistorico({ acao: "documento_anexado", observacao: p.file.name, campo: p.categoria });
-
+        ok++;
       }
       setPending([]);
-      toast.success("Documentos anexados.");
+      if (ok > 0) toast.success(`${ok} documento(s) anexado(s)${fail ? ` — ${fail} falha(s)` : ""}.`);
+      else if (fail > 0) toast.error(`Falha ao enviar ${fail} arquivo(s).`);
       carregar();
     } finally {
       setUploading(false);
     }
+  }
+
+  async function alterarStatus(novo: StatusChamado) {
+    if (!chamado || novo === chamado.status) return;
+    const updates: any = { status: novo };
+    if (novo === "comprado") updates.concluido_em = new Date().toISOString();
+    if (novo === "cancelado") updates.cancelado_em = new Date().toISOString();
+    const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
+    if (error) { toast.error(error.message); return; }
+    await registrarHistorico({ acao: "status_alterado", campo: "status", valor_antes: chamado.status, valor_depois: novo });
+    toast.success("Status atualizado.");
+    carregar();
   }
 
   async function abrirDoc(path: string) {
