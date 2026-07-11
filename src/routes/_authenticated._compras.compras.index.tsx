@@ -149,7 +149,7 @@ function ComprasIndex() {
   }, [rowsPorPeriodo]);
 
   const filtered = useMemo(() => {
-    return rowsPorPeriodo.filter((r) => {
+    const base = rowsPorPeriodo.filter((r) => {
       if (status !== "todos" && r.status !== status) return false;
       if (busca) {
         const q = busca.toLowerCase();
@@ -164,7 +164,27 @@ function ComprasIndex() {
       }
       return true;
     });
-  }, [rowsPorPeriodo, busca, status, solicitantes, lojasMap]);
+    const sorted = [...base];
+    const cmpDate = (a: string, b: string) => new Date(a).getTime() - new Date(b).getTime();
+    switch (sortBy) {
+      case "criado_desc": sorted.sort((a, b) => cmpDate(b.created_at, a.created_at)); break;
+      case "criado_asc": sorted.sort((a, b) => cmpDate(a.created_at, b.created_at)); break;
+      case "placa": sorted.sort((a, b) => (a.placa ?? "").localeCompare(b.placa ?? "")); break;
+      case "nome": sorted.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")); break;
+      case "valor_desc": sorted.sort((a, b) => (Number(b.valor_avaliado) || 0) - (Number(a.valor_avaliado) || 0)); break;
+      case "valor_asc": sorted.sort((a, b) => (Number(a.valor_avaliado) || 0) - (Number(b.valor_avaliado) || 0)); break;
+      case "status": sorted.sort((a, b) => a.status.localeCompare(b.status)); break;
+      case "ordem":
+      default:
+        sorted.sort((a, b) => {
+          const ao = a.ordem ?? Number.MAX_SAFE_INTEGER;
+          const bo = b.ordem ?? Number.MAX_SAFE_INTEGER;
+          if (ao !== bo) return ao - bo;
+          return cmpDate(b.created_at, a.created_at);
+        });
+    }
+    return sorted;
+  }, [rowsPorPeriodo, busca, status, solicitantes, lojasMap, sortBy]);
 
   async function mover(id: string, dir: -1 | 1) {
     const idx = filtered.findIndex((r) => r.id === id);
