@@ -687,6 +687,25 @@ function DetalheChamado() {
                           ))}
                         </div>
                       )}
+                      {!readOnlyAdmin && (
+                        <label className="inline-block mt-2">
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files) {
+                                const arr = Array.from(e.target.files);
+                                setPending((prev) => [...prev, ...arr.map((f) => ({ file: f, categoria: req.categoria }))]);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          <span className="cursor-pointer text-xs text-primary hover:underline inline-flex items-center gap-1">
+                            <Upload className="w-3 h-3" /> Anexar
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
