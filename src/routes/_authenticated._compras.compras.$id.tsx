@@ -718,7 +718,7 @@ function DetalheChamado() {
       <Card>
         <CardHeader><CardTitle>Débitos / itens de checagem</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {TIPOS_DEBITO.map((t) => {
               const atual = debitos.find((d) => d.tipo === t.key);
               return (
