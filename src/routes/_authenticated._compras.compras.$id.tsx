@@ -21,7 +21,9 @@ import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
   errorComponent: ModuleErrorBoundary,
