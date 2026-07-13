@@ -1441,6 +1441,9 @@ export function AdminUsuariosPage() {
                               </span>
                             )}
                           </div>
+                          {u.nome_fantasia && (
+                            <div className="text-xs text-muted-foreground mt-0.5">{u.nome_fantasia}</div>
+                          )}
                           {/* Render dynamic metadata summary */}
                           {u.campos_customizados && Object.keys(u.campos_customizados).length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mt-2">
