@@ -206,9 +206,10 @@ function ConfiguracoesCompras() {
             "140px",            // valor
             "minmax(200px,1fr)",// label
             t.usaUf ? "110px" : null,       // uf
+            t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
             t.usaGrupo ? "160px" : null,    // grupo
             t.usaTipoCampo ? "140px" : null,// tipo
-            t.usaTipoCampo ? "70px" : null, // obrig
+            (t.usaTipoCampo || t.usaObrigatorio) ? "70px" : null, // obrig
             "80px",             // ordem
             "100px",            // ativo
             "90px",             // ações
