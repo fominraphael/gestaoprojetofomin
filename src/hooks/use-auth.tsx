@@ -32,6 +32,7 @@ interface AuthContextType {
       campos_customizados?: Record<string, any>;
       cnpj?: string | null;
       email_recuperacao?: string | null;
+      nome_fantasia?: string | null;
     },
   ) => Promise<void>;
 
