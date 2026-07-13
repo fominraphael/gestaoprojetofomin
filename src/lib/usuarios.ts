@@ -25,6 +25,7 @@ export interface UsuarioSistema {
   role: "admin" | "user";
   status: "pending" | "approved" | "rejected";
   cnpj?: string | null;
+  nome_fantasia?: string | null;
   empresa_id?: string | null;
   modulos?: string[];
   active?: boolean;
