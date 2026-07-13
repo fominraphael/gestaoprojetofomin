@@ -155,7 +155,7 @@ export function AppSidebar() {
         </button>
 
         {!isCollapsed && (
-          <div className="px-3 pt-2 text-xs text-muted-foreground">v1.0</div>
+          <div className="px-3 pt-2 text-xs text-muted-foreground">{APP_VERSION}</div>
         )}
       </div>
     </aside>
