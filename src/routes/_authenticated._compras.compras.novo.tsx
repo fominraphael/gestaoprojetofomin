@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
-import { ArrowLeft, User, Car, MapPin, ShoppingBag, ListPlus, Store } from "lucide-react";
+import { ArrowLeft, User, Car, MapPin, ShoppingBag, Store, ChevronRight } from "lucide-react";
 
 interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number; grupo?: string | null }
 
