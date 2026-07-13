@@ -19,6 +19,7 @@ export type Database = {
           ativo: boolean
           categoria: string
           created_at: string
+          grupo: string | null
           id: string
           label: string
           obrigatorio: boolean
@@ -32,6 +33,7 @@ export type Database = {
           ativo?: boolean
           categoria: string
           created_at?: string
+          grupo?: string | null
           id?: string
           label: string
           obrigatorio?: boolean
@@ -45,6 +47,7 @@ export type Database = {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          grupo?: string | null
           id?: string
           label?: string
           obrigatorio?: boolean
