@@ -100,6 +100,7 @@ export function AdminUsuariosPage() {
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
+    nome_fantasia: "",
     tipo_usuario: "Lojista",
     pode_criar_admin: false,
     modulos: [] as string[],
