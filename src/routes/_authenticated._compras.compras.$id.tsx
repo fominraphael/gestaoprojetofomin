@@ -183,6 +183,8 @@ function DetalheChamado() {
   );
 
 
+  const [autores, setAutores] = useState<Record<string, string>>({});
+
   const carregar = useCallback(async () => {
     setLoading(true);
     const [c, d, deb, hist] = await Promise.all([
@@ -194,7 +196,15 @@ function DetalheChamado() {
     setChamado((c.data as any) ?? null);
     setDocumentos((d.data as any) ?? []);
     setDebitos((deb.data as any) ?? []);
-    setHistorico((hist.data as any) ?? []);
+    const histRows = ((hist.data as any) ?? []) as HistoricoItem[];
+    setHistorico(histRows);
+    const ids = Array.from(new Set(histRows.map((h: any) => h.autor_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, username, nome_fantasia").in("id", ids);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((p: any) => { map[p.id] = p.nome_fantasia || p.username; });
+      setAutores(map);
+    } else setAutores({});
     setLoading(false);
   }, [id]);
 
