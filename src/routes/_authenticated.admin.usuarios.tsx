@@ -242,6 +242,9 @@ export function AdminUsuariosPage() {
   const handleUpdateUser = async (userObj: UsuarioSistema) => {
     setActionLoading(userObj.id);
     try {
+      if (!userObj.nome_fantasia || !userObj.nome_fantasia.trim()) {
+        return showToast("error", "Nome ou nome fantasia é obrigatório.");
+      }
       const selectedType = userTypes.find((t) => t.nome === userObj.tipo_usuario);
       
       // Security Check: if changing/saving type admin but has no permissions
