@@ -152,6 +152,7 @@ export async function atualizarUsuario(
   if (updates.modulos !== undefined) payload.modulos = updates.modulos;
   if (updates.empresa_id !== undefined) payload.empresa_id = updates.empresa_id;
   if (updates.cnpj !== undefined) payload.cnpj = updates.cnpj;
+  if (updates.nome_fantasia !== undefined) payload.nome_fantasia = updates.nome_fantasia;
   if (updates.pode_criar_admin !== undefined) payload.pode_criar_admin = updates.pode_criar_admin;
   if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;
