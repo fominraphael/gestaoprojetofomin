@@ -1398,10 +1398,11 @@ export function AdminUsuariosPage() {
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-border bg-card text-muted-foreground font-medium">
-                    <th className="px-6 py-4">Login de acesso</th>
+                    <th className="px-6 py-4">Login / Nome</th>
                     <th className="px-6 py-4">Tipo de Usuário</th>
                     <th className="px-6 py-4">Módulos</th>
-                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-center">Conta</th>
+                    <th className="px-6 py-4 text-center">Aprovação</th>
                     <th className="px-6 py-4 text-right">Ações</th>
                   </tr>
                 </thead>
