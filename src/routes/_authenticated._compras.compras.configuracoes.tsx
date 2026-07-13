@@ -401,6 +401,16 @@ function ConfiguracoesCompras() {
                               </SelectContent>
                             </Select>
                           )}
+                          {t.usaTipoPessoa && (
+                            <Select value={i.tipo_pessoa ?? "AMBOS"} onValueChange={(v) => updateLocal(i.id, { tipo_pessoa: v === "AMBOS" ? null : (v as "PF" | "PJ") })}>
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="AMBOS">Ambos</SelectItem>
+                                <SelectItem value="PF">PF</SelectItem>
+                                <SelectItem value="PJ">PJ</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                           {t.usaGrupo && (
                             <Select value={i.grupo ?? "cliente"} onValueChange={(v) => updateLocal(i.id, { grupo: v })}>
                               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
@@ -421,8 +431,8 @@ function ConfiguracoesCompras() {
                               </SelectContent>
                             </Select>
                           )}
-                          {t.usaTipoCampo && (
-                            <label className="flex items-center justify-center gap-1 text-xs">
+                          {(t.usaTipoCampo || t.usaObrigatorio) && (
+                            <label className="flex items-center justify-center gap-1 text-xs" title="Obrigatório">
                               <input
                                 type="checkbox"
                                 checked={i.obrigatorio}
