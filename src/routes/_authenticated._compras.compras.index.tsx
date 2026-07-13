@@ -419,15 +419,57 @@ function ComprasIndex() {
                   </TableCell>
                 ))}
                 <TableCell>
-                  <Link to="/compras/$id" params={{ id: r.id }} className="text-primary text-sm hover:underline">
-                    Abrir
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/compras/$id" params={{ id: r.id }} className="text-primary text-sm hover:underline">
+                      Abrir
+                    </Link>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setExcluir(r)}
+                        className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                        title="Excluir chamado"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!excluir} onOpenChange={(o) => !o && setExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chamado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O chamado <b>{excluir?.placa}</b> ({excluir?.nome}) e todos os seus documentos, débitos e histórico serão removidos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!excluir) return;
+                setExcluindo(true);
+                const { error } = await supabase.from("compras_chamados").delete().eq("id", excluir.id);
+                setExcluindo(false);
+                if (error) { toast.error(error.message); return; }
+                toast.success("Chamado excluído");
+                setRows((prev) => prev.filter((x) => x.id !== excluir.id));
+                setExcluir(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
