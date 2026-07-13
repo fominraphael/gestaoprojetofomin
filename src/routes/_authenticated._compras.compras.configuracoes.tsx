@@ -97,7 +97,7 @@ function ConfiguracoesCompras() {
   const setNovoField = (cat: Categoria, patch: Partial<NovoForm>) =>
     setNovo((s) => ({ ...s, [cat]: { ...(s[cat] ?? NOVO_VAZIO), ...patch } }));
 
-  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean) {
+  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean) {
     const n = novo[cat] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
     if (usaUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
@@ -110,6 +110,7 @@ function ConfiguracoesCompras() {
       uf: usaUf ? n.uf.toUpperCase() : null,
       tipo_campo: usaTipoCampo ? n.tipo_campo : null,
       obrigatorio: usaTipoCampo ? n.obrigatorio : false,
+      grupo: usaGrupo ? n.grupo : null,
     } as any);
     if (error) { toast.error(error.message); return; }
     setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
@@ -119,7 +120,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
