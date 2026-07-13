@@ -174,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           campos_customizados: campos,
           cnpj,
           email_recuperacao: extras?.email_recuperacao ?? null,
+          nome_fantasia: extras?.nome_fantasia ?? null,
           modulos: [],
           status: "pending",
           ativo: true,
