@@ -274,6 +274,7 @@ export function AdminUsuariosPage() {
         pode_criar_admin: userObj.pode_criar_admin || false,
         campos_customizados: userObj.campos_customizados || {},
         email_recuperacao: userObj.email_recuperacao ?? null,
+        nome_fantasia: userObj.nome_fantasia?.trim() ?? null,
       };
       if (editPassword) {
         updates.password = editPassword;
