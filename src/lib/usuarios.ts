@@ -45,6 +45,7 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     role,
     status: (p.status ?? "approved") as any,
     cnpj: p.cnpj ?? null,
+    nome_fantasia: p.nome_fantasia ?? null,
     empresa_id: p.empresa_id ?? null,
     modulos: p.modulos ?? [],
     active: p.ativo ?? true,
