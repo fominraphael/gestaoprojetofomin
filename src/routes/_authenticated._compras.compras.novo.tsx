@@ -313,6 +313,56 @@ function NovoChamado() {
   );
 }
 
+const CORES_EXTERNAS = [
+  "Amarelo","Azul","Bege","Branca","Cinza","Dourada","Grená","Laranja",
+  "Marrom","Prata","Preta","Rosa","Roxa","Verde","Vermelha","Fantasia",
+];
+
+function formatMoeda(v: string) {
+  const digits = v.replace(/\D/g, "");
+  if (!digits) return "";
+  const n = parseInt(digits, 10);
+  const inteiro = Math.floor(n / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const cent = (n % 100).toString().padStart(2, "0");
+  return `R$ ${inteiro},${cent}`;
+}
+
+function formatPlaca(v: string) {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+  if (raw.length <= 3) return raw;
+  return `${raw.slice(0, 3)}-${raw.slice(3)}`;
+}
+
+function isPlacaValida(v: string) {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // Antiga: AAA9999 | Mercosul: AAA9A99
+  return /^[A-Z]{3}[0-9]{4}$/.test(raw) || /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
+}
+
+function formatCPF(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
+function formatCNPJ(v: string) {
+  // CNPJ alfanumérico: 12 primeiros alfanuméricos + 2 dígitos verificadores
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14);
+  const p1 = raw.slice(0, 2);
+  const p2 = raw.slice(2, 5);
+  const p3 = raw.slice(5, 8);
+  const p4 = raw.slice(8, 12);
+  const p5 = raw.slice(12, 14).replace(/[^0-9]/g, "");
+  let out = p1;
+  if (raw.length > 2) out += "." + p2;
+  if (raw.length > 5) out += "." + p3;
+  if (raw.length > 8) out += "/" + p4;
+  if (raw.length > 12) out += "-" + p5;
+  return out;
+}
+
 function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; value: string; onChange: (v: string) => void }) {
   if (tipo === "ano") {
     return (
@@ -338,6 +388,73 @@ function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; valu
           onChange(out);
         }}
       />
+    );
+  }
+  if (tipo === "moeda") {
+    return (
+      <Input
+        inputMode="numeric"
+        placeholder="R$ 0,00"
+        value={value}
+        onChange={(e) => onChange(formatMoeda(e.target.value))}
+      />
+    );
+  }
+  if (tipo === "placa") {
+    const invalida = value.length > 0 && !isPlacaValida(value);
+    return (
+      <Input
+        placeholder="ABC-1D23"
+        maxLength={8}
+        value={value}
+        onChange={(e) => onChange(formatPlaca(e.target.value))}
+        aria-invalid={invalida}
+        className={invalida ? "border-destructive" : undefined}
+      />
+    );
+  }
+  if (tipo === "cpf") {
+    return (
+      <Input
+        inputMode="numeric"
+        placeholder="000.000.000-00"
+        maxLength={14}
+        value={value}
+        onChange={(e) => onChange(formatCPF(e.target.value))}
+      />
+    );
+  }
+  if (tipo === "cnpj") {
+    return (
+      <Input
+        placeholder="00.000.000/0000-00"
+        maxLength={18}
+        value={value}
+        onChange={(e) => onChange(formatCNPJ(e.target.value))}
+      />
+    );
+  }
+  if (tipo === "renavam") {
+    return (
+      <Input
+        inputMode="numeric"
+        placeholder="00000000000"
+        maxLength={11}
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 11))}
+      />
+    );
+  }
+  if (tipo === "cor") {
+    return (
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+        <SelectContent>
+          {CORES_EXTERNAS.map((c) => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     );
   }
   return (
