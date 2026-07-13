@@ -524,7 +524,7 @@ function DetalheChamado() {
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
           </Button>
           {isAdmin && (
-            <Button size="sm" variant="outline" onClick={abrirEdicao}>
+            <Button size="sm" variant="outline" onClick={abrirEdicao} disabled={readOnlyAdmin}>
               <Pencil className="w-4 h-4 mr-2" /> Editar dados
             </Button>
           )}
@@ -537,7 +537,7 @@ function DetalheChamado() {
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           )}
-          {(isAdmin || isCriador) && !finalizado ? (
+          {isAdmin && !readOnlyAdmin && !finalizado ? (
             <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
               <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
