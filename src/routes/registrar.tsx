@@ -71,6 +71,11 @@ function RegistrarPage() {
       setError("Informe um e-mail de recuperação válido.");
       return;
     }
+    const nomeFant = nomeFantasia.trim();
+    if (!nomeFant) {
+      setError("Informe o Nome ou nome fantasia.");
+      return;
+    }
 
     // Validação de campos dinâmicos obrigatórios
     if (tipoAtual) {
@@ -92,6 +97,7 @@ function RegistrarPage() {
         campos_customizados: campos,
         cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
         email_recuperacao: emailRec,
+        nome_fantasia: nomeFant,
       });
 
       setSuccess(true);
