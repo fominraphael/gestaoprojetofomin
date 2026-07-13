@@ -1487,8 +1487,24 @@ export function AdminUsuariosPage() {
                               : "bg-red-500/10 border border-red-500/20 text-red-400"
                           }`}
                         >
-                          {u.active ? "Ativo" : "Inativo"}
+                          {u.active ? "Ativa" : "Inativa"}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {(() => {
+                          const s = (u.status ?? "approved") as string;
+                          const cfg: Record<string, { label: string; cls: string }> = {
+                            approved: { label: "Aprovado", cls: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
+                            pending: { label: "Pendente", cls: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
+                            rejected: { label: "Rejeitado", cls: "bg-red-500/10 border-red-500/20 text-red-400" },
+                          };
+                          const c = cfg[s] ?? cfg.approved;
+                          return (
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${c.cls}`}>
+                              {c.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
