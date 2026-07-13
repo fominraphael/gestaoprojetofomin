@@ -1359,7 +1359,7 @@ export function AdminUsuariosPage() {
                       type="button"
                       onClick={() => handleUpdateUser(showEditUser)}
                       disabled={actionLoading === showEditUser.id}
-                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all shadow-md shadow-primary/10"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-md shadow-primary/10"
                     >
                       {actionLoading === showEditUser.id ? "Salvando..." : "Salvar Alterações"}
                     </button>
@@ -1613,7 +1613,7 @@ export function AdminUsuariosPage() {
               })()}
 
               <div className="flex flex-col items-center gap-4 pt-2">
-                <label className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary text-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-muted/20">
+                <label className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-muted/20">
                   <Plus className="w-4 h-4 inline-block mr-2" />
                   Procurar Planilha
                   <input
@@ -1841,7 +1841,7 @@ export function AdminUsuariosPage() {
                       </button>
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-md bg-primary hover:bg-primary text-foreground"
+                        className="px-3 py-1 text-xs rounded-md bg-primary hover:bg-primary text-primary-foreground"
                       >
                         Cadastrar
                       </button>
@@ -2079,7 +2079,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateDocType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Tipo
               </button>
@@ -2126,7 +2126,7 @@ export function AdminUsuariosPage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold transition-all"
                     >
                       Criar Tipo
                     </button>
@@ -2189,7 +2189,7 @@ export function AdminUsuariosPage() {
               </div>
               <button
                 onClick={() => setShowCreateUserType(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 bg-gradient-to-r from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
               >
                 <Plus className="w-4 h-4" /> Novo Perfil
               </button>
@@ -2328,7 +2328,7 @@ export function AdminUsuariosPage() {
                     <button
                       type="submit"
                       disabled={actionLoading === "create-usertype"}
-                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold transition-all"
+                      className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold transition-all"
                     >
                       {actionLoading === "create-usertype" ? "Salvando..." : "Salvar Perfil"}
                     </button>
@@ -2461,7 +2461,7 @@ export function AdminUsuariosPage() {
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2509,7 +2509,7 @@ export function AdminUsuariosPage() {
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2629,7 +2629,7 @@ export function AdminUsuariosPage() {
 
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-foreground text-sm font-semibold disabled:opacity-50">
+                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
                   {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
                 </button>
               </div>
