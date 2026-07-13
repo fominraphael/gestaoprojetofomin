@@ -36,7 +36,7 @@ function NovoChamado() {
     (async () => {
       const { data } = await supabase
         .from("compras_cadastros")
-        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem")
+        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem,grupo")
         .in("categoria", ["loja_estoque", "tipo_compra", "estado_uf", "campo_formulario"])
         .eq("ativo", true)
         .order("ordem");
