@@ -214,11 +214,24 @@ function ConfiguracoesCompras() {
                         </div>
                       </>
                     )}
+                    {t.usaGrupo && (
+                      <div>
+                        <Label>Grupo</Label>
+                        <Select value={n.grupo} onValueChange={(v) => setNovoField(t.key, { grupo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {GRUPOS.map((g) => (
+                              <SelectItem key={g.valor} value={g.valor}>{g.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div>
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
                     </div>
-                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo)} className="md:col-span-1">
+                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo)} className="md:col-span-1">
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
                     </Button>
                   </div>
