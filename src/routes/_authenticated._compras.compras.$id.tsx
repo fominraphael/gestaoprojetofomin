@@ -386,6 +386,35 @@ function DetalheChamado() {
 
   async function enviarParaFila() {
     if (!chamado) return;
+
+    // Valida obrigatoriedade de documentos e itens de checagem/débitos
+    const { data: cad } = await supabase
+      .from("compras_cadastros")
+      .select("categoria,valor,label,uf,tipo_pessoa,obrigatorio")
+      .in("categoria", ["documento", "tipo_debito"])
+      .eq("ativo", true)
+      .eq("obrigatorio", true);
+    const uf = chamado.estado_uf;
+    const tp = chamado.tipo_pessoa;
+    const aplicaveis = ((cad as any[]) ?? []).filter(
+      (c) => (!c.uf || c.uf === uf) && (!c.tipo_pessoa || c.tipo_pessoa === tp),
+    );
+    const docsFalt = aplicaveis
+      .filter((c) => c.categoria === "documento")
+      .filter((c) => !(documentos.some((d) => d.categoria === c.valor)))
+      .map((c) => c.label);
+    const debFalt = aplicaveis
+      .filter((c) => c.categoria === "tipo_debito")
+      .filter((c) => !debitos.some((d) => d.tipo === c.valor))
+      .map((c) => c.label);
+    if (docsFalt.length || debFalt.length) {
+      const parts: string[] = [];
+      if (docsFalt.length) parts.push(`Documentos obrigatórios pendentes: ${docsFalt.join(", ")}`);
+      if (debFalt.length) parts.push(`Itens de checagem/débitos obrigatórios pendentes: ${debFalt.join(", ")}`);
+      toast.error(parts.join(" • "));
+      return;
+    }
+
     const { error } = await supabase
       .from("compras_chamados")
       .update({ status: "na_fila_central" })
