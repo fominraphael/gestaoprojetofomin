@@ -1052,17 +1052,23 @@ export function AdminUsuariosPage() {
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
-                      {["documentos", "gestao"].map((mod) => (
-                        <label key={mod} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                      {[
+                        { key: "gestao", label: "Gestão de Projetos" },
+                        { key: "documentos", label: "Documentos" },
+                        { key: "toyota", label: "Certificação Toyota" },
+                        { key: "compras", label: "Compras Seminovos" },
+                      ].map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={newUser.modulos.includes(mod)}
-                            onChange={() => toggleModuleInNewUser(mod)}
+                            checked={newUser.modulos.includes(key)}
+                            onChange={() => toggleModuleInNewUser(key)}
                             className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
                           />
-                          {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
+                          {label}
                         </label>
                       ))}
+
                     </div>
                   </div>
                   <div className="md:col-span-2 flex items-center justify-end gap-3 mt-4">
@@ -1288,17 +1294,23 @@ export function AdminUsuariosPage() {
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
-                      {["documentos", "gestao"].map((mod) => (
-                        <label key={mod} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                      {[
+                        { key: "gestao", label: "Gestão de Projetos" },
+                        { key: "documentos", label: "Documentos" },
+                        { key: "toyota", label: "Certificação Toyota" },
+                        { key: "compras", label: "Compras Seminovos" },
+                      ].map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={(showEditUser.modulos || []).includes(mod)}
-                            onChange={() => toggleModuleInEditUser(mod)}
+                            checked={(showEditUser.modulos || []).includes(key)}
+                            onChange={() => toggleModuleInEditUser(key)}
                             className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
                           />
-                          {mod === "gestao" ? "Gestão de Projetos" : "Documentos"}
+                          {label}
                         </label>
                       ))}
+
                     </div>
                   </div>
 
