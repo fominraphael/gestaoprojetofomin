@@ -193,6 +193,7 @@ export function AdminUsuariosPage() {
     e.preventDefault();
     if (!newUser.username) return showToast("error", "Login de acesso é obrigatório.");
     if (!newUser.password) return showToast("error", "Senha inicial é obrigatória.");
+    if (!newUser.nome_fantasia.trim()) return showToast("error", "Nome ou nome fantasia é obrigatório.");
 
     // Dynamic field validation
     const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
