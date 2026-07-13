@@ -162,6 +162,22 @@ function RegistrarPage() {
               </div>
 
               <div>
+                <label htmlFor="reg-nome-fantasia" className="block text-sm font-medium text-foreground mb-1.5">
+                  Nome ou nome fantasia <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="reg-nome-fantasia"
+                  type="text"
+                  value={nomeFantasia}
+                  onChange={(e) => setNomeFantasia(e.target.value)}
+                  placeholder="Seu nome ou nome fantasia"
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                />
+              </div>
+
+
+              <div>
                 <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
                   Senha
                 </label>
