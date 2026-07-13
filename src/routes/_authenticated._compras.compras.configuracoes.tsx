@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 
 type Categoria =
   | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario";
+  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento";
 
 interface Item {
   id: string;
@@ -37,14 +37,20 @@ interface Item {
   tipo_campo: string | null;
   obrigatorio: boolean;
   grupo: string | null;
+  tipo_pessoa: "PF" | "PJ" | null;
 }
 
-const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean; multiUf?: boolean }[] = [
+const TABS: {
+  key: Categoria; title: string; hint: string;
+  usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean;
+  multiUf?: boolean; usaObrigatorio?: boolean; usaTipoPessoa?: boolean; multiTipoPessoa?: boolean;
+}[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
   { key: "campo_formulario", title: "Campos", hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.", usaUf: true, usaTipoCampo: true, usaGrupo: true, multiUf: true },
+  { key: "documento", title: "Documentos", hint: "Documentos exigidos por estado e pessoa (PF/PJ). Marque um ou vários estados e PF/PJ — o item é replicado para cada combinação. Marque como obrigatório para bloquear o envio à Central sem anexo.", usaUf: true, multiUf: true, usaObrigatorio: true, usaTipoPessoa: true, multiTipoPessoa: true },
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
-  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado." },
+  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
   { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
   { key: "motivo_cancelamento", title: "Motivos de cancelamento", hint: "Aparecem ao cancelar um chamado." },
 ];
@@ -66,12 +72,15 @@ const GRUPOS = [
   { valor: "veiculo", label: "Veículo" },
 ];
 
+const TIPOS_PESSOA_OPT: ("PF" | "PJ")[] = ["PF", "PJ"];
+
 interface NovoForm {
   valor: string; label: string; ordem: string;
   uf: string; ufs: string[]; tipo_campo: string; obrigatorio: boolean; grupo: string;
+  tipos_pessoa: ("PF" | "PJ")[];
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente" };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [] };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -107,23 +116,43 @@ function ConfiguracoesCompras() {
     setNovoField(cat, { ufs: next });
   };
 
-  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean, multiUf?: boolean) {
+  const toggleTipoPessoa = (cat: Categoria, tp: "PF" | "PJ") => {
+    const cur = novo[cat]?.tipos_pessoa ?? [];
+    const next = cur.includes(tp) ? cur.filter((x) => x !== tp) : [...cur, tp];
+    setNovoField(cat, { tipos_pessoa: next });
+  };
+
+  async function adicionar(cat: Categoria, tab: (typeof TABS)[number]) {
     const n = novo[cat] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
-    if (usaUf && !multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
-    if (usaUf && multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
+    if (tab.usaUf && !tab.multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
+    if (tab.usaUf && tab.multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
     const valor = n.valor.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
-    const ufsAlvo = multiUf ? n.ufs.map((u) => u.toUpperCase()) : usaUf ? [n.uf.toUpperCase()] : [null as any];
-    const rows = ufsAlvo.map((uf) => ({
-      categoria: cat,
-      valor,
-      label: n.label.trim(),
-      ordem: Number(n.ordem) || 0,
-      uf,
-      tipo_campo: usaTipoCampo ? n.tipo_campo : null,
-      obrigatorio: usaTipoCampo ? n.obrigatorio : false,
-      grupo: usaGrupo ? n.grupo : null,
-    }));
+    const ufsAlvo: (string | null)[] = tab.multiUf
+      ? n.ufs.map((u) => u.toUpperCase())
+      : tab.usaUf ? [n.uf.toUpperCase()] : [null];
+    // Se multiTipoPessoa e nenhum selecionado => NULL (aplica a ambos)
+    const tpsAlvo: (("PF" | "PJ") | null)[] = tab.usaTipoPessoa
+      ? (tab.multiTipoPessoa
+          ? (n.tipos_pessoa.length === 0 ? [null] : n.tipos_pessoa)
+          : [null])
+      : [null];
+    const rows: any[] = [];
+    for (const uf of ufsAlvo) {
+      for (const tp of tpsAlvo) {
+        rows.push({
+          categoria: cat,
+          valor,
+          label: n.label.trim(),
+          ordem: Number(n.ordem) || 0,
+          uf,
+          tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
+          obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
+          grupo: tab.usaGrupo ? n.grupo : null,
+          tipo_pessoa: tp,
+        });
+      }
+    }
     const { error } = await supabase.from("compras_cadastros").insert(rows as any);
     if (error) { toast.error(error.message); return; }
     setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
@@ -133,7 +162,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
@@ -177,9 +206,10 @@ function ConfiguracoesCompras() {
             "140px",            // valor
             "minmax(200px,1fr)",// label
             t.usaUf ? "110px" : null,       // uf
+            t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
             t.usaGrupo ? "160px" : null,    // grupo
             t.usaTipoCampo ? "140px" : null,// tipo
-            t.usaTipoCampo ? "70px" : null, // obrig
+            (t.usaTipoCampo || t.usaObrigatorio) ? "70px" : null, // obrig
             "80px",             // ordem
             "100px",            // ativo
             "90px",             // ações
@@ -259,6 +289,35 @@ function ConfiguracoesCompras() {
                         </Popover>
                       </div>
                     )}
+                    {t.usaTipoPessoa && t.multiTipoPessoa && (
+                      <div className="w-[200px]">
+                        <Label>Pessoa (PF/PJ)</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between font-normal">
+                              <span className="truncate">
+                                {n.tipos_pessoa.length === 0 ? "Ambos (PF e PJ)" : n.tipos_pessoa.join(" + ")}
+                              </span>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[200px] p-2" align="start">
+                            <div className="space-y-1">
+                              {TIPOS_PESSOA_OPT.map((tp) => (
+                                <label key={tp} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm">
+                                  <Checkbox
+                                    checked={n.tipos_pessoa.includes(tp)}
+                                    onCheckedChange={() => toggleTipoPessoa(t.key, tp)}
+                                  />
+                                  <span className="flex-1">{tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}</span>
+                                  <span className="text-xs text-muted-foreground">{tp}</span>
+                                </label>
+                              ))}
+                              <p className="text-[10px] text-muted-foreground px-2 pt-1">Nenhum marcado = aplica a ambos.</p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
                     {t.usaGrupo && (
                       <div className="w-[180px]">
                         <Label>Grupo</Label>
@@ -273,34 +332,34 @@ function ConfiguracoesCompras() {
                       </div>
                     )}
                     {t.usaTipoCampo && (
-                      <>
-                        <div className="w-[170px]">
-                          <Label>Tipo</Label>
-                          <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {TIPOS_CAMPO.map((tc) => (
-                                <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-center gap-2 h-10 px-2">
-                          <input
-                            id={`obr-${t.key}`}
-                            type="checkbox"
-                            checked={n.obrigatorio}
-                            onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
-                          />
-                          <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
-                        </div>
-                      </>
+                      <div className="w-[170px]">
+                        <Label>Tipo</Label>
+                        <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {TIPOS_CAMPO.map((tc) => (
+                              <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {(t.usaTipoCampo || t.usaObrigatorio) && (
+                      <div className="flex items-center gap-2 h-10 px-2">
+                        <input
+                          id={`obr-${t.key}`}
+                          type="checkbox"
+                          checked={n.obrigatorio}
+                          onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
+                        />
+                        <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
+                      </div>
                     )}
                     <div className="w-[90px]">
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
                     </div>
-                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo, t.multiUf)}>
+                    <Button onClick={() => adicionar(t.key, t)}>
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
                     </Button>
                   </div>
@@ -317,9 +376,10 @@ function ConfiguracoesCompras() {
                         <div>Chave</div>
                         <div>Rótulo</div>
                         {t.usaUf && <div>UF</div>}
+                        {t.usaTipoPessoa && <div>PF/PJ</div>}
                         {t.usaGrupo && <div>Grupo</div>}
                         {t.usaTipoCampo && <div>Tipo</div>}
-                        {t.usaTipoCampo && <div>Obrig.</div>}
+                        {(t.usaTipoCampo || t.usaObrigatorio) && <div>Obrig.</div>}
                         <div>Ordem</div>
                         <div>Status</div>
                         <div className="text-right">Ações</div>
@@ -339,6 +399,16 @@ function ConfiguracoesCompras() {
                                 {ufs.map((u) => (
                                   <SelectItem key={u.id} value={u.valor.toUpperCase()}>{u.valor.toUpperCase()}</SelectItem>
                                 ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {t.usaTipoPessoa && (
+                            <Select value={i.tipo_pessoa ?? "AMBOS"} onValueChange={(v) => updateLocal(i.id, { tipo_pessoa: v === "AMBOS" ? null : (v as "PF" | "PJ") })}>
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="AMBOS">Ambos</SelectItem>
+                                <SelectItem value="PF">PF</SelectItem>
+                                <SelectItem value="PJ">PJ</SelectItem>
                               </SelectContent>
                             </Select>
                           )}
@@ -362,8 +432,8 @@ function ConfiguracoesCompras() {
                               </SelectContent>
                             </Select>
                           )}
-                          {t.usaTipoCampo && (
-                            <label className="flex items-center justify-center gap-1 text-xs">
+                          {(t.usaTipoCampo || t.usaObrigatorio) && (
+                            <label className="flex items-center justify-center gap-1 text-xs" title="Obrigatório">
                               <input
                                 type="checkbox"
                                 checked={i.obrigatorio}

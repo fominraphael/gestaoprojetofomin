@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { STATUS_LABEL, TIPO_COMPRA_LABEL, type StatusChamado } from "@/lib/compras";
 import {
-  Plus, Search, Settings2, ArrowUp, ArrowDown, Columns3,
+  Plus, Search, ArrowUp, ArrowDown, Columns3,
   ShoppingCart, Clock, AlertTriangle, CheckCircle2, XCircle, Inbox, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +38,7 @@ interface ChamadoRow {
   valor_avaliado: number | null;
   loja_estoque: string | null;
   criado_por: string | null;
+  assumido_por: string | null;
   ordem: number | null;
 }
 
@@ -50,13 +51,14 @@ const STATUS_VARIANT: Record<StatusChamado, string> = {
   cancelado: "bg-red-500/15 text-red-300 border-red-500/30",
 };
 
-type ColId = "ordem" | "placa" | "nome" | "solicitante" | "loja" | "tipo_pessoa" | "estado_uf" | "tipo_compra" | "valor" | "status" | "criado_em";
+type ColId = "ordem" | "placa" | "nome" | "solicitante" | "central" | "loja" | "tipo_pessoa" | "estado_uf" | "tipo_compra" | "valor" | "status" | "criado_em";
 
 const COLUNAS: { id: ColId; label: string }[] = [
   { id: "ordem", label: "#" },
   { id: "placa", label: "Placa" },
   { id: "nome", label: "Cliente" },
   { id: "solicitante", label: "Solicitante" },
+  { id: "central", label: "Central" },
   { id: "loja", label: "Loja" },
   { id: "tipo_pessoa", label: "PF/PJ" },
   { id: "estado_uf", label: "UF" },
@@ -65,75 +67,105 @@ const COLUNAS: { id: ColId; label: string }[] = [
   { id: "status", label: "Status" },
   { id: "criado_em", label: "Criado em" },
 ];
-const COLUNAS_PADRAO: ColId[] = ["ordem", "placa", "nome", "solicitante", "loja", "estado_uf", "tipo_compra", "valor", "status", "criado_em"];
+const COLUNAS_PADRAO: ColId[] = ["ordem", "placa", "nome", "solicitante", "central", "loja", "estado_uf", "tipo_compra", "valor", "status", "criado_em"];
 
-type PeriodoFiltro = "hoje" | "semana" | "mes" | "todos";
+// Period filter: 'hoje' | 'semana7' | 'mes_atual' | 'YYYY-MM'
+type PeriodoFiltro = "hoje" | "semana7" | "mes_atual" | string;
 
 function inicioDoDia(d = new Date()) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
-function inicioDaSemana(d = new Date()) { const x = inicioDoDia(d); x.setDate(x.getDate() - x.getDay()); return x; }
 function inicioDoMes(d = new Date()) { const x = inicioDoDia(d); x.setDate(1); return x; }
+function seteDiasAtras() { const x = inicioDoDia(); x.setDate(x.getDate() - 6); return x; }
+function ymKey(d: Date) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+function ymLabel(ym: string) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1, 1);
+  return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }).replace(/^\w/, (c) => c.toUpperCase());
+}
 
 function ComprasIndex() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<ChamadoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [status, setStatus] = useState<string>("todos");
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes");
+  const [status, setStatus] = useState<string>("na_fila_central");
+  const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes_atual");
   const [reordenando, setReordenando] = useState(false);
-  const [sortBy, setSortBy] = useState<"ordem" | "criado_desc" | "criado_asc" | "placa" | "nome" | "valor_desc" | "valor_asc" | "status">("ordem");
+  const [sortBy, setSortBy] = useState<"criado_desc" | "criado_asc" | "placa" | "nome" | "valor_desc" | "valor_asc" | "status" | "ordem">("criado_desc");
 
   // Lookups
   const [lojasMap, setLojasMap] = useState<Record<string, string>>({});
-  const [solicitantes, setSolicitantes] = useState<Record<string, string>>({});
+  const [usuarios, setUsuarios] = useState<Record<string, string>>({});
 
   const [colunasVisiveis, setColunasVisiveis] = useState<ColId[]>(() => {
     if (typeof window === "undefined") return COLUNAS_PADRAO;
     try {
-      const raw = localStorage.getItem("compras-colunas");
+      const raw = localStorage.getItem("compras-colunas-v2");
       if (raw) return JSON.parse(raw);
     } catch {}
     return COLUNAS_PADRAO;
   });
 
   useEffect(() => {
-    try { localStorage.setItem("compras-colunas", JSON.stringify(colunasVisiveis)); } catch {}
+    try { localStorage.setItem("compras-colunas-v2", JSON.stringify(colunasVisiveis)); } catch {}
   }, [colunasVisiveis]);
 
   async function carregar() {
     setLoading(true);
     const { data } = await supabase
       .from("compras_chamados")
-      .select("id, placa, nome, tipo_pessoa, tipo_compra, estado_uf, status, created_at, valor_avaliado, loja_estoque, criado_por, ordem")
-      .order("ordem", { ascending: true, nullsFirst: false })
+      .select("id, placa, nome, tipo_pessoa, tipo_compra, estado_uf, status, created_at, valor_avaliado, loja_estoque, criado_por, assumido_por, ordem")
       .order("created_at", { ascending: false });
     const list = ((data ?? []) as any) as ChamadoRow[];
     setRows(list);
 
-    // Lookups
+    const userIds = Array.from(new Set(
+      list.flatMap((r) => [r.criado_por, r.assumido_por]).filter(Boolean),
+    )) as string[];
+
     const [{ data: cad }, { data: prof }] = await Promise.all([
       supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque"),
-      supabase.from("profiles").select("id, username").in("id", Array.from(new Set(list.map((r) => r.criado_por).filter(Boolean))) as string[]),
+      userIds.length
+        ? supabase.from("profiles").select("id, username, nome_fantasia").in("id", userIds)
+        : Promise.resolve({ data: [] as any[] } as any),
     ]);
     const lm: Record<string, string> = {};
     (cad ?? []).forEach((c: any) => { lm[c.valor] = c.label; });
     setLojasMap(lm);
-    const sm: Record<string, string> = {};
-    (prof ?? []).forEach((p: any) => { sm[p.id] = p.username; });
-    setSolicitantes(sm);
+    const um: Record<string, string> = {};
+    (prof ?? []).forEach((p: any) => { um[p.id] = p.nome_fantasia || p.username; });
+    setUsuarios(um);
 
     setLoading(false);
   }
 
   useEffect(() => { carregar(); }, []);
 
+  // Meses anteriores com registros (exclui mês atual)
+  const mesesAnteriores = useMemo(() => {
+    const atual = ymKey(new Date());
+    const set = new Set<string>();
+    for (const r of rows) {
+      const k = ymKey(new Date(r.created_at));
+      if (k !== atual) set.add(k);
+    }
+    return Array.from(set).sort().reverse();
+  }, [rows]);
+
   const rowsPorPeriodo = useMemo(() => {
-    if (periodo === "todos") return rows;
-    const inicio =
-      periodo === "hoje" ? inicioDoDia() :
-      periodo === "semana" ? inicioDaSemana() :
-      inicioDoMes();
-    return rows.filter((r) => new Date(r.created_at) >= inicio);
+    if (periodo === "hoje") {
+      const inicio = inicioDoDia();
+      return rows.filter((r) => new Date(r.created_at) >= inicio);
+    }
+    if (periodo === "semana7") {
+      const inicio = seteDiasAtras();
+      return rows.filter((r) => new Date(r.created_at) >= inicio);
+    }
+    if (periodo === "mes_atual") {
+      const inicio = inicioDoMes();
+      return rows.filter((r) => new Date(r.created_at) >= inicio);
+    }
+    // mês específico YYYY-MM
+    return rows.filter((r) => ymKey(new Date(r.created_at)) === periodo);
   }, [rows, periodo]);
 
   const kpis = useMemo(() => {
@@ -153,12 +185,14 @@ function ComprasIndex() {
       if (status !== "todos" && r.status !== status) return false;
       if (busca) {
         const q = busca.toLowerCase();
-        const solic = r.criado_por ? (solicitantes[r.criado_por] ?? "") : "";
+        const solic = r.criado_por ? (usuarios[r.criado_por] ?? "") : "";
+        const central = r.assumido_por ? (usuarios[r.assumido_por] ?? "") : "";
         const loja = r.loja_estoque ? (lojasMap[r.loja_estoque] ?? r.loja_estoque) : "";
         return (
           r.placa?.toLowerCase().includes(q) ||
           r.nome?.toLowerCase().includes(q) ||
           solic.toLowerCase().includes(q) ||
+          central.toLowerCase().includes(q) ||
           loja.toLowerCase().includes(q)
         );
       }
@@ -167,7 +201,6 @@ function ComprasIndex() {
     const sorted = [...base];
     const cmpDate = (a: string, b: string) => new Date(a).getTime() - new Date(b).getTime();
     switch (sortBy) {
-      case "criado_desc": sorted.sort((a, b) => cmpDate(b.created_at, a.created_at)); break;
       case "criado_asc": sorted.sort((a, b) => cmpDate(a.created_at, b.created_at)); break;
       case "placa": sorted.sort((a, b) => (a.placa ?? "").localeCompare(b.placa ?? "")); break;
       case "nome": sorted.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")); break;
@@ -175,16 +208,19 @@ function ComprasIndex() {
       case "valor_asc": sorted.sort((a, b) => (Number(a.valor_avaliado) || 0) - (Number(b.valor_avaliado) || 0)); break;
       case "status": sorted.sort((a, b) => a.status.localeCompare(b.status)); break;
       case "ordem":
-      default:
         sorted.sort((a, b) => {
           const ao = a.ordem ?? Number.MAX_SAFE_INTEGER;
           const bo = b.ordem ?? Number.MAX_SAFE_INTEGER;
           if (ao !== bo) return ao - bo;
           return cmpDate(b.created_at, a.created_at);
         });
+        break;
+      case "criado_desc":
+      default:
+        sorted.sort((a, b) => cmpDate(b.created_at, a.created_at));
     }
     return sorted;
-  }, [rowsPorPeriodo, busca, status, solicitantes, lojasMap, sortBy]);
+  }, [rowsPorPeriodo, busca, status, usuarios, lojasMap, sortBy]);
 
   async function mover(id: string, dir: -1 | 1) {
     const idx = filtered.findIndex((r) => r.id === id);
@@ -192,7 +228,6 @@ function ComprasIndex() {
     if (!alvo) return;
     setReordenando(true);
     try {
-      // Normalize: se não tem ordem, atribui pela posição atual
       const list = [...filtered];
       list.forEach((r, i) => { if (r.ordem == null) r.ordem = (i + 1) * 10; });
       const atual = list[idx];
@@ -200,13 +235,11 @@ function ComprasIndex() {
       const tmp = atual.ordem!;
       atual.ordem = outro.ordem!;
       outro.ordem = tmp;
-      // Persistir os dois
       const upd = await Promise.all([
         supabase.from("compras_chamados").update({ ordem: atual.ordem }).eq("id", atual.id),
         supabase.from("compras_chamados").update({ ordem: outro.ordem }).eq("id", outro.id),
       ]);
       if (upd.some((r) => r.error)) throw new Error("Falha ao reordenar");
-      // Atualizar estado local com nova ordem para todos
       setRows((prev) => prev.map((r) => {
         const found = list.find((l) => l.id === r.id);
         return found ? { ...r, ordem: found.ordem } : r;
@@ -239,7 +272,6 @@ function ComprasIndex() {
 
   return (
     <div className="p-6 space-y-4 max-w-none">
-      {/* Header compacto */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -249,12 +281,14 @@ function ComprasIndex() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFiltro)}>
-            <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 w-52"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="hoje">Hoje</SelectItem>
-              <SelectItem value="semana">Semana</SelectItem>
-              <SelectItem value="mes">Mês</SelectItem>
-              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="semana7">Últimos 7 dias</SelectItem>
+              <SelectItem value="mes_atual">Mês atual</SelectItem>
+              {mesesAnteriores.map((ym) => (
+                <SelectItem key={ym} value={ym}>{ymLabel(ym)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button size="sm" variant="outline" onClick={() => navigate({ to: "/compras/novo" })} title="Novo chamado">
@@ -263,7 +297,6 @@ function ComprasIndex() {
         </div>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KpiCard icon={Inbox} label="Total" valor={kpis.total} onClick={() => setStatus("todos")} ativo={status === "todos"} />
         <KpiCard icon={Loader2} label="Em fluxo" valor={kpis.emFluxo} tint="text-blue-500" onClick={() => setStatus("em_analise")} ativo={status === "em_analise"} />
@@ -273,13 +306,12 @@ function ComprasIndex() {
         <KpiCard icon={Clock} label="Valor comprado" valor={`R$ ${kpis.valorComprado.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`} tint="text-emerald-500" />
       </div>
 
-      {/* Filtros linha */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
           <Input
-            placeholder="Buscar por placa, cliente, solicitante ou loja"
-            className="pl-8 w-80"
+            placeholder="Buscar por placa, cliente, solicitante, central ou loja"
+            className="pl-8 w-96"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
@@ -296,7 +328,6 @@ function ComprasIndex() {
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
           <SelectTrigger className="w-56" title="Ordenar por"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ordem">Ordem manual (#)</SelectItem>
             <SelectItem value="criado_desc">Mais recentes</SelectItem>
             <SelectItem value="criado_asc">Mais antigos</SelectItem>
             <SelectItem value="placa">Placa (A→Z)</SelectItem>
@@ -304,6 +335,7 @@ function ComprasIndex() {
             <SelectItem value="valor_desc">Valor (maior)</SelectItem>
             <SelectItem value="valor_asc">Valor (menor)</SelectItem>
             <SelectItem value="status">Status</SelectItem>
+            <SelectItem value="ordem">Ordem manual (#)</SelectItem>
           </SelectContent>
         </Select>
         <Popover>
@@ -351,46 +383,31 @@ function ComprasIndex() {
         </Popover>
       </div>
 
-      {/* Tabela */}
       <div className="rounded-md border border-border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">Mover</TableHead>
               {colsRender.map((c) => <TableHead key={c.id}>{c.label}</TableHead>)}
               <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={colsRender.length + 2} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={colsRender.length + 1} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={colsRender.length + 2} className="text-center py-8 text-muted-foreground">Nenhum chamado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={colsRender.length + 1} className="text-center py-8 text-muted-foreground">Nenhum chamado.</TableCell></TableRow>
             ) : filtered.map((r, idx) => (
               <TableRow key={r.id}>
-                <TableCell>
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
-                      onClick={() => mover(r.id, -1)}
-                      disabled={idx === 0 || reordenando || sortBy !== "ordem"}
-                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Subir"}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
-                      onClick={() => mover(r.id, 1)}
-                      disabled={idx === filtered.length - 1 || reordenando || sortBy !== "ordem"}
-                      title={sortBy !== "ordem" ? "Selecione 'Ordem manual' para reordenar" : "Descer"}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </TableCell>
                 {colsRender.map((c) => (
                   <TableCell key={c.id} className={c.id === "placa" ? "font-medium" : ""}>
-                    {renderCell(r, c.id, { lojasMap, solicitantes, idx })}
+                    {renderCell(r, c.id, {
+                      lojasMap, usuarios, idx,
+                      podeMover: sortBy === "ordem",
+                      reordenando,
+                      isFirst: idx === 0,
+                      isLast: idx === filtered.length - 1,
+                      onMover: mover,
+                    })}
                   </TableCell>
                 ))}
                 <TableCell>
@@ -407,17 +424,51 @@ function ComprasIndex() {
   );
 }
 
-function renderCell(r: ChamadoRow, col: ColId, ctx: { lojasMap: Record<string, string>; solicitantes: Record<string, string>; idx: number }) {
+interface CellCtx {
+  lojasMap: Record<string, string>;
+  usuarios: Record<string, string>;
+  idx: number;
+  podeMover: boolean;
+  reordenando: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  onMover: (id: string, dir: -1 | 1) => void;
+}
+
+function renderCell(r: ChamadoRow, col: ColId, ctx: CellCtx) {
   switch (col) {
     case "ordem":
       return (
-        <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-md bg-muted text-xs font-semibold tabular-nums">
-          {r.ordem ?? ctx.idx + 1}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-md bg-muted text-xs font-semibold tabular-nums">
+            {r.ordem ?? ctx.idx + 1}
+          </span>
+          {ctx.podeMover && (
+            <div className="flex flex-col">
+              <button
+                className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
+                onClick={() => ctx.onMover(r.id, -1)}
+                disabled={ctx.isFirst || ctx.reordenando}
+                title="Subir"
+              >
+                <ArrowUp className="w-3 h-3" />
+              </button>
+              <button
+                className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
+                onClick={() => ctx.onMover(r.id, 1)}
+                disabled={ctx.isLast || ctx.reordenando}
+                title="Descer"
+              >
+                <ArrowDown className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
       );
     case "placa": return r.placa;
     case "nome": return r.nome;
-    case "solicitante": return r.criado_por ? (ctx.solicitantes[r.criado_por] ?? "—") : "—";
+    case "solicitante": return r.criado_por ? (ctx.usuarios[r.criado_por] ?? "—") : "—";
+    case "central": return r.assumido_por ? (ctx.usuarios[r.assumido_por] ?? "—") : <span className="text-muted-foreground text-xs">—</span>;
     case "loja": return r.loja_estoque ? (ctx.lojasMap[r.loja_estoque] ?? r.loja_estoque) : "—";
     case "tipo_pessoa": return r.tipo_pessoa;
     case "estado_uf": return r.estado_uf;
