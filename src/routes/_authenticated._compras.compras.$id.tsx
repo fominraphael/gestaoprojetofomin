@@ -955,8 +955,15 @@ function DetalheChamado() {
               </div>
             )}
             <div>
-              <Label>Observação</Label>
-              <Textarea rows={3} value={observ} onChange={(e) => setObserv(e.target.value)} />
+              <Label>
+                Observação{dialogo === "comprar" && <span className="text-red-500"> *</span>}
+              </Label>
+              <Textarea
+                rows={3}
+                value={observ}
+                onChange={(e) => setObserv(e.target.value)}
+                placeholder={dialogo === "comprar" ? "Obrigatório: descreva condições, valores acordados, etc." : ""}
+              />
             </div>
           </div>
           <DialogFooter>
