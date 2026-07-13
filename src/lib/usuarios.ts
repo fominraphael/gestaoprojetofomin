@@ -132,6 +132,7 @@ export async function criarUsuario(
     role: usuario.role ?? "user",
     status: usuario.status ?? "approved",
     cnpj: usuario.cnpj ?? null,
+    nome_fantasia: usuario.nome_fantasia ?? null,
     empresa_id: usuario.empresa_id ?? null,
     modulos: usuario.modulos ?? [],
     active: usuario.active ?? true,
