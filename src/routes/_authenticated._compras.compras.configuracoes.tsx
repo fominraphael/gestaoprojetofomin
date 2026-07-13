@@ -217,24 +217,46 @@ function ConfiguracoesCompras() {
                       </div>
                     )}
                     {t.usaUf && t.multiUf && (
-                      <div className="flex-1 min-w-[260px]">
-                        <Label>Estados (UF) — selecione um ou mais</Label>
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {ufs.length === 0 && <span className="text-xs text-muted-foreground">Cadastre estados primeiro.</span>}
-                          {ufs.map((u) => {
-                            const sel = n.ufs.includes(u.valor.toUpperCase());
-                            return (
-                              <button
-                                key={u.id}
-                                type="button"
-                                onClick={() => toggleUf(t.key, u.valor.toUpperCase())}
-                                className={`px-2 py-1 rounded-md text-xs border transition ${sel ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-foreground hover:bg-accent"}`}
-                              >
-                                {u.valor.toUpperCase()}
-                              </button>
-                            );
-                          })}
-                        </div>
+                      <div className="w-[260px]">
+                        <Label>Estados (UF)</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between font-normal">
+                              <span className="truncate">
+                                {n.ufs.length === 0
+                                  ? "Selecione…"
+                                  : n.ufs.length === ufs.length
+                                    ? "Todos os estados"
+                                    : n.ufs.join(", ")}
+                              </span>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[240px] p-2" align="start">
+                            {ufs.length === 0 ? (
+                              <div className="text-xs text-muted-foreground p-2">Cadastre estados primeiro.</div>
+                            ) : (
+                              <div className="space-y-1 max-h-60 overflow-auto">
+                                {ufs.map((u) => {
+                                  const val = u.valor.toUpperCase();
+                                  const sel = n.ufs.includes(val);
+                                  return (
+                                    <label
+                                      key={u.id}
+                                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                                    >
+                                      <Checkbox
+                                        checked={sel}
+                                        onCheckedChange={() => toggleUf(t.key, val)}
+                                      />
+                                      <span className="flex-1">{u.label}</span>
+                                      <span className="text-xs text-muted-foreground">{val}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     )}
                     {t.usaGrupo && (
