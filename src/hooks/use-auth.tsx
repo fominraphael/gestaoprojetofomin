@@ -122,11 +122,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const email = usernameToEmail(username);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message.toLowerCase().includes("invalid"))
         throw new Error("Usuário ou senha incorretos.");
       throw error;
+    }
+
+    // Bloqueia acesso enquanto a conta não foi aprovada pelo administrador
+    if (signInData.user) {
+      const profile = await loadProfile(signInData.user.id);
+      if (profile && profile.role !== "admin") {
+        if (profile.status === "pending") {
+          await supabase.auth.signOut();
+          throw new Error("Sua solicitação de acesso ainda está aguardando aprovação do administrador.");
+        }
+        if (profile.status === "rejected") {
+          await supabase.auth.signOut();
+          throw new Error("Sua solicitação de acesso foi recusada. Entre em contato com o administrador.");
+        }
+        if (profile.active === false) {
+          await supabase.auth.signOut();
+          throw new Error("Seu usuário está inativo. Entre em contato com o administrador.");
+        }
+      }
     }
   };
 
@@ -152,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           campos_customizados: campos,
           cnpj,
           email_recuperacao: extras?.email_recuperacao ?? null,
-          modulos: ["gestao"],
+          modulos: [],
           status: "pending",
           ativo: true,
           role: "user",
@@ -161,7 +180,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) throw error;
+
+    // Garante que o usuário recém-cadastrado não permaneça logado antes da aprovação
+    await supabase.auth.signOut();
   };
+
 
   const refreshProfile = async () => {
     if (session?.user) {
