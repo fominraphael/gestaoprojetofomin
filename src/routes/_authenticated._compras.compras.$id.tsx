@@ -183,6 +183,8 @@ function DetalheChamado() {
   );
 
 
+  const [autores, setAutores] = useState<Record<string, string>>({});
+
   const carregar = useCallback(async () => {
     setLoading(true);
     const [c, d, deb, hist] = await Promise.all([
@@ -194,7 +196,15 @@ function DetalheChamado() {
     setChamado((c.data as any) ?? null);
     setDocumentos((d.data as any) ?? []);
     setDebitos((deb.data as any) ?? []);
-    setHistorico((hist.data as any) ?? []);
+    const histRows = ((hist.data as any) ?? []) as HistoricoItem[];
+    setHistorico(histRows);
+    const ids = Array.from(new Set(histRows.map((h: any) => h.autor_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, username, nome_fantasia").in("id", ids);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((p: any) => { map[p.id] = p.nome_fantasia || p.username; });
+      setAutores(map);
+    } else setAutores({});
     setLoading(false);
   }, [id]);
 
@@ -395,6 +405,9 @@ function DetalheChamado() {
     if ((dialogo === "pendenciar" || dialogo === "cancelar") && !motivo) {
       toast.error("Informe o motivo."); return;
     }
+    if (dialogo === "comprar" && !observ.trim()) {
+      toast.error("Informe a observação da compra."); return;
+    }
     const updates: any = {};
     let acao = "";
     if (dialogo === "pendenciar") {
@@ -491,12 +504,19 @@ function DetalheChamado() {
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
-  const podeAgirCentral = isCentral && (modoAdmin === "assumido" || !isAdmin) && !finalizado;
+  const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
+  const podeEditarDados =
+    !finalizado &&
+    (
+      (isAdmin && !readOnlyAdmin) ||
+      (isCriador && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status))
+    );
+  const podeAgirCentral = isAdmin && modoAdmin === "assumido" && !finalizado;
   const podeEnviarFila = chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
   const podePendenciar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central" || chamado.status === "documentacao");
   const podeResolver = (isCriador || (isAdmin && !readOnlyAdmin)) && chamado.status === "pendenciado";
   const podeComprar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central");
-  const podeCancelar = ((isCentral && !readOnlyAdmin) || isCriador) && !finalizado;
+  const podeCancelar = isAdmin && !readOnlyAdmin && !finalizado;
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full">
@@ -517,7 +537,7 @@ function DetalheChamado() {
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
           </Button>
           {isAdmin && (
-            <Button size="sm" variant="outline" onClick={abrirEdicao}>
+            <Button size="sm" variant="outline" onClick={abrirEdicao} disabled={readOnlyAdmin}>
               <Pencil className="w-4 h-4 mr-2" /> Editar dados
             </Button>
           )}
@@ -530,7 +550,7 @@ function DetalheChamado() {
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           )}
-          {(isAdmin || isCriador) && !finalizado ? (
+          {isAdmin && !readOnlyAdmin && !finalizado ? (
             <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
               <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -589,7 +609,7 @@ function DetalheChamado() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Dropzone */}
-          {!readOnlyAdmin && (
+          {podeEditarDados && (
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
@@ -678,7 +698,7 @@ function DetalheChamado() {
                               <button onClick={() => abrirDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1">
                                 <Eye className="w-3 h-3" /> ver
                               </button>
-                              {!readOnlyAdmin && (
+                              {podeEditarDados && (
                                 <button onClick={() => excluirDoc(d)} className="text-red-400 hover:text-red-300">
                                   <Trash2 className="w-3 h-3" />
                                 </button>
@@ -687,7 +707,7 @@ function DetalheChamado() {
                           ))}
                         </div>
                       )}
-                      {!readOnlyAdmin && (
+                      {podeEditarDados && (
                         <label className="inline-block mt-2">
                           <input
                             type="file"
@@ -727,7 +747,7 @@ function DetalheChamado() {
                   <Select
                     value={atual?.status ?? ""}
                     onValueChange={(v) => marcarDebito(t.key, v as "pago" | "pendente")}
-                    disabled={readOnlyAdmin}
+                    disabled={!podeEditarDados}
                   >
                     <SelectTrigger className="w-36"><SelectValue placeholder="Marcar" /></SelectTrigger>
                     <SelectContent>
@@ -792,6 +812,7 @@ function DetalheChamado() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{h.acao}{h.campo ? ` • ${h.campo}` : ""}</span>
                     <span className="text-xs text-muted-foreground">
+                      {(h as any).autor_id ? `${autores[(h as any).autor_id] ?? "usuário"} • ` : ""}
                       {new Date(h.created_at).toLocaleString("pt-BR")}
                     </span>
                   </div>
@@ -945,8 +966,15 @@ function DetalheChamado() {
               </div>
             )}
             <div>
-              <Label>Observação</Label>
-              <Textarea rows={3} value={observ} onChange={(e) => setObserv(e.target.value)} />
+              <Label>
+                Observação{dialogo === "comprar" && <span className="text-red-500"> *</span>}
+              </Label>
+              <Textarea
+                rows={3}
+                value={observ}
+                onChange={(e) => setObserv(e.target.value)}
+                placeholder={dialogo === "comprar" ? "Obrigatório: descreva condições, valores acordados, etc." : ""}
+              />
             </div>
           </div>
           <DialogFooter>
