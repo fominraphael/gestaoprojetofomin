@@ -14,6 +14,7 @@ function RegistrarPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
+  const [nomeFantasia, setNomeFantasia] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
