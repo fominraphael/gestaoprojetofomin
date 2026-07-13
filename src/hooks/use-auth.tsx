@@ -70,6 +70,7 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
     modulos: isSuper ? [] : (profile.modulos ?? []),
     empresa_id: profile.empresa_id ?? null,
     cnpj: profile.cnpj ?? null,
+    nome_fantasia: (profile as any).nome_fantasia ?? null,
     pode_criar_admin: isSuper ? true : (profile.pode_criar_admin ?? false),
     campos_customizados: (profile.campos_customizados ?? {}) as any,
   };
