@@ -329,7 +329,7 @@ function ConfiguracoesCompras() {
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
                     </div>
-                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo, t.multiUf)}>
+                    <Button onClick={() => adicionar(t.key, t)}>
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
                     </Button>
                   </div>
