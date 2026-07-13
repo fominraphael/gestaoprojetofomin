@@ -217,6 +217,7 @@ export function AdminUsuariosPage() {
       await criarUsuario({
         username: newUser.username,
         password: newUser.password,
+        nome_fantasia: newUser.nome_fantasia.trim(),
         role: selectedType?.role || "user",
         status: "approved",
         cnpj: newUser.campos_customizados.cnpj ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj) : null,
