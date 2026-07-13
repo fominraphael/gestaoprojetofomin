@@ -116,23 +116,43 @@ function ConfiguracoesCompras() {
     setNovoField(cat, { ufs: next });
   };
 
-  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean, multiUf?: boolean) {
+  const toggleTipoPessoa = (cat: Categoria, tp: "PF" | "PJ") => {
+    const cur = novo[cat]?.tipos_pessoa ?? [];
+    const next = cur.includes(tp) ? cur.filter((x) => x !== tp) : [...cur, tp];
+    setNovoField(cat, { tipos_pessoa: next });
+  };
+
+  async function adicionar(cat: Categoria, tab: (typeof TABS)[number]) {
     const n = novo[cat] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
-    if (usaUf && !multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
-    if (usaUf && multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
+    if (tab.usaUf && !tab.multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
+    if (tab.usaUf && tab.multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
     const valor = n.valor.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
-    const ufsAlvo = multiUf ? n.ufs.map((u) => u.toUpperCase()) : usaUf ? [n.uf.toUpperCase()] : [null as any];
-    const rows = ufsAlvo.map((uf) => ({
-      categoria: cat,
-      valor,
-      label: n.label.trim(),
-      ordem: Number(n.ordem) || 0,
-      uf,
-      tipo_campo: usaTipoCampo ? n.tipo_campo : null,
-      obrigatorio: usaTipoCampo ? n.obrigatorio : false,
-      grupo: usaGrupo ? n.grupo : null,
-    }));
+    const ufsAlvo: (string | null)[] = tab.multiUf
+      ? n.ufs.map((u) => u.toUpperCase())
+      : tab.usaUf ? [n.uf.toUpperCase()] : [null];
+    // Se multiTipoPessoa e nenhum selecionado => NULL (aplica a ambos)
+    const tpsAlvo: (("PF" | "PJ") | null)[] = tab.usaTipoPessoa
+      ? (tab.multiTipoPessoa
+          ? (n.tipos_pessoa.length === 0 ? [null] : n.tipos_pessoa)
+          : [null])
+      : [null];
+    const rows: any[] = [];
+    for (const uf of ufsAlvo) {
+      for (const tp of tpsAlvo) {
+        rows.push({
+          categoria: cat,
+          valor,
+          label: n.label.trim(),
+          ordem: Number(n.ordem) || 0,
+          uf,
+          tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
+          obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
+          grupo: tab.usaGrupo ? n.grupo : null,
+          tipo_pessoa: tp,
+        });
+      }
+    }
     const { error } = await supabase.from("compras_cadastros").insert(rows as any);
     if (error) { toast.error(error.message); return; }
     setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
