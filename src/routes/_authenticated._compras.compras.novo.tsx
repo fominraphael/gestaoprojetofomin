@@ -260,7 +260,14 @@ function NovoChamado() {
           </div>
           <div>
             <Label>Cor externa *</Label>
-            <Input value={form.cor_externa} onChange={(e) => set("cor_externa", e.target.value)} />
+            <Select value={form.cor_externa} onValueChange={(v) => set("cor_externa", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+              <SelectContent>
+                {CORES_EXTERNAS.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Código avaliação NBS *</Label>
