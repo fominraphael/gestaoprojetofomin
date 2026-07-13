@@ -229,11 +229,7 @@ function NovoChamado() {
           {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
             <div key={c.valor}>
               <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-              <Input
-                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
-                value={camposExtras[c.valor] ?? ""}
-                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
-              />
+              <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
             </div>
           ))}
         </CardContent>
@@ -277,11 +273,7 @@ function NovoChamado() {
           {camposDoEstado.filter((c) => c.grupo === "veiculo").map((c) => (
             <div key={c.valor}>
               <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-              <Input
-                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
-                value={camposExtras[c.valor] ?? ""}
-                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
-              />
+              <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
             </div>
           ))}
         </CardContent>
@@ -318,5 +310,41 @@ function NovoChamado() {
         </Button>
       </div>
     </div>
+  );
+}
+
+function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; value: string; onChange: (v: string) => void }) {
+  if (tipo === "ano") {
+    return (
+      <Input
+        inputMode="numeric"
+        maxLength={4}
+        placeholder="2026"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+      />
+    );
+  }
+  if (tipo === "ano_mod") {
+    return (
+      <Input
+        inputMode="numeric"
+        maxLength={9}
+        placeholder="2026/2027"
+        value={value}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+          const out = digits.length > 4 ? `${digits.slice(0, 4)}/${digits.slice(4)}` : digits;
+          onChange(out);
+        }}
+      />
+    );
+  }
+  return (
+    <Input
+      type={tipo === "numero" ? "number" : tipo === "data" ? "date" : tipo === "email" ? "email" : "text"}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }
