@@ -13,6 +13,7 @@ export interface AuthUser {
   modulos: string[];
   empresa_id: string | null;
   cnpj: string | null;
+  nome_fantasia: string | null;
   pode_criar_admin: boolean;
   campos_customizados: Record<string, any>;
 }
