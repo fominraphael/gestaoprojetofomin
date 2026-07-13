@@ -228,7 +228,7 @@ export function AdminUsuariosPage() {
       });
       showToast("success", `Usuário "${newUser.username}" criado com sucesso.`);
       setShowCreateUser(false);
-      setNewUser({ username: "", password: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
+      setNewUser({ username: "", password: "", nome_fantasia: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar usuário.");
