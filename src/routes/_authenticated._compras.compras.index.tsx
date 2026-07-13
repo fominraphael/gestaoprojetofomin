@@ -89,6 +89,9 @@ function ymLabel(ym: string) {
 
 function ComprasIndex() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const [excluir, setExcluir] = useState<ChamadoRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const [rows, setRows] = useState<ChamadoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
