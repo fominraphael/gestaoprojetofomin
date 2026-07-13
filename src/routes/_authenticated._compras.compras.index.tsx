@@ -17,9 +17,14 @@ import { Card } from "@/components/ui/card";
 import { STATUS_LABEL, TIPO_COMPRA_LABEL, type StatusChamado } from "@/lib/compras";
 import {
   Plus, Search, ArrowUp, ArrowDown, Columns3,
-  ShoppingCart, Clock, AlertTriangle, CheckCircle2, XCircle, Inbox, Loader2,
+  ShoppingCart, Clock, AlertTriangle, CheckCircle2, XCircle, Inbox, Loader2, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/")({
   errorComponent: ModuleErrorBoundary,
@@ -84,6 +89,9 @@ function ymLabel(ym: string) {
 
 function ComprasIndex() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const [excluir, setExcluir] = useState<ChamadoRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const [rows, setRows] = useState<ChamadoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -411,15 +419,57 @@ function ComprasIndex() {
                   </TableCell>
                 ))}
                 <TableCell>
-                  <Link to="/compras/$id" params={{ id: r.id }} className="text-primary text-sm hover:underline">
-                    Abrir
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/compras/$id" params={{ id: r.id }} className="text-primary text-sm hover:underline">
+                      Abrir
+                    </Link>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setExcluir(r)}
+                        className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                        title="Excluir chamado"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!excluir} onOpenChange={(o) => !o && setExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chamado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O chamado <b>{excluir?.placa}</b> ({excluir?.nome}) e todos os seus documentos, débitos e histórico serão removidos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!excluir) return;
+                setExcluindo(true);
+                const { error } = await supabase.from("compras_chamados").delete().eq("id", excluir.id);
+                setExcluindo(false);
+                if (error) { toast.error(error.message); return; }
+                toast.success("Chamado excluído");
+                setRows((prev) => prev.filter((x) => x.id !== excluir.id));
+                setExcluir(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
