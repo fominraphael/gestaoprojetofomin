@@ -946,6 +946,19 @@ export function AdminUsuariosPage() {
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Nome ou nome fantasia <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex.: João Silva ou Loja Central"
+                      value={newUser.nome_fantasia}
+                      onChange={(e) => setNewUser({ ...newUser, nome_fantasia: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Senha Inicial</label>
                     <input
