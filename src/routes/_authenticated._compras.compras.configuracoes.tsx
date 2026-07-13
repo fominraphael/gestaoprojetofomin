@@ -162,7 +162,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
