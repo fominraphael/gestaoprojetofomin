@@ -812,6 +812,7 @@ function DetalheChamado() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{h.acao}{h.campo ? ` • ${h.campo}` : ""}</span>
                     <span className="text-xs text-muted-foreground">
+                      {(h as any).autor_id ? `${autores[(h as any).autor_id] ?? "usuário"} • ` : ""}
                       {new Date(h.created_at).toLocaleString("pt-BR")}
                     </span>
                   </div>
