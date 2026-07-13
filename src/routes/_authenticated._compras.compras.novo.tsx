@@ -223,9 +223,19 @@ function NovoChamado() {
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
           <div>
-            <Label>{tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
+            <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
             <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
           </div>
+          {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
+            <div key={c.valor}>
+              <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+              <Input
+                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
+                value={camposExtras[c.valor] ?? ""}
+                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 
