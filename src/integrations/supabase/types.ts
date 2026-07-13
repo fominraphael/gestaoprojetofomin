@@ -25,6 +25,7 @@ export type Database = {
           obrigatorio: boolean
           ordem: number
           tipo_campo: string | null
+          tipo_pessoa: string | null
           uf: string | null
           updated_at: string
           valor: string
@@ -39,6 +40,7 @@ export type Database = {
           obrigatorio?: boolean
           ordem?: number
           tipo_campo?: string | null
+          tipo_pessoa?: string | null
           uf?: string | null
           updated_at?: string
           valor: string
@@ -53,6 +55,7 @@ export type Database = {
           obrigatorio?: boolean
           ordem?: number
           tipo_campo?: string | null
+          tipo_pessoa?: string | null
           uf?: string | null
           updated_at?: string
           valor?: string
