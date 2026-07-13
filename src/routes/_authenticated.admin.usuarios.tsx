@@ -100,6 +100,7 @@ export function AdminUsuariosPage() {
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
+    nome_fantasia: "",
     tipo_usuario: "Lojista",
     pode_criar_admin: false,
     modulos: [] as string[],
@@ -192,6 +193,7 @@ export function AdminUsuariosPage() {
     e.preventDefault();
     if (!newUser.username) return showToast("error", "Login de acesso é obrigatório.");
     if (!newUser.password) return showToast("error", "Senha inicial é obrigatória.");
+    if (!newUser.nome_fantasia.trim()) return showToast("error", "Nome ou nome fantasia é obrigatório.");
 
     // Dynamic field validation
     const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
@@ -215,6 +217,7 @@ export function AdminUsuariosPage() {
       await criarUsuario({
         username: newUser.username,
         password: newUser.password,
+        nome_fantasia: newUser.nome_fantasia.trim(),
         role: selectedType?.role || "user",
         status: "approved",
         cnpj: newUser.campos_customizados.cnpj ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj) : null,
@@ -227,7 +230,7 @@ export function AdminUsuariosPage() {
       });
       showToast("success", `Usuário "${newUser.username}" criado com sucesso.`);
       setShowCreateUser(false);
-      setNewUser({ username: "", password: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
+      setNewUser({ username: "", password: "", nome_fantasia: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar usuário.");
@@ -239,6 +242,9 @@ export function AdminUsuariosPage() {
   const handleUpdateUser = async (userObj: UsuarioSistema) => {
     setActionLoading(userObj.id);
     try {
+      if (!userObj.nome_fantasia || !userObj.nome_fantasia.trim()) {
+        return showToast("error", "Nome ou nome fantasia é obrigatório.");
+      }
       const selectedType = userTypes.find((t) => t.nome === userObj.tipo_usuario);
       
       // Security Check: if changing/saving type admin but has no permissions
@@ -268,6 +274,7 @@ export function AdminUsuariosPage() {
         pode_criar_admin: userObj.pode_criar_admin || false,
         campos_customizados: userObj.campos_customizados || {},
         email_recuperacao: userObj.email_recuperacao ?? null,
+        nome_fantasia: userObj.nome_fantasia?.trim() ?? null,
       };
       if (editPassword) {
         updates.password = editPassword;
@@ -939,6 +946,19 @@ export function AdminUsuariosPage() {
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Nome ou nome fantasia <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex.: João Silva ou Loja Central"
+                      value={newUser.nome_fantasia}
+                      onChange={(e) => setNewUser({ ...newUser, nome_fantasia: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Senha Inicial</label>
                     <input
@@ -1136,6 +1156,19 @@ export function AdminUsuariosPage() {
                       placeholder="usuario@exemplo.com"
                       value={showEditUser.email_recuperacao ?? ""}
                       onChange={(e) => setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Nome ou nome fantasia <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex.: João Silva ou Loja Central"
+                      value={showEditUser.nome_fantasia ?? ""}
+                      onChange={(e) => setShowEditUser({ ...showEditUser, nome_fantasia: e.target.value })}
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>

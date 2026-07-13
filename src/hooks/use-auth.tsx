@@ -13,6 +13,7 @@ export interface AuthUser {
   modulos: string[];
   empresa_id: string | null;
   cnpj: string | null;
+  nome_fantasia: string | null;
   pode_criar_admin: boolean;
   campos_customizados: Record<string, any>;
 }
@@ -31,6 +32,7 @@ interface AuthContextType {
       campos_customizados?: Record<string, any>;
       cnpj?: string | null;
       email_recuperacao?: string | null;
+      nome_fantasia?: string | null;
     },
   ) => Promise<void>;
 
@@ -69,6 +71,7 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
     modulos: isSuper ? [] : (profile.modulos ?? []),
     empresa_id: profile.empresa_id ?? null,
     cnpj: profile.cnpj ?? null,
+    nome_fantasia: (profile as any).nome_fantasia ?? null,
     pode_criar_admin: isSuper ? true : (profile.pode_criar_admin ?? false),
     campos_customizados: (profile.campos_customizados ?? {}) as any,
   };
@@ -171,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           campos_customizados: campos,
           cnpj,
           email_recuperacao: extras?.email_recuperacao ?? null,
+          nome_fantasia: extras?.nome_fantasia ?? null,
           modulos: [],
           status: "pending",
           ativo: true,

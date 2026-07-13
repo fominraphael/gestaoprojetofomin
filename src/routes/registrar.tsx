@@ -14,6 +14,7 @@ function RegistrarPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
+  const [nomeFantasia, setNomeFantasia] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -70,6 +71,11 @@ function RegistrarPage() {
       setError("Informe um e-mail de recuperação válido.");
       return;
     }
+    const nomeFant = nomeFantasia.trim();
+    if (!nomeFant) {
+      setError("Informe o Nome ou nome fantasia.");
+      return;
+    }
 
     // Validação de campos dinâmicos obrigatórios
     if (tipoAtual) {
@@ -91,6 +97,7 @@ function RegistrarPage() {
         campos_customizados: campos,
         cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
         email_recuperacao: emailRec,
+        nome_fantasia: nomeFant,
       });
 
       setSuccess(true);
@@ -153,6 +160,22 @@ function RegistrarPage() {
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
+
+              <div>
+                <label htmlFor="reg-nome-fantasia" className="block text-sm font-medium text-foreground mb-1.5">
+                  Nome ou nome fantasia <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="reg-nome-fantasia"
+                  type="text"
+                  value={nomeFantasia}
+                  onChange={(e) => setNomeFantasia(e.target.value)}
+                  placeholder="Seu nome ou nome fantasia"
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                />
+              </div>
+
 
               <div>
                 <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">

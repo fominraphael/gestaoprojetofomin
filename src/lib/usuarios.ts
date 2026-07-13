@@ -25,6 +25,7 @@ export interface UsuarioSistema {
   role: "admin" | "user";
   status: "pending" | "approved" | "rejected";
   cnpj?: string | null;
+  nome_fantasia?: string | null;
   empresa_id?: string | null;
   modulos?: string[];
   active?: boolean;
@@ -44,6 +45,7 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     role,
     status: (p.status ?? "approved") as any,
     cnpj: p.cnpj ?? null,
+    nome_fantasia: p.nome_fantasia ?? null,
     empresa_id: p.empresa_id ?? null,
     modulos: p.modulos ?? [],
     active: p.ativo ?? true,
@@ -95,6 +97,7 @@ export async function criarUsuario(
         modulos: usuario.modulos ?? ["gestao"],
         empresa_id: usuario.empresa_id ?? null,
         cnpj: usuario.cnpj ?? null,
+        nome_fantasia: usuario.nome_fantasia ?? null,
         pode_criar_admin: usuario.pode_criar_admin ?? false,
         campos_customizados: usuario.campos_customizados ?? {},
         ativo: usuario.active ?? true,
@@ -129,6 +132,7 @@ export async function criarUsuario(
     role: usuario.role ?? "user",
     status: usuario.status ?? "approved",
     cnpj: usuario.cnpj ?? null,
+    nome_fantasia: usuario.nome_fantasia ?? null,
     empresa_id: usuario.empresa_id ?? null,
     modulos: usuario.modulos ?? [],
     active: usuario.active ?? true,
@@ -148,6 +152,7 @@ export async function atualizarUsuario(
   if (updates.modulos !== undefined) payload.modulos = updates.modulos;
   if (updates.empresa_id !== undefined) payload.empresa_id = updates.empresa_id;
   if (updates.cnpj !== undefined) payload.cnpj = updates.cnpj;
+  if (updates.nome_fantasia !== undefined) payload.nome_fantasia = updates.nome_fantasia;
   if (updates.pode_criar_admin !== undefined) payload.pode_criar_admin = updates.pode_criar_admin;
   if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;

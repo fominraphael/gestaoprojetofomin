@@ -453,6 +453,7 @@ export type Database = {
           filial_id: string | null
           id: string
           modulos: string[]
+          nome_fantasia: string | null
           pode_criar_admin: boolean
           status: string
           tipo_usuario: string | null
@@ -469,6 +470,7 @@ export type Database = {
           filial_id?: string | null
           id: string
           modulos?: string[]
+          nome_fantasia?: string | null
           pode_criar_admin?: boolean
           status?: string
           tipo_usuario?: string | null
@@ -485,6 +487,7 @@ export type Database = {
           filial_id?: string | null
           id?: string
           modulos?: string[]
+          nome_fantasia?: string | null
           pode_criar_admin?: boolean
           status?: string
           tipo_usuario?: string | null
