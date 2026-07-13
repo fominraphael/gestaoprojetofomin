@@ -229,11 +229,7 @@ function NovoChamado() {
           {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
             <div key={c.valor}>
               <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-              <Input
-                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
-                value={camposExtras[c.valor] ?? ""}
-                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
-              />
+              <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
             </div>
           ))}
         </CardContent>
