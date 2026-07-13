@@ -491,12 +491,19 @@ function DetalheChamado() {
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
-  const podeAgirCentral = isCentral && (modoAdmin === "assumido" || !isAdmin) && !finalizado;
+  const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
+  const podeEditarDados =
+    !finalizado &&
+    (
+      (isAdmin && !readOnlyAdmin) ||
+      (isCriador && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status))
+    );
+  const podeAgirCentral = isAdmin && modoAdmin === "assumido" && !finalizado;
   const podeEnviarFila = chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
   const podePendenciar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central" || chamado.status === "documentacao");
   const podeResolver = (isCriador || (isAdmin && !readOnlyAdmin)) && chamado.status === "pendenciado";
   const podeComprar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central");
-  const podeCancelar = ((isCentral && !readOnlyAdmin) || isCriador) && !finalizado;
+  const podeCancelar = isAdmin && !readOnlyAdmin && !finalizado;
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full">
