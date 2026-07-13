@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { findModuleByPath, userCanAccess, navItemsForPerfil, perfilFromTipoUsuario } from "@/lib/modules";
+import { APP_VERSION } from "@/lib/version";
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -155,7 +156,7 @@ export function AppSidebar() {
         </button>
 
         {!isCollapsed && (
-          <div className="px-3 pt-2 text-xs text-muted-foreground">v1.0</div>
+          <div className="px-3 pt-2 text-xs text-muted-foreground">{APP_VERSION}</div>
         )}
       </div>
     </aside>

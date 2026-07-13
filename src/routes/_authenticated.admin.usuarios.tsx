@@ -1398,10 +1398,11 @@ export function AdminUsuariosPage() {
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-border bg-card text-muted-foreground font-medium">
-                    <th className="px-6 py-4">Login de acesso</th>
+                    <th className="px-6 py-4">Login / Nome</th>
                     <th className="px-6 py-4">Tipo de Usuário</th>
                     <th className="px-6 py-4">Módulos</th>
-                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-center">Conta</th>
+                    <th className="px-6 py-4 text-center">Aprovação</th>
                     <th className="px-6 py-4 text-right">Ações</th>
                   </tr>
                 </thead>
@@ -1440,6 +1441,9 @@ export function AdminUsuariosPage() {
                               </span>
                             )}
                           </div>
+                          {u.nome_fantasia && (
+                            <div className="text-xs text-muted-foreground mt-0.5">{u.nome_fantasia}</div>
+                          )}
                           {/* Render dynamic metadata summary */}
                           {u.campos_customizados && Object.keys(u.campos_customizados).length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -1483,8 +1487,24 @@ export function AdminUsuariosPage() {
                               : "bg-red-500/10 border border-red-500/20 text-red-400"
                           }`}
                         >
-                          {u.active ? "Ativo" : "Inativo"}
+                          {u.active ? "Ativa" : "Inativa"}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {(() => {
+                          const s = (u.status ?? "approved") as string;
+                          const cfg: Record<string, { label: string; cls: string }> = {
+                            approved: { label: "Aprovado", cls: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
+                            pending: { label: "Pendente", cls: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
+                            rejected: { label: "Rejeitado", cls: "bg-red-500/10 border-red-500/20 text-red-400" },
+                          };
+                          const c = cfg[s] ?? cfg.approved;
+                          return (
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${c.cls}`}>
+                              {c.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -1511,7 +1531,7 @@ export function AdminUsuariosPage() {
                   ))}
                   {usuarios.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
+                      <td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
                         Nenhum usuário cadastrado.
                       </td>
                     </tr>
