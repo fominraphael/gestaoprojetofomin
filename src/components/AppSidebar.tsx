@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { findModuleByPath, userCanAccess, navItemsForPerfil, perfilFromTipoUsuario } from "@/lib/modules";
+import { APP_VERSION } from "@/lib/version";
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
