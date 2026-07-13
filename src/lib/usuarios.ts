@@ -97,6 +97,7 @@ export async function criarUsuario(
         modulos: usuario.modulos ?? ["gestao"],
         empresa_id: usuario.empresa_id ?? null,
         cnpj: usuario.cnpj ?? null,
+        nome_fantasia: usuario.nome_fantasia ?? null,
         pode_criar_admin: usuario.pode_criar_admin ?? false,
         campos_customizados: usuario.campos_customizados ?? {},
         ativo: usuario.active ?? true,
