@@ -312,3 +312,39 @@ function NovoChamado() {
     </div>
   );
 }
+
+function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; value: string; onChange: (v: string) => void }) {
+  if (tipo === "ano") {
+    return (
+      <Input
+        inputMode="numeric"
+        maxLength={4}
+        placeholder="2026"
+        value={value}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+      />
+    );
+  }
+  if (tipo === "ano_mod") {
+    return (
+      <Input
+        inputMode="numeric"
+        maxLength={9}
+        placeholder="2026/2027"
+        value={value}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+          const out = digits.length > 4 ? `${digits.slice(0, 4)}/${digits.slice(4)}` : digits;
+          onChange(out);
+        }}
+      />
+    );
+  }
+  return (
+    <Input
+      type={tipo === "numero" ? "number" : tipo === "data" ? "date" : tipo === "email" ? "email" : "text"}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
