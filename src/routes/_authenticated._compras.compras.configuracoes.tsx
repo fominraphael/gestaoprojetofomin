@@ -37,10 +37,10 @@ interface Item {
   grupo: string | null;
 }
 
-const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean }[] = [
+const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean; multiUf?: boolean }[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
-  { key: "campo_formulario", title: "Campos por estado", hint: "Campos adicionais exigidos por estado. Escolha se o campo pertence ao bloco Cliente ou Veículo.", usaUf: true, usaTipoCampo: true, usaGrupo: true },
+  { key: "campo_formulario", title: "Campos", hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.", usaUf: true, usaTipoCampo: true, usaGrupo: true, multiUf: true },
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
   { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado." },
   { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
@@ -50,6 +50,8 @@ const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaT
 const TIPOS_CAMPO = [
   { valor: "texto", label: "Texto" },
   { valor: "numero", label: "Número" },
+  { valor: "ano", label: "Ano (2026)" },
+  { valor: "ano_mod", label: "Ano/Modelo (2026/2027)" },
   { valor: "cpf", label: "CPF" },
   { valor: "cnpj", label: "CNPJ" },
   { valor: "data", label: "Data" },
@@ -64,10 +66,10 @@ const GRUPOS = [
 
 interface NovoForm {
   valor: string; label: string; ordem: string;
-  uf: string; tipo_campo: string; obrigatorio: boolean; grupo: string;
+  uf: string; ufs: string[]; tipo_campo: string; obrigatorio: boolean; grupo: string;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", tipo_campo: "texto", obrigatorio: false, grupo: "cliente" };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente" };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -97,24 +99,33 @@ function ConfiguracoesCompras() {
   const setNovoField = (cat: Categoria, patch: Partial<NovoForm>) =>
     setNovo((s) => ({ ...s, [cat]: { ...(s[cat] ?? NOVO_VAZIO), ...patch } }));
 
-  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean) {
+  const toggleUf = (cat: Categoria, uf: string) => {
+    const cur = novo[cat]?.ufs ?? [];
+    const next = cur.includes(uf) ? cur.filter((x) => x !== uf) : [...cur, uf];
+    setNovoField(cat, { ufs: next });
+  };
+
+  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean, multiUf?: boolean) {
     const n = novo[cat] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
-    if (usaUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
+    if (usaUf && !multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
+    if (usaUf && multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
     const valor = n.valor.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
-    const { error } = await supabase.from("compras_cadastros").insert({
+    const ufsAlvo = multiUf ? n.ufs.map((u) => u.toUpperCase()) : usaUf ? [n.uf.toUpperCase()] : [null as any];
+    const rows = ufsAlvo.map((uf) => ({
       categoria: cat,
       valor,
       label: n.label.trim(),
       ordem: Number(n.ordem) || 0,
-      uf: usaUf ? n.uf.toUpperCase() : null,
+      uf,
       tipo_campo: usaTipoCampo ? n.tipo_campo : null,
       obrigatorio: usaTipoCampo ? n.obrigatorio : false,
       grupo: usaGrupo ? n.grupo : null,
-    } as any);
+    }));
+    const { error } = await supabase.from("compras_cadastros").insert(rows as any);
     if (error) { toast.error(error.message); return; }
     setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
-    toast.success("Item adicionado.");
+    toast.success(`${rows.length} item(ns) adicionado(s).`);
     carregar();
   }
 
@@ -138,14 +149,14 @@ function ConfiguracoesCompras() {
   }
 
   return (
-    <div className="p-6 space-y-4 max-w-[1400px] mx-auto">
+    <div className="p-4 space-y-4 w-full">
       <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })}>
         <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
       </Button>
       <div>
         <h1 className="text-2xl font-semibold">Configurações — Compras Seminovos</h1>
         <p className="text-sm text-muted-foreground">
-          Cadastre estados primeiro, depois vincule lojas e campos adicionais a cada estado.
+          Cadastre estados primeiro, depois vincule lojas e campos a cada estado.
         </p>
       </div>
 
@@ -159,26 +170,39 @@ function ConfiguracoesCompras() {
         {TABS.map((t) => {
           const list = items.filter((i) => i.categoria === t.key);
           const n = novo[t.key] ?? NOVO_VAZIO;
+          // Column template for list rows
+          const cols = [
+            "140px",            // valor
+            "minmax(200px,1fr)",// label
+            t.usaUf ? "110px" : null,       // uf
+            t.usaGrupo ? "160px" : null,    // grupo
+            t.usaTipoCampo ? "140px" : null,// tipo
+            t.usaTipoCampo ? "70px" : null, // obrig
+            "80px",             // ordem
+            "100px",            // ativo
+            "90px",             // ações
+          ].filter(Boolean).join(" ");
+
           return (
             <TabsContent key={t.key} value={t.key} className="space-y-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <CardTitle>{t.title}</CardTitle>
                   <p className="text-xs text-muted-foreground">{t.hint}</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Novo */}
-                  <div className="grid md:grid-cols-6 gap-2 items-end border border-dashed border-border rounded-md p-3">
-                    <div className="md:col-span-1">
+                  <div className="flex flex-wrap gap-2 items-end border border-dashed border-border rounded-md p-3">
+                    <div className="w-[160px]">
                       <Label>Valor (chave)</Label>
                       <Input value={n.valor} onChange={(e) => setNovoField(t.key, { valor: e.target.value })} placeholder={t.key === "estado_uf" ? "GO" : "chave_curta"} />
                     </div>
-                    <div className={t.usaUf ? "md:col-span-1" : "md:col-span-2"}>
+                    <div className="flex-1 min-w-[220px]">
                       <Label>Rótulo</Label>
                       <Input value={n.label} onChange={(e) => setNovoField(t.key, { label: e.target.value })} placeholder="Nome exibido" />
                     </div>
-                    {t.usaUf && (
-                      <div>
+                    {t.usaUf && !t.multiUf && (
+                      <div className="w-[140px]">
                         <Label>Estado (UF)</Label>
                         <Select value={n.uf} onValueChange={(v) => setNovoField(t.key, { uf: v })}>
                           <SelectTrigger><SelectValue placeholder="UF…" /></SelectTrigger>
@@ -190,32 +214,29 @@ function ConfiguracoesCompras() {
                         </Select>
                       </div>
                     )}
-                    {t.usaTipoCampo && (
-                      <>
-                        <div>
-                          <Label>Tipo</Label>
-                          <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {TIPOS_CAMPO.map((tc) => (
-                                <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                    {t.usaUf && t.multiUf && (
+                      <div className="flex-1 min-w-[260px]">
+                        <Label>Estados (UF) — selecione um ou mais</Label>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {ufs.length === 0 && <span className="text-xs text-muted-foreground">Cadastre estados primeiro.</span>}
+                          {ufs.map((u) => {
+                            const sel = n.ufs.includes(u.valor.toUpperCase());
+                            return (
+                              <button
+                                key={u.id}
+                                type="button"
+                                onClick={() => toggleUf(t.key, u.valor.toUpperCase())}
+                                className={`px-2 py-1 rounded-md text-xs border transition ${sel ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-foreground hover:bg-accent"}`}
+                              >
+                                {u.valor.toUpperCase()}
+                              </button>
+                            );
+                          })}
                         </div>
-                        <div className="flex items-center gap-2 pt-6">
-                          <input
-                            id={`obr-${t.key}`}
-                            type="checkbox"
-                            checked={n.obrigatorio}
-                            onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
-                          />
-                          <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
-                        </div>
-                      </>
+                      </div>
                     )}
                     {t.usaGrupo && (
-                      <div>
+                      <div className="w-[180px]">
                         <Label>Grupo</Label>
                         <Select value={n.grupo} onValueChange={(v) => setNovoField(t.key, { grupo: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -227,11 +248,35 @@ function ConfiguracoesCompras() {
                         </Select>
                       </div>
                     )}
-                    <div>
+                    {t.usaTipoCampo && (
+                      <>
+                        <div className="w-[170px]">
+                          <Label>Tipo</Label>
+                          <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {TIPOS_CAMPO.map((tc) => (
+                                <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2 h-10 px-2">
+                          <input
+                            id={`obr-${t.key}`}
+                            type="checkbox"
+                            checked={n.obrigatorio}
+                            onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
+                          />
+                          <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
+                        </div>
+                      </>
+                    )}
+                    <div className="w-[90px]">
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
                     </div>
-                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo)} className="md:col-span-1">
+                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo, t.multiUf)}>
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
                     </Button>
                   </div>
@@ -242,12 +287,28 @@ function ConfiguracoesCompras() {
                   ) : list.length === 0 ? (
                     <div className="text-sm text-muted-foreground">Nenhum item cadastrado.</div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
+                      {/* header */}
+                      <div className="hidden md:grid gap-2 px-2 text-[11px] uppercase tracking-wide text-muted-foreground" style={{ gridTemplateColumns: cols }}>
+                        <div>Chave</div>
+                        <div>Rótulo</div>
+                        {t.usaUf && <div>UF</div>}
+                        {t.usaGrupo && <div>Grupo</div>}
+                        {t.usaTipoCampo && <div>Tipo</div>}
+                        {t.usaTipoCampo && <div>Obrig.</div>}
+                        <div>Ordem</div>
+                        <div>Status</div>
+                        <div className="text-right">Ações</div>
+                      </div>
                       {list.map((i) => (
-                        <div key={i.id} className="grid md:grid-cols-[140px_1fr_90px_110px_110px_80px_90px_auto] gap-2 items-center border border-border rounded-md p-2">
+                        <div
+                          key={i.id}
+                          className="grid gap-2 items-center border border-border rounded-md p-2"
+                          style={{ gridTemplateColumns: cols }}
+                        >
                           <div className="text-xs font-mono text-muted-foreground truncate">{i.valor}</div>
-                          <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} />
-                          {t.usaUf ? (
+                          <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} className="h-8" />
+                          {t.usaUf && (
                             <Select value={i.uf ?? ""} onValueChange={(v) => updateLocal(i.id, { uf: v })}>
                               <SelectTrigger className="h-8"><SelectValue placeholder="UF" /></SelectTrigger>
                               <SelectContent>
@@ -256,8 +317,18 @@ function ConfiguracoesCompras() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ) : <div />}
-                          {t.usaTipoCampo ? (
+                          )}
+                          {t.usaGrupo && (
+                            <Select value={i.grupo ?? "cliente"} onValueChange={(v) => updateLocal(i.id, { grupo: v })}>
+                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {GRUPOS.map((g) => (
+                                  <SelectItem key={g.valor} value={g.valor}>{g.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {t.usaTipoCampo && (
                             <Select value={i.tipo_campo ?? "texto"} onValueChange={(v) => updateLocal(i.id, { tipo_campo: v })}>
                               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -266,32 +337,32 @@ function ConfiguracoesCompras() {
                                 ))}
                               </SelectContent>
                             </Select>
-                          ) : <div />}
-                          {t.usaTipoCampo ? (
-                            <label className="flex items-center gap-1 text-xs">
+                          )}
+                          {t.usaTipoCampo && (
+                            <label className="flex items-center justify-center gap-1 text-xs">
                               <input
                                 type="checkbox"
                                 checked={i.obrigatorio}
                                 onChange={(e) => updateLocal(i.id, { obrigatorio: e.target.checked })}
                               />
-                              Obrig.
                             </label>
-                          ) : <div />}
-                          <Input type="number" value={i.ordem} onChange={(e) => updateLocal(i.id, { ordem: Number(e.target.value) })} />
+                          )}
+                          <Input type="number" value={i.ordem} onChange={(e) => updateLocal(i.id, { ordem: Number(e.target.value) })} className="h-8" />
                           <Button
                             variant="outline" size="sm"
                             onClick={() => { updateLocal(i.id, { ativo: !i.ativo }); salvar({ ...i, ativo: !i.ativo }); }}
+                            className="h-8"
                           >
                             <Power className="w-3 h-3 mr-1" />
                             <Badge variant={i.ativo ? "default" : "secondary"} className="text-[10px]">
                               {i.ativo ? "Ativo" : "Inativo"}
                             </Badge>
                           </Button>
-                          <div className="flex gap-1">
-                            <Button size="sm" onClick={() => salvar(i)}>
+                          <div className="flex gap-1 justify-end">
+                            <Button size="sm" onClick={() => salvar(i)} className="h-8 px-2">
                               <Save className="w-3 h-3" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => excluir(i.id)}>
+                            <Button size="sm" variant="ghost" onClick={() => excluir(i.id)} className="h-8 px-2">
                               <Trash2 className="w-3 h-3 text-red-500" />
                             </Button>
                           </div>
