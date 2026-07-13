@@ -289,6 +289,35 @@ function ConfiguracoesCompras() {
                         </Popover>
                       </div>
                     )}
+                    {t.usaTipoPessoa && t.multiTipoPessoa && (
+                      <div className="w-[200px]">
+                        <Label>Pessoa (PF/PJ)</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between font-normal">
+                              <span className="truncate">
+                                {n.tipos_pessoa.length === 0 ? "Ambos (PF e PJ)" : n.tipos_pessoa.join(" + ")}
+                              </span>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[200px] p-2" align="start">
+                            <div className="space-y-1">
+                              {TIPOS_PESSOA_OPT.map((tp) => (
+                                <label key={tp} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm">
+                                  <Checkbox
+                                    checked={n.tipos_pessoa.includes(tp)}
+                                    onCheckedChange={() => toggleTipoPessoa(t.key, tp)}
+                                  />
+                                  <span className="flex-1">{tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}</span>
+                                  <span className="text-xs text-muted-foreground">{tp}</span>
+                                </label>
+                              ))}
+                              <p className="text-[10px] text-muted-foreground px-2 pt-1">Nenhum marcado = aplica a ambos.</p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
                     {t.usaGrupo && (
                       <div className="w-[180px]">
                         <Label>Grupo</Label>
@@ -303,28 +332,28 @@ function ConfiguracoesCompras() {
                       </div>
                     )}
                     {t.usaTipoCampo && (
-                      <>
-                        <div className="w-[170px]">
-                          <Label>Tipo</Label>
-                          <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {TIPOS_CAMPO.map((tc) => (
-                                <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-center gap-2 h-10 px-2">
-                          <input
-                            id={`obr-${t.key}`}
-                            type="checkbox"
-                            checked={n.obrigatorio}
-                            onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
-                          />
-                          <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
-                        </div>
-                      </>
+                      <div className="w-[170px]">
+                        <Label>Tipo</Label>
+                        <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {TIPOS_CAMPO.map((tc) => (
+                              <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {(t.usaTipoCampo || t.usaObrigatorio) && (
+                      <div className="flex items-center gap-2 h-10 px-2">
+                        <input
+                          id={`obr-${t.key}`}
+                          type="checkbox"
+                          checked={n.obrigatorio}
+                          onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
+                        />
+                        <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
+                      </div>
                     )}
                     <div className="w-[90px]">
                       <Label>Ordem</Label>
