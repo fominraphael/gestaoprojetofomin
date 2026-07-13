@@ -1,0 +1,2 @@
+ALTER TABLE public.compras_cadastros DROP CONSTRAINT compras_cadastros_categoria_valor_key;
+ALTER TABLE public.compras_cadastros ADD CONSTRAINT compras_cadastros_categoria_valor_uf_key UNIQUE (categoria, valor, uf);
