@@ -376,9 +376,10 @@ function ConfiguracoesCompras() {
                         <div>Chave</div>
                         <div>Rótulo</div>
                         {t.usaUf && <div>UF</div>}
+                        {t.usaTipoPessoa && <div>PF/PJ</div>}
                         {t.usaGrupo && <div>Grupo</div>}
                         {t.usaTipoCampo && <div>Tipo</div>}
-                        {t.usaTipoCampo && <div>Obrig.</div>}
+                        {(t.usaTipoCampo || t.usaObrigatorio) && <div>Obrig.</div>}
                         <div>Ordem</div>
                         <div>Status</div>
                         <div className="text-right">Ações</div>
