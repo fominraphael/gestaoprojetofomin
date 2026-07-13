@@ -17,9 +17,14 @@ import { Card } from "@/components/ui/card";
 import { STATUS_LABEL, TIPO_COMPRA_LABEL, type StatusChamado } from "@/lib/compras";
 import {
   Plus, Search, ArrowUp, ArrowDown, Columns3,
-  ShoppingCart, Clock, AlertTriangle, CheckCircle2, XCircle, Inbox, Loader2,
+  ShoppingCart, Clock, AlertTriangle, CheckCircle2, XCircle, Inbox, Loader2, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/")({
   errorComponent: ModuleErrorBoundary,
