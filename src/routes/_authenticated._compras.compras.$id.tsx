@@ -734,7 +734,7 @@ function DetalheChamado() {
                   <Select
                     value={atual?.status ?? ""}
                     onValueChange={(v) => marcarDebito(t.key, v as "pago" | "pendente")}
-                    disabled={readOnlyAdmin}
+                    disabled={!podeEditarDados}
                   >
                     <SelectTrigger className="w-36"><SelectValue placeholder="Marcar" /></SelectTrigger>
                     <SelectContent>
