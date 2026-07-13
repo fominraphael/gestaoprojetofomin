@@ -395,6 +395,9 @@ function DetalheChamado() {
     if ((dialogo === "pendenciar" || dialogo === "cancelar") && !motivo) {
       toast.error("Informe o motivo."); return;
     }
+    if (dialogo === "comprar" && !observ.trim()) {
+      toast.error("Informe a observação da compra."); return;
+    }
     const updates: any = {};
     let acao = "";
     if (dialogo === "pendenciar") {
