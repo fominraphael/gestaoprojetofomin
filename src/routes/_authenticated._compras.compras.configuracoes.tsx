@@ -34,12 +34,13 @@ interface Item {
   uf: string | null;
   tipo_campo: string | null;
   obrigatorio: boolean;
+  grupo: string | null;
 }
 
-const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaTipoCampo?: boolean }[] = [
+const TABS: { key: Categoria; title: string; hint: string; usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean }[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
-  { key: "campo_formulario", title: "Campos por estado", hint: "Campos adicionais exigidos por estado (ex.: CPF do procurador).", usaUf: true, usaTipoCampo: true },
+  { key: "campo_formulario", title: "Campos por estado", hint: "Campos adicionais exigidos por estado. Escolha se o campo pertence ao bloco Cliente ou Veículo.", usaUf: true, usaTipoCampo: true, usaGrupo: true },
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
   { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado." },
   { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
@@ -56,12 +57,17 @@ const TIPOS_CAMPO = [
   { valor: "telefone", label: "Telefone" },
 ];
 
+const GRUPOS = [
+  { valor: "cliente", label: "Cliente / Localização" },
+  { valor: "veiculo", label: "Veículo" },
+];
+
 interface NovoForm {
   valor: string; label: string; ordem: string;
-  uf: string; tipo_campo: string; obrigatorio: boolean;
+  uf: string; tipo_campo: string; obrigatorio: boolean; grupo: string;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", tipo_campo: "texto", obrigatorio: false };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", tipo_campo: "texto", obrigatorio: false, grupo: "cliente" };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -91,7 +97,7 @@ function ConfiguracoesCompras() {
   const setNovoField = (cat: Categoria, patch: Partial<NovoForm>) =>
     setNovo((s) => ({ ...s, [cat]: { ...(s[cat] ?? NOVO_VAZIO), ...patch } }));
 
-  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean) {
+  async function adicionar(cat: Categoria, usaUf?: boolean, usaTipoCampo?: boolean, usaGrupo?: boolean) {
     const n = novo[cat] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
     if (usaUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
@@ -104,6 +110,7 @@ function ConfiguracoesCompras() {
       uf: usaUf ? n.uf.toUpperCase() : null,
       tipo_campo: usaTipoCampo ? n.tipo_campo : null,
       obrigatorio: usaTipoCampo ? n.obrigatorio : false,
+      grupo: usaGrupo ? n.grupo : null,
     } as any);
     if (error) { toast.error(error.message); return; }
     setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
@@ -113,7 +120,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
@@ -207,11 +214,24 @@ function ConfiguracoesCompras() {
                         </div>
                       </>
                     )}
+                    {t.usaGrupo && (
+                      <div>
+                        <Label>Grupo</Label>
+                        <Select value={n.grupo} onValueChange={(v) => setNovoField(t.key, { grupo: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {GRUPOS.map((g) => (
+                              <SelectItem key={g.valor} value={g.valor}>{g.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div>
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
                     </div>
-                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo)} className="md:col-span-1">
+                    <Button onClick={() => adicionar(t.key, t.usaUf, t.usaTipoCampo, t.usaGrupo)} className="md:col-span-1">
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
                     </Button>
                   </div>

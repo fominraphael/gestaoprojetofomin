@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft, User, Car, MapPin, ShoppingBag, ListPlus, Store } from "lucide-react";
 
-interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number }
+interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number; grupo?: string | null }
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
@@ -36,7 +36,7 @@ function NovoChamado() {
     (async () => {
       const { data } = await supabase
         .from("compras_cadastros")
-        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem")
+        .select("categoria,valor,label,uf,tipo_campo,obrigatorio,ordem,grupo")
         .in("categoria", ["loja_estoque", "tipo_compra", "estado_uf", "campo_formulario"])
         .eq("ativo", true)
         .order("ordem");
@@ -223,9 +223,19 @@ function NovoChamado() {
             <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
           </div>
           <div>
-            <Label>{tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
+            <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
             <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
           </div>
+          {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
+            <div key={c.valor}>
+              <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+              <Input
+                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
+                value={camposExtras[c.valor] ?? ""}
+                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 
@@ -264,26 +274,20 @@ function NovoChamado() {
             <Label>Valor avaliado (R$) *</Label>
             <Input value={form.valor_avaliado} onChange={(e) => set("valor_avaliado", e.target.value)} placeholder="0,00" />
           </div>
+          {camposDoEstado.filter((c) => c.grupo === "veiculo").map((c) => (
+            <div key={c.valor}>
+              <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+              <Input
+                type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
+                value={camposExtras[c.valor] ?? ""}
+                onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 
-      {camposDoEstado.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ListPlus className="w-4 h-4 text-primary" /> Campos adicionais — {estadoUf}</CardTitle></CardHeader>
-          <CardContent className="grid md:grid-cols-3 gap-4">
-            {camposDoEstado.map((c) => (
-              <div key={c.valor}>
-                <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-                <Input
-                  type={c.tipo_campo === "numero" ? "number" : c.tipo_campo === "data" ? "date" : c.tipo_campo === "email" ? "email" : "text"}
-                  value={camposExtras[c.valor] ?? ""}
-                  onChange={(e) => setCamposExtras((s) => ({ ...s, [c.valor]: e.target.value }))}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+
 
 
       <Card>
