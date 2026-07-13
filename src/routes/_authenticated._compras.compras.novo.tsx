@@ -154,167 +154,219 @@ function NovoChamado() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })}>
-        <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-      </Button>
-      <div>
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5 text-primary" /> Novo chamado de compra
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Preencha os dados iniciais. Após salvar, você poderá anexar documentos e enviar para análise.
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><MapPin className="w-4 h-4 text-primary" /> Localização e Cliente</CardTitle></CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label>Pessoa</Label>
-            <Select value={tipoPessoa} onValueChange={(v) => setTipoPessoa(v as TipoPessoa)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PF">Pessoa Física</SelectItem>
-                <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Estado (UF) *</Label>
-            <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {estados.length > 0 ? estados.map((e) => (
-                  <SelectItem key={e.valor} value={e.valor.toUpperCase()}>{e.label}</SelectItem>
-                )) : (
-                  <>
-                    <SelectItem value="GO">Goiás</SelectItem>
-                    <SelectItem value="ES">Espírito Santo</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:col-span-2">
-            <Label className="flex items-center gap-1"><Store className="w-3.5 h-3.5" /> Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
-            {lojas.length === 0 ? (
-              <div className="text-xs text-amber-500 border border-amber-500/40 rounded-md p-2">
-                Nenhuma loja cadastrada para {estadoUf}.{" "}
-                {isAdmin && (
-                  <Link to="/compras/configuracoes" className="underline">
-                    Cadastrar agora
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
-                <SelectContent>
-                  {lojas.map((l) => (
-                    <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <div>
-            <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Nome / Razão social *</Label>
-            <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
-          </div>
-          <div>
-            <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
-            <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
-          </div>
-          {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
-            <div key={c.valor}>
-              <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-              <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Car className="w-4 h-4 text-primary" /> Veículo</CardTitle></CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-4">
-          <div>
-            <Label>Placa *</Label>
-            <Input value={form.placa} onChange={(e) => set("placa", e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label>Chassi *</Label>
-            <Input value={form.chassi} onChange={(e) => set("chassi", e.target.value.toUpperCase())} />
-          </div>
-          <div>
-            <Label>Renavam *</Label>
-            <Input value={form.renavam} onChange={(e) => set("renavam", e.target.value)} />
-          </div>
-          <div>
-            <Label>Modelo *</Label>
-            <Input value={form.modelo} onChange={(e) => set("modelo", e.target.value)} />
-          </div>
-          <div>
-            <Label>Ano/Modelo *</Label>
-            <Input value={form.ano_modelo} onChange={(e) => set("ano_modelo", e.target.value)} />
-          </div>
-          <div>
-            <Label>Cor externa *</Label>
-            <Select value={form.cor_externa} onValueChange={(v) => set("cor_externa", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
-              <SelectContent>
-                {CORES_EXTERNAS.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Código avaliação NBS *</Label>
-            <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
-          </div>
-          <div>
-            <Label>Valor avaliado (R$) *</Label>
-            <Input value={form.valor_avaliado} onChange={(e) => set("valor_avaliado", e.target.value)} placeholder="0,00" />
-          </div>
-          {camposDoEstado.filter((c) => c.grupo === "veiculo").map((c) => (
-            <div key={c.valor}>
-              <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-              <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-
-
-
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShoppingBag className="w-4 h-4 text-primary" /> Tipo de compra</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
-            <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {(tiposCompra.length > 0
-                ? tiposCompra.map((t) => ({ valor: t.valor, label: t.label }))
-                : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({ valor: k, label: TIPO_COMPRA_LABEL[k] }))
-              ).map((t) => (
-                <SelectItem key={t.valor} value={t.valor}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div>
-            <Label>Observações</Label>
-            <Textarea rows={3} value={form.observacao} onChange={(e) => set("observacao", e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => navigate({ to: "/compras" })}>Cancelar</Button>
-        <Button onClick={salvar} disabled={saving}>
-          {saving ? "Salvando..." : "Criar chamado"}
+    <div className="min-h-screen w-full bg-muted/30 p-6 md:p-10">
+      <div className="w-full max-w-6xl mx-auto">
+        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })} className="mb-4 -ml-2">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>
+
+        <header className="mb-8 flex items-end justify-between border-b border-border pb-6">
+          <div>
+            <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+              <span>Chamados</span>
+              <ChevronRight className="w-4 h-4" />
+              <span className="font-medium text-foreground">Novo chamado</span>
+            </nav>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <ShoppingBag className="w-6 h-6 text-primary" /> Novo chamado de compra
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Preencha os dados iniciais. Após salvar, você poderá anexar documentos e enviar para análise.
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full border border-primary/20">
+              Compras Seminovos
+            </span>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Coluna esquerda: Cliente e Localização */}
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-muted/40 border-b border-border py-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" /> Localização e Cliente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Pessoa</Label>
+                    <Select value={tipoPessoa} onValueChange={(v) => setTipoPessoa(v as TipoPessoa)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PF">Pessoa Física</SelectItem>
+                        <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Estado (UF) *</Label>
+                    <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {estados.length > 0 ? estados.map((e) => (
+                          <SelectItem key={e.valor} value={e.valor.toUpperCase()}>{e.label}</SelectItem>
+                        )) : (
+                          <>
+                            <SelectItem value="GO">Goiás</SelectItem>
+                            <SelectItem value="ES">Espírito Santo</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-1"><Store className="w-3.5 h-3.5" /> Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
+                  {lojas.length === 0 ? (
+                    <div className="text-xs text-amber-600 border border-amber-500/40 rounded-md p-2">
+                      Nenhuma loja cadastrada para {estadoUf}.{" "}
+                      {isAdmin && (
+                        <Link to="/compras/configuracoes" className="underline">Cadastrar agora</Link>
+                      )}
+                    </div>
+                  ) : (
+                    <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
+                      <SelectContent>
+                        {lojas.map((l) => (
+                          <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Nome / Razão social *</Label>
+                  <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
+                  <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
+                </div>
+
+                {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
+                  <div key={c.valor}>
+                    <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+                    <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Coluna direita: Veículo + Tipo de compra */}
+          <div className="lg:col-span-8 space-y-6">
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-muted/40 border-b border-border py-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Car className="w-4 h-4 text-muted-foreground" /> Informações do Veículo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="md:col-span-1">
+                    <Label>Placa *</Label>
+                    <Input value={form.placa} onChange={(e) => set("placa", e.target.value.toUpperCase())} className="uppercase" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Chassi *</Label>
+                    <Input value={form.chassi} onChange={(e) => set("chassi", e.target.value.toUpperCase())} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Label>Renavam *</Label>
+                    <Input value={form.renavam} onChange={(e) => set("renavam", e.target.value)} />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Modelo *</Label>
+                    <Input value={form.modelo} onChange={(e) => set("modelo", e.target.value)} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Label>Ano/Modelo *</Label>
+                    <Input value={form.ano_modelo} onChange={(e) => set("ano_modelo", e.target.value)} placeholder="2024/2025" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Label>Cor externa *</Label>
+                    <Select value={form.cor_externa} onValueChange={(v) => set("cor_externa", v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                      <SelectContent>
+                        {CORES_EXTERNAS.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Código avaliação NBS *</Label>
+                    <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Valor avaliado (R$) *</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium pointer-events-none">R$</span>
+                      <Input
+                        value={form.valor_avaliado}
+                        onChange={(e) => set("valor_avaliado", e.target.value)}
+                        placeholder="0,00"
+                        className="pl-10 bg-muted/40 font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  {camposDoEstado.filter((c) => c.grupo === "veiculo").map((c) => (
+                    <div key={c.valor} className="md:col-span-2">
+                      <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
+                      <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-muted/40 border-b border-border py-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-muted-foreground" /> Tipo de Compra e Observações
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <Label>Modalidade de compra</Label>
+                  <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(tiposCompra.length > 0
+                        ? tiposCompra.map((t) => ({ valor: t.valor, label: t.label }))
+                        : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({ valor: k, label: TIPO_COMPRA_LABEL[k] }))
+                      ).map((t) => (
+                        <SelectItem key={t.valor} value={t.valor}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Observações adicionais</Label>
+                  <Textarea rows={3} value={form.observacao} onChange={(e) => set("observacao", e.target.value)} placeholder="Detalhes sobre o estado do veículo ou condições da negociação…" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => navigate({ to: "/compras" })}>Cancelar</Button>
+              <Button onClick={salvar} disabled={saving} className="px-8">
+                {saving ? "Salvando..." : "Criar chamado"}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
