@@ -1052,6 +1052,40 @@ function DetalheChamado() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+              <div className="text-sm font-semibold text-foreground truncate">{preview.nome}</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" onClick={() => { const a = document.createElement("a"); a.href = preview.url; a.download = preview.nome; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
+                  <DownloadIcon className="w-3.5 h-3.5 mr-1" /> Baixar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setPreview(null)}>
+                  <XIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(preview.nome) ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img src={preview.url} alt={preview.nome} className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <iframe src={preview.url} title={preview.nome} className="w-full h-full border-0" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
