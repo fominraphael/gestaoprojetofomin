@@ -22,7 +22,7 @@ import {
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon } from "lucide-react";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
@@ -125,6 +125,7 @@ function DetalheChamado() {
   const [debitos, setDebitos] = useState<Debito[]>([]);
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState<{ url: string; nome: string } | null>(null);
 
   const [dialogo, setDialogo] = useState<null | "pendenciar" | "resolver" | "comprar" | "cancelar">(null);
   const [motivo, setMotivo] = useState("");
@@ -322,10 +323,23 @@ function DetalheChamado() {
   }
 
   async function abrirDoc(path: string) {
-    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 60);
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
     if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    const nome = path.split("/").pop() || "documento";
+    setPreview({ url: data.signedUrl, nome });
   }
+
+  async function baixarDoc(path: string) {
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300, { download: true });
+    if (error) { toast.error(error.message); return; }
+    const link = document.createElement("a");
+    link.href = data.signedUrl;
+    link.download = path.split("/").pop() || "documento";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
 
   async function excluirDoc(doc: Documento) {
     if (!confirm("Excluir este documento?")) return;
@@ -744,12 +758,16 @@ function DetalheChamado() {
                               <button onClick={() => abrirDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1">
                                 <Eye className="w-3 h-3" /> ver
                               </button>
+                              <button onClick={() => baixarDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1 text-foreground/80" title="Baixar">
+                                <DownloadIcon className="w-3 h-3" />
+                              </button>
                               {podeEditarDados && (
                                 <button onClick={() => excluirDoc(d)} className="text-red-400 hover:text-red-300">
                                   <Trash2 className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
+
                           ))}
                         </div>
                       )}
@@ -1034,6 +1052,40 @@ function DetalheChamado() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+              <div className="text-sm font-semibold text-foreground truncate">{preview.nome}</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" onClick={() => { const a = document.createElement("a"); a.href = preview.url; a.download = preview.nome; document.body.appendChild(a); a.click(); document.body.removeChild(a); }}>
+                  <DownloadIcon className="w-3.5 h-3.5 mr-1" /> Baixar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setPreview(null)}>
+                  <XIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(preview.nome) ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img src={preview.url} alt={preview.nome} className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <iframe src={preview.url} title={preview.nome} className="w-full h-full border-0" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
