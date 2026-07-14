@@ -68,7 +68,7 @@ interface Documento {
 interface Debito {
   id?: string;
   tipo: string;
-  status: "pago" | "pendente";
+  status: string;
   comprovante_path?: string | null;
   observacao?: string | null;
 }
