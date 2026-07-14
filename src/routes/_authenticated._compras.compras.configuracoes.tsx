@@ -223,6 +223,9 @@ function ConfiguracoesCompras() {
             t.usaUf ? "110px" : null,       // uf
             t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
             t.usaGrupo ? "160px" : null,    // grupo
+            t.usaStatusDebito ? "180px" : null, // aplica-se a
+            t.usaStatusDebito ? "80px" : null,  // exige anexo
+            t.usaStatusDebito ? "80px" : null,  // exige descricao
             t.usaTipoCampo ? "140px" : null,// tipo
             (t.usaTipoCampo || t.usaObrigatorio) ? "70px" : null, // obrig
             "80px",             // ordem
