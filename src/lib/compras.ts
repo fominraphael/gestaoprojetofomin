@@ -136,27 +136,42 @@ export const MOTIVOS_SUSPENSAO = [
   "Outros",
 ];
 
-export type MotivoCategoria = "motivo_pendencia" | "motivo_cancelamento" | "motivo_suspensao";
+export type MotivoCategoria = "pendencia" | "cancelamento" | "suspensao";
 
 /**
- * Carrega motivos do banco (compras_cadastros) para a categoria informada.
+ * Carrega motivos do banco (compras_cadastros) para o tipo informado.
+ * Itens novos ficam em categoria 'motivo_pendencia' com grupo = tipo.
+ * Itens antigos ficam em 'motivo_pendencia' ou 'motivo_cancelamento' sem grupo.
  * Retorna apenas itens ativos, ordenados por ordem.
  * Em caso de erro, retorna o array hardcoded como fallback.
  */
-export async function carregarMotivos(categoria: MotivoCategoria): Promise<string[]> {
-  const { data, error } = await supabase
+export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> {
+  let query = supabase
     .from("compras_cadastros")
-    .select("label")
-    .eq("categoria", categoria)
+    .select("label, grupo")
     .eq("ativo", true)
     .order("ordem");
 
+  if (tipo === "suspensao") {
+    // Itens novos de suspensão: categoria=motivo_pendencia, grupo=suspensao
+    query = query.eq("categoria", "motivo_pendencia").eq("grupo", "suspensao");
+  } else if (tipo === "cancelamento") {
+    // Itens antigos de cancelamento (categoria=motivo_cancelamento, grupo=null)
+    // + Itens novos (categoria=motivo_pendencia, grupo=cancelamento)
+    query = query.or("categoria.eq.motivo_cancelamento,and(categoria.eq.motivo_pendencia,grupo.eq.cancelamento)");
+  } else {
+    // Itens antigos de pendência (categoria=motivo_pendencia, grupo=null ou pendencia)
+    // + Itens novos (categoria=motivo_pendencia, grupo=pendencia)
+    query = query.or("and(categoria.eq.motivo_pendencia,grupo.is.null),and(categoria.eq.motivo_pendencia,grupo.eq.pendencia)");
+  }
+
+  const { data, error } = await query;
+
   if (error || !data || data.length === 0) {
-    // Fallback para arrays hardcoded
-    switch (categoria) {
-      case "motivo_pendencia": return MOTIVOS_PENDENCIA;
-      case "motivo_cancelamento": return MOTIVOS_CANCELAMENTO;
-      case "motivo_suspensao": return MOTIVOS_SUSPENSAO;
+    switch (tipo) {
+      case "pendencia": return MOTIVOS_PENDENCIA;
+      case "cancelamento": return MOTIVOS_CANCELAMENTO;
+      case "suspensao": return MOTIVOS_SUSPENSAO;
     }
   }
 

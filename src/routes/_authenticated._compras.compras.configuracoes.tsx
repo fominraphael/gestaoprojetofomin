@@ -24,14 +24,14 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 
 type Categoria =
   | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "motivo_suspensao" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
+  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
 
-type MotivoTipo = "motivo_pendencia" | "motivo_cancelamento" | "motivo_suspensao";
+type MotivoTipo = "pendencia" | "cancelamento" | "suspensao";
 
 const MOTIVO_TIPO_LABELS: Record<MotivoTipo, string> = {
-  motivo_pendencia: "Pendência",
-  motivo_cancelamento: "Cancelamento",
-  motivo_suspensao: "Suspensão",
+  pendencia: "Pendência",
+  cancelamento: "Cancelamento",
+  suspensao: "Suspensão",
 };
 
 interface Item {
@@ -162,16 +162,17 @@ function ConfiguracoesCompras() {
     for (const uf of ufsAlvo) {
       for (const tp of tpsAlvo) {
         rows.push({
-          categoria: tab.usaMotivoTipo ? n.motivo_tipo : cat,
-          valor,
+          categoria: tab.usaMotivoTipo ? "motivo_pendencia" : cat,
+          valor: tab.usaMotivoTipo ? `${n.motivo_tipo}_${valor}` : valor,
           label: n.label.trim(),
           ordem: Number(n.ordem) || 0,
           uf,
           tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
           obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
-          grupo: tab.usaStatusDebito
-            ? (n.link_tipo_debito || null)
-            : (tab.usaGrupo ? n.grupo : null),
+          grupo: tab.usaMotivoTipo ? n.motivo_tipo
+            : tab.usaStatusDebito
+              ? (n.link_tipo_debito || null)
+              : (tab.usaGrupo ? n.grupo : null),
           tipo_pessoa: tp,
           exige_anexo: tab.usaStatusDebito ? n.exige_anexo : false,
           exige_descricao: tab.usaStatusDebito ? n.exige_descricao : false,
@@ -226,10 +227,10 @@ function ConfiguracoesCompras() {
         {TABS.map((t) => {
           const isMotivos = t.key === "motivos";
           const rawList = isMotivos
-            ? items.filter((i) => ["motivo_pendencia", "motivo_cancelamento", "motivo_suspensao"].includes(i.categoria))
+            ? items.filter((i) => i.categoria === "motivo_pendencia")
             : items.filter((i) => i.categoria === t.key);
           const list = isMotivos && filtroMotivoTipo !== "todos"
-            ? rawList.filter((i) => i.categoria === filtroMotivoTipo)
+            ? rawList.filter((i) => i.grupo === filtroMotivoTipo)
             : rawList;
           const n = novo[t.key] ?? NOVO_VAZIO;
           // Column template for list rows
@@ -484,7 +485,7 @@ function ConfiguracoesCompras() {
                           <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} className="h-8" />
                           {isMotivos && (
                             <Badge variant="outline" className="text-[10px] h-7 justify-center">
-                              {MOTIVO_TIPO_LABELS[i.categoria as MotivoTipo] ?? i.categoria}
+                              {MOTIVO_TIPO_LABELS[(i.grupo as MotivoTipo) ?? "pendencia"] ?? i.grupo}
                             </Badge>
                           )}
                           {t.usaUf && (

@@ -21,7 +21,7 @@ import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
   MOTIVOS_SUSPENSAO, ADMIN_SUSPENSAO_ID,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
-  carregarMotivos, type MotivoCategoria,
+  carregarMotivos,
 } from "@/lib/compras";
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
 import { Input } from "@/components/ui/input";
@@ -158,10 +158,10 @@ function DetalheChamado() {
   const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
   const [statusOpts, setStatusOpts] = useState<{ valor: string; label: string; grupo: string | null; exige_anexo: boolean; exige_descricao: boolean }[]>([]);
   const [userTypes, setUserTypes] = useState<{ id: string; nome: string }[]>([]);
-  const [motivosMap, setMotivosMap] = useState<Record<MotivoCategoria, string[]>>({
-    motivo_pendencia: MOTIVOS_PENDENCIA,
-    motivo_cancelamento: MOTIVOS_CANCELAMENTO,
-    motivo_suspensao: MOTIVOS_SUSPENSAO,
+  const [motivosMap, setMotivosMap] = useState<Record<"pendencia" | "cancelamento" | "suspensao", string[]>>({
+    pendencia: MOTIVOS_PENDENCIA,
+    cancelamento: MOTIVOS_CANCELAMENTO,
+    suspensao: MOTIVOS_SUSPENSAO,
   });
 
   useEffect(() => {
@@ -177,9 +177,9 @@ function DetalheChamado() {
 
       // Carrega motivos do banco
       const [pend, canc, susp] = await Promise.all([
-        carregarMotivos("motivo_pendencia"),
-        carregarMotivos("motivo_cancelamento"),
-        carregarMotivos("motivo_suspensao"),
+        carregarMotivos("pendencia"),
+        carregarMotivos("cancelamento"),
+        carregarMotivos("suspensao"),
       ]);
       setMotivosMap({
         motivo_pendencia: pend,
@@ -1135,9 +1135,9 @@ function DetalheChamado() {
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     {(
-                      dialogo === "pendenciar" ? motivosMap.motivo_pendencia
-                      : dialogo === "suspender" ? motivosMap.motivo_suspensao
-                      : motivosMap.motivo_cancelamento
+                      dialogo === "pendenciar" ? motivosMap.pendencia
+                      : dialogo === "suspender" ? motivosMap.suspensao
+                      : motivosMap.cancelamento
                     ).map((m) => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
