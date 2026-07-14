@@ -323,10 +323,23 @@ function DetalheChamado() {
   }
 
   async function abrirDoc(path: string) {
-    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 60);
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
     if (error) { toast.error(error.message); return; }
-    window.open(data.signedUrl, "_blank");
+    const nome = path.split("/").pop() || "documento";
+    setPreview({ url: data.signedUrl, nome });
   }
+
+  async function baixarDoc(path: string) {
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300, { download: true });
+    if (error) { toast.error(error.message); return; }
+    const link = document.createElement("a");
+    link.href = data.signedUrl;
+    link.download = path.split("/").pop() || "documento";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
 
   async function excluirDoc(doc: Documento) {
     if (!confirm("Excluir este documento?")) return;
