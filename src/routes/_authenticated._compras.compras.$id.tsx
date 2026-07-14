@@ -156,7 +156,6 @@ function DetalheChamado() {
   const [debSaving, setDebSaving] = useState(false);
   const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
   const [statusOpts, setStatusOpts] = useState<{ valor: string; label: string; grupo: string | null; exige_anexo: boolean; exige_descricao: boolean }[]>([]);
-<<<<<<< HEAD
   const [userTypes, setUserTypes] = useState<{ id: string; nome: string }[]>([]);
 
   useEffect(() => {
@@ -169,17 +168,6 @@ function DetalheChamado() {
       setLojas((lojasRes.data as any) ?? []);
       setStatusOpts((stRes.data as any) ?? []);
       setUserTypes(typesRes.map((t) => ({ id: t.id, nome: t.nome })));
-=======
-
-  useEffect(() => {
-    (async () => {
-      const [lojasRes, stRes] = await Promise.all([
-        supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
-        supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
-      ]);
-      setLojas((lojasRes.data as any) ?? []);
-      setStatusOpts((stRes.data as any) ?? []);
->>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
     })();
   }, []);
 
