@@ -90,16 +90,20 @@ export type Database = {
           modelo: string | null
           motivo_cancelamento: string | null
           motivo_pendencia: string | null
+          motivo_suspensao: string | null
           nf_observacao: string | null
           nf_status: string | null
           nome: string
           observacao_cancelamento: string | null
           observacao_compra: string | null
           observacao_pendencia: string | null
+          observacao_suspensao: string | null
           ordem: number | null
           placa: string
           renavam: string | null
           status: string
+          suspenso_em: string | null
+          suspenso_por: string | null
           tipo_compra: string
           tipo_pessoa: string
           updated_at: string
@@ -126,16 +130,20 @@ export type Database = {
           modelo?: string | null
           motivo_cancelamento?: string | null
           motivo_pendencia?: string | null
+          motivo_suspensao?: string | null
           nf_observacao?: string | null
           nf_status?: string | null
           nome: string
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
+          observacao_suspensao?: string | null
           ordem?: number | null
           placa: string
           renavam?: string | null
           status?: string
+          suspenso_em?: string | null
+          suspenso_por?: string | null
           tipo_compra: string
           tipo_pessoa: string
           updated_at?: string
@@ -162,16 +170,20 @@ export type Database = {
           modelo?: string | null
           motivo_cancelamento?: string | null
           motivo_pendencia?: string | null
+          motivo_suspensao?: string | null
           nf_observacao?: string | null
           nf_status?: string | null
           nome?: string
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
+          observacao_suspensao?: string | null
           ordem?: number | null
           placa?: string
           renavam?: string | null
           status?: string
+          suspenso_em?: string | null
+          suspenso_por?: string | null
           tipo_compra?: string
           tipo_pessoa?: string
           updated_at?: string

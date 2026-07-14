@@ -303,6 +303,27 @@ function DetalheChamado() {
     carregar();
   }
 
+  async function devolverAFila() {
+    if (!chamado || !user) return;
+    if (!confirm("Devolver este processo para a fila da Central?")) return;
+    const { error } = await supabase
+      .from("compras_chamados")
+      .update({ assumido_por: null, assumido_em: null, status: "na_fila_central" })
+      .eq("id", chamado.id);
+    if (error) { toast.error(error.message); return; }
+    await registrarHistorico({
+      acao: "devolvido_fila",
+      campo: "status",
+      valor_antes: chamado.status,
+      valor_depois: "na_fila_central",
+    });
+
+    setModoAdmin(null);
+    setAskAdmin(false);
+    toast.success("Processo devolvido à fila.");
+    carregar();
+  }
+
   function guessCategoria(name: string): string {
     const lower = name.toLowerCase();
     const match = requisitos.find((r) => lower.includes(r.categoria.split("_")[0]));
@@ -650,12 +671,6 @@ function DetalheChamado() {
           <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
           </Button>
-          {isAdmin && (
-            <Button size="sm" variant="outline" onClick={abrirEdicao} disabled={readOnlyAdmin}>
-              <Pencil className="w-4 h-4 mr-2" /> Editar dados
-            </Button>
-          )}
-
           {chamado.assumido_por && (
             <Badge variant="secondary" className="text-xs gap-1">
               <UserCheck className="w-3 h-3" />
@@ -663,6 +678,17 @@ function DetalheChamado() {
               {chamado.assumido_em && <span className="text-muted-foreground ml-1">{new Date(chamado.assumido_em).toLocaleString("pt-BR")}</span>}
             </Badge>
           )}
+          {isAdmin && modoAdmin === "assumido" && chamado.assumido_por === user?.id && (
+            <Button size="sm" variant="outline" onClick={devolverAFila}>
+              <XIcon className="w-4 h-4 mr-2" /> Devolver à fila
+            </Button>
+          )}
+          {isAdmin && (
+            <Button size="sm" variant="outline" onClick={abrirEdicao} disabled={readOnlyAdmin}>
+              <Pencil className="w-4 h-4 mr-2" /> Editar dados
+            </Button>
+          )}
+
           {readOnlyAdmin && (
             <Badge variant="outline" className="text-xs gap-1"><Eye className="w-3 h-3" /> Somente visualização</Badge>
           )}
@@ -1116,7 +1142,7 @@ function DetalheChamado() {
               <Eye className="w-4 h-4 mr-2" /> Apenas visualizar
             </Button>
             <Button onClick={assumir}>
-              <UserCheck className="w-4 h-4 mr-2" /> {chamado.assumido_por ? "Assumir processo" : "Assumir processo"}
+              <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           </DialogFooter>
         </DialogContent>

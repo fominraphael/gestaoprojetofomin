@@ -27,6 +27,7 @@ import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_auth
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
@@ -135,6 +136,12 @@ const AuthenticatedComprasComprasIndexRoute =
     path: '/compras/',
     getParentRoute: () => AuthenticatedComprasRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNotificarVencimentosTestRoute =
   ApiPublicHooksNotificarVencimentosTestRouteImport.update({
     id: '/api/public/hooks/notificar-vencimentos-test',
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -267,6 +275,7 @@ export interface FileRoutesByTo {
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/compras': typeof AuthenticatedComprasComprasIndexRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -301,6 +310,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/_compras/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/lovable/email/queue/process'
     | '/compras/'
     | '/toyota/estoque/importar'
   fileRoutesByTo: FileRoutesByTo
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/lovable/email/queue/process'
     | '/compras'
     | '/toyota/estoque/importar'
   id:
@@ -392,6 +404,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/regras'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
+    | '/lovable/email/queue/process'
     | '/_authenticated/_compras/compras/'
     | '/_authenticated/_toyota/toyota/estoque/importar'
   fileRoutesById: FileRoutesById
@@ -403,6 +416,7 @@ export interface RootRouteChildren {
   RegistrarRoute: typeof RegistrarRoute
   ApiPublicHooksNotificarVencimentosRoute: typeof ApiPublicHooksNotificarVencimentosRoute
   ApiPublicHooksNotificarVencimentosTestRoute: typeof ApiPublicHooksNotificarVencimentosTestRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -532,6 +546,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/compras/'
       preLoaderRoute: typeof AuthenticatedComprasComprasIndexRouteImport
       parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/notificar-vencimentos-test': {
       id: '/api/public/hooks/notificar-vencimentos-test'
@@ -743,17 +764,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksNotificarVencimentosRoute,
   ApiPublicHooksNotificarVencimentosTestRoute:
     ApiPublicHooksNotificarVencimentosTestRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
