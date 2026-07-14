@@ -787,18 +787,20 @@ function DetalheChamado() {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {TIPOS_DEBITO.map((t) => {
               const atual = debitos.find((d) => d.tipo === t.key);
+              const opts = statusesFor(t.key);
               return (
                 <div key={t.key} className="flex items-center justify-between gap-3 border border-border rounded-md p-2">
                   <div className="text-sm font-medium">{t.label}</div>
                   <Select
                     value={atual?.status ?? ""}
-                    onValueChange={(v) => marcarDebito(t.key, v as "pago" | "pendente")}
-                    disabled={!podeEditarDados}
+                    onValueChange={(v) => marcarDebito(t.key, v)}
+                    disabled={!podeEditarDados || opts.length === 0}
                   >
-                    <SelectTrigger className="w-36"><SelectValue placeholder="Marcar" /></SelectTrigger>
+                    <SelectTrigger className="w-44"><SelectValue placeholder={opts.length === 0 ? "Sem status" : "Marcar"} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pago">Pago / OK</SelectItem>
-                      <SelectItem value="pendente">Pendente</SelectItem>
+                      {opts.map((s) => (
+                        <SelectItem key={s.valor} value={s.valor}>{s.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
