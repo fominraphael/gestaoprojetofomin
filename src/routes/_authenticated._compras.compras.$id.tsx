@@ -758,12 +758,16 @@ function DetalheChamado() {
                               <button onClick={() => abrirDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1">
                                 <Eye className="w-3 h-3" /> ver
                               </button>
+                              <button onClick={() => baixarDoc(d.storage_path)} className="hover:underline inline-flex items-center gap-1 text-foreground/80" title="Baixar">
+                                <DownloadIcon className="w-3 h-3" />
+                              </button>
                               {podeEditarDados && (
                                 <button onClick={() => excluirDoc(d)} className="text-red-400 hover:text-red-300">
                                   <Trash2 className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
+
                           ))}
                         </div>
                       )}
