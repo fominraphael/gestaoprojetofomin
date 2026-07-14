@@ -7,6 +7,20 @@ export interface SendMailInput {
   html: string;
 }
 
+function htmlToText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export async function sendMail({ to, subject, html }: SendMailInput) {
   const lovableApiKey = process.env.LOVABLE_API_KEY;
   const lovableSendUrl = process.env.LOVABLE_SEND_URL;
@@ -24,6 +38,7 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
           sender_domain: lovableDomain,
           subject,
           html,
+          text: htmlToText(html),
           purpose: "transactional",
           label: "sistema",
           message_id: messageId,
@@ -36,12 +51,11 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
     } catch (err) {
       console.error("[lovable-email] FALHA:", err);
       console.error("[lovable-email] params: from=" + lovableFrom + " domain=" + lovableDomain);
-      // Não faz fallback — se o Lovable está configurado, deve usar ele
       throw err;
     }
   }
 
-  // Fallback: SMTP direto via worker-mailer (apenas se Lovable não configurado)
+  // Fallback: SMTP direto via worker-mailer
   const { WorkerMailer } = await import("worker-mailer");
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT || 587);
