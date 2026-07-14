@@ -68,7 +68,7 @@ interface Documento {
 interface Debito {
   id?: string;
   tipo: string;
-  status: "pago" | "pendente";
+  status: string;
   comprovante_path?: string | null;
   observacao?: string | null;
 }
@@ -143,23 +143,28 @@ function DetalheChamado() {
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string }>(null);
+  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string; statusValor: string; statusLabel: string; exigeAnexo: boolean; exigeDescricao: boolean }>(null);
   const [debObs, setDebObs] = useState("");
   const [debFile, setDebFile] = useState<File | null>(null);
   const [debSaving, setDebSaving] = useState(false);
   const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
+  const [statusOpts, setStatusOpts] = useState<{ valor: string; label: string; grupo: string | null; exige_anexo: boolean; exige_descricao: boolean }[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("compras_cadastros")
-        .select("valor,label")
-        .eq("categoria", "loja_estoque")
-        .eq("ativo", true)
-        .order("ordem");
-      setLojas((data as any) ?? []);
+      const [lojasRes, stRes] = await Promise.all([
+        supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
+        supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
+      ]);
+      setLojas((lojasRes.data as any) ?? []);
+      setStatusOpts((stRes.data as any) ?? []);
     })();
   }, []);
+
+  const statusesFor = useCallback(
+    (tipo: string) => statusOpts.filter((s) => !s.grupo || s.grupo === tipo),
+    [statusOpts],
+  );
 
   const registrarHistorico = useCallback(
     async (payload: {
@@ -331,54 +336,66 @@ function DetalheChamado() {
     await registrarHistorico({ acao: "documento_removido", campo: doc.categoria, observacao: doc.storage_path });
   }
 
-  async function marcarDebito(tipo: string, status: "pago" | "pendente") {
+  async function marcarDebito(tipo: string, statusValor: string) {
     if (!chamado) return;
-    if (status === "pendente") {
-      const label = TIPOS_DEBITO.find((t) => t.key === tipo)?.label ?? tipo;
-      setDebObs(""); setDebFile(null); setDebitoPend({ tipo, label });
+    const opt = statusOpts.find((s) => s.valor === statusValor && (!s.grupo || s.grupo === tipo));
+    if (!opt) { toast.error("Status inválido."); return; }
+    const tipoLabel = TIPOS_DEBITO.find((t) => t.key === tipo)?.label ?? tipo;
+    if (opt.exige_anexo || opt.exige_descricao) {
+      setDebObs(""); setDebFile(null);
+      setDebitoPend({
+        tipo, label: tipoLabel,
+        statusValor: opt.valor, statusLabel: opt.label,
+        exigeAnexo: opt.exige_anexo, exigeDescricao: opt.exige_descricao,
+      });
       return;
     }
     const anterior = debitos.find((d) => d.tipo === tipo)?.status ?? null;
     setDebitos((prev) => {
       const idx = prev.findIndex((d) => d.tipo === tipo);
-      if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], status }; return copy; }
-      return [...prev, { tipo, status }];
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], status: statusValor }; return copy; }
+      return [...prev, { tipo, status: statusValor }];
     });
     const { error } = await supabase.from("compras_debitos").upsert(
-      { chamado_id: chamado.id, tipo, status },
+      { chamado_id: chamado.id, tipo, status: statusValor },
       { onConflict: "chamado_id,tipo" },
     );
     if (error) { toast.error(error.message); carregar(); return; }
-    await registrarHistorico({ acao: "debito_marcado", campo: tipo, valor_antes: anterior, valor_depois: status });
+    await registrarHistorico({ acao: "debito_marcado", campo: tipo, valor_antes: anterior, valor_depois: statusValor });
   }
 
   async function confirmarDebitoPendente() {
     if (!chamado || !debitoPend) return;
-    if (!debFile) { toast.error("Anexo obrigatório ao marcar como pendente."); return; }
-    if (!debObs.trim()) { toast.error("Informe a observação da pendência."); return; }
+    if (debitoPend.exigeAnexo && !debFile) { toast.error("Anexo obrigatório para este status."); return; }
+    if (debitoPend.exigeDescricao && !debObs.trim()) { toast.error("Descrição obrigatória para este status."); return; }
     setDebSaving(true);
     try {
-      const path = `compras/${chamado.id}/debitos/${debitoPend.tipo}-${Date.now()}-${debFile.name}`;
-      const { error: upErr } = await supabase.storage.from("documentos").upload(path, debFile);
-      if (upErr) { toast.error(upErr.message); return; }
+      let path: string | null = null;
+      if (debFile) {
+        path = `compras/${chamado.id}/debitos/${debitoPend.tipo}-${Date.now()}-${debFile.name}`;
+        const { error: upErr } = await supabase.storage.from("documentos").upload(path, debFile);
+        if (upErr) { toast.error(upErr.message); return; }
+      }
       const anterior = debitos.find((d) => d.tipo === debitoPend.tipo)?.status ?? null;
-      const { error } = await supabase.from("compras_debitos").upsert(
-        { chamado_id: chamado.id, tipo: debitoPend.tipo, status: "pendente", comprovante_path: path, observacao: debObs.trim() },
-        { onConflict: "chamado_id,tipo" },
-      );
+      const payload: any = {
+        chamado_id: chamado.id, tipo: debitoPend.tipo, status: debitoPend.statusValor,
+        observacao: debObs.trim() || null,
+      };
+      if (path) payload.comprovante_path = path;
+      const { error } = await supabase.from("compras_debitos").upsert(payload, { onConflict: "chamado_id,tipo" });
       if (error) { toast.error(error.message); return; }
       setDebitos((prev) => {
         const idx = prev.findIndex((d) => d.tipo === debitoPend.tipo);
-        const item = { tipo: debitoPend.tipo, status: "pendente" as const, comprovante_path: path, observacao: debObs.trim() };
+        const item: Debito = { tipo: debitoPend.tipo, status: debitoPend.statusValor, comprovante_path: path ?? undefined, observacao: debObs.trim() || undefined };
         if (idx >= 0) { const copy = [...prev]; copy[idx] = { ...copy[idx], ...item }; return copy; }
         return [...prev, item];
       });
       await registrarHistorico({
-        acao: "debito_pendenciado", campo: debitoPend.tipo,
-        valor_antes: anterior, valor_depois: "pendente",
-        observacao: debObs.trim(), anexo_path: path,
+        acao: "debito_status_alterado", campo: debitoPend.tipo,
+        valor_antes: anterior, valor_depois: debitoPend.statusValor,
+        observacao: debObs.trim() || null, anexo_path: path,
       });
-      toast.success("Pendência registrada.");
+      toast.success("Status registrado.");
       setDebitoPend(null);
     } finally { setDebSaving(false); }
   }
@@ -770,18 +787,20 @@ function DetalheChamado() {
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {TIPOS_DEBITO.map((t) => {
               const atual = debitos.find((d) => d.tipo === t.key);
+              const opts = statusesFor(t.key);
               return (
                 <div key={t.key} className="flex items-center justify-between gap-3 border border-border rounded-md p-2">
                   <div className="text-sm font-medium">{t.label}</div>
                   <Select
                     value={atual?.status ?? ""}
-                    onValueChange={(v) => marcarDebito(t.key, v as "pago" | "pendente")}
-                    disabled={!podeEditarDados}
+                    onValueChange={(v) => marcarDebito(t.key, v)}
+                    disabled={!podeEditarDados || opts.length === 0}
                   >
-                    <SelectTrigger className="w-36"><SelectValue placeholder="Marcar" /></SelectTrigger>
+                    <SelectTrigger className="w-44"><SelectValue placeholder={opts.length === 0 ? "Sem status" : "Marcar"} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pago">Pago / OK</SelectItem>
-                      <SelectItem value="pendente">Pendente</SelectItem>
+                      {opts.map((s) => (
+                        <SelectItem key={s.valor} value={s.valor}>{s.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -925,16 +944,19 @@ function DetalheChamado() {
       <Dialog open={!!debitoPend} onOpenChange={(o) => !o && setDebitoPend(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Marcar {debitoPend?.label} como pendente</DialogTitle>
-            <DialogDescription>Anexo e observação são obrigatórios.</DialogDescription>
+            <DialogTitle>{debitoPend?.label} → {debitoPend?.statusLabel}</DialogTitle>
+            <DialogDescription>
+              {[debitoPend?.exigeDescricao ? "descrição" : null, debitoPend?.exigeAnexo ? "anexo" : null]
+                .filter(Boolean).join(" e ")} obrigatório(s) para este status.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Observação *</Label>
+              <Label>Descrição {debitoPend?.exigeDescricao && "*"}</Label>
               <Textarea rows={3} value={debObs} onChange={(e) => setDebObs(e.target.value)} />
             </div>
             <div>
-              <Label>Anexo (comprovante) *</Label>
+              <Label>Anexo {debitoPend?.exigeAnexo && "*"}</Label>
               <Input type="file" onChange={(e) => setDebFile(e.target.files?.[0] ?? null)} />
               {debFile && <div className="text-xs text-muted-foreground mt-1">{debFile.name}</div>}
             </div>

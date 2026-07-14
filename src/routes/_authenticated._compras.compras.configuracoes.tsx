@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 
 type Categoria =
   | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento";
+  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
 
 interface Item {
   id: string;
@@ -38,19 +38,23 @@ interface Item {
   obrigatorio: boolean;
   grupo: string | null;
   tipo_pessoa: "PF" | "PJ" | null;
+  exige_anexo: boolean;
+  exige_descricao: boolean;
 }
 
 const TABS: {
   key: Categoria; title: string; hint: string;
   usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean;
   multiUf?: boolean; usaObrigatorio?: boolean; usaTipoPessoa?: boolean; multiTipoPessoa?: boolean;
+  usaStatusDebito?: boolean;
 }[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
   { key: "campo_formulario", title: "Campos", hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.", usaUf: true, usaTipoCampo: true, usaGrupo: true, multiUf: true },
   { key: "documento", title: "Documentos", hint: "Documentos exigidos por estado e pessoa (PF/PJ). Marque um ou vários estados e PF/PJ — o item é replicado para cada combinação. Marque como obrigatório para bloquear o envio à Central sem anexo.", usaUf: true, multiUf: true, usaObrigatorio: true, usaTipoPessoa: true, multiTipoPessoa: true },
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
-  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
+  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados no chamado com um status configurado abaixo. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
+  { key: "status_debito", title: "Status de débito", hint: "Opções do seletor de status em cada item de checagem/débito. Vincule a um tipo específico (ex.: só aparece em Multas) ou deixe em Todos. Marque se ao selecionar exige descrição e/ou anexo.", usaStatusDebito: true },
   { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
   { key: "motivo_cancelamento", title: "Motivos de cancelamento", hint: "Aparecem ao cancelar um chamado." },
 ];
@@ -82,9 +86,12 @@ interface NovoForm {
   valor: string; label: string; ordem: string;
   uf: string; ufs: string[]; tipo_campo: string; obrigatorio: boolean; grupo: string;
   tipos_pessoa: ("PF" | "PJ")[];
+  link_tipo_debito: string; // "" = todos
+  exige_anexo: boolean;
+  exige_descricao: boolean;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [] };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -152,8 +159,12 @@ function ConfiguracoesCompras() {
           uf,
           tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
           obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
-          grupo: tab.usaGrupo ? n.grupo : null,
+          grupo: tab.usaStatusDebito
+            ? (n.link_tipo_debito || null)
+            : (tab.usaGrupo ? n.grupo : null),
           tipo_pessoa: tp,
+          exige_anexo: tab.usaStatusDebito ? n.exige_anexo : false,
+          exige_descricao: tab.usaStatusDebito ? n.exige_descricao : false,
         });
       }
     }
@@ -166,7 +177,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa, exige_anexo: i.exige_anexo, exige_descricao: i.exige_descricao } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
@@ -212,6 +223,9 @@ function ConfiguracoesCompras() {
             t.usaUf ? "110px" : null,       // uf
             t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
             t.usaGrupo ? "160px" : null,    // grupo
+            t.usaStatusDebito ? "180px" : null, // aplica-se a
+            t.usaStatusDebito ? "80px" : null,  // exige anexo
+            t.usaStatusDebito ? "80px" : null,  // exige descricao
             t.usaTipoCampo ? "140px" : null,// tipo
             (t.usaTipoCampo || t.usaObrigatorio) ? "70px" : null, // obrig
             "80px",             // ordem
@@ -359,6 +373,30 @@ function ConfiguracoesCompras() {
                         <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
                       </div>
                     )}
+                    {t.usaStatusDebito && (
+                      <>
+                        <div className="w-[200px]">
+                          <Label>Aplica-se a</Label>
+                          <Select value={n.link_tipo_debito || "__all"} onValueChange={(v) => setNovoField(t.key, { link_tipo_debito: v === "__all" ? "" : v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all">Todos os tipos</SelectItem>
+                              {items.filter((i) => i.categoria === "tipo_debito" && i.ativo).map((td) => (
+                                <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2 h-10 px-2">
+                          <input id={`ea-${t.key}`} type="checkbox" checked={n.exige_anexo} onChange={(e) => setNovoField(t.key, { exige_anexo: e.target.checked })} />
+                          <Label htmlFor={`ea-${t.key}`} className="cursor-pointer">Exige anexo</Label>
+                        </div>
+                        <div className="flex items-center gap-2 h-10 px-2">
+                          <input id={`ed-${t.key}`} type="checkbox" checked={n.exige_descricao} onChange={(e) => setNovoField(t.key, { exige_descricao: e.target.checked })} />
+                          <Label htmlFor={`ed-${t.key}`} className="cursor-pointer">Exige descrição</Label>
+                        </div>
+                      </>
+                    )}
                     <div className="w-[90px]">
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
@@ -382,6 +420,9 @@ function ConfiguracoesCompras() {
                         {t.usaUf && <div>UF</div>}
                         {t.usaTipoPessoa && <div>PF/PJ</div>}
                         {t.usaGrupo && <div>Grupo</div>}
+                        {t.usaStatusDebito && <div>Aplica-se</div>}
+                        {t.usaStatusDebito && <div>Anexo?</div>}
+                        {t.usaStatusDebito && <div>Descr.?</div>}
                         {t.usaTipoCampo && <div>Tipo</div>}
                         {(t.usaTipoCampo || t.usaObrigatorio) && <div>Obrig.</div>}
                         <div>Ordem</div>
@@ -425,6 +466,25 @@ function ConfiguracoesCompras() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          )}
+                          {t.usaStatusDebito && (
+                            <>
+                              <Select value={i.grupo ?? "__all"} onValueChange={(v) => updateLocal(i.id, { grupo: v === "__all" ? null : v })}>
+                                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__all">Todos</SelectItem>
+                                  {items.filter((x) => x.categoria === "tipo_debito" && x.ativo).map((td) => (
+                                    <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <label className="flex items-center justify-center text-xs">
+                                <input type="checkbox" checked={i.exige_anexo} onChange={(e) => updateLocal(i.id, { exige_anexo: e.target.checked })} />
+                              </label>
+                              <label className="flex items-center justify-center text-xs">
+                                <input type="checkbox" checked={i.exige_descricao} onChange={(e) => updateLocal(i.id, { exige_descricao: e.target.checked })} />
+                              </label>
+                            </>
                           )}
                           {t.usaTipoCampo && (
                             <Select value={i.tipo_campo ?? "texto"} onValueChange={(v) => updateLocal(i.id, { tipo_campo: v })}>
