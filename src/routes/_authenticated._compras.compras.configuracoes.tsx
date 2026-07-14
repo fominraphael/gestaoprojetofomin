@@ -467,6 +467,25 @@ function ConfiguracoesCompras() {
                               </SelectContent>
                             </Select>
                           )}
+                          {t.usaStatusDebito && (
+                            <>
+                              <Select value={i.grupo ?? "__all"} onValueChange={(v) => updateLocal(i.id, { grupo: v === "__all" ? null : v })}>
+                                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__all">Todos</SelectItem>
+                                  {items.filter((x) => x.categoria === "tipo_debito" && x.ativo).map((td) => (
+                                    <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <label className="flex items-center justify-center text-xs">
+                                <input type="checkbox" checked={i.exige_anexo} onChange={(e) => updateLocal(i.id, { exige_anexo: e.target.checked })} />
+                              </label>
+                              <label className="flex items-center justify-center text-xs">
+                                <input type="checkbox" checked={i.exige_descricao} onChange={(e) => updateLocal(i.id, { exige_descricao: e.target.checked })} />
+                              </label>
+                            </>
+                          )}
                           {t.usaTipoCampo && (
                             <Select value={i.tipo_campo ?? "texto"} onValueChange={(v) => updateLocal(i.id, { tipo_campo: v })}>
                               <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
