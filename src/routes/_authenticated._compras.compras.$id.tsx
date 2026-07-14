@@ -944,16 +944,19 @@ function DetalheChamado() {
       <Dialog open={!!debitoPend} onOpenChange={(o) => !o && setDebitoPend(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Marcar {debitoPend?.label} como pendente</DialogTitle>
-            <DialogDescription>Anexo e observação são obrigatórios.</DialogDescription>
+            <DialogTitle>{debitoPend?.label} → {debitoPend?.statusLabel}</DialogTitle>
+            <DialogDescription>
+              {[debitoPend?.exigeDescricao ? "descrição" : null, debitoPend?.exigeAnexo ? "anexo" : null]
+                .filter(Boolean).join(" e ")} obrigatório(s) para este status.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Observação *</Label>
+              <Label>Descrição {debitoPend?.exigeDescricao && "*"}</Label>
               <Textarea rows={3} value={debObs} onChange={(e) => setDebObs(e.target.value)} />
             </div>
             <div>
-              <Label>Anexo (comprovante) *</Label>
+              <Label>Anexo {debitoPend?.exigeAnexo && "*"}</Label>
               <Input type="file" onChange={(e) => setDebFile(e.target.files?.[0] ?? null)} />
               {debFile && <div className="text-xs text-muted-foreground mt-1">{debFile.name}</div>}
             </div>
