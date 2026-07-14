@@ -22,7 +22,7 @@ import {
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon } from "lucide-react";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
