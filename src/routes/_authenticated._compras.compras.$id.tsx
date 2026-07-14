@@ -143,23 +143,28 @@ function DetalheChamado() {
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string }>(null);
+  const [debitoPend, setDebitoPend] = useState<null | { tipo: string; label: string; statusValor: string; statusLabel: string; exigeAnexo: boolean; exigeDescricao: boolean }>(null);
   const [debObs, setDebObs] = useState("");
   const [debFile, setDebFile] = useState<File | null>(null);
   const [debSaving, setDebSaving] = useState(false);
   const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
+  const [statusOpts, setStatusOpts] = useState<{ valor: string; label: string; grupo: string | null; exige_anexo: boolean; exige_descricao: boolean }[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("compras_cadastros")
-        .select("valor,label")
-        .eq("categoria", "loja_estoque")
-        .eq("ativo", true)
-        .order("ordem");
-      setLojas((data as any) ?? []);
+      const [lojasRes, stRes] = await Promise.all([
+        supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
+        supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
+      ]);
+      setLojas((lojasRes.data as any) ?? []);
+      setStatusOpts((stRes.data as any) ?? []);
     })();
   }, []);
+
+  const statusesFor = useCallback(
+    (tipo: string) => statusOpts.filter((s) => !s.grupo || s.grupo === tipo),
+    [statusOpts],
+  );
 
   const registrarHistorico = useCallback(
     async (payload: {
