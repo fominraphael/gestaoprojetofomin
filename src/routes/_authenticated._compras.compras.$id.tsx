@@ -125,6 +125,7 @@ function DetalheChamado() {
   const [debitos, setDebitos] = useState<Debito[]>([]);
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState<{ url: string; nome: string } | null>(null);
 
   const [dialogo, setDialogo] = useState<null | "pendenciar" | "resolver" | "comprar" | "cancelar">(null);
   const [motivo, setMotivo] = useState("");
