@@ -9,6 +9,8 @@ import {
   FileText,
   Download,
   ExternalLink,
+  Eye,
+  X,
 } from "lucide-react";
 import JSZip from "jszip";
 import {
