@@ -22,10 +22,7 @@ import {
   MOTIVOS_SUSPENSAO, ADMIN_SUSPENSAO_ID,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
-<<<<<<< HEAD
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
-=======
->>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
 
