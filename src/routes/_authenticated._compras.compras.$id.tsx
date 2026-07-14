@@ -231,7 +231,12 @@ function DetalheChamado() {
     setDebitos((deb.data as any) ?? []);
     const histRows = ((hist.data as any) ?? []) as HistoricoItem[];
     setHistorico(histRows);
-    const ids = Array.from(new Set(histRows.map((h: any) => h.autor_id).filter(Boolean))) as string[];
+    const chamadoData = c.data as any;
+    const ids = Array.from(new Set([
+      ...histRows.map((h: any) => h.autor_id),
+      chamadoData?.assumido_por,
+      chamadoData?.suspenso_por,
+    ].filter(Boolean))) as string[];
     if (ids.length) {
       const { data: profs } = await supabase.from("profiles").select("id, username, nome_fantasia").in("id", ids);
       const map: Record<string, string> = {};
@@ -651,6 +656,13 @@ function DetalheChamado() {
             </Button>
           )}
 
+          {chamado.assumido_por && (
+            <Badge variant="secondary" className="text-xs gap-1">
+              <UserCheck className="w-3 h-3" />
+              {autores[chamado.assumido_por] ?? "Admin"}
+              {chamado.assumido_em && <span className="text-muted-foreground ml-1">{new Date(chamado.assumido_em).toLocaleString("pt-BR")}</span>}
+            </Badge>
+          )}
           {readOnlyAdmin && (
             <Badge variant="outline" className="text-xs gap-1"><Eye className="w-3 h-3" /> Somente visualização</Badge>
           )}
@@ -707,6 +719,7 @@ function DetalheChamado() {
                 {chamado.suspenso_em && (
                   <div className="text-xs text-muted-foreground mt-1">
                     Suspenso em: {new Date(chamado.suspenso_em).toLocaleString("pt-BR")}
+                    {chamado.suspenso_por && <span> por {autores[chamado.suspenso_por] ?? "admin"}</span>}
                   </div>
                 )}
               </div>
@@ -1091,7 +1104,11 @@ function DetalheChamado() {
           <DialogHeader>
             <DialogTitle>Como deseja acessar este processo?</DialogTitle>
             <DialogDescription>
-              Você pode apenas visualizar sem alterar nada, ou assumir o processo para tomar ações da Central.
+              {chamado.assumido_por ? (
+                <>Este processo já está com <strong>{autores[chamado.assumido_por] ?? "outro admin"}</strong>{chamado.assumido_em ? ` desde ${new Date(chamado.assumido_em).toLocaleString("pt-BR")}` : ""}. Deseja assumir?</>
+              ) : (
+                <>Você pode apenas visualizar sem alterar nada, ou assumir o processo para tomar ações da Central.</>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -1099,7 +1116,7 @@ function DetalheChamado() {
               <Eye className="w-4 h-4 mr-2" /> Apenas visualizar
             </Button>
             <Button onClick={assumir}>
-              <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
+              <UserCheck className="w-4 h-4 mr-2" /> {chamado.assumido_por ? "Assumir processo" : "Assumir processo"}
             </Button>
           </DialogFooter>
         </DialogContent>
