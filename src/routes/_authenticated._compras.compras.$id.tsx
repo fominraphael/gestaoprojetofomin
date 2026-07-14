@@ -22,7 +22,10 @@ import {
   MOTIVOS_SUSPENSAO, ADMIN_SUSPENSAO_ID,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
+<<<<<<< HEAD
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
+=======
+>>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
 
@@ -156,6 +159,7 @@ function DetalheChamado() {
   const [debSaving, setDebSaving] = useState(false);
   const [lojas, setLojas] = useState<{ valor: string; label: string }[]>([]);
   const [statusOpts, setStatusOpts] = useState<{ valor: string; label: string; grupo: string | null; exige_anexo: boolean; exige_descricao: boolean }[]>([]);
+<<<<<<< HEAD
   const [userTypes, setUserTypes] = useState<{ id: string; nome: string }[]>([]);
 
   useEffect(() => {
@@ -168,6 +172,17 @@ function DetalheChamado() {
       setLojas((lojasRes.data as any) ?? []);
       setStatusOpts((stRes.data as any) ?? []);
       setUserTypes(typesRes.map((t) => ({ id: t.id, nome: t.nome })));
+=======
+
+  useEffect(() => {
+    (async () => {
+      const [lojasRes, stRes] = await Promise.all([
+        supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
+        supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
+      ]);
+      setLojas((lojasRes.data as any) ?? []);
+      setStatusOpts((stRes.data as any) ?? []);
+>>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
     })();
   }, []);
 
@@ -239,6 +254,20 @@ function DetalheChamado() {
     setAskAdmin(true);
   }, [chamado, isAdmin, user?.id]);
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    console.log("=== DEBUG COMPRAS SEMINOVOS ===");
+    console.log("Chamado Status Atual:", chamado?.status);
+    console.log("Usuário Logado:", user);
+    console.log("ID do Usuário Logado (user?.id):", user?.id);
+    console.log("É Admin (isAdmin):", isAdmin);
+    console.log("ID Autorizado para Suspensão (ADMIN_SUSPENSAO_ID):", ADMIN_SUSPENSAO_ID);
+    console.log("Permissão 'podeAdminSuspensao':", isAdmin && user?.id === ADMIN_SUSPENSAO_ID);
+    console.log("=================================");
+  }, [chamado, user, isAdmin]);
+
+>>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
   const isCriador = !!user && !!chamado && user.id === chamado.criado_por;
   const isCentral = isAdmin;
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
@@ -587,9 +616,14 @@ function DetalheChamado() {
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
+<<<<<<< HEAD
   // Admin com permissão exclusiva de suspensão — compara o tipo_usuario do logado com o perfil cujo ID é ADMIN_SUSPENSAO_ID
   const perfilSuspensao = userTypes.find((t) => t.id === ADMIN_SUSPENSAO_ID);
   const podeAdminSuspensao = isAdmin && !!perfilSuspensao && user?.tipo_usuario === perfilSuspensao.nome;
+=======
+  // Admin com permissão exclusiva de suspensão
+  const podeAdminSuspensao = isAdmin && user?.id === ADMIN_SUSPENSAO_ID;
+>>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
   const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
   const podeEditarDados =
     !finalizado &&
@@ -641,7 +675,11 @@ function DetalheChamado() {
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           )}
+<<<<<<< HEAD
           {isAdmin && !readOnlyAdmin ? (
+=======
+          {isAdmin && !readOnlyAdmin && !finalizado ? (
+>>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
             <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
               <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
