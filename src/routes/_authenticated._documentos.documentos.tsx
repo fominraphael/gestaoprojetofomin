@@ -272,16 +272,28 @@ function DocumentosPage() {
                         <h4 className="text-foreground font-semibold text-sm mt-2.5">{type.descricao || "Documentação"}</h4>
                         <div className="mt-3 space-y-1.5">
                           {typeFiles.map((f) => (
-                            <a
+                            <div
                               key={f.id}
-                              href={f.arquivo_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center justify-between gap-2 text-xs text-foreground hover:text-foreground px-2 py-1.5 rounded-lg bg-muted/50 hover:bg-background border border-border transition-all"
+                              className="flex items-center justify-between gap-2 text-xs text-foreground px-2 py-1.5 rounded-lg bg-muted/50 border border-border transition-all"
                             >
-                              <span className="truncate">{f.arquivo_nome}</span>
-                              <ExternalLink className="w-3 h-3 shrink-0" />
-                            </a>
+                              <span className="truncate flex-1">{f.arquivo_nome}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={() => setPreview(f)}
+                                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                                  title="Visualizar"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDownload(f)}
+                                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                                  title="Baixar"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
