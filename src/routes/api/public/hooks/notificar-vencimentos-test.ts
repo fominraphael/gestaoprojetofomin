@@ -84,7 +84,8 @@ async function runSimulation() {
     <p style="color:#666;font-size:12px">E-mail disparado pela rota de simulação.</p>
   `;
 
-  await sendMail({ to: empresa.email_notificacao, subject: assunto, html });
+  const TESTE_EMAIL = "raphaelf@aguiabranca.com.br";
+  await sendMail({ to: TESTE_EMAIL, subject: assunto, html });
 
 
   await supabaseAdmin
@@ -95,7 +96,7 @@ async function runSimulation() {
   return {
     ok: true,
     empresa: empresa.nome,
-    destinatario: empresa.email_notificacao,
+    destinatario: TESTE_EMAIL,
     documento: tipo.nome,
     vencimento: hoje,
   };
