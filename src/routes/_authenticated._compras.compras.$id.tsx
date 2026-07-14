@@ -641,11 +641,7 @@ function DetalheChamado() {
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
             </Button>
           )}
-<<<<<<< HEAD
-          {isAdmin && !readOnlyAdmin ? (
-=======
           {isAdmin && !readOnlyAdmin && !finalizado ? (
->>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
             <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
               <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
