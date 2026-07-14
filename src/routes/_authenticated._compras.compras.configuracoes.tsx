@@ -370,6 +370,30 @@ function ConfiguracoesCompras() {
                         <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
                       </div>
                     )}
+                    {t.usaStatusDebito && (
+                      <>
+                        <div className="w-[200px]">
+                          <Label>Aplica-se a</Label>
+                          <Select value={n.link_tipo_debito || "__all"} onValueChange={(v) => setNovoField(t.key, { link_tipo_debito: v === "__all" ? "" : v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all">Todos os tipos</SelectItem>
+                              {items.filter((i) => i.categoria === "tipo_debito" && i.ativo).map((td) => (
+                                <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2 h-10 px-2">
+                          <input id={`ea-${t.key}`} type="checkbox" checked={n.exige_anexo} onChange={(e) => setNovoField(t.key, { exige_anexo: e.target.checked })} />
+                          <Label htmlFor={`ea-${t.key}`} className="cursor-pointer">Exige anexo</Label>
+                        </div>
+                        <div className="flex items-center gap-2 h-10 px-2">
+                          <input id={`ed-${t.key}`} type="checkbox" checked={n.exige_descricao} onChange={(e) => setNovoField(t.key, { exige_descricao: e.target.checked })} />
+                          <Label htmlFor={`ed-${t.key}`} className="cursor-pointer">Exige descrição</Label>
+                        </div>
+                      </>
+                    )}
                     <div className="w-[90px]">
                       <Label>Ordem</Label>
                       <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
