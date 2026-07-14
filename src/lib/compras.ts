@@ -8,6 +8,7 @@ export type StatusChamado =
   | "na_fila_central"
   | "em_analise"
   | "pendenciado"
+  | "suspenso"
   | "comprado"
   | "cancelado";
 
@@ -16,9 +17,16 @@ export const STATUS_LABEL: Record<StatusChamado, string> = {
   na_fila_central: "Na fila (Central)",
   em_analise: "Em análise (Central)",
   pendenciado: "Pendenciado",
+  suspenso: "Suspenso",
   comprado: "Comprado",
   cancelado: "Cancelado",
 };
+
+/**
+ * ID do perfil de administrador com permissão exclusiva para suspender/reativar chamados.
+ * Apenas este usuário pode definir ou remover o status "suspenso".
+ */
+export const ADMIN_SUSPENSAO_ID = "104982f4-794b-4cf5-b024-adb55609d3d9";
 
 export const TIPO_COMPRA_LABEL: Record<TipoCompra, string> = {
   somente_compra: "Somente compra",
@@ -114,5 +122,15 @@ export const MOTIVOS_CANCELAMENTO = [
   "Divergência insanável",
   "Restrição legal",
   "Preço não aprovado",
+  "Outros",
+];
+
+export const MOTIVOS_SUSPENSAO = [
+  "Aguardando laudo de terceiros",
+  "Aguardando quitação de débito",
+  "Aguardando documentação de terceiros",
+  "Aguardando regularização DETRAN",
+  "Aguardando decisão judicial",
+  "Aguardando desalienação",
   "Outros",
 ];

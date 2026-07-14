@@ -19,6 +19,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { notificarChamado } from "@/lib/compras.functions";
 import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
+  MOTIVOS_SUSPENSAO, ADMIN_SUSPENSAO_ID,
   documentosRequeridos, type EstadoUF, type TipoPessoa, type StatusChamado,
 } from "@/lib/compras";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,10 @@ interface Chamado {
   nf_observacao: string | null;
   assumido_por: string | null;
   assumido_em: string | null;
+  motivo_suspensao: string | null;
+  observacao_suspensao: string | null;
+  suspenso_em: string | null;
+  suspenso_por: string | null;
   created_at: string;
 }
 
@@ -127,7 +132,7 @@ function DetalheChamado() {
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<{ url: string; nome: string } | null>(null);
 
-  const [dialogo, setDialogo] = useState<null | "pendenciar" | "resolver" | "comprar" | "cancelar">(null);
+  const [dialogo, setDialogo] = useState<null | "pendenciar" | "resolver" | "comprar" | "cancelar" | "suspender" | "reativar">(null);
   const [motivo, setMotivo] = useState("");
   const [observ, setObserv] = useState("");
 
@@ -462,7 +467,7 @@ function DetalheChamado() {
 
   async function confirmarAcao() {
     if (!chamado || !dialogo) return;
-    if ((dialogo === "pendenciar" || dialogo === "cancelar") && !motivo) {
+    if ((dialogo === "pendenciar" || dialogo === "cancelar" || dialogo === "suspender") && !motivo) {
       toast.error("Informe o motivo."); return;
     }
     if (dialogo === "comprar" && !observ.trim()) {
@@ -491,6 +496,20 @@ function DetalheChamado() {
       updates.motivo_cancelamento = motivo;
       updates.observacao_cancelamento = observ;
       acao = "cancelado";
+    } else if (dialogo === "suspender") {
+      updates.status = "suspenso";
+      updates.motivo_suspensao = motivo;
+      updates.observacao_suspensao = observ || null;
+      updates.suspenso_em = new Date().toISOString();
+      updates.suspenso_por = user?.id ?? null;
+      acao = "suspenso";
+    } else if (dialogo === "reativar") {
+      updates.status = "em_analise";
+      updates.motivo_suspensao = null;
+      updates.observacao_suspensao = null;
+      updates.suspenso_em = null;
+      updates.suspenso_por = null;
+      acao = "reativado";
     }
     const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
@@ -564,6 +583,8 @@ function DetalheChamado() {
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
+  // Admin com permissão exclusiva de suspensão
+  const podeAdminSuspensao = isAdmin && user?.id === ADMIN_SUSPENSAO_ID;
   const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
   const podeEditarDados =
     !finalizado &&
@@ -577,6 +598,11 @@ function DetalheChamado() {
   const podeResolver = (isCriador || (isAdmin && !readOnlyAdmin)) && chamado.status === "pendenciado";
   const podeComprar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central");
   const podeCancelar = isAdmin && !readOnlyAdmin && !finalizado;
+  // Suspender: admin específico, chamado em análise ou na fila, não finalizado
+  const podeSuspender = podeAdminSuspensao && !finalizado &&
+    (chamado.status === "em_analise" || chamado.status === "na_fila_central");
+  // Reativar: admin específico, chamado suspenso
+  const podeReativar = podeAdminSuspensao && chamado.status === "suspenso";
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full">
@@ -614,9 +640,11 @@ function DetalheChamado() {
             <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
               <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {(Object.keys(STATUS_LABEL) as StatusChamado[]).map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                ))}
+                {(Object.keys(STATUS_LABEL) as StatusChamado[])
+                  .filter((s) => s !== "suspenso" || podeAdminSuspensao)
+                  .map((s) => (
+                    <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           ) : (
@@ -634,6 +662,30 @@ function DetalheChamado() {
                 <div className="font-medium">Chamado pendenciado</div>
                 <div className="text-sm"><strong>Motivo:</strong> {chamado.motivo_pendencia}</div>
                 {chamado.observacao_pendencia && <div className="text-sm"><strong>Obs:</strong> {chamado.observacao_pendencia}</div>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chamado.status === "suspenso" && (
+        <Card className="border-purple-500/50 bg-purple-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5" />
+              <div>
+                <div className="font-medium text-purple-300">Chamado suspenso — aguardando terceiros</div>
+                {chamado.motivo_suspensao && (
+                  <div className="text-sm"><strong>Motivo:</strong> {chamado.motivo_suspensao}</div>
+                )}
+                {chamado.observacao_suspensao && (
+                  <div className="text-sm"><strong>Obs:</strong> {chamado.observacao_suspensao}</div>
+                )}
+                {chamado.suspenso_em && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Suspenso em: {new Date(chamado.suspenso_em).toLocaleString("pt-BR")}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -849,6 +901,24 @@ function DetalheChamado() {
               <ShoppingCart className="w-4 h-4 mr-2" /> Comprar
             </Button>
           )}
+          {podeSuspender && (
+            <Button
+              variant="outline"
+              className="border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:text-purple-200"
+              onClick={() => setDialogo("suspender")}
+            >
+              <AlertCircle className="w-4 h-4 mr-2" /> Suspender
+            </Button>
+          )}
+          {podeReativar && (
+            <Button
+              variant="outline"
+              className="border-blue-500/50 text-blue-300 hover:bg-blue-500/10 hover:text-blue-200"
+              onClick={() => setDialogo("reativar")}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" /> Reativar
+            </Button>
+          )}
           {podeCancelar && (
             <Button variant="destructive" onClick={() => setDialogo("cancelar")}>
               <Ban className="w-4 h-4 mr-2" /> Cancelar
@@ -939,9 +1009,11 @@ function DetalheChamado() {
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(STATUS_LABEL) as StatusChamado[]).map((s) => (
-                      <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                    ))}
+                    {(Object.keys(STATUS_LABEL) as StatusChamado[])
+                      .filter((s) => s !== "suspenso" || podeAdminSuspensao)
+                      .map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1018,33 +1090,51 @@ function DetalheChamado() {
               {dialogo === "resolver" && "Resolver pendência"}
               {dialogo === "comprar" && "Confirmar compra"}
               {dialogo === "cancelar" && "Cancelar chamado"}
+              {dialogo === "suspender" && "Suspender chamado"}
+              {dialogo === "reativar" && "Reativar chamado suspenso"}
             </DialogTitle>
+            {dialogo === "suspender" && (
+              <DialogDescription>
+                O chamado ficará suspenso até que terceiros resolvam a pendência. Apenas você poderá reativá-lo.
+              </DialogDescription>
+            )}
+            {dialogo === "reativar" && (
+              <DialogDescription>
+                O chamado voltará para o status "Em análise (Central)" para continuar o processo.
+              </DialogDescription>
+            )}
           </DialogHeader>
           <div className="space-y-3">
-            {(dialogo === "pendenciar" || dialogo === "cancelar") && (
+            {(dialogo === "pendenciar" || dialogo === "cancelar" || dialogo === "suspender") && (
               <div>
                 <Label>Motivo</Label>
                 <Select value={motivo} onValueChange={setMotivo}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {(dialogo === "pendenciar" ? MOTIVOS_PENDENCIA : MOTIVOS_CANCELAMENTO).map((m) => (
+                    {(
+                      dialogo === "pendenciar" ? MOTIVOS_PENDENCIA
+                      : dialogo === "suspender" ? MOTIVOS_SUSPENSAO
+                      : MOTIVOS_CANCELAMENTO
+                    ).map((m) => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
-            <div>
-              <Label>
-                Observação{dialogo === "comprar" && <span className="text-red-500"> *</span>}
-              </Label>
-              <Textarea
-                rows={3}
-                value={observ}
-                onChange={(e) => setObserv(e.target.value)}
-                placeholder={dialogo === "comprar" ? "Obrigatório: descreva condições, valores acordados, etc." : ""}
-              />
-            </div>
+            {dialogo !== "reativar" && (
+              <div>
+                <Label>
+                  Observação{dialogo === "comprar" && <span className="text-red-500"> *</span>}
+                </Label>
+                <Textarea
+                  rows={3}
+                  value={observ}
+                  onChange={(e) => setObserv(e.target.value)}
+                  placeholder={dialogo === "comprar" ? "Obrigatório: descreva condições, valores acordados, etc." : ""}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogo(null)}>Fechar</Button>
