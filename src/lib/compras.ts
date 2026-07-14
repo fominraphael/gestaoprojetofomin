@@ -153,20 +153,20 @@ export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> 
     .order("ordem");
 
   if (tipo === "suspensao") {
-    // Itens novos de suspensão: categoria=motivo_pendencia, grupo=suspensao
     query = query.eq("categoria", "motivo_pendencia").eq("grupo", "suspensao");
   } else if (tipo === "cancelamento") {
-    // Itens antigos de cancelamento (categoria=motivo_cancelamento, grupo=null)
-    // + Itens novos (categoria=motivo_pendencia, grupo=cancelamento)
     query = query.or("categoria.eq.motivo_cancelamento,and(categoria.eq.motivo_pendencia,grupo.eq.cancelamento)");
   } else {
-    // Itens antigos de pendência (categoria=motivo_pendencia, grupo=null ou pendencia)
-    // + Itens novos (categoria=motivo_pendencia, grupo=pendencia)
     query = query.or("and(categoria.eq.motivo_pendencia,grupo.is.null),and(categoria.eq.motivo_pendencia,grupo.eq.pendencia)");
   }
 
   const { data, error } = await query;
 
+  if (error) {
+    console.error(`Erro ao carregar motivos de ${tipo}:`, error.message);
+  }
+
+  // Se houve erro OU retornou vazio, usa fallback hardcoded
   if (error || !data || data.length === 0) {
     switch (tipo) {
       case "pendencia": return MOTIVOS_PENDENCIA;

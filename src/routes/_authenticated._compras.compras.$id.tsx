@@ -25,7 +25,7 @@ import {
 } from "@/lib/compras";
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, Eye as EyeIcon, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
@@ -182,9 +182,9 @@ function DetalheChamado() {
         carregarMotivos("suspensao"),
       ]);
       setMotivosMap({
-        motivo_pendencia: pend,
-        motivo_cancelamento: canc,
-        motivo_suspensao: susp,
+        pendencia: pend,
+        cancelamento: canc,
+        suspensao: susp,
       });
     })();
   }, []);
@@ -652,7 +652,7 @@ function DetalheChamado() {
           )}
 
           {readOnlyAdmin && (
-            <Badge variant="outline" className="text-xs gap-1"><EyeIcon className="w-3 h-3" /> Somente visualização</Badge>
+            <Badge variant="outline" className="text-xs gap-1"><Eye className="w-3 h-3" /> Somente visualização</Badge>
           )}
           {isAdmin && modoAdmin === "visualizar" && !finalizado && (
             <Button size="sm" variant="outline" onClick={assumir}>
@@ -1096,7 +1096,7 @@ function DetalheChamado() {
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setModoAdmin("visualizar"); setAskAdmin(false); }}>
-              <EyeIcon className="w-4 h-4 mr-2" /> Apenas visualizar
+              <Eye className="w-4 h-4 mr-2" /> Apenas visualizar
             </Button>
             <Button onClick={assumir}>
               <UserCheck className="w-4 h-4 mr-2" /> Assumir processo

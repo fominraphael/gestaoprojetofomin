@@ -99,7 +99,7 @@ interface NovoForm {
   motivo_tipo: MotivoTipo;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false, motivo_tipo: "motivo_pendencia" };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false, motivo_tipo: "pendencia" };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
