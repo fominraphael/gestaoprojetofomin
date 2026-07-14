@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 
 type Categoria =
   | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento";
+  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
 
 interface Item {
   id: string;
@@ -38,19 +38,23 @@ interface Item {
   obrigatorio: boolean;
   grupo: string | null;
   tipo_pessoa: "PF" | "PJ" | null;
+  exige_anexo: boolean;
+  exige_descricao: boolean;
 }
 
 const TABS: {
   key: Categoria; title: string; hint: string;
   usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean;
   multiUf?: boolean; usaObrigatorio?: boolean; usaTipoPessoa?: boolean; multiTipoPessoa?: boolean;
+  usaStatusDebito?: boolean;
 }[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
   { key: "campo_formulario", title: "Campos", hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.", usaUf: true, usaTipoCampo: true, usaGrupo: true, multiUf: true },
   { key: "documento", title: "Documentos", hint: "Documentos exigidos por estado e pessoa (PF/PJ). Marque um ou vários estados e PF/PJ — o item é replicado para cada combinação. Marque como obrigatório para bloquear o envio à Central sem anexo.", usaUf: true, multiUf: true, usaObrigatorio: true, usaTipoPessoa: true, multiTipoPessoa: true },
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
-  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados como Pago/OK ou Pendente no chamado. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
+  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados no chamado com um status configurado abaixo. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
+  { key: "status_debito", title: "Status de débito", hint: "Opções do seletor de status em cada item de checagem/débito. Vincule a um tipo específico (ex.: só aparece em Multas) ou deixe em Todos. Marque se ao selecionar exige descrição e/ou anexo.", usaStatusDebito: true },
   { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
   { key: "motivo_cancelamento", title: "Motivos de cancelamento", hint: "Aparecem ao cancelar um chamado." },
 ];
@@ -82,9 +86,12 @@ interface NovoForm {
   valor: string; label: string; ordem: string;
   uf: string; ufs: string[]; tipo_campo: string; obrigatorio: boolean; grupo: string;
   tipos_pessoa: ("PF" | "PJ")[];
+  link_tipo_debito: string; // "" = todos
+  exige_anexo: boolean;
+  exige_descricao: boolean;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [] };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
