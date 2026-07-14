@@ -84,7 +84,7 @@ async function runSimulation() {
     <p style="color:#666;font-size:12px">E-mail disparado pela rota de simulação.</p>
   `;
 
-  const TESTE_EMAIL = "raphaelf@aguiabranca.com.br";
+  const TESTE_EMAIL = "fominraphael@gmail.com";
   await sendMail({ to: TESTE_EMAIL, subject: assunto, html });
 
 
