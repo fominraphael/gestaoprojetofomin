@@ -127,20 +127,21 @@ function ConfiguracoesCompras() {
 
   const ufs = items.filter((i) => i.categoria === "estado_uf" && i.ativo);
 
-  const setNovoField = (cat: Categoria, patch: Partial<NovoForm>) =>
+  const setNovoField = (cat: Categoria | "motivos", patch: Partial<NovoForm>) =>
     setNovo((s) => ({ ...s, [cat]: { ...(s[cat] ?? NOVO_VAZIO), ...patch } }));
 
-  const toggleUf = (cat: Categoria, uf: string) => {
+  const toggleUf = (cat: Categoria | "motivos", uf: string) => {
     const cur = novo[cat]?.ufs ?? [];
     const next = cur.includes(uf) ? cur.filter((x) => x !== uf) : [...cur, uf];
     setNovoField(cat, { ufs: next });
   };
 
-  const toggleTipoPessoa = (cat: Categoria, tp: "PF" | "PJ") => {
+  const toggleTipoPessoa = (cat: Categoria | "motivos", tp: "PF" | "PJ") => {
     const cur = novo[cat]?.tipos_pessoa ?? [];
     const next = cur.includes(tp) ? cur.filter((x) => x !== tp) : [...cur, tp];
     setNovoField(cat, { tipos_pessoa: next });
   };
+
 
   async function adicionar(cat: Categoria | "motivos", tab: (typeof TABS)[number]) {
     const n = novo[tab.key] ?? NOVO_VAZIO;
