@@ -159,8 +159,12 @@ function ConfiguracoesCompras() {
           uf,
           tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
           obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
-          grupo: tab.usaGrupo ? n.grupo : null,
+          grupo: tab.usaStatusDebito
+            ? (n.link_tipo_debito || null)
+            : (tab.usaGrupo ? n.grupo : null),
           tipo_pessoa: tp,
+          exige_anexo: tab.usaStatusDebito ? n.exige_anexo : false,
+          exige_descricao: tab.usaStatusDebito ? n.exige_descricao : false,
         });
       }
     }
@@ -173,7 +177,7 @@ function ConfiguracoesCompras() {
 
   async function salvar(i: Item) {
     const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa } as any)
+      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa, exige_anexo: i.exige_anexo, exige_descricao: i.exige_descricao } as any)
       .eq("id", i.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Salvo.");
