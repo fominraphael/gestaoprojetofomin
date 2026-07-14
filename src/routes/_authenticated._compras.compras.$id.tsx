@@ -587,14 +587,9 @@ function DetalheChamado() {
   if (!chamado) return <div className="p-6">Chamado não encontrado.</div>;
 
   const finalizado = chamado.status === "comprado" || chamado.status === "cancelado";
-<<<<<<< HEAD
   // Admin com permissão exclusiva de suspensão — compara o tipo_usuario do logado com o perfil cujo ID é ADMIN_SUSPENSAO_ID
   const perfilSuspensao = userTypes.find((t) => t.id === ADMIN_SUSPENSAO_ID);
   const podeAdminSuspensao = isAdmin && !!perfilSuspensao && user?.tipo_usuario === perfilSuspensao.nome;
-=======
-  // Admin com permissão exclusiva de suspensão
-  const podeAdminSuspensao = isAdmin && user?.id === ADMIN_SUSPENSAO_ID;
->>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
   const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
   const podeEditarDados =
     !finalizado &&
