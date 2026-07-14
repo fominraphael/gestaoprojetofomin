@@ -43,6 +43,7 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
           label: "sistema",
           message_id: messageId,
           idempotency_key: messageId,
+          unsubscribe_token: messageId,
         },
         { apiKey: lovableApiKey, sendUrl: lovableSendUrl },
       );
