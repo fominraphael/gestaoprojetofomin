@@ -420,6 +420,9 @@ function ConfiguracoesCompras() {
                         {t.usaUf && <div>UF</div>}
                         {t.usaTipoPessoa && <div>PF/PJ</div>}
                         {t.usaGrupo && <div>Grupo</div>}
+                        {t.usaStatusDebito && <div>Aplica-se</div>}
+                        {t.usaStatusDebito && <div>Anexo?</div>}
+                        {t.usaStatusDebito && <div>Descr.?</div>}
                         {t.usaTipoCampo && <div>Tipo</div>}
                         {(t.usaTipoCampo || t.usaObrigatorio) && <div>Obrig.</div>}
                         <div>Ordem</div>
