@@ -19,6 +19,8 @@ export type Database = {
           ativo: boolean
           categoria: string
           created_at: string
+          exige_anexo: boolean
+          exige_descricao: boolean
           grupo: string | null
           id: string
           label: string
@@ -34,6 +36,8 @@ export type Database = {
           ativo?: boolean
           categoria: string
           created_at?: string
+          exige_anexo?: boolean
+          exige_descricao?: boolean
           grupo?: string | null
           id?: string
           label: string
@@ -49,6 +53,8 @@ export type Database = {
           ativo?: boolean
           categoria?: string
           created_at?: string
+          exige_anexo?: boolean
+          exige_descricao?: boolean
           grupo?: string | null
           id?: string
           label?: string
