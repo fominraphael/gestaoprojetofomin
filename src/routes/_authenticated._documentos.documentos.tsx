@@ -8,7 +8,8 @@ import {
   Building,
   FileText,
   Download,
-  ExternalLink,
+  Eye,
+  X,
 } from "lucide-react";
 import JSZip from "jszip";
 import {
@@ -37,6 +38,32 @@ function DocumentosPage() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [zipProgress, setZipProgress] = useState(false);
   const [zipPercent, setZipPercent] = useState("");
+  const [preview, setPreview] = useState<DocumentoArquivo | null>(null);
+
+  const handleDownload = async (f: DocumentoArquivo) => {
+    try {
+      let blobUrl: string;
+      let revoke = false;
+      if (f.arquivo_url.startsWith("data:")) {
+        blobUrl = f.arquivo_url;
+      } else {
+        const res = await fetch(f.arquivo_url);
+        const blob = await res.blob();
+        blobUrl = URL.createObjectURL(blob);
+        revoke = true;
+      }
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = f.arquivo_nome;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (revoke) setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error("Erro ao baixar arquivo:", err);
+      alert("Erro ao baixar arquivo.");
+    }
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
@@ -244,16 +271,28 @@ function DocumentosPage() {
                         <h4 className="text-foreground font-semibold text-sm mt-2.5">{type.descricao || "Documentação"}</h4>
                         <div className="mt-3 space-y-1.5">
                           {typeFiles.map((f) => (
-                            <a
+                            <div
                               key={f.id}
-                              href={f.arquivo_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center justify-between gap-2 text-xs text-foreground hover:text-foreground px-2 py-1.5 rounded-lg bg-muted/50 hover:bg-background border border-border transition-all"
+                              className="flex items-center justify-between gap-2 text-xs text-foreground px-2 py-1.5 rounded-lg bg-muted/50 border border-border transition-all"
                             >
-                              <span className="truncate">{f.arquivo_nome}</span>
-                              <ExternalLink className="w-3 h-3 shrink-0" />
-                            </a>
+                              <span className="truncate flex-1">{f.arquivo_nome}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={() => setPreview(f)}
+                                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                                  title="Visualizar"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDownload(f)}
+                                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                                  title="Baixar"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -265,6 +304,50 @@ function DocumentosPage() {
           </div>
         )}
       </main>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+              <div className="text-sm font-semibold text-foreground truncate">{preview.arquivo_nome}</div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => handleDownload(preview)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Baixar
+                </button>
+                <button
+                  onClick={() => setPreview(null)}
+                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                  title="Fechar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {/\.(png|jpe?g|gif|webp|svg)$/i.test(preview.arquivo_nome) ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img src={preview.arquivo_url} alt={preview.arquivo_nome} className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <iframe
+                  src={preview.arquivo_url}
+                  title={preview.arquivo_nome}
+                  className="w-full h-full border-0"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
