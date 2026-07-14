@@ -1,4 +1,5 @@
 // Configurações do módulo Compras Seminovos
+import { supabase } from "@/integrations/supabase/client";
 
 export type EstadoUF = "GO" | "ES";
 export type TipoPessoa = "PF" | "PJ";
@@ -134,3 +135,30 @@ export const MOTIVOS_SUSPENSAO = [
   "Aguardando desalienação",
   "Outros",
 ];
+
+export type MotivoCategoria = "motivo_pendencia" | "motivo_cancelamento" | "motivo_suspensao";
+
+/**
+ * Carrega motivos do banco (compras_cadastros) para a categoria informada.
+ * Retorna apenas itens ativos, ordenados por ordem.
+ * Em caso de erro, retorna o array hardcoded como fallback.
+ */
+export async function carregarMotivos(categoria: MotivoCategoria): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("compras_cadastros")
+    .select("label")
+    .eq("categoria", categoria)
+    .eq("ativo", true)
+    .order("ordem");
+
+  if (error || !data || data.length === 0) {
+    // Fallback para arrays hardcoded
+    switch (categoria) {
+      case "motivo_pendencia": return MOTIVOS_PENDENCIA;
+      case "motivo_cancelamento": return MOTIVOS_CANCELAMENTO;
+      case "motivo_suspensao": return MOTIVOS_SUSPENSAO;
+    }
+  }
+
+  return data.map((d: any) => d.label);
+}

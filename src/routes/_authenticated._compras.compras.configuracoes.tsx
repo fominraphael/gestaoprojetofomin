@@ -24,7 +24,15 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 
 type Categoria =
   | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
+  | "motivo_cancelamento" | "motivo_suspensao" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
+
+type MotivoTipo = "motivo_pendencia" | "motivo_cancelamento" | "motivo_suspensao";
+
+const MOTIVO_TIPO_LABELS: Record<MotivoTipo, string> = {
+  motivo_pendencia: "Pendência",
+  motivo_cancelamento: "Cancelamento",
+  motivo_suspensao: "Suspensão",
+};
 
 interface Item {
   id: string;
@@ -43,10 +51,10 @@ interface Item {
 }
 
 const TABS: {
-  key: Categoria; title: string; hint: string;
+  key: Categoria | "motivos"; title: string; hint: string;
   usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean;
   multiUf?: boolean; usaObrigatorio?: boolean; usaTipoPessoa?: boolean; multiTipoPessoa?: boolean;
-  usaStatusDebito?: boolean;
+  usaStatusDebito?: boolean; usaMotivoTipo?: boolean;
 }[] = [
   { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
   { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
@@ -55,8 +63,7 @@ const TABS: {
   { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
   { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados no chamado com um status configurado abaixo. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
   { key: "status_debito", title: "Status de débito", hint: "Opções do seletor de status em cada item de checagem/débito. Vincule a um tipo específico (ex.: só aparece em Multas) ou deixe em Todos. Marque se ao selecionar exige descrição e/ou anexo.", usaStatusDebito: true },
-  { key: "motivo_pendencia", title: "Motivos de pendência", hint: "Aparecem ao pendenciar um chamado." },
-  { key: "motivo_cancelamento", title: "Motivos de cancelamento", hint: "Aparecem ao cancelar um chamado." },
+  { key: "motivos", title: "Motivos", hint: "Motivos para pendência, cancelamento e suspensão de chamados. Selecione o tipo ao adicionar.", usaMotivoTipo: true },
 ];
 
 const TIPOS_CAMPO = [
@@ -89,9 +96,10 @@ interface NovoForm {
   link_tipo_debito: string; // "" = todos
   exige_anexo: boolean;
   exige_descricao: boolean;
+  motivo_tipo: MotivoTipo;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false };
+const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false, motivo_tipo: "motivo_pendencia" };
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -99,6 +107,7 @@ function ConfiguracoesCompras() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [novo, setNovo] = useState<Record<string, NovoForm>>({});
+  const [filtroMotivoTipo, setFiltroMotivoTipo] = useState<MotivoTipo | "todos">("todos");
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -133,11 +142,12 @@ function ConfiguracoesCompras() {
     setNovoField(cat, { tipos_pessoa: next });
   };
 
-  async function adicionar(cat: Categoria, tab: (typeof TABS)[number]) {
-    const n = novo[cat] ?? NOVO_VAZIO;
+  async function adicionar(cat: Categoria | "motivos", tab: (typeof TABS)[number]) {
+    const n = novo[tab.key] ?? NOVO_VAZIO;
     if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
     if (tab.usaUf && !tab.multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
     if (tab.usaUf && tab.multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
+    if (tab.usaMotivoTipo && !n.motivo_tipo) { toast.error("Selecione o tipo de motivo."); return; }
     const valor = n.valor.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
     const ufsAlvo: (string | null)[] = tab.multiUf
       ? n.ufs.map((u) => u.toUpperCase())
@@ -152,7 +162,7 @@ function ConfiguracoesCompras() {
     for (const uf of ufsAlvo) {
       for (const tp of tpsAlvo) {
         rows.push({
-          categoria: cat,
+          categoria: tab.usaMotivoTipo ? n.motivo_tipo : cat,
           valor,
           label: n.label.trim(),
           ordem: Number(n.ordem) || 0,
@@ -170,7 +180,7 @@ function ConfiguracoesCompras() {
     }
     const { error } = await supabase.from("compras_cadastros").insert(rows as any);
     if (error) { toast.error(error.message); return; }
-    setNovo((s) => ({ ...s, [cat]: NOVO_VAZIO }));
+    setNovo((s) => ({ ...s, [tab.key]: NOVO_VAZIO }));
     toast.success(`${rows.length} item(ns) adicionado(s).`);
     carregar();
   }
@@ -214,12 +224,19 @@ function ConfiguracoesCompras() {
         </TabsList>
 
         {TABS.map((t) => {
-          const list = items.filter((i) => i.categoria === t.key);
+          const isMotivos = t.key === "motivos";
+          const rawList = isMotivos
+            ? items.filter((i) => ["motivo_pendencia", "motivo_cancelamento", "motivo_suspensao"].includes(i.categoria))
+            : items.filter((i) => i.categoria === t.key);
+          const list = isMotivos && filtroMotivoTipo !== "todos"
+            ? rawList.filter((i) => i.categoria === filtroMotivoTipo)
+            : rawList;
           const n = novo[t.key] ?? NOVO_VAZIO;
           // Column template for list rows
           const cols = [
             "140px",            // valor
             "minmax(200px,1fr)",// label
+            isMotivos ? "130px" : null,  // tipo (motivos)
             t.usaUf ? "110px" : null,       // uf
             t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
             t.usaGrupo ? "160px" : null,    // grupo
@@ -251,6 +268,19 @@ function ConfiguracoesCompras() {
                       <Label>Rótulo</Label>
                       <Input value={n.label} onChange={(e) => setNovoField(t.key, { label: e.target.value })} placeholder="Nome exibido" />
                     </div>
+                    {t.usaMotivoTipo && (
+                      <div className="w-[170px]">
+                        <Label>Tipo de Motivo</Label>
+                        <Select value={n.motivo_tipo} onValueChange={(v) => setNovoField(t.key, { motivo_tipo: v as MotivoTipo })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {(Object.keys(MOTIVO_TIPO_LABELS) as MotivoTipo[]).map((mt) => (
+                              <SelectItem key={mt} value={mt}>{MOTIVO_TIPO_LABELS[mt]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     {t.usaUf && !t.multiUf && (
                       <div className="w-[140px]">
                         <Label>Estado (UF)</Label>
@@ -407,6 +437,20 @@ function ConfiguracoesCompras() {
                   </div>
 
                   {/* Lista */}
+                  {isMotivos && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label className="text-xs text-muted-foreground">Filtrar por tipo:</Label>
+                      <Select value={filtroMotivoTipo} onValueChange={(v) => setFiltroMotivoTipo(v as MotivoTipo | "todos")}>
+                        <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todos">Todos</SelectItem>
+                          {(Object.keys(MOTIVO_TIPO_LABELS) as MotivoTipo[]).map((mt) => (
+                            <SelectItem key={mt} value={mt}>{MOTIVO_TIPO_LABELS[mt]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   {loading ? (
                     <div className="text-sm text-muted-foreground">Carregando…</div>
                   ) : list.length === 0 ? (
@@ -417,6 +461,7 @@ function ConfiguracoesCompras() {
                       <div className="hidden md:grid gap-2 px-2 text-[11px] uppercase tracking-wide text-muted-foreground" style={{ gridTemplateColumns: cols }}>
                         <div>Chave</div>
                         <div>Rótulo</div>
+                        {isMotivos && <div>Tipo</div>}
                         {t.usaUf && <div>UF</div>}
                         {t.usaTipoPessoa && <div>PF/PJ</div>}
                         {t.usaGrupo && <div>Grupo</div>}
@@ -437,6 +482,11 @@ function ConfiguracoesCompras() {
                         >
                           <div className="text-xs font-mono text-muted-foreground truncate">{i.valor}</div>
                           <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} className="h-8" />
+                          {isMotivos && (
+                            <Badge variant="outline" className="text-[10px] h-7 justify-center">
+                              {MOTIVO_TIPO_LABELS[i.categoria as MotivoTipo] ?? i.categoria}
+                            </Badge>
+                          )}
                           {t.usaUf && (
                             <Select value={i.uf ?? ""} onValueChange={(v) => updateLocal(i.id, { uf: v })}>
                               <SelectTrigger className="h-8"><SelectValue placeholder="UF" /></SelectTrigger>
