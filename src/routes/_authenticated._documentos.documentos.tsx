@@ -305,6 +305,50 @@ function DocumentosPage() {
           </div>
         )}
       </main>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+              <div className="text-sm font-semibold text-foreground truncate">{preview.arquivo_nome}</div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => handleDownload(preview)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Baixar
+                </button>
+                <button
+                  onClick={() => setPreview(null)}
+                  className="p-1.5 rounded-md hover:bg-accent text-foreground transition-colors"
+                  title="Fechar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 bg-muted/30">
+              {/\.(png|jpe?g|gif|webp|svg)$/i.test(preview.arquivo_nome) ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img src={preview.arquivo_url} alt={preview.arquivo_nome} className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <iframe
+                  src={preview.arquivo_url}
+                  title={preview.arquivo_nome}
+                  className="w-full h-full border-0"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
