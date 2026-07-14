@@ -39,6 +39,32 @@ function DocumentosPage() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [zipProgress, setZipProgress] = useState(false);
   const [zipPercent, setZipPercent] = useState("");
+  const [preview, setPreview] = useState<DocumentoArquivo | null>(null);
+
+  const handleDownload = async (f: DocumentoArquivo) => {
+    try {
+      let blobUrl: string;
+      let revoke = false;
+      if (f.arquivo_url.startsWith("data:")) {
+        blobUrl = f.arquivo_url;
+      } else {
+        const res = await fetch(f.arquivo_url);
+        const blob = await res.blob();
+        blobUrl = URL.createObjectURL(blob);
+        revoke = true;
+      }
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = f.arquivo_nome;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (revoke) setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error("Erro ao baixar arquivo:", err);
+      alert("Erro ao baixar arquivo.");
+    }
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
