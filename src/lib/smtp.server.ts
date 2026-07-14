@@ -10,6 +10,8 @@ export interface SendMailInput {
 export async function sendMail({ to, subject, html }: SendMailInput) {
   const lovableApiKey = process.env.LOVABLE_API_KEY;
   const lovableSendUrl = process.env.LOVABLE_SEND_URL;
+  const lovableFrom = process.env.LOVABLE_FROM || "noreply@notify.moduloabsn.com";
+  const lovableDomain = process.env.LOVABLE_SENDER_DOMAIN || "notify.moduloabsn.com";
 
   // Tenta Lovable Email API primeiro
   if (lovableApiKey) {
@@ -18,8 +20,8 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
       await sendLovableEmail(
         {
           to,
-          from: process.env.SMTP_FROM || "noreply@notify.moduloabsn.com",
-          sender_domain: "moduloabsn.com",
+          from: lovableFrom,
+          sender_domain: lovableDomain,
           subject,
           html,
           purpose: "transactional",
@@ -29,14 +31,17 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
         },
         { apiKey: lovableApiKey, sendUrl: lovableSendUrl },
       );
-      console.log(`[lovable-email] sent to=${to} subject="${subject}"`);
+      console.log(`[lovable-email] sent to=${to} from=${lovableFrom} subject="${subject}"`);
       return;
     } catch (err) {
-      console.error("[lovable-email] falha, fallback para SMTP:", err);
+      console.error("[lovable-email] FALHA:", err);
+      console.error("[lovable-email] params: from=" + lovableFrom + " domain=" + lovableDomain);
+      // Não faz fallback — se o Lovable está configurado, deve usar ele
+      throw err;
     }
   }
 
-  // Fallback: SMTP direto via worker-mailer
+  // Fallback: SMTP direto via worker-mailer (apenas se Lovable não configurado)
   const { WorkerMailer } = await import("worker-mailer");
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT || 587);
