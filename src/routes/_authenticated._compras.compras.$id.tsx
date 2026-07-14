@@ -239,20 +239,6 @@ function DetalheChamado() {
     setAskAdmin(true);
   }, [chamado, isAdmin, user?.id]);
 
-<<<<<<< HEAD
-=======
-  useEffect(() => {
-    console.log("=== DEBUG COMPRAS SEMINOVOS ===");
-    console.log("Chamado Status Atual:", chamado?.status);
-    console.log("Usuário Logado:", user);
-    console.log("ID do Usuário Logado (user?.id):", user?.id);
-    console.log("É Admin (isAdmin):", isAdmin);
-    console.log("ID Autorizado para Suspensão (ADMIN_SUSPENSAO_ID):", ADMIN_SUSPENSAO_ID);
-    console.log("Permissão 'podeAdminSuspensao':", isAdmin && user?.id === ADMIN_SUSPENSAO_ID);
-    console.log("=================================");
-  }, [chamado, user, isAdmin]);
-
->>>>>>> b4879f39bf512d807e6d61214d8a6dfc4541f252
   const isCriador = !!user && !!chamado && user.id === chamado.criado_por;
   const isCentral = isAdmin;
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
