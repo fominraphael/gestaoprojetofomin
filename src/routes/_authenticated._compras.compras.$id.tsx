@@ -262,7 +262,13 @@ function DetalheChamado() {
     setAskAdmin(true);
   }, [chamado, isAdmin, user?.id]);
 
-  const isCriador = !!user && !!chamado && user.id === chamado.criado_por;
+  // Usuários não-admin acessam diretamente (modo "assumido")
+  useEffect(() => {
+    if (!chamado || isAdmin || askedRef.current) return;
+    askedRef.current = true;
+    setModoAdmin("assumido");
+  }, [chamado, isAdmin]);
+
   const isCentral = isAdmin;
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
 
@@ -634,17 +640,16 @@ function DetalheChamado() {
   // Admin com permissão exclusiva de suspensão — compara o tipo_usuario do logado com o perfil cujo ID é ADMIN_SUSPENSAO_ID
   const perfilSuspensao = userTypes.find((t) => t.id === ADMIN_SUSPENSAO_ID);
   const podeAdminSuspensao = isAdmin && !!perfilSuspensao && user?.tipo_usuario === perfilSuspensao.nome;
-  const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
-  const podeEditarDados =
-    !finalizado &&
-    (
-      (isAdmin && !readOnlyAdmin) ||
-      (isCriador && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status))
-    );
+  const STATUS_EDITAVEIS: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
+  const podeEditarDados = !finalizado && (
+    isAdmin
+      ? !readOnlyAdmin
+      : STATUS_EDITAVEIS.includes(chamado.status)
+  );
   const podeAgirCentral = isAdmin && modoAdmin === "assumido" && !finalizado;
-  const podeEnviarFila = chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
+  const podeEnviarFila = chamado.status === "documentacao" && (isAdmin ? !readOnlyAdmin : true);
   const podePendenciar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central" || chamado.status === "documentacao");
-  const podeResolver = (isCriador || (isAdmin && !readOnlyAdmin)) && chamado.status === "pendenciado";
+  const podeResolver = (isAdmin ? !readOnlyAdmin : true) && chamado.status === "pendenciado";
   const podeComprar = podeAgirCentral && (chamado.status === "em_analise" || chamado.status === "na_fila_central");
   const podeCancelar = isAdmin && !readOnlyAdmin && !finalizado;
   // Suspender: admin específico, chamado em análise ou na fila, não finalizado
