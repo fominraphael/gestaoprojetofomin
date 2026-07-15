@@ -168,17 +168,10 @@ function DetalheChamado() {
       setLojas((lojasRes.data as any) ?? []);
       setStatusOpts((stRes.data as any) ?? []);
       setUserTypes(typesRes.map((t) => ({ id: t.id, nome: t.nome })));
+    })();
+  }, []);
 
-      useEffect(() => {
-        (async () => {
-          const [lojasRes, stRes] = await Promise.all([
-            supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
-            supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
-          ]);
-          setLojas((lojasRes.data as any) ?? []);
-          setStatusOpts((stRes.data as any) ?? []);
-        })();
-      }, []);
+
 
       const statusesFor = useCallback(
         (tipo: string) => statusOpts.filter((s) => !s.grupo || s.grupo === tipo),
@@ -610,8 +603,6 @@ function DetalheChamado() {
       // Admin com permissão exclusiva de suspensão — compara o tipo_usuario do logado com o perfil cujo ID é ADMIN_SUSPENSAO_ID
       const perfilSuspensao = userTypes.find((t) => t.id === ADMIN_SUSPENSAO_ID);
       const podeAdminSuspensao = isAdmin && !!perfilSuspensao && user?.tipo_usuario === perfilSuspensao.nome;
-      // Admin com permissão exclusiva de suspensão
-      const podeAdminSuspensao = isAdmin && user?.id === ADMIN_SUSPENSAO_ID;
       const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
       const podeEditarDados =
         !finalizado &&
@@ -663,21 +654,20 @@ function DetalheChamado() {
                   <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
                 </Button>
               )}
-              {isAdmin && !readOnlyAdmin ? (
-                { isAdmin && !readOnlyAdmin && !finalizado ? (
-                  <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
-                    <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(STATUS_LABEL) as StatusChamado[])
-                        .filter((s) => s !== "suspenso" || podeAdminSuspensao)
-                        .map((s) => (
-                          <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
-                )}
+              {isAdmin && !readOnlyAdmin && !finalizado ? (
+                <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
+                  <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as StatusChamado[])
+                      .filter((s) => s !== "suspenso" || podeAdminSuspensao)
+                      .map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+              )}
             </div>
           </div>
 

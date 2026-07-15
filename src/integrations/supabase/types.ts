@@ -94,6 +94,7 @@ export type Database = {
           nf_observacao: string | null
           nf_status: string | null
           nome: string
+          notificacao_ultima_envio: Json
           observacao_cancelamento: string | null
           observacao_compra: string | null
           observacao_pendencia: string | null
@@ -102,6 +103,7 @@ export type Database = {
           placa: string
           renavam: string | null
           status: string
+          status_entrou_em: string
           suspenso_em: string | null
           suspenso_por: string | null
           tipo_compra: string
@@ -134,6 +136,7 @@ export type Database = {
           nf_observacao?: string | null
           nf_status?: string | null
           nome: string
+          notificacao_ultima_envio?: Json
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
@@ -142,6 +145,7 @@ export type Database = {
           placa: string
           renavam?: string | null
           status?: string
+          status_entrou_em?: string
           suspenso_em?: string | null
           suspenso_por?: string | null
           tipo_compra: string
@@ -174,6 +178,7 @@ export type Database = {
           nf_observacao?: string | null
           nf_status?: string | null
           nome?: string
+          notificacao_ultima_envio?: Json
           observacao_cancelamento?: string | null
           observacao_compra?: string | null
           observacao_pendencia?: string | null
@@ -182,6 +187,7 @@ export type Database = {
           placa?: string
           renavam?: string | null
           status?: string
+          status_entrou_em?: string
           suspenso_em?: string | null
           suspenso_por?: string | null
           tipo_compra?: string
@@ -325,6 +331,56 @@ export type Database = {
           },
         ]
       }
+      compras_notificacoes: {
+        Row: {
+          chamado_id: string
+          criado_em: string
+          destinatario_id: string
+          enviado_em: string | null
+          id: string
+          lido_em: string | null
+          link: string | null
+          mensagem: string
+          status_notif: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          chamado_id: string
+          criado_em?: string
+          destinatario_id: string
+          enviado_em?: string | null
+          id?: string
+          lido_em?: string | null
+          link?: string | null
+          mensagem: string
+          status_notif?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          chamado_id?: string
+          criado_em?: string
+          destinatario_id?: string
+          enviado_em?: string | null
+          id?: string
+          lido_em?: string | null
+          link?: string | null
+          mensagem?: string
+          status_notif?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_notificacoes_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "compras_chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_arquivo: {
         Row: {
           arquivo_nome: string
@@ -406,6 +462,93 @@ export type Database = {
         }
         Relationships: []
       }
+      email_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string
+        }
+        Relationships: []
+      }
+      email_send_state: {
+        Row: {
+          auth_email_ttl_minutes: number
+          batch_size: number
+          id: number
+          retry_after_until: string | null
+          send_delay_ms: number
+          transactional_email_ttl_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       empresas: {
         Row: {
           ativo: boolean
@@ -470,6 +613,7 @@ export type Database = {
         Row: {
           ativo: boolean
           campos_customizados: Json
+          central_compras: boolean
           cnpj: string | null
           created_at: string
           email_recuperacao: string | null
@@ -487,6 +631,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           campos_customizados?: Json
+          central_compras?: boolean
           cnpj?: string | null
           created_at?: string
           email_recuperacao?: string | null
@@ -504,6 +649,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           campos_customizados?: Json
+          central_compras?: boolean
           cnpj?: string | null
           created_at?: string
           email_recuperacao?: string | null
@@ -534,6 +680,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
@@ -1120,6 +1290,30 @@ export type Database = {
       }
     }
     Views: {
+      tipos_usuario_publicos: {
+        Row: {
+          ativo: boolean | null
+          campos_schema: Json | null
+          id: string | null
+          nome: string | null
+          role: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          campos_schema?: Json | null
+          id?: string | null
+          nome?: string | null
+          role?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          campos_schema?: Json | null
+          id?: string | null
+          nome?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
       usuarios_sistema_public: {
         Row: {
           ativo: boolean | null
@@ -1183,6 +1377,15 @@ export type Database = {
         Args: { _name: string }
         Returns: boolean
       }
+      delete_email: {
+        Args: { message_id: number; queue_name: string }
+        Returns: boolean
+      }
+      email_queue_dispatch: { Args: never; Returns: undefined }
+      enqueue_email: {
+        Args: { payload: Json; queue_name: string }
+        Returns: number
+      }
       has_filial: {
         Args: { _filial_id: string; _user_id: string }
         Returns: boolean
@@ -1194,7 +1397,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      move_to_dlq: {
+        Args: {
+          dlq_name: string
+          message_id: number
+          payload: Json
+          source_queue: string
+        }
+        Returns: number
+      }
       purge_old_trash: { Args: never; Returns: undefined }
+      read_email_batch: {
+        Args: { batch_size: number; queue_name: string; vt: number }
+        Returns: {
+          message: Json
+          msg_id: number
+          read_ct: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
