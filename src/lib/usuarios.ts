@@ -38,7 +38,6 @@ export interface UsuarioSistema {
   created_at?: string;
 }
 
-
 function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
   return {
     id: p.id,
@@ -57,7 +56,6 @@ function profileToUsuario(p: any, role: "admin" | "user"): UsuarioSistema {
     filial_id: p.filial_id ?? null,
     created_at: p.created_at,
   };
-
 }
 
 // ============================================================
@@ -70,14 +68,16 @@ export async function obterUsuarios(): Promise<UsuarioSistema[]> {
   ]);
   if (pErr) throw pErr;
   if (rErr) throw rErr;
-  const adminSet = new Set((roles ?? []).filter((r: any) => r.role === "admin").map((r: any) => r.user_id));
+  const adminSet = new Set(
+    (roles ?? []).filter((r: any) => r.role === "admin").map((r: any) => r.user_id),
+  );
   return ((profiles as any[]) ?? []).map((p) =>
-    profileToUsuario(p, adminSet.has(p.id) ? "admin" : "user")
+    profileToUsuario(p, adminSet.has(p.id) ? "admin" : "user"),
   );
 }
 
 export async function criarUsuario(
-  usuario: Omit<UsuarioSistema, "id" | "created_at"> & { password?: string }
+  usuario: Omit<UsuarioSistema, "id" | "created_at"> & { password?: string },
 ): Promise<UsuarioSistema> {
   const password = usuario.password || "Trocar@2026!";
   const email = usernameToEmail(usuario.username);
@@ -122,7 +122,10 @@ export async function criarUsuario(
   }
 
   if (error) {
-    if (error.message.toLowerCase().includes("already") || (error as any).code === "user_already_exists")
+    if (
+      error.message.toLowerCase().includes("already") ||
+      (error as any).code === "user_already_exists"
+    )
       throw new Error("Login de acesso já cadastrado.");
     throw error;
   }
@@ -146,7 +149,7 @@ export async function criarUsuario(
 
 export async function atualizarUsuario(
   id: string,
-  updates: Partial<UsuarioSistema> & { password?: string }
+  updates: Partial<UsuarioSistema> & { password?: string },
 ): Promise<void> {
   const payload: any = {};
   if (updates.username !== undefined) payload.username = updates.username;
@@ -157,12 +160,13 @@ export async function atualizarUsuario(
   if (updates.nome_fantasia !== undefined) payload.nome_fantasia = updates.nome_fantasia;
   if (updates.pode_criar_admin !== undefined) payload.pode_criar_admin = updates.pode_criar_admin;
   if (updates.central_compras !== undefined) payload.central_compras = updates.central_compras;
-  if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
+  if (updates.campos_customizados !== undefined)
+    payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;
   if (updates.status !== undefined) payload.status = updates.status;
-  if (updates.email_recuperacao !== undefined) payload.email_recuperacao = updates.email_recuperacao;
+  if (updates.email_recuperacao !== undefined)
+    payload.email_recuperacao = updates.email_recuperacao;
   if (updates.filial_id !== undefined) payload.filial_id = updates.filial_id;
-
 
   if (Object.keys(payload).length > 0) {
     const { error } = await supabase.from("profiles").update(payload).eq("id", id);
@@ -171,10 +175,7 @@ export async function atualizarUsuario(
 
   // Atualizar role (somente admin pode — RLS bloqueia caso contrário)
   if (updates.role !== undefined) {
-    const { data: existing } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", id);
+    const { data: existing } = await supabase.from("user_roles").select("role").eq("user_id", id);
     const hasAdmin = (existing ?? []).some((r: any) => r.role === "admin");
     if (updates.role === "admin" && !hasAdmin) {
       const { error } = await supabase.from("user_roles").insert({ user_id: id, role: "admin" });
@@ -206,7 +207,7 @@ export async function atualizarUsuario(
 
 export async function solicitarCriacaoConta(
   username: string,
-  password: string
+  password: string,
 ): Promise<UsuarioSistema> {
   return criarUsuario({
     username,
@@ -236,15 +237,16 @@ export async function autenticar(username: string, password: string): Promise<Us
     supabase.from("profiles").select("*").eq("id", au.user.id).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", au.user.id),
   ]);
-  const role: "admin" | "user" =
-    (roles ?? []).some((r: any) => r.role === "admin") ? "admin" : "user";
+  const role: "admin" | "user" = (roles ?? []).some((r: any) => r.role === "admin")
+    ? "admin"
+    : "user";
   if (!profile) throw new Error("Perfil não encontrado.");
   return profileToUsuario(profile, role);
 }
 
 export async function atualizarStatusUsuario(
   id: string,
-  status: "approved" | "rejected"
+  status: "approved" | "rejected",
 ): Promise<void> {
   return atualizarUsuario(id, { status });
 }
@@ -279,16 +281,18 @@ export async function obterTiposUsuarioConfig(): Promise<TipoUsuarioConfig[]> {
 }
 
 export async function criarTipoUsuarioConfig(
-  tipo: Omit<TipoUsuarioConfig, "id" | "created_at">
+  tipo: Omit<TipoUsuarioConfig, "id" | "created_at">,
 ): Promise<TipoUsuarioConfig> {
   const { data, error } = await supabase
     .from("tipos_usuario_config")
-    .insert([{
-      nome: tipo.nome,
-      role: tipo.role,
-      campos_schema: tipo.campos_schema as any,
-      ativo: tipo.ativo ?? true,
-    }])
+    .insert([
+      {
+        nome: tipo.nome,
+        role: tipo.role,
+        campos_schema: tipo.campos_schema as any,
+        ativo: tipo.ativo ?? true,
+      },
+    ])
     .select("id, nome, role, campos_schema, ativo, created_at")
     .single();
   if (error) {
@@ -300,14 +304,11 @@ export async function criarTipoUsuarioConfig(
 
 export async function atualizarTipoUsuarioConfig(
   id: string,
-  updates: Partial<TipoUsuarioConfig>
+  updates: Partial<TipoUsuarioConfig>,
 ): Promise<void> {
   const payload: any = { ...updates };
   if (payload.campos_schema) payload.campos_schema = payload.campos_schema as any;
-  const { error } = await supabase
-    .from("tipos_usuario_config")
-    .update(payload)
-    .eq("id", id);
+  const { error } = await supabase.from("tipos_usuario_config").update(payload).eq("id", id);
   if (error) throw error;
 }
 

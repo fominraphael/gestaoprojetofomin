@@ -118,9 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     let username = identifier.trim();
     if (username.includes("@")) {
-      const { lookupUsernameByRecoveryEmail } = await import(
-        "@/lib/recovery-lookup.functions"
-      );
+      const { lookupUsernameByRecoveryEmail } = await import("@/lib/recovery-lookup.functions");
       const res = await lookupUsernameByRecoveryEmail({ data: { email: username } });
       if (!res.username) throw new Error("Usuário ou senha incorretos.");
       username = res.username;
@@ -140,11 +138,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profile && profile.role !== "admin") {
         if (profile.status === "pending") {
           await supabase.auth.signOut();
-          throw new Error("Sua solicitação de acesso ainda está aguardando aprovação do administrador.");
+          throw new Error(
+            "Sua solicitação de acesso ainda está aguardando aprovação do administrador.",
+          );
         }
         if (profile.status === "rejected") {
           await supabase.auth.signOut();
-          throw new Error("Sua solicitação de acesso foi recusada. Entre em contato com o administrador.");
+          throw new Error(
+            "Sua solicitação de acesso foi recusada. Entre em contato com o administrador.",
+          );
         }
         if (profile.active === false) {
           await supabase.auth.signOut();
@@ -190,7 +192,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Garante que o usuário recém-cadastrado não permaneça logado antes da aprovação
     await supabase.auth.signOut();
   };
-
 
   const refreshProfile = async () => {
     if (session?.user) {
