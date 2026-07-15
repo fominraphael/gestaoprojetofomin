@@ -39,7 +39,16 @@ function RegistrarPage() {
         );
         setTipos(filtrados);
       } catch {
-        setTipos([]);
+        // Fallback: Lojista sempre disponível
+        setTipos([
+          {
+            id: "fallback-lojista",
+            nome: "Lojista",
+            role: "user",
+            campos_schema: [],
+            ativo: true,
+          },
+        ]);
       }
     })();
   }, []);
