@@ -168,17 +168,10 @@ function DetalheChamado() {
       setLojas((lojasRes.data as any) ?? []);
       setStatusOpts((stRes.data as any) ?? []);
       setUserTypes(typesRes.map((t) => ({ id: t.id, nome: t.nome })));
+    })();
+  }, []);
 
-      useEffect(() => {
-        (async () => {
-          const [lojasRes, stRes] = await Promise.all([
-            supabase.from("compras_cadastros").select("valor,label").eq("categoria", "loja_estoque").eq("ativo", true).order("ordem"),
-            supabase.from("compras_cadastros").select("valor,label,grupo,exige_anexo,exige_descricao").eq("categoria", "status_debito").eq("ativo", true).order("ordem"),
-          ]);
-          setLojas((lojasRes.data as any) ?? []);
-          setStatusOpts((stRes.data as any) ?? []);
-        })();
-      }, []);
+
 
       const statusesFor = useCallback(
         (tipo: string) => statusOpts.filter((s) => !s.grupo || s.grupo === tipo),
