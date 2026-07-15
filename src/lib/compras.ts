@@ -93,9 +93,15 @@ export const DOCUMENTOS_POR_ESTADO: Record<EstadoUF, {
   },
 };
 
-export function documentosRequeridos(uf: EstadoUF, tipo: TipoPessoa): DocumentoRequisito[] {
+export function documentosRequeridos(uf: EstadoUF, tipo: TipoPessoa, temInscricaoEstadual?: boolean | null): DocumentoRequisito[] {
   const base = DOCUMENTOS_POR_ESTADO[uf];
-  return tipo === "PJ" ? [...base.pf, ...base.pj_extra] : base.pf;
+  if (tipo !== "PJ") return base.pf;
+  let extras = [...base.pj_extra];
+  // Se PJ não tem inscrição estadual, remove nf_emissor
+  if (temInscricaoEstadual === false) {
+    extras = extras.filter((d) => d.categoria !== "nf_emissor");
+  }
+  return [...base.pf, ...extras];
 }
 
 export const TIPOS_DEBITO = [

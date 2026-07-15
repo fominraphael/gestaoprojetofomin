@@ -92,6 +92,7 @@ interface Chamado {
   observacao_compra: string | null;
   nf_status: string | null;
   nf_observacao: string | null;
+  tem_inscricao_estadual: boolean | null;
   assumido_por: string | null;
   assumido_em: string | null;
   status_entrou_em: string | null;
@@ -364,7 +365,7 @@ function DetalheChamado() {
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
 
   const requisitos = useMemo(
-    () => (chamado ? documentosRequeridos(chamado.estado_uf, chamado.tipo_pessoa) : []),
+    () => (chamado ? documentosRequeridos(chamado.estado_uf, chamado.tipo_pessoa, chamado.tem_inscricao_estadual) : []),
     [chamado],
   );
 
@@ -1174,9 +1175,19 @@ function DetalheChamado() {
               <strong>{chamado.tipo_pessoa === "PF" ? "CPF" : "CNPJ"}:</strong> {chamado.cpf_cnpj}
             </div>
             {chamado.tipo_pessoa === "PJ" && (
-              <div>
-                <strong>Status NF:</strong> {chamado.nf_status ?? "-"}
-              </div>
+              <>
+                <div>
+                  <strong>Inscrição Estadual:</strong>{" "}
+                  {chamado.tem_inscricao_estadual === true
+                    ? "Sim"
+                    : chamado.tem_inscricao_estadual === false
+                      ? "Não"
+                      : "-"}
+                </div>
+                <div>
+                  <strong>Status NF:</strong> {chamado.nf_status ?? "-"}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

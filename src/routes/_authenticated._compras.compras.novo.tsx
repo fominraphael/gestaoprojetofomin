@@ -51,6 +51,7 @@ function NovoChamado() {
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>("PF");
   const [estadoUf, setEstadoUf] = useState<string>("GO");
   const [tipoCompra, setTipoCompra] = useState<TipoCompra>("somente_compra");
+  const [temInscricaoEstadual, setTemInscricaoEstadual] = useState<boolean | null>(null);
   const [form, setForm] = useState({
     nome: "",
     cpf_cnpj: "",
@@ -95,6 +96,10 @@ function NovoChamado() {
       toast.error(`Preencha os campos obrigatórios do estado: ${camposObrigFalt.join(", ")}`);
       return;
     }
+    if (tipoPessoa === "PJ" && temInscricaoEstadual === null) {
+      toast.error("Selecione se a pessoa jurídica possui inscrição estadual.");
+      return;
+    }
     setSaving(true);
     try {
       // Bloqueio: já existe chamado ativo para essa placa?
@@ -134,6 +139,7 @@ function NovoChamado() {
             : null,
           observacao_compra: form.observacao.trim() || null,
           nf_status: tipoPessoa === "PJ" ? "aguardando_analise" : "nao_aplicavel",
+          tem_inscricao_estadual: tipoPessoa === "PJ" ? temInscricaoEstadual : null,
           campos_extras: camposExtras,
         } as any)
         .select("id")
@@ -252,6 +258,37 @@ function NovoChamado() {
                   <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
                   <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
                 </div>
+
+                {tipoPessoa === "PJ" && (
+                  <div>
+                    <Label>Tem inscrição estadual? *</Label>
+                    <div className="flex gap-4 mt-1.5">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tem_ie"
+                          checked={temInscricaoEstadual === true}
+                          onChange={() => setTemInscricaoEstadual(true)}
+                          className="text-primary focus:ring-0"
+                        />
+                        Sim
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tem_ie"
+                          checked={temInscricaoEstadual === false}
+                          onChange={() => setTemInscricaoEstadual(false)}
+                          className="text-primary focus:ring-0"
+                        />
+                        Não
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Se "Não", o documento NF (emissor de nota) não será obrigatório.
+                    </p>
+                  </div>
+                )}
 
                 {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
                   <div key={c.valor}>
