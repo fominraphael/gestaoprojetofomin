@@ -76,31 +76,43 @@ async function enviarPush(
   title: string,
   body: string,
   url: string,
-): Promise<number> {
-  let enviados = 0;
-
+): Promise<{ enviados: number; erro?: string }> {
   try {
     const webpush = await import("web-push");
 
-    // Buscar chaves VAPID das env vars (com fallback para valores hardcoded temporários)
     const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
 
     if (!vapidPublicKey || !vapidPrivateKey) {
-      console.warn("[push] VAPID keys não configuradas, pulando push");
-      return 0;
+      const msg = "VAPID keys não configuradas nas env vars";
+      console.warn(`[push] ${msg}`);
+      return { enviados: 0, erro: msg };
     }
 
     webpush.default.setVapidDetails("mailto:admin@moduloabsn.com", vapidPublicKey, vapidPrivateKey);
 
     // Buscar subscriptions do usuário
-    const { data: subs } = await admin
+    const { data: subs, error: subsErr } = await admin
       .from("push_subscriptions")
       .select("id, endpoint, p256dh, auth_key")
       .eq("user_id", userId);
 
-    if (!subs?.length) return 0;
+    if (subsErr) {
+      console.error("[push] Erro ao buscar subscriptions:", subsErr.message);
+      return { enviados: 0, erro: `Erro ao buscar subscriptions: ${subsErr.message}` };
+    }
 
+    if (!subs?.length) {
+      console.warn(`[push] Nenhuma subscription encontrada para usuário ${userId}`);
+      return {
+        enviados: 0,
+        erro: "Nenhuma subscription push encontrada. O usuário precisa conceder permissão de notificação no navegador.",
+      };
+    }
+
+    console.log(`[push] Enviando para ${subs.length} subscription(s) do usuário ${userId}`);
+
+    let enviados = 0;
     const payload = JSON.stringify({ title, body, url, tag: `chamado-${url.split("/").pop()}` });
 
     for (const sub of subs) {
@@ -113,28 +125,31 @@ async function enviarPush(
           payload,
         );
 
-        // Atualizar last_used_at
         await admin
           .from("push_subscriptions")
           .update({ last_used_at: new Date().toISOString() })
           .eq("id", sub.id);
 
         enviados++;
+        console.log(`[push] Enviado com sucesso para subscription ${sub.id}`);
       } catch (err: any) {
-        // Subscription expirada ou inválida — remover
+        console.error(
+          `[push] Falha para subscription ${sub.id}:`,
+          err.message,
+          `status:${err.statusCode}`,
+        );
         if (err.statusCode === 404 || err.statusCode === 410) {
           await admin.from("push_subscriptions").delete().eq("id", sub.id);
           console.warn(`[push] Subscription inválida removida: ${sub.id}`);
-        } else {
-          console.error(`[push] Falha para ${sub.endpoint}:`, err.message);
         }
       }
     }
-  } catch (err) {
-    console.error("[push] Erro ao enviar push:", err);
-  }
 
-  return enviados;
+    return { enviados };
+  } catch (err: any) {
+    console.error("[push] Erro geral:", err.message);
+    return { enviados: 0, erro: `Erro push: ${err.message}` };
+  }
 }
 
 // Enviar e-mail para um usuário
@@ -146,10 +161,12 @@ async function enviarEmail(
   assunto: string,
   html: string,
   chamadoId: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; erro?: string }> {
   try {
     const { sendMail } = await import("@/lib/smtp.server");
+    console.log(`[email] Enviando para ${email}...`);
     await sendMail({ to: email, subject: assunto, html });
+    console.log(`[email] Enviado com sucesso para ${email}`);
 
     await admin.from("compras_notificacoes").insert({
       chamado_id: chamadoId,
@@ -162,19 +179,19 @@ async function enviarEmail(
       enviado_em: new Date().toISOString(),
     });
 
-    return true;
-  } catch (err) {
-    console.error(`[email] Falha para ${email}:`, err);
+    return { ok: true };
+  } catch (err: any) {
+    console.error(`[email] Falha para ${email}:`, err.message || err);
     await admin.from("compras_notificacoes").insert({
       chamado_id: chamadoId,
       destinatario_id: destinatarioId,
       tipo: "email",
       status_notif: "erro",
       titulo: assunto,
-      mensagem: String(err),
+      mensagem: String(err.message || err),
       link: `/compras/${chamadoId}`,
     });
-    return false;
+    return { ok: false, erro: err.message || String(err) };
   }
 }
 
@@ -192,12 +209,10 @@ interface NotificacaoPendente {
 
 // ============================================================
 // VERIFICAÇÃO PERIÓDICA (chamada por cron ou manualmente)
-// Regras conforme especificação do usuário
 // ============================================================
 export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(async () => {
   const admin = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Buscar todos os chamados (inclui finalizados para regras de "comprado"/"cancelado")
   const { data: chamados } = await admin
     .from("compras_chamados")
     .select(
@@ -206,7 +221,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
 
   if (!chamados?.length) return { processados: 0, enviados: 0 };
 
-  // Buscar central_compras primeiro para incluir seus IDs na busca de emails
   const { data: centralProfiles } = await admin
     .from("profiles")
     .select("id, username, nome_fantasia")
@@ -214,7 +228,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
 
   const centralIds = (centralProfiles ?? []).map((p: any) => p.id);
 
-  // Buscar dados de todos os usuários envolvidos
   const userIds = Array.from(
     new Set([
       ...chamados.flatMap((c) => [c.criado_por, c.assumido_por].filter(Boolean)),
@@ -239,7 +252,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
     const horas = c.status_entrou_em ? horasDesde(c.status_entrou_em) : 999;
 
     switch (c.status) {
-      // 1. Em Documentação: após 1h parado → solicitante; repetir a cada 24h
       case "documentacao": {
         if (horas >= 1 && !jaNotificou(notifMap, "documentacao", 24)) {
           const dados = dadosMap.get(c.criado_por);
@@ -259,8 +271,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 2. Na Fila: imediato + repetir a cada 10min → central_compras
       case "na_fila_central": {
         if (!jaNotificou(notifMap, "na_fila_central", 10 / 60)) {
           for (const u of centralUsers) {
@@ -279,8 +289,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 3. Em Análise Central: após 1h parado → responsável; repetir a cada 1h
       case "em_analise": {
         if (horas >= 1 && c.assumido_por && !jaNotificou(notifMap, "em_analise", 1)) {
           const dados = dadosMap.get(c.assumido_por);
@@ -300,8 +308,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 4. Pendenciado: imediato + repetir a cada 24h → solicitante
       case "pendenciado": {
         if (!jaNotificou(notifMap, "pendenciado", 24)) {
           const dados = dadosMap.get(c.criado_por);
@@ -321,8 +327,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 5. Suspenso: após 1h parado → responsável; repetir a cada 1h
       case "suspenso": {
         if (horas >= 1 && c.assumido_por && !jaNotificou(notifMap, "suspenso", 1)) {
           const dados = dadosMap.get(c.assumido_por);
@@ -342,8 +346,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 6. Comprado: única vez → solicitante
       case "comprado": {
         if (!jaNotificou(notifMap, "comprado", 999999)) {
           const dados = dadosMap.get(c.criado_por);
@@ -363,8 +365,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         }
         break;
       }
-
-      // 7. Cancelado: única vez → solicitante
       case "cancelado": {
         if (!jaNotificou(notifMap, "cancelado", 999999)) {
           const dados = dadosMap.get(c.criado_por);
@@ -408,8 +408,7 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
     const pushBody = `${n.placa} (${n.nome_cliente}) — ${label}${tempoMsg}`;
 
     try {
-      // Enviar push + email em paralelo
-      const [pushCount] = await Promise.all([
+      const [pushResult, emailResult] = await Promise.all([
         enviarPush(admin, n.destinatario_id, `GOSYSTEM — ${label}`, pushBody, chamadoUrl),
         enviarEmail(
           admin,
@@ -422,8 +421,7 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         ),
       ]);
 
-      // Registrar push notification no log
-      if (pushCount > 0) {
+      if (pushResult.enviados > 0) {
         await admin.from("compras_notificacoes").insert({
           chamado_id: n.chamado_id,
           destinatario_id: n.destinatario_id,
@@ -436,7 +434,6 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
         });
       }
 
-      // Atualizar última notificação
       const { data: atual } = await admin
         .from("compras_chamados")
         .select("notificacao_ultima_envio")
@@ -460,12 +457,13 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
 
 // ============================================================
 // FORÇAR NOTIFICAÇÃO MANUAL (botão no chamado)
-// Dispara push + email imediatamente para o status atual
+// Retorna diagnóstico detalhado do que funcionou e o que não
 // ============================================================
 export const forcarNotificacao = createServerFn({ method: "POST" })
   .inputValidator((d: { chamadoId: string }) => d)
   .handler(async ({ data }) => {
     const admin = createClient(supabaseUrl, supabaseServiceKey);
+    const diagnostico: string[] = [];
 
     const { data: chamado } = await admin
       .from("compras_chamados")
@@ -474,18 +472,20 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
       .single();
 
     if (!chamado) return { ok: false, reason: "chamado não encontrado" };
+    diagnostico.push(`Chamado: ${chamado.placa} | Status: ${chamado.status}`);
 
-    // Determinar destinatários conforme regras de status
+    // Determinar destinatários
     let destinatarios: { id: string; email: string; nome: string }[] = [];
 
     if (chamado.status === "na_fila_central") {
-      // Central de compras
       const { data: centralProfiles } = await admin
         .from("profiles")
         .select("id, username, nome_fantasia")
         .eq("central_compras", true);
 
       const centralIds = (centralProfiles ?? []).map((p: any) => p.id);
+      diagnostico.push(`Central de compras encontrada: ${centralIds.length} usuário(s)`);
+
       const centralDados = await buscarDadosUsuarios(admin, centralIds);
 
       destinatarios = (centralProfiles ?? [])
@@ -495,24 +495,31 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
         })
         .filter(Boolean) as { id: string; email: string; nome: string }[];
     } else if (chamado.status === "em_analise" || chamado.status === "suspenso") {
-      // Responsável
       if (chamado.assumido_por) {
         const dadosMap = await buscarDadosUsuarios(admin, [chamado.assumido_por]);
         const dados = dadosMap.get(chamado.assumido_por);
         if (dados)
           destinatarios = [{ id: chamado.assumido_por, email: dados.email, nome: dados.nome }];
+        diagnostico.push(`Responsável: ${chamado.assumido_por} | email encontrado: ${!!dados}`);
+      } else {
+        diagnostico.push("AVISO: Status exige responsável mas assumido_por está vazio");
       }
     } else {
-      // Solicitante (documentacao, pendenciado, comprado, cancelado)
       if (chamado.criado_por) {
         const dadosMap = await buscarDadosUsuarios(admin, [chamado.criado_por]);
         const dados = dadosMap.get(chamado.criado_por);
         if (dados)
           destinatarios = [{ id: chamado.criado_por, email: dados.email, nome: dados.nome }];
+        diagnostico.push(`Solicitante: ${chamado.criado_por} | email encontrado: ${!!dados}`);
       }
     }
 
-    if (!destinatarios.length) return { ok: false, reason: "sem destinatários" };
+    if (!destinatarios.length) {
+      diagnostico.push("Nenhum destinatário encontrado");
+      return { ok: false, reason: "sem destinatários", diagnostico };
+    }
+
+    diagnostico.push(`Destinatários: ${destinatarios.map((d) => d.email).join(", ")}`);
 
     const label = STATUS_LABELS[chamado.status] ?? chamado.status;
     const appUrl = (process.env.VITE_SUPABASE_URL || "").replace(".supabase.co", ".lovable.app");
@@ -532,12 +539,16 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
       `;
 
       try {
-        const [pushCount] = await Promise.all([
+        const [pushResult, emailResult] = await Promise.all([
           enviarPush(admin, dest.id, `GOSYSTEM — ${label}`, pushBody, chamadoUrl),
           enviarEmail(admin, dest.id, dest.email, dest.nome, assunto, html, chamado.id),
         ]);
 
-        if (pushCount > 0) {
+        diagnostico.push(
+          `[${dest.email}] Push: ${pushResult.enviados} enviado(s)${pushResult.erro ? ` (${pushResult.erro})` : ""} | Email: ${emailResult.ok ? "OK" : `FALHOU (${emailResult.erro})`}`,
+        );
+
+        if (pushResult.enviados > 0) {
           await admin.from("compras_notificacoes").insert({
             chamado_id: chamado.id,
             destinatario_id: dest.id,
@@ -551,10 +562,13 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
         }
 
         enviados++;
-      } catch (err) {
+      } catch (err: any) {
         console.error(`[notif-forcar] falha:`, err);
+        diagnostico.push(`[${dest.email}] ERRO: ${err.message}`);
       }
     }
 
-    return { ok: true, enviados };
+    console.log(`[forcarNotificacao] Diagnóstico:`, diagnostico.join(" | "));
+
+    return { ok: true, enviados, diagnostico };
   });

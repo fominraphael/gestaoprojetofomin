@@ -1027,9 +1027,19 @@ function DetalheChamado() {
               variant="outline"
               onClick={async () => {
                 const res = await forcarNotificacao({ data: { chamadoId: chamado.id } });
-                if (res?.ok)
-                  toast.success(`Notificação enviada para ${res.enviados} destinatário(s).`);
-                else toast.error(res?.reason || "Falha ao enviar notificação.");
+                if (res?.ok) {
+                  const diag = res.diagnostico?.join(" → ") || "";
+                  toast.success(`Enviado para ${res.enviados} destinatário(s).`, {
+                    description: diag,
+                    duration: 8000,
+                  });
+                } else {
+                  const diag = res.diagnostico?.join(" → ") || "";
+                  toast.error(res?.reason || "Falha ao enviar notificação.", {
+                    description: diag,
+                    duration: 8000,
+                  });
+                }
               }}
             >
               <Send className="w-4 h-4 mr-1" /> Forçar Notificação
