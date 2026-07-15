@@ -85,18 +85,23 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
 
   if (!chamados?.length) return { processados: 0, enviados: 0 };
 
-  // Buscar profiles (nome, central_compras)
-  const userIds = Array.from(
-    new Set(chamados.flatMap((c) => [c.criado_por, c.assumido_por].filter(Boolean))),
-  ) as string[];
-
-  const emailMap = await buscarEmailsUsuarios(admin, userIds);
-
-  // Buscar central_compras
+  // Buscar central_compras primeiro para incluir seus IDs na busca de emails
   const { data: centralProfiles } = await admin
     .from("profiles")
     .select("id, username, nome_fantasia")
     .eq("central_compras", true);
+
+  const centralIds = (centralProfiles ?? []).map((p: any) => p.id);
+
+  // Buscar profiles (nome) — inclui criado_por, assumido_por E central_compras
+  const userIds = Array.from(
+    new Set([
+      ...chamados.flatMap((c) => [c.criado_por, c.assumido_por].filter(Boolean)),
+      ...centralIds,
+    ]),
+  ) as string[];
+
+  const emailMap = await buscarEmailsUsuarios(admin, userIds);
 
   const centralUsers = (centralProfiles ?? [])
     .map((p: any) => ({
