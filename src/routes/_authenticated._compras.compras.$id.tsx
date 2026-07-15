@@ -603,8 +603,6 @@ function DetalheChamado() {
       // Admin com permissão exclusiva de suspensão — compara o tipo_usuario do logado com o perfil cujo ID é ADMIN_SUSPENSAO_ID
       const perfilSuspensao = userTypes.find((t) => t.id === ADMIN_SUSPENSAO_ID);
       const podeAdminSuspensao = isAdmin && !!perfilSuspensao && user?.tipo_usuario === perfilSuspensao.nome;
-      // Admin com permissão exclusiva de suspensão
-      const podeAdminSuspensao = isAdmin && user?.id === ADMIN_SUSPENSAO_ID;
       const STATUS_EDITAVEIS_CRIADOR: StatusChamado[] = ["documentacao", "na_fila_central", "pendenciado"];
       const podeEditarDados =
         !finalizado &&
