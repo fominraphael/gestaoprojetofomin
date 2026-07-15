@@ -52,9 +52,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Esta página não carregou
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Algo deu errado. Tente novamente.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Algo deu errado. Tente novamente.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -82,8 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "Portal de Aplicações" },
       { property: "og:description", content: "Painel pessoal de gestão de projetos e atividades" },
       { name: "twitter:description", content: "Painel pessoal de gestão de projetos e atividades" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5525a6bd-06d3-4db5-b5b1-9f4e437055ee/id-preview-5d767bb2--358d8cb0-fba0-4a79-b55c-25d29ba4cae9.lovable.app-1782310781905.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5525a6bd-06d3-4db5-b5b1-9f4e437055ee/id-preview-5d767bb2--358d8cb0-fba0-4a79-b55c-25d29ba4cae9.lovable.app-1782310781905.png" },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5525a6bd-06d3-4db5-b5b1-9f4e437055ee/id-preview-5d767bb2--358d8cb0-fba0-4a79-b55c-25d29ba4cae9.lovable.app-1782310781905.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5525a6bd-06d3-4db5-b5b1-9f4e437055ee/id-preview-5d767bb2--358d8cb0-fba0-4a79-b55c-25d29ba4cae9.lovable.app-1782310781905.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -109,8 +115,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -123,6 +127,13 @@ function RootComponent() {
     const { protocol, hostname, href } = window.location;
     if (protocol === "http:" && hostname !== "localhost" && hostname !== "127.0.0.1") {
       window.location.replace(href.replace(/^http:/, "https:"));
+    }
+
+    // Registrar Service Worker para Web Push Notifications
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.warn("[sw] Falha ao registrar service worker:", err);
+      });
     }
   }, []);
 
@@ -137,7 +148,6 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
 
 function RedirectToLogin() {
   const navigate = useNavigate();
@@ -171,9 +181,7 @@ function AccessDenied({ reason }: { reason: string }) {
         <h1 className="text-3xl font-extrabold tracking-tight text-white mb-3">
           403 - Acesso Negado
         </h1>
-        <p className="text-muted-foreground text-sm leading-relaxed mb-8">
-          {reason}
-        </p>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-8">{reason}</p>
 
         <button
           onClick={() => navigate({ to: "/" })}
@@ -210,12 +218,10 @@ function AppLayout() {
   // route gate; admin pages should also verify role server-side.
   const isAdmin = user?.role === "admin";
   if (pathname.startsWith("/admin") && !isAdmin) {
-    return <AccessDenied reason="Você não possui credenciais de administrador para acessar este painel." />;
+    return (
+      <AccessDenied reason="Você não possui credenciais de administrador para acessar este painel." />
+    );
   }
 
   return <Outlet />;
 }
-
-
-
-

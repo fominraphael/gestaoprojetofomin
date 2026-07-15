@@ -60,6 +60,7 @@ import {
   X as XIcon,
   Download as DownloadIcon,
   Send,
+  UserMinus,
 } from "lucide-react";
 import { NotificationCenter } from "@/components/notificacoes/NotificationCenter";
 
@@ -293,13 +294,18 @@ function DetalheChamado() {
         .eq("chamado_id", id)
         .order("created_at", { ascending: false }),
     ]);
-    setChamado((c.data as any) ?? null);
+    const chamadoData = (c.data as any) ?? null;
+    setChamado(chamadoData);
     setDocumentos((d.data as any) ?? []);
     setDebitos((deb.data as any) ?? []);
     const histRows = ((hist.data as any) ?? []) as HistoricoItem[];
     setHistorico(histRows);
     const ids = Array.from(
-      new Set(histRows.map((h: any) => h.autor_id).filter(Boolean)),
+      new Set(
+        [...histRows.map((h: any) => h.autor_id).filter(Boolean), chamadoData?.assumido_por].filter(
+          Boolean,
+        ),
+      ),
     ) as string[];
     if (ids.length) {
       const { data: profs } = await supabase
@@ -403,6 +409,32 @@ function DetalheChamado() {
     carregar();
   }
 
+  async function devolverAFila() {
+    if (!chamado || !user) return;
+    if (!confirm("Devolver este processo para a fila da Central?")) return;
+    const { error } = await supabase
+      .from("compras_chamados")
+      .update({
+        assumido_por: null,
+        assumido_em: null,
+        status: "na_fila_central",
+        status_entrou_em: new Date().toISOString(),
+      } as any)
+      .eq("id", chamado.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await registrarHistorico({
+      acao: "devolvido_fila",
+      campo: "status",
+      valor_antes: chamado.status,
+      valor_depois: "na_fila_central",
+    });
+    toast.success("Processo devolvido à fila.");
+    carregar();
+  }
+
   function guessCategoria(name: string): string {
     const lower = name.toLowerCase();
     const match = requisitos.find((r) => lower.includes(r.categoria.split("_")[0]));
@@ -475,6 +507,16 @@ function DetalheChamado() {
       valor_antes: chamado.status,
       valor_depois: novo,
     });
+
+    // Notificação imediata para comprado e cancelado
+    if (novo === "comprado" || novo === "cancelado") {
+      try {
+        await forcarNotificacao({ data: { chamadoId: chamado.id } });
+      } catch {
+        /* notificação é best-effort */
+      }
+    }
+
     toast.success("Status atualizado.");
     carregar();
   }
@@ -767,6 +809,15 @@ function DetalheChamado() {
         /* email é best-effort */
       }
     }
+
+    // Notificação imediata para comprado e cancelado
+    if (dialogo === "comprar" || dialogo === "cancelar") {
+      try {
+        await forcarNotificacao({ data: { chamadoId: chamado.id } });
+      } catch {
+        /* notificação é best-effort */
+      }
+    }
     toast.success("Ação registrada.");
     setDialogo(null);
     setMotivo("");
@@ -953,6 +1004,22 @@ function DetalheChamado() {
             <Badge variant="outline" className="text-sm">
               {STATUS_LABEL[chamado.status]}
             </Badge>
+          )}
+          {chamado.assumido_por && (
+            <Badge variant="secondary" className="text-xs gap-1">
+              <UserCheck className="w-3 h-3" />
+              {autores[chamado.assumido_por] ?? "Usuário"}
+              {chamado.assumido_em && (
+                <span className="text-muted-foreground ml-1">
+                  • {new Date(chamado.assumido_em).toLocaleDateString("pt-BR")}
+                </span>
+              )}
+            </Badge>
+          )}
+          {chamado.assumido_por === user?.id && !finalizado && (
+            <Button size="sm" variant="outline" onClick={devolverAFila}>
+              <UserMinus className="w-4 h-4 mr-1" /> Devolver à fila
+            </Button>
           )}
           {isAdmin && (
             <Button

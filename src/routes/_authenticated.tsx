@@ -1,4 +1,10 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { usePushRegistration } from "@/hooks/use-push-registration";
+
+function AuthenticatedLayout() {
+  usePushRegistration();
+  return <Outlet />;
+}
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -11,5 +17,5 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
