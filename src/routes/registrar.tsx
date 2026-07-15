@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { obterTiposUsuarioConfig, type TipoUsuarioConfig } from "@/lib/usuarios";
+import { obterTiposParaRegistro } from "@/lib/tipos-usuario-public";
 import { Eye, EyeOff, UserPlus, Layers, CheckCircle } from "lucide-react";
 
 export const Route = createFileRoute("/registrar")({
@@ -15,7 +15,7 @@ function RegistrarPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [tipos, setTipos] = useState<TipoUsuarioConfig[]>([]);
+  const [tipos, setTipos] = useState<{ id: string; nome: string; role: string; campos_schema: any[] }[]>([]);
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("");
 
   const [username, setUsername] = useState("");
@@ -33,11 +33,8 @@ function RegistrarPage() {
   useEffect(() => {
     (async () => {
       try {
-        const all = await obterTiposUsuarioConfig();
-        const filtrados = all.filter(
-          (t) => t.role !== "admin" && t.ativo !== false && t.nome !== "Administrador",
-        );
-        setTipos(filtrados);
+        const data = await obterTiposParaRegistro();
+        setTipos(data as any);
       } catch {
         // Fallback: Lojista sempre disponível
         setTipos([
@@ -46,7 +43,6 @@ function RegistrarPage() {
             nome: "Lojista",
             role: "user",
             campos_schema: [],
-            ativo: true,
           },
         ]);
       }
