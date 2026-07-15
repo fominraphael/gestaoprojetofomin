@@ -10,38 +10,40 @@ export const Route = createFileRoute("/registrar")({
 
 function RegistrarPage() {
   const { register } = useAuth();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [emailRecuperacao, setEmailRecuperacao] = useState("");
-  const [nomeFantasia, setNomeFantasia] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Tipo de usuário
   const [tipos, setTipos] = useState<TipoUsuarioConfig[]>([]);
-  const [tipoSelecionado, setTipoSelecionado] = useState<string>("Lojista");
+  const [tipoSelecionado, setTipoSelecionado] = useState<string>("");
+
+  // Campos fixos
+  const [username, setUsername] = useState("");
+  const [nomeFantasia, setNomeFantasia] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailRecuperacao, setEmailRecuperacao] = useState("");
+
+  // Campos dinâmicos do tipo
   const [campos, setCampos] = useState<Record<string, any>>({});
 
   useEffect(() => {
     (async () => {
       try {
         const all = await obterTiposUsuarioConfig();
-        // Filtra estritamente: sem administradores e sem tipos inativos.
         const filtrados = all.filter(
           (t) => t.role !== "admin" && t.ativo !== false && t.nome !== "Administrador",
         );
         setTipos(filtrados);
-        if (filtrados.length > 0 && !filtrados.some((t) => t.nome === tipoSelecionado)) {
+        if (filtrados.length > 0) {
           setTipoSelecionado(filtrados[0].nome);
         }
       } catch {
         setTipos([]);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const tipoAtual = tipos.find((t) => t.nome === tipoSelecionado);
@@ -58,22 +60,30 @@ function RegistrarPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
+
+    if (!tipoSelecionado) {
+      setError("Selecione o tipo de usuário.");
+      return;
+    }
+    if (!username.trim()) {
+      setError("O login de acesso é obrigatório.");
+      return;
+    }
+    if (!nomeFantasia.trim()) {
+      setError("O nome ou nome fantasia é obrigatório.");
       return;
     }
     if (password.length < 4) {
       setError("A senha deve ter pelo menos 4 caracteres.");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
     const emailRec = emailRecuperacao.trim();
     if (!emailRec || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRec)) {
       setError("Informe um e-mail de recuperação válido.");
-      return;
-    }
-    const nomeFant = nomeFantasia.trim();
-    if (!nomeFant) {
-      setError("Informe o Nome ou nome fantasia.");
       return;
     }
 
@@ -92,12 +102,12 @@ function RegistrarPage() {
 
     setLoading(true);
     try {
-      await register(username, password, {
+      await register(username.trim(), password, {
         tipo_usuario: tipoSelecionado,
         campos_customizados: campos,
         cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
         email_recuperacao: emailRec,
-        nome_fantasia: nomeFant,
+        nome_fantasia: nomeFantasia.trim(),
       });
 
       setSuccess(true);
@@ -145,17 +155,39 @@ function RegistrarPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* 1. TIPO DE USUÁRIO - primeiro campo */}
+              {tipos.length > 0 && (
+                <div>
+                  <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
+                    Tipo de Usuário <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    id="reg-tipo"
+                    value={tipoSelecionado}
+                    onChange={(e) => handleTipoChange(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                  >
+                    <option value="">Selecione o tipo...</option>
+                    {tipos.map((t) => (
+                      <option key={t.id} value={t.nome}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* 2. CAMPOS FIXOS */}
               <div>
                 <label htmlFor="reg-username" className="block text-sm font-medium text-foreground mb-1.5">
-                  Nome de usuário
+                  Login de acesso <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="reg-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Escolha um nome de usuário"
-                  required
+                  placeholder="Escolha um login de acesso"
                   autoComplete="username"
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
@@ -171,15 +203,13 @@ function RegistrarPage() {
                   value={nomeFantasia}
                   onChange={(e) => setNomeFantasia(e.target.value)}
                   placeholder="Seu nome ou nome fantasia"
-                  required
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
               </div>
 
-
               <div>
                 <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
-                  Senha
+                  Senha <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -188,7 +218,6 @@ function RegistrarPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Crie uma senha"
-                    required
                     autoComplete="new-password"
                     className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                   />
@@ -204,7 +233,7 @@ function RegistrarPage() {
 
               <div>
                 <label htmlFor="reg-confirm" className="block text-sm font-medium text-foreground mb-1.5">
-                  Confirmar senha
+                  Confirmar senha <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="reg-confirm"
@@ -212,7 +241,6 @@ function RegistrarPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a senha"
-                  required
                   autoComplete="new-password"
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
@@ -228,7 +256,6 @@ function RegistrarPage() {
                   value={emailRecuperacao}
                   onChange={(e) => setEmailRecuperacao(e.target.value)}
                   placeholder="seu@email.com"
-                  required
                   autoComplete="email"
                   className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                 />
@@ -237,29 +264,7 @@ function RegistrarPage() {
                 </p>
               </div>
 
-
-
-              {tipos.length > 0 && (
-                <div>
-                  <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
-                    Tipo de Usuário
-                  </label>
-                  <select
-                    id="reg-tipo"
-                    value={tipoSelecionado}
-                    onChange={(e) => handleTipoChange(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                  >
-                    {tipos.map((t) => (
-                      <option key={t.id} value={t.nome}>
-                        {t.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Campos dinâmicos do tipo selecionado */}
+              {/* 3. CAMPOS DINÂMICOS DO TIPO SELECIONADO */}
               {tipoAtual?.campos_schema.map((field) => (
                 <div key={field.nome}>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -300,7 +305,7 @@ function RegistrarPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !tipoSelecionado}
                 id="btn-registrar"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
               >

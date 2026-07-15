@@ -43,22 +43,21 @@ sw.addEventListener("notificationclick", (event) => {
 
   if (event.action === "dismiss") return;
 
-  const url = event.notification.data?.url || "/compras";
-  console.log("[sw] notificationclick - URL:", url);
+  const targetUrl = event.notification.data?.url || "/compras";
+  console.log("[sw] notificationclick - URL:", targetUrl);
 
   event.waitUntil(
     sw.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       console.log("[sw] clients found:", clientList.length);
-      // Se já existe uma janela do sistema aberta, foca nela
+      // Focus existing window or open new one
       for (const client of clientList) {
         console.log("[sw] client URL:", client.url);
-        if (client.url.includes(sw.location.origin) && "focus" in client) {
-          client.navigate(url);
+        if ("focus" in client) {
+          client.navigate(targetUrl);
           return client.focus();
         }
       }
-      // Senão, abre nova janela
-      return sw.clients.openWindow(url);
+      return sw.clients.openWindow(targetUrl);
     }),
   );
 });

@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           nome_fantasia: extras?.nome_fantasia ?? null,
           modulos: [],
           status: "pending",
-          ativo: true,
+          ativo: false,
           role: "user",
         },
       },

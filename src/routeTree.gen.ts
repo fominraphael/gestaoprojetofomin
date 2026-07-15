@@ -30,6 +30,7 @@ import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
+import { Route as ApiPublicCronVerificarNotificacoesRouteImport } from './routes/api/public/cron/verificar-notificacoes'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
 import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
 import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
@@ -154,6 +155,12 @@ const ApiPublicHooksNotificarVencimentosRoute =
     path: '/api/public/hooks/notificar-vencimentos',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronVerificarNotificacoesRoute =
+  ApiPublicCronVerificarNotificacoesRouteImport.update({
+    id: '/api/public/cron/verificar-notificacoes',
+    path: '/api/public/cron/verificar-notificacoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedToyotaToyotaRegrasRoute =
   AuthenticatedToyotaToyotaRegrasRouteImport.update({
     id: '/toyota/regras',
@@ -244,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -273,6 +281,7 @@ export interface FileRoutesByTo {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -308,6 +317,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/_authenticated/_toyota/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/painel-geral'
     | '/toyota/regras'
+    | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/painel-geral'
     | '/toyota/regras'
+    | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
@@ -402,6 +414,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/painel'
     | '/_authenticated/_toyota/toyota/painel-geral'
     | '/_authenticated/_toyota/toyota/regras'
+    | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
@@ -414,6 +427,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RegistrarRoute: typeof RegistrarRoute
+  ApiPublicCronVerificarNotificacoesRoute: typeof ApiPublicCronVerificarNotificacoesRoute
   ApiPublicHooksNotificarVencimentosRoute: typeof ApiPublicHooksNotificarVencimentosRoute
   ApiPublicHooksNotificarVencimentosTestRoute: typeof ApiPublicHooksNotificarVencimentosTestRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -566,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/notificar-vencimentos'
       fullPath: '/api/public/hooks/notificar-vencimentos'
       preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/verificar-notificacoes': {
+      id: '/api/public/cron/verificar-notificacoes'
+      path: '/api/public/cron/verificar-notificacoes'
+      fullPath: '/api/public/cron/verificar-notificacoes'
+      preLoaderRoute: typeof ApiPublicCronVerificarNotificacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_toyota/toyota/regras': {
@@ -760,6 +781,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RegistrarRoute: RegistrarRoute,
+  ApiPublicCronVerificarNotificacoesRoute:
+    ApiPublicCronVerificarNotificacoesRoute,
   ApiPublicHooksNotificarVencimentosRoute:
     ApiPublicHooksNotificarVencimentosRoute,
   ApiPublicHooksNotificarVencimentosTestRoute:
