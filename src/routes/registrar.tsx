@@ -15,18 +15,19 @@ function RegistrarPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Tipo de usuário
   const [tipos, setTipos] = useState<TipoUsuarioConfig[]>([]);
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("");
 
-  // Campos fixos
   const [username, setUsername] = useState("");
   const [nomeFantasia, setNomeFantasia] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailRecuperacao, setEmailRecuperacao] = useState("");
 
-  // Campos dinâmicos do tipo
+  const [cnpj, setCnpj] = useState("");
+  const [razaoSocial, setRazaoSocial] = useState("");
+  const [celular, setCelular] = useState("");
+
   const [campos, setCampos] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -37,9 +38,6 @@ function RegistrarPage() {
           (t) => t.role !== "admin" && t.ativo !== false && t.nome !== "Administrador",
         );
         setTipos(filtrados);
-        if (filtrados.length > 0) {
-          setTipoSelecionado(filtrados[0].nome);
-        }
       } catch {
         setTipos([]);
       }
@@ -47,14 +45,39 @@ function RegistrarPage() {
   }, []);
 
   const tipoAtual = tipos.find((t) => t.nome === tipoSelecionado);
+  const isLojista = tipoSelecionado === "Lojista";
 
   const handleTipoChange = (nome: string) => {
     setTipoSelecionado(nome);
     setCampos({});
+    setCnpj("");
+    setRazaoSocial("");
+    setCelular("");
   };
 
   const handleCampoChange = (nome: string, valor: any) => {
     setCampos((prev) => ({ ...prev, [nome]: valor }));
+  };
+
+  const formatCnpj = (v: string) => {
+    const digits = v.replace(/\D/g, "").slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const formatCelular = (v: string) => {
+    const digits = v.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 10) {
+      return digits
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+    }
+    return digits
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,8 +110,25 @@ function RegistrarPage() {
       return;
     }
 
-    // Validação de campos dinâmicos obrigatórios
-    if (tipoAtual) {
+    // Validação Lojista
+    if (isLojista) {
+      const cnpjDigits = cnpj.replace(/\D/g, "");
+      if (!cnpjDigits || cnpjDigits.length !== 14) {
+        setError("O CNPJ deve ter 14 dígitos.");
+        return;
+      }
+      if (!razaoSocial.trim()) {
+        setError("A Razão Social é obrigatória.");
+        return;
+      }
+      if (!celular.trim() || celular.replace(/\D/g, "").length < 10) {
+        setError("Informe um celular válido.");
+        return;
+      }
+    }
+
+    // Validação de campos dinâmicos obrigatórios (outros tipos)
+    if (tipoAtual && !isLojista) {
       for (const f of tipoAtual.campos_schema) {
         if (f.obrigatorio) {
           const v = campos[f.nome];
@@ -102,10 +142,17 @@ function RegistrarPage() {
 
     setLoading(true);
     try {
+      const camposCustomizados: Record<string, any> = { ...campos };
+      if (isLojista) {
+        camposCustomizados.cnpj = cnpj.replace(/\D/g, "");
+        camposCustomizados.razao_social = razaoSocial.trim();
+        camposCustomizados.celular = celular.trim();
+      }
+
       await register(username.trim(), password, {
         tipo_usuario: tipoSelecionado,
-        campos_customizados: campos,
-        cnpj: campos.cnpj ? String(campos.cnpj).trim() : null,
+        campos_customizados: camposCustomizados,
+        cnpj: isLojista ? cnpj.replace(/\D/g, "") : null,
         email_recuperacao: emailRec,
         nome_fantasia: nomeFantasia.trim(),
       });
@@ -155,147 +202,198 @@ function RegistrarPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* 1. TIPO DE USUÁRIO - primeiro campo */}
-              {tipos.length > 0 && (
-                <div>
-                  <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
-                    Tipo de Usuário <span className="text-red-400">*</span>
-                  </label>
-                  <select
-                    id="reg-tipo"
-                    value={tipoSelecionado}
-                    onChange={(e) => handleTipoChange(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                  >
-                    <option value="">Selecione o tipo...</option>
-                    {tipos.map((t) => (
-                      <option key={t.id} value={t.nome}>
-                        {t.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* 2. CAMPOS FIXOS */}
+              {/* 1. TIPO DE USUÁRIO */}
               <div>
-                <label htmlFor="reg-username" className="block text-sm font-medium text-foreground mb-1.5">
-                  Login de acesso <span className="text-red-400">*</span>
+                <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
+                  Tipo de Usuário <span className="text-red-400">*</span>
                 </label>
-                <input
-                  id="reg-username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Escolha um login de acesso"
-                  autoComplete="username"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                />
+                <select
+                  id="reg-tipo"
+                  value={tipoSelecionado}
+                  onChange={(e) => handleTipoChange(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                >
+                  <option value="">Selecione o tipo...</option>
+                  {tipos.map((t) => (
+                    <option key={t.id} value={t.nome}>
+                      {t.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div>
-                <label htmlFor="reg-nome-fantasia" className="block text-sm font-medium text-foreground mb-1.5">
-                  Nome ou nome fantasia <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="reg-nome-fantasia"
-                  type="text"
-                  value={nomeFantasia}
-                  onChange={(e) => setNomeFantasia(e.target.value)}
-                  placeholder="Seu nome ou nome fantasia"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
-                  Senha <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    id="reg-password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Crie uma senha"
-                    autoComplete="new-password"
-                    className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="reg-confirm" className="block text-sm font-medium text-foreground mb-1.5">
-                  Confirmar senha <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="reg-confirm"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repita a senha"
-                  autoComplete="new-password"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="reg-email-rec" className="block text-sm font-medium text-foreground mb-1.5">
-                  E-mail de recuperação <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="reg-email-rec"
-                  type="email"
-                  value={emailRecuperacao}
-                  onChange={(e) => setEmailRecuperacao(e.target.value)}
-                  placeholder="seu@email.com"
-                  autoComplete="email"
-                  className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Usado para receber o código de recuperação em "Esqueci minha senha".
-                </p>
-              </div>
-
-              {/* 3. CAMPOS DINÂMICOS DO TIPO SELECIONADO */}
-              {tipoAtual?.campos_schema.map((field) => (
-                <div key={field.nome}>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
-                  </label>
-                  {field.tipo === "boolean" ? (
-                    <select
-                      value={campos[field.nome] ? "true" : "false"}
-                      onChange={(e) => handleCampoChange(field.nome, e.target.value === "true")}
-                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                    >
-                      <option value="false">Não</option>
-                      <option value="true">Sim</option>
-                    </select>
-                  ) : (
+              {tipoSelecionado && (
+                <>
+                  {/* 2. CAMPOS FIXOS */}
+                  <div>
+                    <label htmlFor="reg-username" className="block text-sm font-medium text-foreground mb-1.5">
+                      Login de acesso <span className="text-red-400">*</span>
+                    </label>
                     <input
-                      type={field.tipo === "number" ? "number" : "text"}
-                      required={field.obrigatorio}
-                      value={campos[field.nome] ?? ""}
-                      onChange={(e) =>
-                        handleCampoChange(
-                          field.nome,
-                          field.tipo === "number" ? Number(e.target.value) : e.target.value,
-                        )
-                      }
-                      placeholder={`Preencha o campo ${field.label}`}
+                      id="reg-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Escolha um login de acesso"
+                      autoComplete="username"
                       className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
                     />
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-nome-fantasia" className="block text-sm font-medium text-foreground mb-1.5">
+                      Nome ou nome fantasia <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="reg-nome-fantasia"
+                      type="text"
+                      value={nomeFantasia}
+                      onChange={(e) => setNomeFantasia(e.target.value)}
+                      placeholder="Seu nome ou nome fantasia"
+                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
+                      Senha <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="reg-password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Crie uma senha"
+                        autoComplete="new-password"
+                        className="w-full px-4 py-2.5 pr-11 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-confirm" className="block text-sm font-medium text-foreground mb-1.5">
+                      Confirmar senha <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="reg-confirm"
+                      type={showPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repita a senha"
+                      autoComplete="new-password"
+                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                    />
+                  </div>
+
+                  {/* 3. CAMPOS EXCLUSIVOS LOJISTA */}
+                  {isLojista && (
+                    <>
+                      <div>
+                        <label htmlFor="reg-cnpj" className="block text-sm font-medium text-foreground mb-1.5">
+                          CNPJ <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          id="reg-cnpj"
+                          type="text"
+                          value={cnpj}
+                          onChange={(e) => setCnpj(formatCnpj(e.target.value))}
+                          placeholder="00.000.000/0000-00"
+                          maxLength={18}
+                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="reg-razao" className="block text-sm font-medium text-foreground mb-1.5">
+                          Razão Social <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          id="reg-razao"
+                          type="text"
+                          value={razaoSocial}
+                          onChange={(e) => setRazaoSocial(e.target.value)}
+                          placeholder="Razão social da empresa"
+                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="reg-celular" className="block text-sm font-medium text-foreground mb-1.5">
+                          Celular <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          id="reg-celular"
+                          type="tel"
+                          value={celular}
+                          onChange={(e) => setCelular(formatCelular(e.target.value))}
+                          placeholder="(00) 00000-0000"
+                          maxLength={15}
+                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                        />
+                      </div>
+                    </>
                   )}
-                </div>
-              ))}
+
+                  <div>
+                    <label htmlFor="reg-email-rec" className="block text-sm font-medium text-foreground mb-1.5">
+                      E-mail de recuperação <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="reg-email-rec"
+                      type="email"
+                      value={emailRecuperacao}
+                      onChange={(e) => setEmailRecuperacao(e.target.value)}
+                      placeholder="seu@email.com"
+                      autoComplete="email"
+                      className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Usado para receber o código de recuperação em "Esqueci minha senha".
+                    </p>
+                  </div>
+
+                  {/* 4. CAMPOS DINÂMICOS (outros tipos de usuário) */}
+                  {!isLojista && tipoAtual?.campos_schema.map((field) => (
+                    <div key={field.nome}>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                      </label>
+                      {field.tipo === "boolean" ? (
+                        <select
+                          value={campos[field.nome] ? "true" : "false"}
+                          onChange={(e) => handleCampoChange(field.nome, e.target.value === "true")}
+                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                        >
+                          <option value="false">Não</option>
+                          <option value="true">Sim</option>
+                        </select>
+                      ) : (
+                        <input
+                          type={field.tipo === "number" ? "number" : "text"}
+                          required={field.obrigatorio}
+                          value={campos[field.nome] ?? ""}
+                          onChange={(e) =>
+                            handleCampoChange(
+                              field.nome,
+                              field.tipo === "number" ? Number(e.target.value) : e.target.value,
+                            )
+                          }
+                          placeholder={`Preencha o campo ${field.label}`}
+                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">
