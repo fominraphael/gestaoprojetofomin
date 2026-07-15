@@ -663,21 +663,20 @@ function DetalheChamado() {
                   <UserCheck className="w-4 h-4 mr-2" /> Assumir processo
                 </Button>
               )}
-              {isAdmin && !readOnlyAdmin ? (
-                { isAdmin && !readOnlyAdmin && !finalizado ? (
-                  <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
-                    <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(STATUS_LABEL) as StatusChamado[])
-                        .filter((s) => s !== "suspenso" || podeAdminSuspensao)
-                        .map((s) => (
-                          <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
-                )}
+              {isAdmin && !readOnlyAdmin && !finalizado ? (
+                <Select value={chamado.status} onValueChange={(v) => alterarStatus(v as StatusChamado)}>
+                  <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(STATUS_LABEL) as StatusChamado[])
+                      .filter((s) => s !== "suspenso" || podeAdminSuspensao)
+                      .map((s) => (
+                        <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge variant="outline" className="text-sm">{STATUS_LABEL[chamado.status]}</Badge>
+              )}
             </div>
           </div>
 
