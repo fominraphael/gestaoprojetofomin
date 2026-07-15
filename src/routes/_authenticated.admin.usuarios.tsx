@@ -34,6 +34,16 @@ import {
 import { Search, Edit3 } from "lucide-react";
 import { ModuleBadge } from "@/components/ModuleBadge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Users,
   Check,
   X,
@@ -127,6 +137,9 @@ export function AdminUsuariosPage() {
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState<"text" | "number" | "boolean">("text");
+
+  // Delete confirmation dialog
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
   const [newFieldRequired, setNewFieldRequired] = useState(false);
 
   // Company management view states
@@ -295,16 +308,21 @@ export function AdminUsuariosPage() {
   };
 
   const handleDeleteUser = async (id: string, name: string) => {
-    if (!confirm(`Deseja realmente excluir o usuário "${name}"?`)) return;
-    setActionLoading(id);
+    setUserToDelete({ id, name });
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setActionLoading(userToDelete.id);
     try {
-      await excluirUsuario(id);
-      showToast("success", `Usuário "${name}" excluído.`);
+      await excluirUsuario(userToDelete.id);
+      showToast("success", `Usuário "${userToDelete.name}" excluído.`);
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao excluir usuário.");
     } finally {
       setActionLoading(null);
+      setUserToDelete(null);
     }
   };
 
@@ -2672,6 +2690,28 @@ export function AdminUsuariosPage() {
           </div>
         </div>
       )}
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(o) => !o && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O usuário <strong>{userToDelete?.name}</strong> será excluído permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteUser}
+              disabled={!!actionLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {actionLoading ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

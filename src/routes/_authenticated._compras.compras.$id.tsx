@@ -1099,6 +1099,43 @@ function DetalheChamado() {
         </Card>
       )}
 
+      {chamado.status === "comprado" && (
+        <Card className="border-emerald-500/50 bg-emerald-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+              <div>
+                <div className="font-medium text-emerald-400">Chamado comprado</div>
+                {chamado.observacao_compra && (
+                  <div className="text-sm">
+                    <strong>Obs:</strong> {chamado.observacao_compra}
+                  </div>
+                )}
+                {chamado.concluido_em && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Concluído em: {new Date(chamado.concluido_em).toLocaleString("pt-BR")}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chamado.observacao_compra && chamado.status !== "comprado" && (
+        <Card className="border-border">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div>
+                <div className="font-medium">Observação do solicitante</div>
+                <div className="text-sm">{chamado.observacao_compra}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>

@@ -129,7 +129,9 @@ function NovoChamado() {
           ano_modelo: form.ano_modelo.trim() || null,
           loja_estoque: form.loja_estoque.trim() || null,
           codigo_avaliacao_nbs: form.codigo_avaliacao_nbs.trim() || null,
-          valor_avaliado: form.valor_avaliado ? Number(form.valor_avaliado.replace(",", ".")) : null,
+          valor_avaliado: form.valor_avaliado
+            ? Number(form.valor_avaliado.replace(/[R$\s.]/g, "").replace(",", "."))
+            : null,
           observacao_compra: form.observacao.trim() || null,
           nf_status: tipoPessoa === "PJ" ? "aguardando_analise" : "nao_aplicavel",
           campos_extras: camposExtras,

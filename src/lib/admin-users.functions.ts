@@ -37,3 +37,39 @@ export const adminSetUserPassword = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Exclui um usuário permanentemente (hard delete).
+ * Remove de auth.users (cascade para profiles e user_roles).
+ * Não permite excluir o próprio usuário logado.
+ */
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    if (!input?.userId) throw new Error("userId é obrigatório.");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    if (data.userId === userId) {
+      throw new Error("Não é possível excluir seu próprio usuário.");
+    }
+
+    const [{ data: isAdmin }, { data: profile }] = await Promise.all([
+      supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+      supabase.from("profiles").select("username").eq("id", userId).maybeSingle(),
+    ]);
+    const isSuper = profile?.username === SUPER_USERNAME;
+    if (!isAdmin && !isSuper) {
+      throw new Error("Sem permissão para excluir usuários.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Remove auth user (cascade: profiles, user_roles, push_subscriptions)
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  });

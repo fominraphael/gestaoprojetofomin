@@ -252,9 +252,8 @@ export async function atualizarStatusUsuario(
 }
 
 export async function excluirUsuario(id: string): Promise<void> {
-  // Soft delete: marca como inativo. Exclusão real exige service_role.
-  const { error } = await supabase.from("profiles").update({ ativo: false }).eq("id", id);
-  if (error) throw error;
+  const { adminDeleteUser } = await import("./admin-users.functions");
+  await adminDeleteUser({ data: { userId: id } });
 }
 
 // ============================================================
