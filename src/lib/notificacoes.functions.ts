@@ -48,19 +48,22 @@ async function buscarDadosUsuarios(
   const mapa = new Map<string, { email: string; nome: string }>();
   if (!userIds.length) return mapa;
 
+  // Buscar profiles com email_recuperacao (email correto do usuário)
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id, username, nome_fantasia")
+    .select("id, username, nome_fantasia, email_recuperacao")
     .in("id", userIds);
 
+  // Fallback: email de auth.users caso não tenha email_recuperacao
   const { data: authUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const emailMap = new Map<string, string>();
+  const authEmailMap = new Map<string, string>();
   for (const u of authUsers?.users ?? []) {
-    emailMap.set(u.id, u.email ?? "");
+    authEmailMap.set(u.id, u.email ?? "");
   }
 
   for (const p of profiles ?? []) {
-    const email = emailMap.get(p.id);
+    // Priorizar email_recuperacao do profiles, senão usar email do auth
+    const email = p.email_recuperacao || authEmailMap.get(p.id) || "";
     if (email) {
       mapa.set(p.id, { email, nome: p.nome_fantasia || p.username });
     }

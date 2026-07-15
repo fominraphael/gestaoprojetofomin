@@ -44,11 +44,14 @@ sw.addEventListener("notificationclick", (event) => {
   if (event.action === "dismiss") return;
 
   const url = event.notification.data?.url || "/compras";
+  console.log("[sw] notificationclick - URL:", url);
 
   event.waitUntil(
     sw.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      console.log("[sw] clients found:", clientList.length);
       // Se já existe uma janela do sistema aberta, foca nela
       for (const client of clientList) {
+        console.log("[sw] client URL:", client.url);
         if (client.url.includes(sw.location.origin) && "focus" in client) {
           client.navigate(url);
           return client.focus();
@@ -63,13 +66,8 @@ sw.addEventListener("notificationclick", (event) => {
 sw.addEventListener("pushsubscriptionchange", (event) => {
   // Re-solicitar subscription quando expirar
   event.waitUntil(
-    sw.registration.pushManager.subscribe(event.oldSubscription.options).then((subscription) => {
-      // Enviar nova subscription ao servidor
-      return fetch("/api/push-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subscription),
-      });
+    sw.registration.pushManager.subscribe(event.oldSubscription.options).catch((err) => {
+      console.warn("[sw] Falha ao re-solicitar subscription:", err);
     }),
   );
 });
