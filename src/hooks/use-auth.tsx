@@ -15,6 +15,7 @@ export interface AuthUser {
   cnpj: string | null;
   nome_fantasia: string | null;
   pode_criar_admin: boolean;
+  central_compras: boolean;
   campos_customizados: Record<string, any>;
 }
 
@@ -73,6 +74,7 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
     cnpj: profile.cnpj ?? null,
     nome_fantasia: (profile as any).nome_fantasia ?? null,
     pode_criar_admin: isSuper ? true : (profile.pode_criar_admin ?? false),
+    central_compras: (profile as any).central_compras ?? false,
     campos_customizados: (profile.campos_customizados ?? {}) as any,
   };
 }

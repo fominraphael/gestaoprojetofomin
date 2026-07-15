@@ -31,6 +31,7 @@ export interface UsuarioSistema {
   active?: boolean;
   tipo_usuario?: string;
   pode_criar_admin?: boolean;
+  central_compras?: boolean;
   campos_customizados?: Record<string, any>;
   email_recuperacao?: string | null;
   filial_id?: string | null;
@@ -99,6 +100,7 @@ export async function criarUsuario(
         cnpj: usuario.cnpj ?? null,
         nome_fantasia: usuario.nome_fantasia ?? null,
         pode_criar_admin: usuario.pode_criar_admin ?? false,
+        central_compras: usuario.central_compras ?? false,
         campos_customizados: usuario.campos_customizados ?? {},
         ativo: usuario.active ?? true,
         status: usuario.status ?? "approved",
@@ -154,6 +156,7 @@ export async function atualizarUsuario(
   if (updates.cnpj !== undefined) payload.cnpj = updates.cnpj;
   if (updates.nome_fantasia !== undefined) payload.nome_fantasia = updates.nome_fantasia;
   if (updates.pode_criar_admin !== undefined) payload.pode_criar_admin = updates.pode_criar_admin;
+  if (updates.central_compras !== undefined) payload.central_compras = updates.central_compras;
   if (updates.campos_customizados !== undefined) payload.campos_customizados = updates.campos_customizados;
   if (updates.active !== undefined) payload.ativo = updates.active;
   if (updates.status !== undefined) payload.status = updates.status;

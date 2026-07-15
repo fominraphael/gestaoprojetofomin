@@ -103,6 +103,7 @@ export function AdminUsuariosPage() {
     nome_fantasia: "",
     tipo_usuario: "Lojista",
     pode_criar_admin: false,
+    central_compras: false,
     modulos: [] as string[],
     active: true,
     campos_customizados: {} as Record<string, any>,
@@ -226,11 +227,12 @@ export function AdminUsuariosPage() {
         active: newUser.active,
         tipo_usuario: newUser.tipo_usuario,
         pode_criar_admin: newUser.pode_criar_admin,
+        central_compras: newUser.central_compras,
         campos_customizados: newUser.campos_customizados,
       });
       showToast("success", `Usuário "${newUser.username}" criado com sucesso.`);
       setShowCreateUser(false);
-      setNewUser({ username: "", password: "", nome_fantasia: "", tipo_usuario: "Lojista", pode_criar_admin: false, modulos: [], active: true, campos_customizados: {} });
+      setNewUser({ username: "", password: "", nome_fantasia: "", tipo_usuario: "Lojista", pode_criar_admin: false, central_compras: false, modulos: [], active: true, campos_customizados: {} });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar usuário.");
@@ -272,6 +274,7 @@ export function AdminUsuariosPage() {
         status: userObj.status,
         tipo_usuario: userObj.tipo_usuario,
         pode_criar_admin: userObj.pode_criar_admin || false,
+        central_compras: userObj.central_compras || false,
         campos_customizados: userObj.campos_customizados || {},
         email_recuperacao: userObj.email_recuperacao ?? null,
         nome_fantasia: userObj.nome_fantasia?.trim() ?? null,
@@ -1069,6 +1072,22 @@ export function AdminUsuariosPage() {
                     return null;
                   })()}
 
+                  {/* central_compras Flag check */}
+                  <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewUser({ ...newUser, central_compras: !newUser.central_compras })}
+                      className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
+                    >
+                      {newUser.central_compras ? (
+                        <ToggleRight className="w-8 h-5 text-primary" />
+                      ) : (
+                        <ToggleLeft className="w-8 h-5 text-muted-foreground" />
+                      )}
+                      Central de Compras (recebe notificações de fila)
+                    </button>
+                  </div>
+
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
                     <div className="flex flex-wrap gap-4">
@@ -1323,6 +1342,22 @@ export function AdminUsuariosPage() {
                     }
                     return null;
                   })()}
+
+                  {/* central_compras Flag check for edit dialog */}
+                  <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditUser({ ...showEditUser, central_compras: !showEditUser.central_compras })}
+                      className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
+                    >
+                      {showEditUser.central_compras ? (
+                        <ToggleRight className="w-8 h-5 text-primary" />
+                      ) : (
+                        <ToggleLeft className="w-8 h-5 text-muted-foreground" />
+                      )}
+                      Central de Compras (recebe notificações de fila)
+                    </button>
+                  </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>

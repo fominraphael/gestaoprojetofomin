@@ -17,6 +17,8 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { notificarChamado } from "@/lib/compras.functions";
+import { forcarNotificacao } from "@/lib/notificacoes.functions";
+import { NotificationCenter } from "@/components/notificacoes/NotificationCenter";
 import {
   STATUS_LABEL, TIPO_COMPRA_LABEL, TIPOS_DEBITO, MOTIVOS_PENDENCIA, MOTIVOS_CANCELAMENTO,
   MOTIVOS_SUSPENSAO, ADMIN_SUSPENSAO_ID,
@@ -25,7 +27,7 @@ import {
 } from "@/lib/compras";
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon } from "lucide-react";
+import { ArrowLeft, Upload, Eye, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Ban, Trash2, UserCheck, History, Pencil, Save, X as XIcon, Download as DownloadIcon, Bell } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/$id")({
@@ -62,6 +64,7 @@ interface Chamado {
   observacao_suspensao: string | null;
   suspenso_em: string | null;
   suspenso_por: string | null;
+  status_entrou_em: string | null;
   created_at: string;
 }
 
@@ -291,9 +294,10 @@ function DetalheChamado() {
   async function assumir() {
     if (!chamado || !user) return;
     const novoStatus: StatusChamado = chamado.status === "na_fila_central" ? "em_analise" : chamado.status;
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from("compras_chamados")
-      .update({ assumido_por: user.id, assumido_em: new Date().toISOString(), status: novoStatus })
+      .update({ assumido_por: user.id, assumido_em: now, status: novoStatus, status_entrou_em: now } as any)
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
     await registrarHistorico({
@@ -314,7 +318,7 @@ function DetalheChamado() {
     if (!confirm("Devolver este processo para a fila da Central?")) return;
     const { error } = await supabase
       .from("compras_chamados")
-      .update({ assumido_por: null, assumido_em: null, status: "na_fila_central" })
+      .update({ assumido_por: null, assumido_em: null, status: "na_fila_central", status_entrou_em: new Date().toISOString() } as any)
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
     await registrarHistorico({
@@ -371,7 +375,7 @@ function DetalheChamado() {
 
   async function alterarStatus(novo: StatusChamado) {
     if (!chamado || novo === chamado.status) return;
-    const updates: any = { status: novo };
+    const updates: any = { status: novo, status_entrou_em: new Date().toISOString() };
     if (novo === "comprado") updates.concluido_em = new Date().toISOString();
     if (novo === "cancelado") updates.cancelado_em = new Date().toISOString();
     const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
@@ -507,7 +511,7 @@ function DetalheChamado() {
 
     const { error } = await supabase
       .from("compras_chamados")
-      .update({ status: "na_fila_central" })
+      .update({ status: "na_fila_central", status_entrou_em: new Date().toISOString() } as any)
       .eq("id", chamado.id);
     if (error) { toast.error(error.message); return; }
     await registrarHistorico({
@@ -527,7 +531,7 @@ function DetalheChamado() {
     if (dialogo === "comprar" && !observ.trim()) {
       toast.error("Informe a observação da compra."); return;
     }
-    const updates: any = {};
+    const updates: any = { status_entrou_em: new Date().toISOString() };
     let acao = "";
     if (dialogo === "pendenciar") {
       updates.status = "pendenciado";
@@ -612,6 +616,7 @@ function DetalheChamado() {
       // Status (select)
       if (editForm.status !== atual.status) {
         updates.status = editForm.status;
+        updates.status_entrou_em = new Date().toISOString();
         if (editForm.status === "comprado") updates.concluido_em = new Date().toISOString();
         if (editForm.status === "cancelado") updates.cancelado_em = new Date().toISOString();
         mudancas.push({ campo: "status", label: "Status", antes: atual.status, depois: editForm.status });
@@ -673,8 +678,22 @@ function DetalheChamado() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <NotificationCenter />
           <Button size="sm" variant="outline" onClick={() => setLogOpen(true)}>
             <History className="w-4 h-4 mr-2" /> Log ({historico.length})
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              if (!chamado) return;
+              toast.info("Enviando notificação…");
+              const result = await forcarNotificacao({ data: { chamadoId: chamado.id } });
+              if (result?.ok) toast.success(`Notificação enviada para ${result.enviados} destinatário(s).`);
+              else toast.error(result?.reason ?? "Falha ao enviar notificação.");
+            }}
+          >
+            <Bell className="w-4 h-4 mr-2" /> Forçar Notificação
           </Button>
           {chamado.assumido_por && (
             <Badge variant="secondary" className="text-xs gap-1">

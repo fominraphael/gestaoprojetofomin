@@ -18,6 +18,7 @@ import { VersionWatcher } from "@/components/VersionWatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { isKnownRoute } from "@/lib/modules";
+import { NotificationPopup } from "@/components/notificacoes/NotificationPopup";
 
 function NotFoundComponent() {
   return (
@@ -131,6 +132,7 @@ function RootComponent() {
         <VersionWatcher />
         <AppLayout />
         <Toaster />
+        <NotificationPopup />
       </AuthProvider>
     </QueryClientProvider>
   );
