@@ -92,6 +92,7 @@ export type Database = {
           observacao_cancelamento: string | null;
           observacao_compra: string | null;
           observacao_pendencia: string | null;
+          observacao_solicitante: string | null;
           observacao_suspensao: string | null;
           ordem: number | null;
           placa: string;
@@ -135,6 +136,7 @@ export type Database = {
           observacao_cancelamento?: string | null;
           observacao_compra?: string | null;
           observacao_pendencia?: string | null;
+          observacao_solicitante?: string | null;
           observacao_suspensao?: string | null;
           ordem?: number | null;
           placa: string;
@@ -178,6 +180,7 @@ export type Database = {
           observacao_cancelamento?: string | null;
           observacao_compra?: string | null;
           observacao_pendencia?: string | null;
+          observacao_solicitante?: string | null;
           observacao_suspensao?: string | null;
           ordem?: number | null;
           placa?: string;

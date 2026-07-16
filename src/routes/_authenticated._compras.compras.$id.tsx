@@ -92,6 +92,7 @@ interface Chamado {
   motivo_cancelamento: string | null;
   observacao_cancelamento: string | null;
   observacao_compra: string | null;
+  observacao_solicitante: string | null;
   nf_status: string | null;
   nf_observacao: string | null;
   tem_inscricao_estadual: boolean | null;
@@ -932,9 +933,7 @@ function DetalheChamado() {
     "pendenciado",
   ];
   const podeEditarDados =
-    !finalizado &&
-    ((isAdmin && !readOnlyAdmin) ||
-      (isCriador && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status)));
+    !finalizado && !readOnlyAdmin && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status);
   const podeAgirCentral = isAdmin && modoAdmin === "assumido" && !finalizado;
   const podeEnviarFila =
     chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
@@ -1057,7 +1056,8 @@ function DetalheChamado() {
         </div>
       </div>
 
-      {(chamado.observacao_pendencia ||
+      {(chamado.observacao_solicitante ||
+        chamado.observacao_pendencia ||
         chamado.observacao_cancelamento ||
         chamado.observacao_compra ||
         chamado.observacao_suspensao) && (
@@ -1066,11 +1066,29 @@ function DetalheChamado() {
             <CardTitle>Observações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
+            {chamado.observacao_solicitante && (
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                <div>
+                  <div>
+                    <strong>Solicitante:</strong> {chamado.observacao_solicitante}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {chamado.criado_por && autores[chamado.criado_por]
+                      ? autores[chamado.criado_por]
+                      : "—"}{" "}
+                    · {new Date(chamado.created_at).toLocaleString("pt-BR")}
+                  </div>
+                </div>
+              </div>
+            )}
             {chamado.observacao_pendencia && (
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                 <div>
-                  <strong>Pendência:</strong> {chamado.observacao_pendencia}
+                  <div>
+                    <strong>Pendência:</strong> {chamado.observacao_pendencia}
+                  </div>
                 </div>
               </div>
             )}
@@ -1078,23 +1096,44 @@ function DetalheChamado() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
                 <div>
-                  <strong>Cancelamento:</strong> {chamado.observacao_cancelamento}
+                  <div>
+                    <strong>Cancelamento:</strong> {chamado.observacao_cancelamento}
+                  </div>
                 </div>
               </div>
             )}
-            {chamado.observacao_compra && (
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                <div>
-                  <strong>Compra:</strong> {chamado.observacao_compra}
-                </div>
-              </div>
-            )}
+            {chamado.observacao_compra &&
+              (() => {
+                const histCompra = historico.find((h) => h.acao === "comprado");
+                return (
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <div>
+                      <div>
+                        <strong>Compra:</strong> {chamado.observacao_compra}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {histCompra?.autor_id && autores[histCompra.autor_id]
+                          ? autores[histCompra.autor_id]
+                          : "—"}{" "}
+                        ·{" "}
+                        {histCompra?.created_at
+                          ? new Date(histCompra.created_at).toLocaleString("pt-BR")
+                          : chamado.concluido_em
+                            ? new Date(chamado.concluido_em).toLocaleString("pt-BR")
+                            : "—"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             {chamado.observacao_suspensao && (
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
                 <div>
-                  <strong>Suspensão:</strong> {chamado.observacao_suspensao}
+                  <div>
+                    <strong>Suspensão:</strong> {chamado.observacao_suspensao}
+                  </div>
                 </div>
               </div>
             )}

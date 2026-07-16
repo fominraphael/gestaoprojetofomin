@@ -176,7 +176,7 @@ function NovoChamado() {
           valor_avaliado: form.valor_avaliado
             ? Number(form.valor_avaliado.replace(/[R$\s.]/g, "").replace(",", "."))
             : null,
-          observacao_compra: form.observacao.trim() || null,
+          observacao_solicitante: form.observacao.trim() || null,
           nf_status: tipoPessoa === "PJ" ? "aguardando_analise" : "nao_aplicavel",
           tem_inscricao_estadual: tipoPessoa === "PJ" ? temInscricaoEstadual : null,
           campos_extras: camposExtras,
