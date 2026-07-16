@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import { isSuperUser } from "@/lib/superadmin";
 
 export interface AuthUser {
   id: string;
@@ -48,8 +49,6 @@ const EMAIL_DOMAIN = "gestao.local";
 const usernameToEmail = (u: string) =>
   u.includes("@") ? u.toLowerCase() : `${u.toLowerCase()}@${EMAIL_DOMAIN}`;
 
-const SUPER_USERNAME = "fominraphael";
-
 async function loadProfile(userId: string): Promise<AuthUser | null> {
   const [{ data: profile, error: pErr }, { data: roles }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
@@ -57,7 +56,7 @@ async function loadProfile(userId: string): Promise<AuthUser | null> {
   ]);
   if (pErr || !profile) return null;
   const dbIsAdmin = roles?.some((r: any) => r.role === "admin");
-  const isSuper = (profile.username ?? "").toLowerCase() === SUPER_USERNAME;
+  const isSuper = isSuperUser(profile.username);
   // Superusuário sempre admin, com `modulos: []` (bypass total em userCanAccess).
   const role: "admin" | "user" = isSuper || dbIsAdmin ? "admin" : "user";
   const { data: au } = await supabase.auth.getUser();
@@ -112,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hydrate(data.session).finally(() => setLoading(false));
     });
     return () => sub.subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (identifier: string, password: string) => {

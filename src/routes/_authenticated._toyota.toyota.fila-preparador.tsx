@@ -18,9 +18,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute(
-  "/_authenticated/_toyota/toyota/fila-preparador",
-)({
+export const Route = createFileRoute("/_authenticated/_toyota/toyota/fila-preparador")({
   component: FilaPreparador,
   errorComponent: ModuleErrorBoundary,
 });
@@ -73,18 +71,12 @@ function FilaPreparador() {
     const t = busca.trim().toLowerCase();
     if (!t) return veiculos;
     return veiculos.filter((v) =>
-      [v.chassi, v.placa, v.modelo]
-        .filter(Boolean)
-        .some((s) => s!.toLowerCase().includes(t)),
+      [v.chassi, v.placa, v.modelo].filter(Boolean).some((s) => s!.toLowerCase().includes(t)),
     );
   }, [veiculos, busca]);
 
-  const novos = filtrados.filter(
-    (v) => v.status_aprovacao === "pendente_preparacao",
-  );
-  const devolvidos = filtrados.filter(
-    (v) => v.status_aprovacao === "devolvido_preparador",
-  );
+  const novos = filtrados.filter((v) => v.status_aprovacao === "pendente_preparacao");
+  const devolvidos = filtrados.filter((v) => v.status_aprovacao === "devolvido_preparador");
 
   const entregar = async (v: Veiculo) => {
     setAcaoId(v.id);
@@ -133,9 +125,7 @@ function FilaPreparador() {
             <TableRow key={v.id}>
               <TableCell>
                 <div className="font-mono text-xs">{v.chassi}</div>
-                <div className="text-xs text-muted-foreground">
-                  {v.placa ?? "—"}
-                </div>
+                <div className="text-xs text-muted-foreground">{v.placa ?? "—"}</div>
               </TableCell>
               <TableCell>
                 <div className="text-sm">{v.modelo ?? "—"}</div>
@@ -150,8 +140,7 @@ function FilaPreparador() {
                 <div className="space-y-1 text-xs">
                   {v.hsv_revisoes_pendentes?.length ? (
                     <div>
-                      <strong>Revisões:</strong>{" "}
-                      {v.hsv_revisoes_pendentes.join(", ")}
+                      <strong>Revisões:</strong> {v.hsv_revisoes_pendentes.join(", ")}
                     </div>
                   ) : null}
                   {v.hsv_os_ajustes?.length ? (
@@ -160,9 +149,7 @@ function FilaPreparador() {
                     </div>
                   ) : null}
                   {v.hsv_observacoes_preparador ? (
-                    <div className="text-muted-foreground">
-                      {v.hsv_observacoes_preparador}
-                    </div>
+                    <div className="text-muted-foreground">{v.hsv_observacoes_preparador}</div>
                   ) : null}
                   {!v.hsv_revisoes_pendentes?.length &&
                   !v.hsv_os_ajustes?.length &&
@@ -180,11 +167,7 @@ function FilaPreparador() {
                 </TableCell>
               )}
               <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  onClick={() => entregar(v)}
-                  disabled={acaoId === v.id}
-                >
+                <Button size="sm" onClick={() => entregar(v)} disabled={acaoId === v.id}>
                   {acaoId === v.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
                   ) : (
@@ -207,8 +190,7 @@ function FilaPreparador() {
           <Truck className="h-6 w-6" /> Fila do Preparador
         </h1>
         <p className="text-sm text-muted-foreground">
-          Veículos aprovados pela Análise Central aguardando entrega ao
-          Pós-Vendas (oficina).
+          Veículos aprovados pela Análise Central aguardando entrega ao Pós-Vendas (oficina).
         </p>
       </div>
 
@@ -224,9 +206,7 @@ function FilaPreparador() {
 
       <Tabs defaultValue="novos" className="w-full">
         <TabsList>
-          <TabsTrigger value="novos">
-            Aprovados pelo ADM ({novos.length})
-          </TabsTrigger>
+          <TabsTrigger value="novos">Aprovados pelo ADM ({novos.length})</TabsTrigger>
           <TabsTrigger value="devolvidos">
             Devolvidos pela Central ({devolvidos.length})
           </TabsTrigger>
@@ -242,9 +222,7 @@ function FilaPreparador() {
         <TabsContent value="devolvidos">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">
-                Retornos da Análise Central
-              </CardTitle>
+              <CardTitle className="text-base">Retornos da Análise Central</CardTitle>
             </CardHeader>
             <CardContent>{renderTabela(devolvidos, true)}</CardContent>
           </Card>

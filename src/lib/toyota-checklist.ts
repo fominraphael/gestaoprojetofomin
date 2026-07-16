@@ -304,14 +304,10 @@ export const CHECKLIST_MODELOS: Record<ChecklistTipo, ChecklistModelo> = {
 
 // Asserção de tamanho em runtime (build dev) para garantir contagens exatas
 if (CHECKLIST_MODELOS.TCUV.totalItens !== 135) {
-  console.warn(
-    `[checklist] TCUV deve ter 135 itens, atual=${CHECKLIST_MODELOS.TCUV.totalItens}`,
-  );
+  console.warn(`[checklist] TCUV deve ter 135 itens, atual=${CHECKLIST_MODELOS.TCUV.totalItens}`);
 }
 if (CHECKLIST_MODELOS.TSIM.totalItens !== 48) {
-  console.warn(
-    `[checklist] TSIM deve ter 48 itens, atual=${CHECKLIST_MODELOS.TSIM.totalItens}`,
-  );
+  console.warn(`[checklist] TSIM deve ter 48 itens, atual=${CHECKLIST_MODELOS.TSIM.totalItens}`);
 }
 
 export type MarcacaoItem = "" | "✓" | "N/A";

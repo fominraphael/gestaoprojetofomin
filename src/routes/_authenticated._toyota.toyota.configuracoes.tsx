@@ -1,6 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Building2, Warehouse, FileText, Upload, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Building2,
+  Warehouse,
+  FileText,
+  Upload,
+  CheckCircle2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
@@ -64,7 +74,6 @@ interface UsuarioSimples {
   ativo: boolean;
 }
 
-
 function ToyotaConfiguracoes() {
   const { isAdmin } = useAuth();
   const [filiais, setFiliais] = useState<Filial[]>([]);
@@ -76,7 +85,6 @@ function ToyotaConfiguracoes() {
   const [vincularFilial, setVincularFilial] = useState<Filial | null>(null);
   const [vincularSelecionados, setVincularSelecionados] = useState<Set<string>>(new Set());
   const [vincularBusca, setVincularBusca] = useState("");
-
 
   const [filialModalOpen, setFilialModalOpen] = useState(false);
   const [editingFilial, setEditingFilial] = useState<Filial | null>(null);
@@ -109,17 +117,9 @@ function ToyotaConfiguracoes() {
           .from("toyota_filiais")
           .select("id, nome, dealer_number, nome_bi_toyota, ativo")
           .order("nome"),
-        supabase
-          .from("toyota_patios")
-          .select("id, nome, ativo, filial_id")
-          .order("nome"),
-        supabase
-          .from("profiles")
-          .select("id, username, tipo_usuario, ativo")
-          .order("username"),
-        supabase
-          .from("toyota_usuario_filial")
-          .select("user_id, filial_id"),
+        supabase.from("toyota_patios").select("id, nome, ativo, filial_id").order("nome"),
+        supabase.from("profiles").select("id, username, tipo_usuario, ativo").order("username"),
+        supabase.from("toyota_usuario_filial").select("user_id, filial_id"),
       ]);
       if (fRes.error) throw fRes.error;
       if (pRes.error) throw pRes.error;
@@ -156,9 +156,9 @@ function ToyotaConfiguracoes() {
       const paraRemover = [...atuais].filter((id) => !vincularSelecionados.has(id));
 
       if (paraAdicionar.length > 0) {
-        const { error } = await supabase.from("toyota_usuario_filial").insert(
-          paraAdicionar.map((user_id) => ({ user_id, filial_id: vincularFilial.id })),
-        );
+        const { error } = await supabase
+          .from("toyota_usuario_filial")
+          .insert(paraAdicionar.map((user_id) => ({ user_id, filial_id: vincularFilial.id })));
         if (error) throw error;
       }
       if (paraRemover.length > 0) {
@@ -178,7 +178,6 @@ function ToyotaConfiguracoes() {
       setSaving(false);
     }
   }
-
 
   useEffect(() => {
     carregar();
@@ -298,7 +297,9 @@ function ToyotaConfiguracoes() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Configurações — Certificação Toyota</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Configurações — Certificação Toyota
+        </h1>
         <p className="text-sm text-muted-foreground">
           Gerencie as Filiais (agrupadores) e seus Pátios (unidades operacionais).
         </p>
@@ -339,13 +340,19 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={isAdmin ? 7 : 6}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filiais.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={isAdmin ? 7 : 6}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     Nenhuma filial cadastrada.
                   </TableCell>
                 </TableRow>
@@ -357,7 +364,9 @@ function ToyotaConfiguracoes() {
                     <TableRow key={f.id}>
                       <TableCell className="font-medium">{f.nome}</TableCell>
                       <TableCell className="font-mono text-xs">{f.dealer_number ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{f.nome_bi_toyota ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {f.nome_bi_toyota ?? "—"}
+                      </TableCell>
                       <TableCell>{count}</TableCell>
                       <TableCell>
                         {isAdmin ? (
@@ -390,7 +399,6 @@ function ToyotaConfiguracoes() {
                             </Button>
                           </div>
                         </TableCell>
-
                       )}
                     </TableRow>
                   );
@@ -409,7 +417,8 @@ function ToyotaConfiguracoes() {
             <div>
               <CardTitle className="text-lg">Pátios</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {patios.length} cadastrado{patios.length === 1 ? "" : "s"} — vincule cada pátio a uma Filial.
+                {patios.length} cadastrado{patios.length === 1 ? "" : "s"} — vincule cada pátio a
+                uma Filial.
               </p>
             </div>
           </div>
@@ -433,13 +442,19 @@ function ToyotaConfiguracoes() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={isAdmin ? 4 : 3}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : patios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-muted-foreground py-8">
+                  <TableCell
+                    colSpan={isAdmin ? 4 : 3}
+                    className="text-center text-muted-foreground py-8"
+                  >
                     Nenhum pátio cadastrado.
                   </TableCell>
                 </TableRow>
@@ -586,15 +601,12 @@ function ToyotaConfiguracoes() {
       <Dialog open={!!vincularFilial} onOpenChange={(v) => !v && setVincularFilial(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              Vincular usuários — {vincularFilial?.nome ?? ""}
-            </DialogTitle>
+            <DialogTitle>Vincular usuários — {vincularFilial?.nome ?? ""}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-xs text-muted-foreground">
-              Preparadores e Consultores de Pós-Vendas só verão carros das
-              filiais em que estão vinculados. Administradores veem tudo,
-              independentemente destes vínculos.
+              Preparadores e Consultores de Pós-Vendas só verão carros das filiais em que estão
+              vinculados. Administradores veem tudo, independentemente destes vínculos.
             </p>
             <Input
               placeholder="Buscar por usuário..."
@@ -633,9 +645,7 @@ function ToyotaConfiguracoes() {
                         <div className="text-sm font-medium truncate">
                           {u.username ?? "—"}
                           {!u.ativo && (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              (inativo)
-                            </span>
+                            <span className="ml-2 text-xs text-muted-foreground">(inativo)</span>
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
@@ -652,7 +662,8 @@ function ToyotaConfiguracoes() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {vincularSelecionados.size} usuário{vincularSelecionados.size === 1 ? "" : "s"} selecionado{vincularSelecionados.size === 1 ? "" : "s"}.
+              {vincularSelecionados.size} usuário{vincularSelecionados.size === 1 ? "" : "s"}{" "}
+              selecionado{vincularSelecionados.size === 1 ? "" : "s"}.
             </p>
           </div>
           <DialogFooter>
@@ -667,11 +678,9 @@ function ToyotaConfiguracoes() {
       </Dialog>
 
       {isAdmin && <TemplatesChecklistCard />}
-
     </div>
   );
 }
-
 
 // ============================================================================
 // Templates de Check-list (Upload de .txt com Base64 pré-marcado)
@@ -707,10 +716,7 @@ function TemplatesChecklistCard() {
 
   async function carregar() {
     const keys = TIPOS.flatMap((t) => GRUPOS.map((g) => settingKey(t, g)));
-    const { data } = await supabase
-      .from("system_settings")
-      .select("key,value")
-      .in("key", keys);
+    const { data } = await supabase.from("system_settings").select("key,value").in("key", keys);
     const next: StatusMap = {};
     for (const row of data ?? []) {
       const v = row.value as { base64?: string } | string | null;
@@ -724,8 +730,7 @@ function TemplatesChecklistCard() {
   }, []);
 
   async function upload(tipo: Tipo, grupo: Grupo, file: File) {
-    const isTxt =
-      file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
+    const isTxt = file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
     if (!isTxt) {
       toast.error("Envie um arquivo .txt contendo o Base64 do PDF.");
       return;
@@ -734,17 +739,14 @@ function TemplatesChecklistCard() {
     setUploading(key);
     try {
       const text = await file.text();
-      const base64 = text
-        .replace(/^data:application\/pdf;base64,/i, "")
-        .replace(/\s+/g, "");
+      const base64 = text.replace(/^data:application\/pdf;base64,/i, "").replace(/\s+/g, "");
       if (base64.length < 100 || !/^[A-Za-z0-9+/=]+$/.test(base64)) {
         toast.error("Arquivo .txt não contém um Base64 válido.");
         return;
       }
-      const { error: sErr } = await supabase.from("system_settings").upsert(
-        { key, value: { base64 } as unknown as never },
-        { onConflict: "key" },
-      );
+      const { error: sErr } = await supabase
+        .from("system_settings")
+        .upsert({ key, value: { base64 } as unknown as never }, { onConflict: "key" });
       if (sErr) throw sErr;
       toast.success(`Template ${tipo.toUpperCase()} • ${GRUPO_META[grupo].label} atualizado.`);
       await carregar();
@@ -826,9 +828,7 @@ function TemplatesChecklistCard() {
                         </span>
                       </Button>
                     </label>
-                    {ok && (
-                      <DiagnosticoCamposTemplate tipo={tipo} grupo={grupo} disabled={isUp} />
-                    )}
+                    {ok && <DiagnosticoCamposTemplate tipo={tipo} grupo={grupo} disabled={isUp} />}
                   </div>
                 );
               })}
@@ -839,7 +839,3 @@ function TemplatesChecklistCard() {
     </Card>
   );
 }
-
-
-
-

@@ -28,8 +28,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/solicitacoes")({
   head: () => ({
     meta: [{ title: "Solicitações — Gestão de Projetos" }],
   }),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(tarefasQuery("solicitacao")),
+  loader: ({ context }) => context.queryClient.ensureQueryData(tarefasQuery("solicitacao")),
   component: SolicitacoesPage,
   errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Sem solicitações.</div>,
@@ -56,8 +55,7 @@ function SolicitacoesPage() {
 
   const filtered = tarefas.filter((t) => {
     if (filtroTipo !== "todos" && t.tipo !== filtroTipo) return false;
-    if (filtroSolicitante !== "todos" && t.solicitante !== filtroSolicitante)
-      return false;
+    if (filtroSolicitante !== "todos" && t.solicitante !== filtroSolicitante) return false;
     return true;
   });
 
@@ -99,7 +97,9 @@ function SolicitacoesPage() {
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS_SOLICITACAO.map((t) => (
-              <SelectItem key={t} value={t}>{t}</SelectItem>
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -110,7 +110,9 @@ function SolicitacoesPage() {
           <SelectContent>
             <SelectItem value="todos">Todos os solicitantes</SelectItem>
             {solicitantes.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -191,7 +193,9 @@ function KanbanBoard({
                       </span>
                     )}
                     {t.prioridade && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${prioColor[t.prioridade]}`}>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded ${prioColor[t.prioridade]}`}
+                      >
                         {t.prioridade}
                       </span>
                     )}
@@ -241,7 +245,9 @@ function ListaView({
               <td className="px-4 py-3 text-muted-foreground">{t.tipo ?? "—"}</td>
               <td className="px-4 py-3 text-muted-foreground">{t.solicitante ?? "—"}</td>
               <td className="px-4 py-3">
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}
+                >
                   {t.status}
                 </span>
               </td>

@@ -35,8 +35,8 @@ function ToyotaLayout() {
           <div className="max-w-md text-center space-y-2">
             <h1 className="text-xl font-semibold">Acesso restrito</h1>
             <p className="text-sm text-muted-foreground">
-              Seu perfil ({perfil}) não tem permissão para acessar esta tela.
-              Fale com um Administrador se precisar liberar o acesso.
+              Seu perfil ({perfil}) não tem permissão para acessar esta tela. Fale com um
+              Administrador se precisar liberar o acesso.
             </p>
           </div>
         </main>

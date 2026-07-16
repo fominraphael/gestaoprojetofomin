@@ -50,10 +50,9 @@ export const Route = createFileRoute("/api/public/cron/verificar-notificacoes")(
               `enviados=${(resultado as any).enviados ?? 0}`,
           );
 
-          return new Response(
-            JSON.stringify({ ok: true, ...resultado, duracaoMs }),
-            { headers: { "Content-Type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ ok: true, ...resultado, duracaoMs }), {
+            headers: { "Content-Type": "application/json" },
+          });
         } catch (err: any) {
           const finalizadoEm = new Date().toISOString();
 
@@ -73,13 +72,10 @@ export const Route = createFileRoute("/api/public/cron/verificar-notificacoes")(
 
           console.error("[cron] verificar_notificacoes erro:", err.message || err);
 
-          return new Response(
-            JSON.stringify({ ok: false, error: err.message || String(err) }),
-            {
-              status: 500,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
+          return new Response(JSON.stringify({ ok: false, error: err.message || String(err) }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         }
       },
     },

@@ -18,8 +18,18 @@ export const Route = createFileRoute("/_authenticated/_gestao/roadmap")({
 });
 
 const meses = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 function RoadmapPage() {
@@ -87,7 +97,9 @@ function RoadmapPage() {
                     className="text-left bg-card border border-border rounded-lg p-4 hover:border-foreground/20 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-start gap-2 mb-2">
-                      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusDot[t.status]}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${statusDot[t.status]}`}
+                      />
                       <div className="text-sm font-medium flex-1">{t.titulo}</div>
                     </div>
                     <div className="text-xs text-muted-foreground mb-2">
@@ -95,7 +107,9 @@ function RoadmapPage() {
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${statusColor[t.status]}`}>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${statusColor[t.status]}`}
+                        >
                           {t.status}
                         </span>
                         {isEmRisco(t) && (
@@ -118,9 +132,7 @@ function RoadmapPage() {
 
       {semData.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold mb-3 text-muted-foreground">
-            Sem data definida
-          </h2>
+          <h2 className="text-sm font-semibold mb-3 text-muted-foreground">Sem data definida</h2>
           <div className="bg-card border border-border rounded-lg divide-y divide-border">
             {semData.map((t) => (
               <button
@@ -135,7 +147,9 @@ function RoadmapPage() {
                     {t.projeto ?? "Sem projeto"}
                   </div>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}
+                >
                   {t.status}
                 </span>
               </button>

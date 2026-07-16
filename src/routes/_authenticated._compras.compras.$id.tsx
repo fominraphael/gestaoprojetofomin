@@ -100,6 +100,7 @@ interface Chamado {
   observacao_suspensao: string | null;
   suspenso_em: string | null;
   suspenso_por: string | null;
+  concluido_em: string | null;
   created_at: string;
 }
 
@@ -365,7 +366,14 @@ function DetalheChamado() {
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
 
   const requisitos = useMemo(
-    () => (chamado ? documentosRequeridos(chamado.estado_uf, chamado.tipo_pessoa, chamado.tem_inscricao_estadual) : []),
+    () =>
+      chamado
+        ? documentosRequeridos(
+            chamado.estado_uf,
+            chamado.tipo_pessoa,
+            chamado.tem_inscricao_estadual,
+          )
+        : [],
     [chamado],
   );
 

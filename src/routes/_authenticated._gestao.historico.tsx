@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tarefasQuery, STATUSES, statusColor, type Tarefa, type Status, type Categoria } from "@/lib/tarefas";
+import {
+  tarefasQuery,
+  STATUSES,
+  statusColor,
+  type Tarefa,
+  type Status,
+  type Categoria,
+} from "@/lib/tarefas";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,8 +28,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/historico")({
   head: () => ({
     meta: [{ title: "Lixeira — Gestão de Projetos" }],
   }),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(tarefasQuery("historico")),
+  loader: ({ context }) => context.queryClient.ensureQueryData(tarefasQuery("historico")),
   component: LixeiraPage,
   errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Lixeira vazia.</div>,
@@ -63,7 +69,8 @@ function LixeiraPage() {
     const q = busca.toLowerCase().trim();
     return tarefas.filter((t) => {
       if (filtroStatus !== "todos" && t.status !== filtroStatus) return false;
-      if (filtroOrigem !== "todas" && (t.categoria_origem ?? "backlog") !== filtroOrigem) return false;
+      if (filtroOrigem !== "todas" && (t.categoria_origem ?? "backlog") !== filtroOrigem)
+        return false;
       if (!q) return true;
       return (
         t.titulo.toLowerCase().includes(q) ||
@@ -108,7 +115,8 @@ function LixeiraPage() {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Lixeira</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Itens excluídos do Backlog, Roadmap e Solicitações. Removidos automaticamente após 30 dias.
+          Itens excluídos do Backlog, Roadmap e Solicitações. Removidos automaticamente após 30
+          dias.
         </p>
       </header>
 
@@ -140,7 +148,9 @@ function LixeiraPage() {
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -180,12 +190,16 @@ function LixeiraPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${ORIGEM_STYLE[origem]}`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-md font-medium ${ORIGEM_STYLE[origem]}`}
+                    >
                       {ORIGEM_LABEL[origem]}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status as Status]}`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status as Status]}`}
+                    >
                       {t.status}
                     </span>
                   </td>

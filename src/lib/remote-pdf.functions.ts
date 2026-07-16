@@ -18,5 +18,8 @@ export const fetchRemotePdf = createServerFn({ method: "POST" })
     for (let i = 0; i < bytes.length; i += chunk) {
       binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
     }
-    return { base64: btoa(binary), contentType: res.headers.get("content-type") ?? "application/pdf" };
+    return {
+      base64: btoa(binary),
+      contentType: res.headers.get("content-type") ?? "application/pdf",
+    };
   });

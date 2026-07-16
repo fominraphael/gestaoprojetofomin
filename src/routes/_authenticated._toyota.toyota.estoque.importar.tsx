@@ -32,9 +32,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute(
-  "/_authenticated/_toyota/toyota/estoque/importar",
-)({
+export const Route = createFileRoute("/_authenticated/_toyota/toyota/estoque/importar")({
   errorComponent: ModuleErrorBoundary,
   component: ImportarHub,
 });
@@ -79,7 +77,10 @@ function mapStatusLaudo(raw: unknown): string {
 /** Header fuzzy pick. */
 function pick(row: Record<string, any>, candidates: string[]): any {
   const norm = (s: string) =>
-    s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+    s
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
   const keys = Object.keys(row);
   for (const cand of candidates) {
     const re = new RegExp(cand, "i");
@@ -232,7 +233,9 @@ function GosystemImporter() {
         let semPatioCount = 0;
         const candidatos: VeiculoGosystem[] = elegiveis.map((r) => {
           const origem = String(pick(r, ["^origem$"]) ?? "").trim();
-          const chassiResumido = String(pick(r, ["chassiresumido", "chassi.*resumido"]) ?? "").trim();
+          const chassiResumido = String(
+            pick(r, ["chassiresumido", "chassi.*resumido"]) ?? "",
+          ).trim();
           const chassi = String(pick(r, ["^chassi$", "^vin$"]) ?? "").trim();
           const externalId = `${origem}::${chassiResumido || chassi}`;
           const marca = String(pick(r, ["^marca$"]) ?? "").trim();
@@ -240,7 +243,9 @@ function GosystemImporter() {
           const anoFab = parseInt0(pick(r, ["anofabricacao", "ano.*fab"]));
           const anoMod = parseInt0(pick(r, ["anomodelo", "ano.*mod"]));
           const km = parseInt0(pick(r, ["km", "quilometragem", "hodometro"]));
-          const placa = String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase();
+          const placa = String(pick(r, ["^placa$"]) ?? "")
+            .trim()
+            .toUpperCase();
           const laudo = String(pick(r, ["resultado.*laudo", "^laudo$"]) ?? "").trim();
           const laudoUrl = String(
             pick(r, [
@@ -256,7 +261,9 @@ function GosystemImporter() {
           ).trim();
           // Spec: a coluna "Filial" da planilha é o Pátio no sistema.
           // A Filial (do sistema) é deduzida via toyota_patios.filial_id.
-          const patioNome = String(pick(r, ["^filial$", "filial", "p[aá]tio", "^patio$"]) ?? "").trim();
+          const patioNome = String(
+            pick(r, ["^filial$", "filial", "p[aá]tio", "^patio$"]) ?? "",
+          ).trim();
           const patioId = patioMap.get(normalize(patioNome)) ?? null;
           if (!patioId) semPatioCount++;
           return {
@@ -346,16 +353,13 @@ function GosystemImporter() {
     // Upload do arquivo original
     let arquivoPath: string | null = null;
     if (file) {
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      const safeName = file.name.replace(/[^\w.-]+/g, "_");
       arquivoPath = `toyota/importacoes/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(arquivoPath, file, {
-          upsert: false,
-          contentType:
-            file.type ||
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
+      const { error: upErr } = await supabase.storage.from("documentos").upload(arquivoPath, file, {
+        upsert: false,
+        contentType:
+          file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       if (upErr) {
         console.warn("Falha upload arquivo:", upErr.message);
         arquivoPath = null;
@@ -436,8 +440,12 @@ function GosystemImporter() {
 
   const resumo = useMemo(() => {
     const total = rows.length;
-    const tcuv = rows.filter((r) => r.elegibilidade === "Elegível TCUV" && !r.duplicado && r.patioId).length;
-    const tsim = rows.filter((r) => r.elegibilidade === "Elegível TSIM" && !r.duplicado && r.patioId).length;
+    const tcuv = rows.filter(
+      (r) => r.elegibilidade === "Elegível TCUV" && !r.duplicado && r.patioId,
+    ).length;
+    const tsim = rows.filter(
+      (r) => r.elegibilidade === "Elegível TSIM" && !r.duplicado && r.patioId,
+    ).length;
     const dup = rows.filter((r) => r.duplicado).length;
     return { total, tcuv, tsim, dup };
   }, [rows]);
@@ -549,7 +557,10 @@ function GosystemImporter() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((r, i) => (
-                      <TableRow key={`${r.externalId}-${i}`} className={r.duplicado || !r.patioId ? "opacity-50" : ""}>
+                      <TableRow
+                        key={`${r.externalId}-${i}`}
+                        className={r.duplicado || !r.patioId ? "opacity-50" : ""}
+                      >
                         <TableCell className="text-xs">
                           {r.patioId ? (
                             r.patioNome || "—"
@@ -565,16 +576,24 @@ function GosystemImporter() {
                           <div className="font-medium">{r.modelo || "—"}</div>
                           <div className="text-xs text-muted-foreground">{r.marca}</div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{r.anoFabricacao ?? "—"}</TableCell>
-                        <TableCell><LaudoBadge status={r.statusCautelar} /></TableCell>
-                        <TableCell><ElegBadge value={r.elegibilidade} /></TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {r.anoFabricacao ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <LaudoBadge status={r.statusCautelar} />
+                        </TableCell>
+                        <TableCell>
+                          <ElegBadge value={r.elegibilidade} />
+                        </TableCell>
                         <TableCell>
                           {!r.patioId ? (
                             <Badge variant="outline">Sem pátio</Badge>
                           ) : r.duplicado ? (
                             <Badge variant="outline">Já analisado</Badge>
                           ) : (
-                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Novo</Badge>
+                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                              Novo
+                            </Badge>
                           )}
                         </TableCell>
                       </TableRow>
@@ -614,7 +633,12 @@ interface BiRow {
   ambiguo: boolean;
   vehicleId: string | null;
   statusAtual: string | null;
-  novoStatus: "certificado_toyota" | "reprovado_toyota" | "aguardando_analise_toyota" | "manter" | "nao_encontrado";
+  novoStatus:
+    | "certificado_toyota"
+    | "reprovado_toyota"
+    | "aguardando_analise_toyota"
+    | "manter"
+    | "nao_encontrado";
 }
 
 function BiToyotaImporter() {
@@ -637,13 +661,18 @@ function BiToyotaImporter() {
         raw: false,
       });
 
-      const parsed: Omit<BiRow, "encontrado" | "ambiguo" | "vehicleId" | "statusAtual" | "novoStatus">[] = data.map((r) => ({
+      const parsed: Omit<
+        BiRow,
+        "encontrado" | "ambiguo" | "vehicleId" | "statusAtual" | "novoStatus"
+      >[] = data.map((r) => ({
         codCertificacao: String(pick(r, ["cod.*certif", "codigo.*certif"]) ?? "").trim(),
         solicitacao: String(pick(r, ["solicitacao"]) ?? "").trim(),
         certificacao: String(pick(r, ["^certificacao$"]) ?? "").trim(),
         familia: String(pick(r, ["familia"]) ?? "").trim(),
         chassi: String(pick(r, ["^chassi$", "^vin$"]) ?? "").trim(),
-        placa: String(pick(r, ["^placa$"]) ?? "").trim().toUpperCase(),
+        placa: String(pick(r, ["^placa$"]) ?? "")
+          .trim()
+          .toUpperCase(),
         dealer: String(pick(r, ["dealer"]) ?? "").trim(),
         grupo: String(pick(r, ["^grupo$"]) ?? "").trim(),
         entrega: String(pick(r, ["entrega"]) ?? "").trim(),
@@ -747,7 +776,9 @@ function BiToyotaImporter() {
   const aplicar = useCallback(async () => {
     const aprovados = rows.filter((r) => r.novoStatus === "certificado_toyota" && r.vehicleId);
     const reprovados = rows.filter((r) => r.novoStatus === "reprovado_toyota" && r.vehicleId);
-    const aguardando = rows.filter((r) => r.novoStatus === "aguardando_analise_toyota" && r.vehicleId);
+    const aguardando = rows.filter(
+      (r) => r.novoStatus === "aguardando_analise_toyota" && r.vehicleId,
+    );
     if (aprovados.length + reprovados.length + aguardando.length === 0) {
       toast.error("Nenhuma atualização a aplicar.");
       return;
@@ -758,7 +789,11 @@ function BiToyotaImporter() {
       for (const r of aprovados) {
         const { error } = await supabase
           .from("toyota_estoque_veiculos")
-          .update({ status_aprovacao: "certificado_toyota", retorno_toyota_em: now, aprovado_toyota_em: now })
+          .update({
+            status_aprovacao: "certificado_toyota",
+            retorno_toyota_em: now,
+            aprovado_toyota_em: now,
+          })
           .eq("id", r.vehicleId!);
         if (error) throw error;
       }
@@ -920,7 +955,11 @@ function BiToyotaImporter() {
                         <TableCell className="font-mono text-xs">{r.chassi || "—"}</TableCell>
                         <TableCell className="font-mono">{r.placa || "—"}</TableCell>
                         <TableCell>{r.familia || "—"}</TableCell>
-                        <TableCell>{r.certificadoAprovado || <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell>
+                          {r.certificadoAprovado || (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="max-w-xs truncate" title={r.motivoReprovacao}>
                           {r.motivoReprovacao || "—"}
                         </TableCell>
@@ -931,7 +970,9 @@ function BiToyotaImporter() {
                             <Badge variant="secondary">não encontrado</Badge>
                           )}
                         </TableCell>
-                        <TableCell><AcaoBadge a={r.novoStatus} /></TableCell>
+                        <TableCell>
+                          <AcaoBadge a={r.novoStatus} />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1023,7 +1064,9 @@ function HistoricoImportacoes({ tipo, refreshKey }: { tipo: string; refreshKey: 
       setLoading(true);
       const { data } = await supabase
         .from("toyota_importacoes")
-        .select("id, created_at, status, arquivo_nome, arquivo_path, total_linhas, total_salvos, total_ignorados, mensagem, tipo, user_id")
+        .select(
+          "id, created_at, status, arquivo_nome, arquivo_path, total_linhas, total_salvos, total_ignorados, mensagem, tipo, user_id",
+        )
         .eq("tipo", tipo)
         .order("created_at", { ascending: false })
         .limit(50);

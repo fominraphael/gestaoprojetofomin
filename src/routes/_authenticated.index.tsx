@@ -16,7 +16,14 @@ import {
   Briefcase,
   ExternalLink,
 } from "lucide-react";
-import { obterArquivos, obterDocumentosTipo, obterEmpresas, type DocumentoArquivo, type DocumentoTipo, type Empresa } from "@/lib/empresas";
+import {
+  obterArquivos,
+  obterDocumentosTipo,
+  obterEmpresas,
+  type DocumentoArquivo,
+  type DocumentoTipo,
+  type Empresa,
+} from "@/lib/empresas";
 import JSZip from "jszip";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -54,10 +61,7 @@ export function PortalPage() {
       if (!user) return;
       setLoadingDocs(true);
       try {
-        const [allEmps, allTipos] = await Promise.all([
-          obterEmpresas(),
-          obterDocumentosTipo(),
-        ]);
+        const [allEmps, allTipos] = await Promise.all([obterEmpresas(), obterDocumentosTipo()]);
         setTodasEmpresas(allEmps);
         setDocTipos(allTipos);
 
@@ -112,7 +116,7 @@ export function PortalPage() {
         const file = arquivos[i];
         const typeObj = docTipos.find((t) => t.id === file.tipo_id);
         const folderName = typeObj?.nome || "OUTROS";
-        
+
         setZipPercent(`Adicionando: ${file.arquivo_nome} (${i + 1}/${arquivos.length})`);
 
         // Check if data is already base64 dataUrl (from fallback)
@@ -129,11 +133,14 @@ export function PortalPage() {
 
       setZipPercent("Finalizando pacote...");
       const content = await zip.generateAsync({ type: "blob" });
-      
+
       // Trigger download
       const link = document.createElement("a");
       link.href = URL.createObjectURL(content);
-      link.download = `KIT_DOCUMENTOS_${selectedEmpresa?.nome || "LOJISTA"}.zip`.replace(/\s+/g, "_");
+      link.download = `KIT_DOCUMENTOS_${selectedEmpresa?.nome || "LOJISTA"}.zip`.replace(
+        /\s+/g,
+        "_",
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -160,7 +167,7 @@ export function PortalPage() {
 
   // Documents listing filter: "so deve aparecer para o usuário os tipos que tiverem arquivos anexados na empresa para não poluir a visão dele"
   const docTypesWithFiles = docTipos.filter((type) =>
-    arquivos.some((file) => file.tipo_id === type.id)
+    arquivos.some((file) => file.tipo_id === type.id),
   );
 
   return (
@@ -179,7 +186,9 @@ export function PortalPage() {
               <Layers className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-foreground leading-tight">Portal de Aplicações</div>
+              <div className="text-sm font-semibold text-foreground leading-tight">
+                Portal de Aplicações
+              </div>
               <div className="text-xs text-muted-foreground">Painel Principal</div>
             </div>
           </div>
@@ -233,7 +242,9 @@ export function PortalPage() {
             </span>
           </h1>
           <p className="text-muted-foreground text-sm mt-2">
-            {isAdmin ? "Gerencie os lojistas ou acesse os módulos." : "Acesse os módulos disponíveis abaixo."}
+            {isAdmin
+              ? "Gerencie os lojistas ou acesse os módulos."
+              : "Acesse os módulos disponíveis abaixo."}
           </p>
         </div>
 
@@ -258,7 +269,9 @@ export function PortalPage() {
                   </div>
 
                   <h2 className="text-lg font-semibold text-foreground mb-2">{app.label}</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-5">{app.description}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+                    {app.description}
+                  </p>
 
                   <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:gap-2.5 transition-all">
                     Acessar Módulo

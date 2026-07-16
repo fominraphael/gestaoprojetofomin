@@ -56,7 +56,7 @@ export function usePushRegistration() {
     } catch (err) {
       console.error("[push] Erro ao registrar subscription:", err);
     }
-  }, [user?.id]);
+  }, [user]);
 
   // Registrar ao fazer login
   useEffect(() => {
@@ -64,7 +64,7 @@ export function usePushRegistration() {
     // Pequeno delay para não bloquear a UI
     const timer = setTimeout(registrarSubscription, 2000);
     return () => clearTimeout(timer);
-  }, [user?.id, registrarSubscription]);
+  }, [user, registrarSubscription]);
 
   return { registrarSubscription };
 }

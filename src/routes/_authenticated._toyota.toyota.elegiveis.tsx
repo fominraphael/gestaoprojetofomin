@@ -53,9 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 
-export const Route = createFileRoute(
-  "/_authenticated/_toyota/toyota/elegiveis",
-)({
+export const Route = createFileRoute("/_authenticated/_toyota/toyota/elegiveis")({
   errorComponent: ModuleErrorBoundary,
   component: AnaliseElegiveis,
 });
@@ -73,7 +71,6 @@ interface Patio {
   nome: string;
   filial_id: string | null;
 }
-
 
 interface Veiculo {
   id: string;
@@ -109,7 +106,6 @@ function AnaliseElegiveis() {
   const [patios, setPatios] = useState<Patio[]>([]);
   const [filtro, setFiltro] = useState("");
 
-
   // Aprovar
   const [aprovando, setAprovando] = useState<Veiculo | null>(null);
   const [salvandoAprovar, setSalvandoAprovar] = useState(false);
@@ -138,26 +134,17 @@ function AnaliseElegiveis() {
         .in("elegibilidade", ["TCUV", "TSIM"])
         .eq("status_aprovacao", "analise")
         .order("importado_em", { ascending: false }),
-      supabase
-        .from("toyota_filiais")
-        .select("id, nome")
-        .eq("ativo", true)
-        .order("nome"),
-      supabase
-        .from("toyota_patios")
-        .select("id, nome, filial_id")
-        .eq("ativo", true)
-        .order("nome"),
+      supabase.from("toyota_filiais").select("id, nome").eq("ativo", true).order("nome"),
+      supabase.from("toyota_patios").select("id, nome, filial_id").eq("ativo", true).order("nome"),
     ]);
     if (vRes.error) toast.error("Falha ao carregar veículos.");
     if (fRes.error) toast.error("Falha ao carregar filiais.");
     if (pRes.error) toast.error("Falha ao carregar pátios.");
-    setVeiculos(((vRes.data ?? []) as unknown) as Veiculo[]);
+    setVeiculos((vRes.data ?? []) as unknown as Veiculo[]);
     setFiliais((fRes.data ?? []) as Filial[]);
     setPatios((pRes.data ?? []) as Patio[]);
     setLoading(false);
   }
-
 
   useEffect(() => {
     carregar();
@@ -263,9 +250,7 @@ function AnaliseElegiveis() {
   }
 
   function toggleRevisao(r: string) {
-    setHsvRevisoes((prev) =>
-      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r],
-    );
+    setHsvRevisoes((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
   }
 
   async function salvarHsv() {
@@ -302,7 +287,9 @@ function AnaliseElegiveis() {
     }
     const filialDestinoId = v.filial?.filial_id ?? null;
     if (!filialDestinoId) {
-      toast.error("O pátio deste veículo não está vinculado a uma filial. Ajuste o cadastro do pátio.");
+      toast.error(
+        "O pátio deste veículo não está vinculado a uma filial. Ajuste o cadastro do pátio.",
+      );
       return;
     }
     setAprovando(v);
@@ -343,7 +330,11 @@ function AnaliseElegiveis() {
     setVeiculos((prev) =>
       prev.map((x) =>
         x.id === v.id
-          ? { ...x, filial_id: novoPatioId, filial: { nome: patio.nome, filial_id: patio.filial_id } }
+          ? {
+              ...x,
+              filial_id: novoPatioId,
+              filial: { nome: patio.nome, filial_id: patio.filial_id },
+            }
           : x,
       ),
     );
@@ -352,7 +343,8 @@ function AnaliseElegiveis() {
   }
 
   async function arquivarVeiculo(v: Veiculo) {
-    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`)) return;
+    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele será finalizado e movido para o histórico.`))
+      return;
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
@@ -449,15 +441,19 @@ function AnaliseElegiveis() {
                     <TableBody>
                       {filtered.map((v) => {
                         const laudoOk = laudoValido(v);
-                        const laudoStatus = v.resultado_laudo === "reprovado"
-                          ? "Reprovado"
-                          : v.resultado_laudo === "aprovado" || laudoOk
-                            ? "Aprovado"
-                            : "Pendente";
+                        const laudoStatus =
+                          v.resultado_laudo === "reprovado"
+                            ? "Reprovado"
+                            : v.resultado_laudo === "aprovado" || laudoOk
+                              ? "Aprovado"
+                              : "Pendente";
                         const hsvOk = v.hsv_status === "ok";
                         const aprovarHabilitado = podeAprovar(v);
                         return (
-                          <TableRow key={v.id} className={v.retorno_toyota_em ? "bg-red-50/60" : ""}>
+                          <TableRow
+                            key={v.id}
+                            className={v.retorno_toyota_em ? "bg-red-50/60" : ""}
+                          >
                             <TableCell>
                               <Select
                                 value={v.filial_id ?? ""}
@@ -482,7 +478,10 @@ function AnaliseElegiveis() {
                               <div className="flex items-center gap-2">
                                 <span>{v.chassi}</span>
                                 {v.retorno_toyota_em && (
-                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100" title={v.observacao_toyota ?? undefined}>
+                                  <Badge
+                                    className="bg-red-100 text-red-700 hover:bg-red-100"
+                                    title={v.observacao_toyota ?? undefined}
+                                  >
                                     Recusado Toyota
                                   </Badge>
                                 )}
@@ -491,19 +490,29 @@ function AnaliseElegiveis() {
                             <TableCell className="font-mono">{v.placa ?? "—"}</TableCell>
                             <TableCell>
                               <div className="font-medium">{v.modelo ?? "—"}</div>
-                              {v.marca && <div className="text-xs text-muted-foreground">{v.marca}</div>}
+                              {v.marca && (
+                                <div className="text-xs text-muted-foreground">{v.marca}</div>
+                              )}
                             </TableCell>
                             <TableCell className="font-mono text-xs">
-                              {v.ano_fabricacao && v.ano_modelo ? `${v.ano_fabricacao}/${v.ano_modelo}` : "—"}
+                              {v.ano_fabricacao && v.ano_modelo
+                                ? `${v.ano_fabricacao}/${v.ano_modelo}`
+                                : "—"}
                             </TableCell>
                             <TableCell className="text-right">
-                              {v.quilometragem !== null ? v.quilometragem.toLocaleString("pt-BR") : "—"}
+                              {v.quilometragem !== null
+                                ? v.quilometragem.toLocaleString("pt-BR")
+                                : "—"}
                             </TableCell>
                             <TableCell>
                               {v.elegibilidade === "TCUV" ? (
-                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">TCUV</Badge>
+                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                  TCUV
+                                </Badge>
                               ) : (
-                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">TSIM</Badge>
+                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                  TSIM
+                                </Badge>
                               )}
                             </TableCell>
                             <TableCell>
@@ -546,7 +555,11 @@ function AnaliseElegiveis() {
                                 variant={hsvOk ? "outline" : "ghost"}
                                 size="sm"
                                 onClick={() => iniciarHsv(v)}
-                                className={hsvOk ? "border-emerald-300 text-emerald-700" : "text-red-600 font-semibold"}
+                                className={
+                                  hsvOk
+                                    ? "border-emerald-300 text-emerald-700"
+                                    : "text-red-600 font-semibold"
+                                }
                               >
                                 {hsvOk ? (
                                   <>
@@ -564,7 +577,10 @@ function AnaliseElegiveis() {
                                 <Button
                                   size="sm"
                                   onClick={() => iniciarAprovacao(v)}
-                                  disabled={!aprovarHabilitado || (salvandoAprovar && aprovando?.id === v.id)}
+                                  disabled={
+                                    !aprovarHabilitado ||
+                                    (salvandoAprovar && aprovando?.id === v.id)
+                                  }
                                   title={
                                     aprovarHabilitado
                                       ? "Aprovar para preparação"
@@ -578,7 +594,11 @@ function AnaliseElegiveis() {
                                   )}
                                   Aprovar
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => arquivarVeiculo(v)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => arquivarVeiculo(v)}
+                                >
                                   <Archive className="w-3.5 h-3.5" />
                                   Arquivar
                                 </Button>
@@ -604,8 +624,6 @@ function AnaliseElegiveis() {
         </TabsContent>
       </Tabs>
 
-
-
       {/* =============== HSV =============== */}
       <Dialog open={!!hsvVeiculo} onOpenChange={(o) => !o && setHsvVeiculo(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -615,7 +633,8 @@ function AnaliseElegiveis() {
               Validação Técnica (HSV)
             </DialogTitle>
             <DialogDescription>
-              Marque as revisões necessárias, informe as OS e observações. O "OK" indica que a análise foi concluída.
+              Marque as revisões necessárias, informe as OS e observações. O "OK" indica que a
+              análise foi concluída.
             </DialogDescription>
           </DialogHeader>
           {hsvVeiculo && (
@@ -641,7 +660,12 @@ function AnaliseElegiveis() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Ordens de Serviço (OS) para ajuste</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setHsvOS((p) => [...p, ""])}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setHsvOS((p) => [...p, ""])}
+                  >
                     <Plus className="w-3.5 h-3.5" /> Adicionar OS
                   </Button>
                 </div>
@@ -699,7 +723,8 @@ function AnaliseElegiveis() {
           <DialogHeader>
             <DialogTitle>Anexar Laudo</DialogTitle>
             <DialogDescription>
-              Insira um link válido ou envie o arquivo do laudo. Pelo menos um dos dois é obrigatório.
+              Insira um link válido ou envie o arquivo do laudo. Pelo menos um dos dois é
+              obrigatório.
             </DialogDescription>
           </DialogHeader>
           {laudoVeiculo && (
@@ -732,7 +757,11 @@ function AnaliseElegiveis() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLaudoVeiculo(null)} disabled={salvandoLaudo}>
+            <Button
+              variant="outline"
+              onClick={() => setLaudoVeiculo(null)}
+              disabled={salvandoLaudo}
+            >
               Cancelar
             </Button>
             <Button onClick={salvarLaudo} disabled={salvandoLaudo}>
@@ -787,8 +816,6 @@ interface VeiculoEnvio {
   retorno_toyota_em?: string | null;
 }
 
-
-
 function formatarBytes(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return "Tamanho indisponível";
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -805,9 +832,7 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
   const statusFiltro = mode === "recusados" ? "reprovado_toyota" : "aguardando_analise_central";
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
-    const { data, error } = await supabase.storage
-      .from("documentos")
-      .createSignedUrl(path, 60);
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 60);
     if (error || !data?.signedUrl) return null;
     try {
       const res = await fetch(data.signedUrl, { method: "HEAD" });
@@ -868,6 +893,7 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
 
   useEffect(() => {
     carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function baixarBytes(path: string): Promise<ArrayBuffer | null> {
@@ -909,46 +935,37 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     } = await import("@/lib/checklist-template");
     const tipo = detectarTipoTemplate(v.elegibilidade);
     if (!tipo) {
-      throw new Error(
-        `Elegibilidade "${v.elegibilidade ?? "—"}" não corresponde a TCUV nem TSIM.`,
-      );
+      throw new Error(`Elegibilidade "${v.elegibilidade ?? "—"}" não corresponde a TCUV nem TSIM.`);
     }
     const { data, hora } = formatarDataHora(v.posvendas_finalizado_em);
     const km = formatarKm(v.posvendas_km);
     const responsavel = v.posvendas_finalizado_por ?? "";
-    return gerarChecklistPreenchido(
-      tipo,
-      {
-        modelo: v.modelo ?? "",
-        veiculoAnoModelo: formatarModeloComAno(v.modelo, v.ano_modelo),
-        chassi: v.chassi,
-        km,
-        dn: v.toyota_filiais?.dealer_number ?? "",
-        nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
-        avaliadorResponsavel: responsavel,
-        tecnicoResponsavel: responsavel,
-        data,
-        hora,
-      },
-    );
+    return gerarChecklistPreenchido(tipo, {
+      modelo: v.modelo ?? "",
+      veiculoAnoModelo: formatarModeloComAno(v.modelo, v.ano_modelo),
+      chassi: v.chassi,
+      km,
+      dn: v.toyota_filiais?.dealer_number ?? "",
+      nomeDistribuidor: v.toyota_filiais?.nome_bi_toyota ?? "",
+      avaliadorResponsavel: responsavel,
+      tecnicoResponsavel: responsavel,
+      data,
+      hora,
+    });
   }
-
 
   async function gerarDossie(v: VeiculoEnvio, pularCompressao = false) {
     setGerando(v.id);
     try {
-      const { error: invokeErr } = await supabase.functions.invoke(
-        "gerar-dossie",
-        { body: { veiculo_id: v.id, pular_compressao: pularCompressao } },
-      );
+      const { error: invokeErr } = await supabase.functions.invoke("gerar-dossie", {
+        body: { veiculo_id: v.id, pular_compressao: pularCompressao },
+      });
       if (invokeErr) {
         toast.error(`Falha ao disparar geração do dossiê: ${invokeErr.message}`);
         return;
       }
       toast.info(
-        pularCompressao
-          ? "Unindo PDFs sem compressão..."
-          : "Gerando dossiê em segundo plano...",
+        pularCompressao ? "Unindo PDFs sem compressão..." : "Gerando dossiê em segundo plano...",
       );
 
       const dossieAntes = v.dossie_pdf_path;
@@ -969,7 +986,9 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
         }
       }
       if (!novoPath) {
-        toast.warning("Ainda gerando. Clique em atualizar em alguns instantes para consultar o resultado.");
+        toast.warning(
+          "Ainda gerando. Clique em atualizar em alguns instantes para consultar o resultado.",
+        );
         await carregar();
         return;
       }
@@ -1015,9 +1034,6 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     }
   }
 
-
-
-
   async function visualizarDossie(v: VeiculoEnvio) {
     if (!v.dossie_pdf_path) return;
     const { data: signed, error } = await supabase.storage
@@ -1029,7 +1045,6 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     }
     window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
   }
-
 
   async function salvarTcuv(v: VeiculoEnvio) {
     const codigo = (tcuvInput[v.id] ?? "").trim();
@@ -1083,7 +1098,8 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
   }
 
   async function arquivarVeiculo(v: VeiculoEnvio) {
-    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele deixará de aparecer nos fluxos ativos.`)) return;
+    if (!confirm(`Arquivar o veículo ${v.chassi}? Ele deixará de aparecer nos fluxos ativos.`))
+      return;
     setArquivando(v.id);
     const { error } = await supabase
       .from("toyota_estoque_veiculos")
@@ -1097,7 +1113,6 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
     toast.success("Veículo arquivado.");
     setVeiculos((prev) => prev.filter((x) => x.id !== v.id));
   }
-
 
   if (loading) {
     return (
@@ -1135,48 +1150,46 @@ export function EnvioToyotaTab({ mode = "envio" }: { mode?: "envio" | "recusados
           </Card>
         </div>
       )}
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
-          {mode === "recusados" ? "Recusados pela Toyota" : "Aguardando envio à Toyota"}
-          <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {mode === "recusados"
-            ? "Analise o motivo da recusa, ajuste os documentos e reenvie com um NOVO código TCUV, ou arquive o processo."
-            : "Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê. O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado."}
-        </p>
-        <div className="pt-3">
-          <Button size="sm" variant="outline" onClick={carregar} disabled={loading}>
-            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Atualizar lista
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {veiculos.map((v) => (
-          <VeiculoEnvioCard
-            key={v.id}
-            v={v}
-            mode={mode}
-            gerando={gerando === v.id}
-            salvandoTcuv={salvandoTcuv === v.id}
-            arquivando={arquivando === v.id}
-            tcuvValue={tcuvInput[v.id] ?? (mode === "recusados" ? "" : v.codigo_tcuv ?? "")}
-            onTcuvChange={(val) =>
-              setTcuvInput((p) => ({ ...p, [v.id]: val }))
-            }
-            onGerar={() => gerarDossie(v)}
-            onGerarSemCompressao={() => gerarDossie(v, true)}
-            onImportarManual={(file) => importarDossieManual(v, file)}
-            onVisualizar={() => visualizarDossie(v)}
-            onSalvarTcuv={() => salvarTcuv(v)}
-            onArquivar={() => arquivarVeiculo(v)}
-            onRefresh={carregar}
-          />
-        ))}
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {mode === "recusados" ? "Recusados pela Toyota" : "Aguardando envio à Toyota"}
+            <span className="text-muted-foreground font-normal ml-2">({veiculos.length})</span>
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {mode === "recusados"
+              ? "Analise o motivo da recusa, ajuste os documentos e reenvie com um NOVO código TCUV, ou arquive o processo."
+              : "Revise cada documento individualmente. Você pode substituí-los livremente antes de gerar o Dossiê. O código TCUV e o envio final só ficam disponíveis após o Dossiê ser mesclado."}
+          </p>
+          <div className="pt-3">
+            <Button size="sm" variant="outline" onClick={carregar} disabled={loading}>
+              {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Atualizar lista
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {veiculos.map((v) => (
+            <VeiculoEnvioCard
+              key={v.id}
+              v={v}
+              mode={mode}
+              gerando={gerando === v.id}
+              salvandoTcuv={salvandoTcuv === v.id}
+              arquivando={arquivando === v.id}
+              tcuvValue={tcuvInput[v.id] ?? (mode === "recusados" ? "" : (v.codigo_tcuv ?? ""))}
+              onTcuvChange={(val) => setTcuvInput((p) => ({ ...p, [v.id]: val }))}
+              onGerar={() => gerarDossie(v)}
+              onGerarSemCompressao={() => gerarDossie(v, true)}
+              onImportarManual={(file) => importarDossieManual(v, file)}
+              onVisualizar={() => visualizarDossie(v)}
+              onSalvarTcuv={() => salvarTcuv(v)}
+              onArquivar={() => arquivarVeiculo(v)}
+              onRefresh={carregar}
+            />
+          ))}
+        </CardContent>
+      </Card>
     </>
   );
 }
@@ -1222,7 +1235,6 @@ function VeiculoEnvioCard({
   const podeGerar = laudoPresente && healthPresente; // checklist é gerado on-the-fly
 
   const dossieOk = !!v.dossie_pdf_path;
-
 
   return (
     <div className="rounded-lg border p-4 space-y-3 bg-white">
@@ -1278,9 +1290,7 @@ function VeiculoEnvioCard({
           presente={checklistPresente}
           tamanhoBytes={v.tamanhos?.checklist}
           onVisualizar={
-            v.checklist_pdf_path
-              ? () => abrirPathStorage(v.checklist_pdf_path!)
-              : undefined
+            v.checklist_pdf_path ? () => abrirPathStorage(v.checklist_pdf_path!) : undefined
           }
           onSubstituir={async (file) => {
             const path = `toyota/checklist/${v.id}/${Date.now()}.pdf`;
@@ -1291,11 +1301,7 @@ function VeiculoEnvioCard({
         <DocumentoSlot
           label="Laudo Cautelar"
           descricao={
-            v.laudo_arquivo_path
-              ? "Anexo interno"
-              : v.laudo_url
-                ? "Link externo"
-                : "Não anexado"
+            v.laudo_arquivo_path ? "Anexo interno" : v.laudo_url ? "Link externo" : "Não anexado"
           }
           presente={laudoPresente}
           tamanhoBytes={v.tamanhos?.laudo}
@@ -1318,9 +1324,7 @@ function VeiculoEnvioCard({
           presente={healthPresente}
           tamanhoBytes={v.tamanhos?.health}
           onVisualizar={
-            v.health_check_pdf_path
-              ? () => abrirPathStorage(v.health_check_pdf_path!)
-              : undefined
+            v.health_check_pdf_path ? () => abrirPathStorage(v.health_check_pdf_path!) : undefined
           }
           onSubstituir={async (file) => {
             const path = `toyota/health/${v.id}/${Date.now()}.pdf`;
@@ -1344,11 +1348,7 @@ function VeiculoEnvioCard({
             ) : (
               <FileStack className="w-3.5 h-3.5" />
             )}
-            {gerando
-              ? "Gerando..."
-              : v.dossie_pdf_path
-                ? "Regerar Dossiê"
-                : "Gerar Dossiê"}
+            {gerando ? "Gerando..." : v.dossie_pdf_path ? "Regerar Dossiê" : "Gerar Dossiê"}
           </Button>
           <Button
             size="sm"
@@ -1408,11 +1408,7 @@ function VeiculoEnvioCard({
             onChange={(e) => onTcuvChange(e.target.value)}
             className="w-64"
           />
-          <Button
-            size="sm"
-            onClick={onSalvarTcuv}
-            disabled={salvandoTcuv || !tcuvValue.trim()}
-          >
+          <Button size="sm" onClick={onSalvarTcuv} disabled={salvandoTcuv || !tcuvValue.trim()}>
             {salvandoTcuv ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
@@ -1437,7 +1433,6 @@ function VeiculoEnvioCard({
             </Button>
           )}
         </div>
-
       </div>
     </div>
   );
@@ -1515,10 +1510,7 @@ async function abrirPathStorage(path: string) {
 async function uploadDocumento(
   path: string,
   file: File,
-  coluna:
-    | "checklist_pdf_path"
-    | "laudo_arquivo_path"
-    | "health_check_pdf_path",
+  coluna: "checklist_pdf_path" | "laudo_arquivo_path" | "health_check_pdf_path",
   veiculoId: string,
 ) {
   const { error: upErr } = await supabase.storage
@@ -1528,11 +1520,10 @@ async function uploadDocumento(
     toast.error(`Falha ao enviar arquivo: ${upErr.message}`);
     return;
   }
-  const patch: Partial<
-    Database["public"]["Tables"]["toyota_estoque_veiculos"]["Update"]
-  > = { [coluna]: path } as Record<string, string>;
-  if (coluna === "laudo_arquivo_path")
-    (patch as { laudo_url?: string | null }).laudo_url = null;
+  const patch: Partial<Database["public"]["Tables"]["toyota_estoque_veiculos"]["Update"]> = {
+    [coluna]: path,
+  } as Record<string, string>;
+  if (coluna === "laudo_arquivo_path") (patch as { laudo_url?: string | null }).laudo_url = null;
   const { error } = await supabase
     .from("toyota_estoque_veiculos")
     .update(patch)
@@ -1543,4 +1534,3 @@ async function uploadDocumento(
   }
   toast.success("Documento substituído.");
 }
-

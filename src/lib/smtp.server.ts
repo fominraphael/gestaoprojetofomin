@@ -86,6 +86,10 @@ export async function sendMail({ to, subject, html }: SendMailInput) {
     });
     console.log(`[smtp] sent to=${to} subject="${subject}"`);
   } finally {
-    try { await mailer.close?.(); } catch {}
+    try {
+      await mailer.close?.();
+    } catch {
+      // ignore close errors
+    }
   }
 }

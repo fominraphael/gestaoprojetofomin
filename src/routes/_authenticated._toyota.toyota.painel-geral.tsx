@@ -114,10 +114,19 @@ interface Filial {
 const ETAPA_LABEL: Record<string, { label: string; cls: string }> = {
   analise: { label: "Aguardando análise de elegibilidade", cls: "bg-blue-100 text-blue-700" },
   pendente_preparacao: { label: "Aguardando Preparador", cls: "bg-amber-100 text-amber-700" },
-  devolvido_preparador: { label: "Aguardando Preparador (devolvido)", cls: "bg-amber-100 text-amber-700" },
+  devolvido_preparador: {
+    label: "Aguardando Preparador (devolvido)",
+    cls: "bg-amber-100 text-amber-700",
+  },
   em_posvendas: { label: "Aguardando Pós-Vendas", cls: "bg-purple-100 text-purple-700" },
-  aguardando_analise_central: { label: "Aguardando Central - Envio Toyota", cls: "bg-indigo-100 text-indigo-700" },
-  reprovado_toyota: { label: "Aguardando Central - Reenvio Toyota", cls: "bg-orange-100 text-orange-700" },
+  aguardando_analise_central: {
+    label: "Aguardando Central - Envio Toyota",
+    cls: "bg-indigo-100 text-indigo-700",
+  },
+  reprovado_toyota: {
+    label: "Aguardando Central - Reenvio Toyota",
+    cls: "bg-orange-100 text-orange-700",
+  },
   aguardando_analise_toyota: { label: "Aguardando análise Toyota", cls: "bg-sky-100 text-sky-700" },
   certificado_toyota: { label: "Aprovado", cls: "bg-emerald-100 text-emerald-700" },
   arquivado: { label: "Arquivado", cls: "bg-slate-200 text-slate-700" },
@@ -373,9 +382,7 @@ function DetalhesModal({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() =>
-                            d.key === "laudo" ? abrirLaudo(row) : abrirPath(d.path)
-                          }
+                          onClick={() => (d.key === "laudo" ? abrirLaudo(row) : abrirPath(d.path))}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Button>
@@ -603,9 +610,7 @@ function PainelGeral() {
     setColPrefs((p) => {
       const next: ColPrefs = {
         order: p.order,
-        visible: p.visible.includes(key)
-          ? p.visible.filter((k) => k !== key)
-          : [...p.visible, key],
+        visible: p.visible.includes(key) ? p.visible.filter((k) => k !== key) : [...p.visible, key],
       };
       saveColPrefs(user?.id, next);
       return next;
@@ -632,10 +637,7 @@ function PainelGeral() {
   async function confirmarExclusao() {
     if (!excluir) return;
     setExcluindo(true);
-    const { error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .delete()
-      .eq("id", excluir.id);
+    const { error } = await supabase.from("toyota_estoque_veiculos").delete().eq("id", excluir.id);
     setExcluindo(false);
     if (error) {
       toast.error(`Falha ao excluir: ${error.message}`);
@@ -800,10 +802,7 @@ function PainelGeral() {
                           onCheckedChange={() => toggleCol(key)}
                           id={`col-${key}`}
                         />
-                        <label
-                          htmlFor={`col-${key}`}
-                          className="flex-1 text-sm cursor-pointer"
-                        >
+                        <label htmlFor={`col-${key}`} className="flex-1 text-sm cursor-pointer">
                           {col.label}
                         </label>
                         <button
@@ -862,15 +861,12 @@ function PainelGeral() {
                 <TableBody>
                   {filtrados.map((r) => {
                     const laudoOk =
-                      r.resultado_laudo === "aprovado" ||
-                      !!r.laudo_url ||
-                      !!r.laudo_arquivo_path;
+                      r.resultado_laudo === "aprovado" || !!r.laudo_url || !!r.laudo_arquivo_path;
                     const hcOk = !!r.health_check_pdf_path;
                     const checklistOk = !!r.checklist_pdf_path;
                     const dossieOk = !!r.dossie_pdf_path;
                     const certOk = !!r.certificado_pdf_path;
-                    const podeImportarCert =
-                      isAdmin && r.status_aprovacao === "certificado_toyota";
+                    const podeImportarCert = isAdmin && r.status_aprovacao === "certificado_toyota";
                     const cellFor = (key: ColKey) => {
                       switch (key) {
                         case "veiculo":
@@ -878,8 +874,7 @@ function PainelGeral() {
                             <TableCell key={key} className="whitespace-nowrap">
                               <div className="font-medium">{r.modelo ?? "—"}</div>
                               <div className="text-xs text-muted-foreground">
-                                {r.placa ?? "—"} ·{" "}
-                                <span className="font-mono">{r.chassi}</span>
+                                {r.placa ?? "—"} · <span className="font-mono">{r.chassi}</span>
                               </div>
                             </TableCell>
                           );
@@ -1018,7 +1013,10 @@ function PainelGeral() {
                                 {dossieOk ? (
                                   <Badge className="bg-emerald-100 text-emerald-700">Gerado</Badge>
                                 ) : (
-                                  <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-300 text-amber-700"
+                                  >
                                     Pendente
                                   </Badge>
                                 )}
@@ -1127,11 +1125,7 @@ function PainelGeral() {
                       }
                     };
                     return (
-                      <TableRow
-                        key={r.id}
-                        className="cursor-pointer"
-                        onClick={() => setDetalhe(r)}
-                      >
+                      <TableRow key={r.id} className="cursor-pointer" onClick={() => setDetalhe(r)}>
                         {orderedVisible.map((k) => cellFor(k))}
                       </TableRow>
                     );
@@ -1170,9 +1164,8 @@ function PainelGeral() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir veículo</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é permanente. O veículo{" "}
-              <span className="font-mono">{excluir?.chassi}</span> e seus registros
-              associados serão removidos.
+              Esta ação é permanente. O veículo <span className="font-mono">{excluir?.chassi}</span>{" "}
+              e seus registros associados serão removidos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

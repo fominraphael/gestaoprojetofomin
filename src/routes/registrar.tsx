@@ -15,7 +15,9 @@ function RegistrarPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [tipos, setTipos] = useState<{ id: string; nome: string; role: string; campos_schema: any[] }[]>([]);
+  const [tipos, setTipos] = useState<
+    { id: string; nome: string; role: string; campos_schema: any[] }[]
+  >([]);
   const [tipoSelecionado, setTipoSelecionado] = useState<string>("");
 
   const [username, setUsername] = useState("");
@@ -76,13 +78,9 @@ function RegistrarPage() {
   const formatCelular = (v: string) => {
     const digits = v.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 10) {
-      return digits
-        .replace(/^(\d{2})(\d)/, "($1) $2")
-        .replace(/(\d{4})(\d)/, "$1-$2");
+      return digits.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
     }
-    return digits
-      .replace(/^(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{5})(\d)/, "$1-$2");
+    return digits.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,7 +194,8 @@ function RegistrarPage() {
               </div>
               <h2 className="text-xl font-semibold text-foreground mb-2">Solicitação enviada!</h2>
               <p className="text-muted-foreground text-sm mb-6">
-                Sua solicitação foi recebida. Aguarde a aprovação do administrador para acessar o sistema.
+                Sua solicitação foi recebida. Aguarde a aprovação do administrador para acessar o
+                sistema.
               </p>
               <Link
                 to="/login"
@@ -209,7 +208,10 @@ function RegistrarPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* 1. TIPO DE USUÁRIO */}
               <div>
-                <label htmlFor="reg-tipo" className="block text-sm font-medium text-foreground mb-1.5">
+                <label
+                  htmlFor="reg-tipo"
+                  className="block text-sm font-medium text-foreground mb-1.5"
+                >
                   Tipo de Usuário <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -231,7 +233,10 @@ function RegistrarPage() {
                 <>
                   {/* 2. CAMPOS FIXOS */}
                   <div>
-                    <label htmlFor="reg-username" className="block text-sm font-medium text-foreground mb-1.5">
+                    <label
+                      htmlFor="reg-username"
+                      className="block text-sm font-medium text-foreground mb-1.5"
+                    >
                       Login de acesso <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -246,7 +251,10 @@ function RegistrarPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="reg-nome-fantasia" className="block text-sm font-medium text-foreground mb-1.5">
+                    <label
+                      htmlFor="reg-nome-fantasia"
+                      className="block text-sm font-medium text-foreground mb-1.5"
+                    >
                       Nome ou nome fantasia <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -260,7 +268,10 @@ function RegistrarPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
+                    <label
+                      htmlFor="reg-password"
+                      className="block text-sm font-medium text-foreground mb-1.5"
+                    >
                       Senha <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
@@ -278,13 +289,20 @@ function RegistrarPage() {
                         onClick={() => setShowPassword((v) => !v)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="reg-confirm" className="block text-sm font-medium text-foreground mb-1.5">
+                    <label
+                      htmlFor="reg-confirm"
+                      className="block text-sm font-medium text-foreground mb-1.5"
+                    >
                       Confirmar senha <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -302,7 +320,10 @@ function RegistrarPage() {
                   {isLojista && (
                     <>
                       <div>
-                        <label htmlFor="reg-cnpj" className="block text-sm font-medium text-foreground mb-1.5">
+                        <label
+                          htmlFor="reg-cnpj"
+                          className="block text-sm font-medium text-foreground mb-1.5"
+                        >
                           CNPJ <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -317,7 +338,10 @@ function RegistrarPage() {
                       </div>
 
                       <div>
-                        <label htmlFor="reg-razao" className="block text-sm font-medium text-foreground mb-1.5">
+                        <label
+                          htmlFor="reg-razao"
+                          className="block text-sm font-medium text-foreground mb-1.5"
+                        >
                           Razão Social <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -331,7 +355,10 @@ function RegistrarPage() {
                       </div>
 
                       <div>
-                        <label htmlFor="reg-celular" className="block text-sm font-medium text-foreground mb-1.5">
+                        <label
+                          htmlFor="reg-celular"
+                          className="block text-sm font-medium text-foreground mb-1.5"
+                        >
                           Celular <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -348,7 +375,10 @@ function RegistrarPage() {
                   )}
 
                   <div>
-                    <label htmlFor="reg-email-rec" className="block text-sm font-medium text-foreground mb-1.5">
+                    <label
+                      htmlFor="reg-email-rec"
+                      className="block text-sm font-medium text-foreground mb-1.5"
+                    >
                       E-mail de recuperação <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -366,37 +396,41 @@ function RegistrarPage() {
                   </div>
 
                   {/* 4. CAMPOS DINÂMICOS (outros tipos de usuário) */}
-                  {!isLojista && tipoAtual?.campos_schema.map((field) => (
-                    <div key={field.nome}>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">
-                        {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
-                      </label>
-                      {field.tipo === "boolean" ? (
-                        <select
-                          value={campos[field.nome] ? "true" : "false"}
-                          onChange={(e) => handleCampoChange(field.nome, e.target.value === "true")}
-                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                        >
-                          <option value="false">Não</option>
-                          <option value="true">Sim</option>
-                        </select>
-                      ) : (
-                        <input
-                          type={field.tipo === "number" ? "number" : "text"}
-                          required={field.obrigatorio}
-                          value={campos[field.nome] ?? ""}
-                          onChange={(e) =>
-                            handleCampoChange(
-                              field.nome,
-                              field.tipo === "number" ? Number(e.target.value) : e.target.value,
-                            )
-                          }
-                          placeholder={`Preencha o campo ${field.label}`}
-                          className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
-                        />
-                      )}
-                    </div>
-                  ))}
+                  {!isLojista &&
+                    tipoAtual?.campos_schema.map((field) => (
+                      <div key={field.nome}>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">
+                          {field.label}{" "}
+                          {field.obrigatorio && <span className="text-red-400">*</span>}
+                        </label>
+                        {field.tipo === "boolean" ? (
+                          <select
+                            value={campos[field.nome] ? "true" : "false"}
+                            onChange={(e) =>
+                              handleCampoChange(field.nome, e.target.value === "true")
+                            }
+                            className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                          >
+                            <option value="false">Não</option>
+                            <option value="true">Sim</option>
+                          </select>
+                        ) : (
+                          <input
+                            type={field.tipo === "number" ? "number" : "text"}
+                            required={field.obrigatorio}
+                            value={campos[field.nome] ?? ""}
+                            onChange={(e) =>
+                              handleCampoChange(
+                                field.nome,
+                                field.tipo === "number" ? Number(e.target.value) : e.target.value,
+                              )
+                            }
+                            placeholder={`Preencha o campo ${field.label}`}
+                            className="w-full px-4 py-2.5 rounded-lg bg-card border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-all"
+                          />
+                        )}
+                      </div>
+                    ))}
                 </>
               )}
 
@@ -426,7 +460,10 @@ function RegistrarPage() {
             <div className="mt-6 pt-6 border-t border-border text-center">
               <p className="text-muted-foreground text-sm">
                 Já tem uma conta?{" "}
-                <Link to="/login" className="text-foreground hover:text-foreground font-medium transition-colors">
+                <Link
+                  to="/login"
+                  className="text-foreground hover:text-foreground font-medium transition-colors"
+                >
                   Fazer login
                 </Link>
               </p>

@@ -9,13 +9,25 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
 import { ArrowLeft, User, Car, MapPin, ShoppingBag, Store, ChevronRight } from "lucide-react";
 
-interface Cadastro { valor: string; label: string; uf?: string | null; tipo_campo?: string | null; obrigatorio?: boolean; ordem?: number; grupo?: string | null }
+interface Cadastro {
+  valor: string;
+  label: string;
+  uf?: string | null;
+  tipo_campo?: string | null;
+  obrigatorio?: boolean;
+  ordem?: number;
+  grupo?: string | null;
+}
 
 export const Route = createFileRoute("/_authenticated/_compras/compras/novo")({
   errorComponent: ModuleErrorBoundary,
@@ -68,25 +80,37 @@ function NovoChamado() {
   });
 
   // Reset loja quando muda o estado (loja é vinculada ao estado)
-  useEffect(() => { setForm((s) => ({ ...s, loja_estoque: "" })); }, [estadoUf]);
+  useEffect(() => {
+    setForm((s) => ({ ...s, loja_estoque: "" }));
+  }, [estadoUf]);
 
   const lojas = lojasAll.filter((l) => !l.uf || l.uf.toUpperCase() === estadoUf.toUpperCase());
-  const camposDoEstado = camposExtrasCad.filter((c) => !c.uf || c.uf.toUpperCase() === estadoUf.toUpperCase());
-
+  const camposDoEstado = camposExtrasCad.filter(
+    (c) => !c.uf || c.uf.toUpperCase() === estadoUf.toUpperCase(),
+  );
 
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const salvar = async () => {
     if (!user) return;
     const obrig: [string, string][] = [
-      ["nome", form.nome], ["cpf_cnpj", form.cpf_cnpj], ["placa", form.placa],
-      ["chassi", form.chassi], ["renavam", form.renavam], ["cor_externa", form.cor_externa],
-      ["modelo", form.modelo], ["ano_modelo", form.ano_modelo], ["loja_estoque", form.loja_estoque],
-      ["codigo_avaliacao_nbs", form.codigo_avaliacao_nbs], ["valor_avaliado", form.valor_avaliado],
+      ["nome", form.nome],
+      ["cpf_cnpj", form.cpf_cnpj],
+      ["placa", form.placa],
+      ["chassi", form.chassi],
+      ["renavam", form.renavam],
+      ["cor_externa", form.cor_externa],
+      ["modelo", form.modelo],
+      ["ano_modelo", form.ano_modelo],
+      ["loja_estoque", form.loja_estoque],
+      ["codigo_avaliacao_nbs", form.codigo_avaliacao_nbs],
+      ["valor_avaliado", form.valor_avaliado],
     ];
     const faltando = obrig.filter(([, v]) => !v.trim()).map(([k]) => k);
     if (faltando.length) {
-      toast.error(`Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`);
+      toast.error(
+        `Preencha todos os campos obrigatórios (${faltando.length} pendente(s)). Apenas observações é opcional.`,
+      );
       return;
     }
     const camposObrigFalt = camposDoEstado
@@ -164,7 +188,12 @@ function NovoChamado() {
   return (
     <div className="min-h-screen w-full bg-muted/30 p-6 md:p-10">
       <div className="w-full max-w-6xl mx-auto">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/compras" })} className="mb-4 -ml-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate({ to: "/compras" })}
+          className="mb-4 -ml-2"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>
 
@@ -179,7 +208,8 @@ function NovoChamado() {
               <ShoppingBag className="w-6 h-6 text-primary" /> Novo chamado de compra
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Preencha os dados iniciais. Após salvar, você poderá anexar documentos e enviar para análise.
+              Preencha os dados iniciais. Após salvar, você poderá anexar documentos e enviar para
+              análise.
             </p>
           </div>
           <div className="hidden md:block">
@@ -202,8 +232,13 @@ function NovoChamado() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Pessoa</Label>
-                    <Select value={tipoPessoa} onValueChange={(v) => setTipoPessoa(v as TipoPessoa)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={tipoPessoa}
+                      onValueChange={(v) => setTipoPessoa(v as TipoPessoa)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="PF">Pessoa Física</SelectItem>
                         <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
@@ -213,11 +248,17 @@ function NovoChamado() {
                   <div>
                     <Label>Estado (UF) *</Label>
                     <Select value={estadoUf} onValueChange={(v) => setEstadoUf(v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        {estados.length > 0 ? estados.map((e) => (
-                          <SelectItem key={e.valor} value={e.valor.toUpperCase()}>{e.label}</SelectItem>
-                        )) : (
+                        {estados.length > 0 ? (
+                          estados.map((e) => (
+                            <SelectItem key={e.valor} value={e.valor.toUpperCase()}>
+                              {e.label}
+                            </SelectItem>
+                          ))
+                        ) : (
                           <>
                             <SelectItem value="GO">Goiás</SelectItem>
                             <SelectItem value="ES">Espírito Santo</SelectItem>
@@ -229,20 +270,29 @@ function NovoChamado() {
                 </div>
 
                 <div>
-                  <Label className="flex items-center gap-1"><Store className="w-3.5 h-3.5" /> Loja / Filial * <span className="text-xs text-muted-foreground">({estadoUf})</span></Label>
+                  <Label className="flex items-center gap-1">
+                    <Store className="w-3.5 h-3.5" /> Loja / Filial *{" "}
+                    <span className="text-xs text-muted-foreground">({estadoUf})</span>
+                  </Label>
                   {lojas.length === 0 ? (
                     <div className="text-xs text-amber-600 border border-amber-500/40 rounded-md p-2">
                       Nenhuma loja cadastrada para {estadoUf}.{" "}
                       {isAdmin && (
-                        <Link to="/compras/configuracoes" className="underline">Cadastrar agora</Link>
+                        <Link to="/compras/configuracoes" className="underline">
+                          Cadastrar agora
+                        </Link>
                       )}
                     </div>
                   ) : (
                     <Select value={form.loja_estoque} onValueChange={(v) => set("loja_estoque", v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione a filial…" /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a filial…" />
+                      </SelectTrigger>
                       <SelectContent>
                         {lojas.map((l) => (
-                          <SelectItem key={l.valor} value={l.valor}>{l.label}</SelectItem>
+                          <SelectItem key={l.valor} value={l.valor}>
+                            {l.label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -250,12 +300,16 @@ function NovoChamado() {
                 </div>
 
                 <div>
-                  <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Nome / Razão social *</Label>
+                  <Label className="flex items-center gap-1">
+                    <User className="w-3.5 h-3.5" /> Nome / Razão social *
+                  </Label>
                   <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} />
                 </div>
 
                 <div>
-                  <Label className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}</Label>
+                  <Label className="flex items-center gap-1">
+                    <User className="w-3.5 h-3.5" /> {tipoPessoa === "PF" ? "CPF *" : "CNPJ *"}
+                  </Label>
                   <Input value={form.cpf_cnpj} onChange={(e) => set("cpf_cnpj", e.target.value)} />
                 </div>
 
@@ -290,12 +344,21 @@ function NovoChamado() {
                   </div>
                 )}
 
-                {camposDoEstado.filter((c) => (c.grupo ?? "cliente") === "cliente").map((c) => (
-                  <div key={c.valor}>
-                    <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-                    <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
-                  </div>
-                ))}
+                {camposDoEstado
+                  .filter((c) => (c.grupo ?? "cliente") === "cliente")
+                  .map((c) => (
+                    <div key={c.valor}>
+                      <Label>
+                        {c.label}
+                        {c.obrigatorio ? " *" : ""}
+                      </Label>
+                      <CampoExtraInput
+                        tipo={c.tipo_campo}
+                        value={camposExtras[c.valor] ?? ""}
+                        onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))}
+                      />
+                    </div>
+                  ))}
               </CardContent>
             </Card>
           </div>
@@ -312,11 +375,18 @@ function NovoChamado() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="md:col-span-1">
                     <Label>Placa *</Label>
-                    <Input value={form.placa} onChange={(e) => set("placa", e.target.value.toUpperCase())} className="uppercase" />
+                    <Input
+                      value={form.placa}
+                      onChange={(e) => set("placa", e.target.value.toUpperCase())}
+                      className="uppercase"
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <Label>Chassi *</Label>
-                    <Input value={form.chassi} onChange={(e) => set("chassi", e.target.value.toUpperCase())} />
+                    <Input
+                      value={form.chassi}
+                      onChange={(e) => set("chassi", e.target.value.toUpperCase())}
+                    />
                   </div>
                   <div className="md:col-span-1">
                     <Label>Renavam *</Label>
@@ -329,15 +399,23 @@ function NovoChamado() {
                   </div>
                   <div className="md:col-span-1">
                     <Label>Ano/Modelo *</Label>
-                    <Input value={form.ano_modelo} onChange={(e) => set("ano_modelo", e.target.value)} placeholder="2024/2025" />
+                    <Input
+                      value={form.ano_modelo}
+                      onChange={(e) => set("ano_modelo", e.target.value)}
+                      placeholder="2024/2025"
+                    />
                   </div>
                   <div className="md:col-span-1">
                     <Label>Cor externa *</Label>
                     <Select value={form.cor_externa} onValueChange={(v) => set("cor_externa", v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione…" />
+                      </SelectTrigger>
                       <SelectContent>
                         {CORES_EXTERNAS.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -345,12 +423,17 @@ function NovoChamado() {
 
                   <div className="md:col-span-2">
                     <Label>Código avaliação NBS *</Label>
-                    <Input value={form.codigo_avaliacao_nbs} onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)} />
+                    <Input
+                      value={form.codigo_avaliacao_nbs}
+                      onChange={(e) => set("codigo_avaliacao_nbs", e.target.value)}
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <Label>Valor avaliado (R$) *</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium pointer-events-none">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium pointer-events-none">
+                        R$
+                      </span>
                       <Input
                         value={form.valor_avaliado}
                         onChange={(e) => set("valor_avaliado", e.target.value)}
@@ -360,12 +443,21 @@ function NovoChamado() {
                     </div>
                   </div>
 
-                  {camposDoEstado.filter((c) => c.grupo === "veiculo").map((c) => (
-                    <div key={c.valor} className="md:col-span-2">
-                      <Label>{c.label}{c.obrigatorio ? " *" : ""}</Label>
-                      <CampoExtraInput tipo={c.tipo_campo} value={camposExtras[c.valor] ?? ""} onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))} />
-                    </div>
-                  ))}
+                  {camposDoEstado
+                    .filter((c) => c.grupo === "veiculo")
+                    .map((c) => (
+                      <div key={c.valor} className="md:col-span-2">
+                        <Label>
+                          {c.label}
+                          {c.obrigatorio ? " *" : ""}
+                        </Label>
+                        <CampoExtraInput
+                          tipo={c.tipo_campo}
+                          value={camposExtras[c.valor] ?? ""}
+                          onChange={(v) => setCamposExtras((s) => ({ ...s, [c.valor]: v }))}
+                        />
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
@@ -373,33 +465,48 @@ function NovoChamado() {
             <Card className="overflow-hidden">
               <CardHeader className="bg-muted/40 border-b border-border py-4">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-muted-foreground" /> Tipo de Compra e Observações
+                  <ShoppingBag className="w-4 h-4 text-muted-foreground" /> Tipo de Compra e
+                  Observações
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div>
                   <Label>Modalidade de compra</Label>
                   <Select value={tipoCompra} onValueChange={(v) => setTipoCompra(v as TipoCompra)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {(tiposCompra.length > 0
                         ? tiposCompra.map((t) => ({ valor: t.valor, label: t.label }))
-                        : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({ valor: k, label: TIPO_COMPRA_LABEL[k] }))
+                        : (Object.keys(TIPO_COMPRA_LABEL) as TipoCompra[]).map((k) => ({
+                            valor: k,
+                            label: TIPO_COMPRA_LABEL[k],
+                          }))
                       ).map((t) => (
-                        <SelectItem key={t.valor} value={t.valor}>{t.label}</SelectItem>
+                        <SelectItem key={t.valor} value={t.valor}>
+                          {t.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Observações adicionais</Label>
-                  <Textarea rows={3} value={form.observacao} onChange={(e) => set("observacao", e.target.value)} placeholder="Detalhes sobre o estado do veículo ou condições da negociação…" />
+                  <Textarea
+                    rows={3}
+                    value={form.observacao}
+                    onChange={(e) => set("observacao", e.target.value)}
+                    placeholder="Detalhes sobre o estado do veículo ou condições da negociação…"
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => navigate({ to: "/compras" })}>Cancelar</Button>
+              <Button variant="outline" onClick={() => navigate({ to: "/compras" })}>
+                Cancelar
+              </Button>
               <Button onClick={salvar} disabled={saving} className="px-8">
                 {saving ? "Salvando..." : "Criar chamado"}
               </Button>
@@ -412,21 +519,40 @@ function NovoChamado() {
 }
 
 const CORES_EXTERNAS = [
-  "Amarelo","Azul","Bege","Branca","Cinza","Dourada","Grená","Laranja",
-  "Marrom","Prata","Preta","Rosa","Roxa","Verde","Vermelha","Fantasia",
+  "Amarelo",
+  "Azul",
+  "Bege",
+  "Branca",
+  "Cinza",
+  "Dourada",
+  "Grená",
+  "Laranja",
+  "Marrom",
+  "Prata",
+  "Preta",
+  "Rosa",
+  "Roxa",
+  "Verde",
+  "Vermelha",
+  "Fantasia",
 ];
 
 function formatMoeda(v: string) {
   const digits = v.replace(/\D/g, "");
   if (!digits) return "";
   const n = parseInt(digits, 10);
-  const inteiro = Math.floor(n / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const inteiro = Math.floor(n / 100)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   const cent = (n % 100).toString().padStart(2, "0");
   return `R$ ${inteiro},${cent}`;
 }
 
 function formatPlaca(v: string) {
-  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7);
+  const raw = v
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 7);
   if (raw.length <= 3) return raw;
   return `${raw.slice(0, 3)}-${raw.slice(3)}`;
 }
@@ -447,7 +573,10 @@ function formatCPF(v: string) {
 
 function formatCNPJ(v: string) {
   // CNPJ alfanumérico: 12 primeiros alfanuméricos + 2 dígitos verificadores
-  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14);
+  const raw = v
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 14);
   const p1 = raw.slice(0, 2);
   const p2 = raw.slice(2, 5);
   const p3 = raw.slice(5, 8);
@@ -461,7 +590,15 @@ function formatCNPJ(v: string) {
   return out;
 }
 
-function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; value: string; onChange: (v: string) => void }) {
+function CampoExtraInput({
+  tipo,
+  value,
+  onChange,
+}: {
+  tipo?: string | null;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   if (tipo === "ano") {
     return (
       <Input
@@ -546,10 +683,14 @@ function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; valu
   if (tipo === "cor") {
     return (
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger><SelectValue placeholder="Selecione a cor" /></SelectTrigger>
+        <SelectTrigger>
+          <SelectValue placeholder="Selecione a cor" />
+        </SelectTrigger>
         <SelectContent>
           {CORES_EXTERNAS.map((c) => (
-            <SelectItem key={c} value={c}>{c}</SelectItem>
+            <SelectItem key={c} value={c}>
+              {c}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -557,7 +698,15 @@ function CampoExtraInput({ tipo, value, onChange }: { tipo?: string | null; valu
   }
   return (
     <Input
-      type={tipo === "numero" ? "number" : tipo === "data" ? "date" : tipo === "email" ? "email" : "text"}
+      type={
+        tipo === "numero"
+          ? "number"
+          : tipo === "data"
+            ? "date"
+            : tipo === "email"
+              ? "email"
+              : "text"
+      }
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />

@@ -5,22 +5,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  FileCheck2,
-  Upload,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Eye,
-} from "lucide-react";
+import { FileCheck2, Upload, AlertTriangle, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 export type HealthCheckStatus =
-  | "pendente"
-  | "auto_identificado"
-  | "manual"
-  | "aprovado"
-  | "recusado";
+  "pendente" | "auto_identificado" | "manual" | "aprovado" | "recusado";
 
 export interface HealthCheckValidacao {
   arquivoNome?: string;
@@ -140,8 +129,7 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <AlertTitle>Chassi identificado automaticamente</AlertTitle>
             <AlertDescription>
-              <span className="font-mono">{value.chassiIdentificado}</span> —{" "}
-              {value.arquivoNome}
+              <span className="font-mono">{value.chassiIdentificado}</span> — {value.arquivoNome}
             </AlertDescription>
           </Alert>
         )}
@@ -152,8 +140,8 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
             <AlertTitle>Chassi não identificado automaticamente</AlertTitle>
             <AlertDescription className="space-y-3">
               <p className="text-sm">
-                Não foi possível extrair o chassi do PDF{" "}
-                <strong>{value.arquivoNome}</strong>. Inicie a análise manual.
+                Não foi possível extrair o chassi do PDF <strong>{value.arquivoNome}</strong>.
+                Inicie a análise manual.
               </p>
               <Button size="sm" onClick={iniciarAnaliseManual}>
                 <Eye className="mr-2 h-4 w-4" />
@@ -182,17 +170,13 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="justificativa">
-                    Justificativa (obrigatório para recusar)
-                  </Label>
+                  <Label htmlFor="justificativa">Justificativa (obrigatório para recusar)</Label>
                   <Textarea
                     id="justificativa"
                     rows={5}
                     placeholder="Descreva o motivo da recusa..."
                     value={value.justificativaRecusa ?? ""}
-                    onChange={(e) =>
-                      onChange({ ...value, justificativaRecusa: e.target.value })
-                    }
+                    onChange={(e) => onChange({ ...value, justificativaRecusa: e.target.value })}
                     maxLength={1000}
                   />
                 </div>
@@ -202,11 +186,7 @@ export function ValidacaoHealthCheck({ chassiEsperado, value, onChange }: Props)
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     Aprovar Documento
                   </Button>
-                  <Button
-                    onClick={recusar}
-                    variant="destructive"
-                    className="flex-1"
-                  >
+                  <Button onClick={recusar} variant="destructive" className="flex-1">
                     <XCircle className="mr-2 h-4 w-4" />
                     Recusar Documento
                   </Button>

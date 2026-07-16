@@ -74,7 +74,8 @@ export function DiagnosticoCamposTemplate({ tipo, grupo, disabled }: Props) {
   const encontrados = CAMPOS_ESPERADOS_TEMPLATE.filter((n) => nomesDetectados.has(n));
   const faltando = CAMPOS_ESPERADOS_TEMPLATE.filter((n) => !nomesDetectados.has(n));
   const extras = (campos ?? []).filter(
-    (c) => !CAMPOS_ESPERADOS_TEMPLATE.includes(c.nome as (typeof CAMPOS_ESPERADOS_TEMPLATE)[number]),
+    (c) =>
+      !CAMPOS_ESPERADOS_TEMPLATE.includes(c.nome as (typeof CAMPOS_ESPERADOS_TEMPLATE)[number]),
   );
 
   const copiarEsperados = async () => {
@@ -111,9 +112,9 @@ export function DiagnosticoCamposTemplate({ tipo, grupo, disabled }: Props) {
                   Este PDF não contém campos de AcroForm.
                 </p>
                 <p className="text-muted-foreground mt-1">
-                  Abra o arquivo no Adobe Acrobat ou LibreOffice Draw, adicione um
-                  campo de texto sobre cada linha do cabeçalho usando os nomes da
-                  lista abaixo e gere o Base64 novamente.
+                  Abra o arquivo no Adobe Acrobat ou LibreOffice Draw, adicione um campo de texto
+                  sobre cada linha do cabeçalho usando os nomes da lista abaixo e gere o Base64
+                  novamente.
                 </p>
               </div>
             </div>
@@ -129,9 +130,7 @@ export function DiagnosticoCamposTemplate({ tipo, grupo, disabled }: Props) {
                 {faltando.length > 0 && (
                   <Badge variant="destructive">{faltando.length} faltando</Badge>
                 )}
-                {extras.length > 0 && (
-                  <Badge variant="outline">{extras.length} extras</Badge>
-                )}
+                {extras.length > 0 && <Badge variant="outline">{extras.length} extras</Badge>}
               </div>
 
               <div>

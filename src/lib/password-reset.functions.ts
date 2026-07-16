@@ -38,9 +38,7 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
       const profile = await loadProfileByUsername(data.username);
       if (!profile || !profile.email_recuperacao) {
         // Não revela ao caller o motivo
-        console.warn(
-          `[reset] username="${data.username}" sem email_recuperacao ou inexistente`,
-        );
+        console.warn(`[reset] username="${data.username}" sem email_recuperacao ou inexistente`);
         return { ok: true };
       }
 
@@ -57,13 +55,11 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
       const code = generateCode();
       const expires = new Date(Date.now() + CODE_TTL_MINUTES * 60_000);
 
-      const { error: insErr } = await supabaseAdmin
-        .from("password_reset_codes")
-        .insert({
-          user_id: profile.id,
-          code,
-          expires_at: expires.toISOString(),
-        });
+      const { error: insErr } = await supabaseAdmin.from("password_reset_codes").insert({
+        user_id: profile.id,
+        code,
+        expires_at: expires.toISOString(),
+      });
       if (insErr) throw new Error(insErr.message);
 
       const html = `
@@ -144,19 +140,17 @@ export const verifyResetCode = createServerFn({ method: "POST" })
  * chama a Admin API para trocar a senha.
  */
 export const resetPasswordWithCode = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { username: string; code: string; newPassword: string }) => {
-      if (!input?.username?.trim()) throw new Error("Informe o usuário.");
-      if (!input?.code?.trim()) throw new Error("Informe o código.");
-      if (!input?.newPassword || input.newPassword.length < 6)
-        throw new Error("A nova senha deve ter no mínimo 6 caracteres.");
-      return {
-        username: input.username.trim(),
-        code: input.code.trim(),
-        newPassword: input.newPassword,
-      };
-    },
-  )
+  .inputValidator((input: { username: string; code: string; newPassword: string }) => {
+    if (!input?.username?.trim()) throw new Error("Informe o usuário.");
+    if (!input?.code?.trim()) throw new Error("Informe o código.");
+    if (!input?.newPassword || input.newPassword.length < 6)
+      throw new Error("A nova senha deve ter no mínimo 6 caracteres.");
+    return {
+      username: input.username.trim(),
+      code: input.code.trim(),
+      newPassword: input.newPassword,
+    };
+  })
   .handler(async ({ data }) => {
     const profile = await loadProfileByUsername(data.username);
     if (!profile) throw new Error("Código inválido ou expirado.");
@@ -182,10 +176,9 @@ export const resetPasswordWithCode = createServerFn({ method: "POST" })
       throw new Error("Código incorreto.");
     }
 
-    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(
-      profile.id,
-      { password: data.newPassword },
-    );
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(profile.id, {
+      password: data.newPassword,
+    });
     if (updErr) throw new Error(updErr.message);
 
     await supabaseAdmin

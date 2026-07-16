@@ -38,7 +38,7 @@ export function NotificationPopup() {
       const novos = (data as any[]).filter((d) => !existentes.has(d.id));
       return [...novos, ...prev].slice(0, 5);
     });
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     checar();
@@ -48,7 +48,7 @@ export function NotificationPopup() {
     if (!user) return;
     const interval = setInterval(checar, 15000);
     return () => clearInterval(interval);
-  }, [user?.id, checar]);
+  }, [user, checar]);
 
   function fechar(id: string) {
     setPopups((prev) => prev.filter((p) => p.id !== id));

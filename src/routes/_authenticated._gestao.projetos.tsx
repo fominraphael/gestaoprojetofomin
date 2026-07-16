@@ -32,15 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Plus,
-  Search,
-  X,
-  Columns3,
-} from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Plus, Search, X, Columns3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_gestao/projetos")({
   head: () => ({

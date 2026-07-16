@@ -100,8 +100,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         prioridade: tarefa.prioridade ?? "nenhuma",
         ordem: tarefa.ordem != null ? String(tarefa.ordem) : "",
         inicio_previsto: tarefa.inicio_previsto ?? "",
-        estimativa_dias:
-          tarefa.estimativa_dias != null ? String(tarefa.estimativa_dias) : "",
+        estimativa_dias: tarefa.estimativa_dias != null ? String(tarefa.estimativa_dias) : "",
         inicio_real: tarefa.inicio_real ?? "",
         fim_real: tarefa.fim_real ?? "",
         categoria: tarefa.categoria,
@@ -141,22 +140,18 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
         categoria: form.categoria,
         tags: form.tags || null,
         tipo: form.categoria === "solicitacao" && form.tipo !== "nenhum" ? form.tipo : null,
-        solicitante: form.categoria === "solicitacao" ? (form.solicitante || null) : null,
+        solicitante: form.categoria === "solicitacao" ? form.solicitante || null : null,
       };
       if (tarefa) {
         // inicio_previsto não é editável após criação
-        const { error } = await supabase
-          .from("tarefas")
-          .update(basePayload)
-          .eq("id", tarefa.id);
+        const { error } = await supabase.from("tarefas").update(basePayload).eq("id", tarefa.id);
         if (error) throw error;
       } else {
-        const inicio =
-          form.inicio_previsto
-            ? form.inicio_previsto
-            : form.categoria === "solicitacao"
-              ? null
-              : today();
+        const inicio = form.inicio_previsto
+          ? form.inicio_previsto
+          : form.categoria === "solicitacao"
+            ? null
+            : today();
         if (!user) throw new Error("Sessão expirada. Faça login novamente.");
         const { error } = await supabase.from("tarefas").insert({
           ...basePayload,
@@ -200,8 +195,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const fmt = (d: string) =>
-    d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  const fmt = (d: string) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,8 +223,6 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               maxLength={200}
             />
           </div>
-
-
 
           <div>
             <Label>Código</Label>
@@ -283,10 +275,14 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               value={form.status}
               onValueChange={(v) => setForm({ ...form, status: v as Status })}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -306,15 +302,15 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             </p>
           </div>
 
-
-
           <div>
             <Label>Categoria</Label>
             <Select
               value={form.categoria}
               onValueChange={(v) => setForm({ ...form, categoria: v as Categoria })}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="roadmap">Roadmap</SelectItem>
@@ -330,15 +326,17 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
                 <Label>Tipo</Label>
                 <Select
                   value={form.tipo}
-                  onValueChange={(v) =>
-                    setForm({ ...form, tipo: v as TipoSolicitacao | "nenhum" })
-                  }
+                  onValueChange={(v) => setForm({ ...form, tipo: v as TipoSolicitacao | "nenhum" })}
                 >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="nenhum">Sem tipo</SelectItem>
                     {TIPOS_SOLICITACAO.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -356,10 +354,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
 
           <div>
             <Label>Tags</Label>
-            <Input
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            />
+            <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
           </div>
 
           <div className="col-span-2 border-t pt-3 mt-1">
@@ -368,9 +363,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               <div>
                 <Label>
                   Início previsto
-                  {tarefa && (
-                    <span className="ml-1 text-xs text-muted-foreground">(travado)</span>
-                  )}
+                  {tarefa && <span className="ml-1 text-xs text-muted-foreground">(travado)</span>}
                 </Label>
                 <Input
                   type="date"
@@ -391,11 +384,7 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
               </div>
               <div>
                 <Label>Fim previsto</Label>
-                <Input
-                  value={fmt(fimPrevisto || (tarefa?.fim_previsto ?? ""))}
-                  disabled
-                  readOnly
-                />
+                <Input value={fmt(fimPrevisto || (tarefa?.fim_previsto ?? ""))} disabled readOnly />
               </div>
             </div>
           </div>
@@ -438,11 +427,10 @@ export function TarefaModal({ open, onOpenChange, tarefa, defaultCategoria = "ba
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button
-              onClick={() => save.mutate()}
-              disabled={!form.titulo.trim() || save.isPending}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => save.mutate()} disabled={!form.titulo.trim() || save.isPending}>
               {save.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>

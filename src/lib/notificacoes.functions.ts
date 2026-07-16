@@ -392,7 +392,9 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
 
   if (!pendentes.length) return { processados: chamados.length, enviados: 0 };
 
-  const appUrl = process.env.APP_URL || (process.env.VITE_SUPABASE_URL || "").replace(".supabase.co", ".lovable.app");
+  const appUrl =
+    process.env.APP_URL ||
+    (process.env.VITE_SUPABASE_URL || "").replace(".supabase.co", ".lovable.app");
   let enviados = 0;
 
   for (const n of pendentes) {
@@ -525,7 +527,9 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
     diagnostico.push(`Destinatários: ${destinatarios.map((d) => d.email).join(", ")}`);
 
     const label = STATUS_LABELS[chamado.status] ?? chamado.status;
-    const appUrl = process.env.APP_URL || (process.env.VITE_SUPABASE_URL || "").replace(".supabase.co", ".lovable.app");
+    const appUrl =
+      process.env.APP_URL ||
+      (process.env.VITE_SUPABASE_URL || "").replace(".supabase.co", ".lovable.app");
     const chamadoUrl = `${appUrl}/compras/${chamado.id}`;
     let enviados = 0;
 

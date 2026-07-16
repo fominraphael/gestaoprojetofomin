@@ -49,15 +49,22 @@ function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 shadow-lg mb-4">
             <Layers className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Portal de Aplicações</h1>
-          <p className="text-muted-foreground text-sm mt-1">Faça login para acessar suas ferramentas</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Portal de Aplicações
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Faça login para acessar suas ferramentas
+          </p>
         </div>
 
         {/* Card */}
         <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
                 Usuário ou e-mail de recuperação
               </label>
               <input
@@ -73,7 +80,10 @@ function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
                 Senha
               </label>
               <div className="relative">
@@ -126,8 +136,6 @@ function LoginPage() {
               Esqueci minha senha
             </Link>
           </div>
-
-
 
           <div className="mt-6 pt-6 border-t border-border text-center">
             <p className="text-muted-foreground text-sm">

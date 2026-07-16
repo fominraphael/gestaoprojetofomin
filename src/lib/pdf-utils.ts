@@ -8,7 +8,9 @@ export async function extractPdfText(bytes: ArrayBuffer): Promise<string> {
   const pdfjs = await import("pdfjs-dist");
   // worker embutido como URL para funcionar em Vite
   const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
-  (pdfjs as unknown as { GlobalWorkerOptions: { workerSrc: string } }).GlobalWorkerOptions.workerSrc = workerSrc;
+  (
+    pdfjs as unknown as { GlobalWorkerOptions: { workerSrc: string } }
+  ).GlobalWorkerOptions.workerSrc = workerSrc;
 
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
   const doc = await loadingTask.promise;
@@ -17,9 +19,7 @@ export async function extractPdfText(bytes: ArrayBuffer): Promise<string> {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
     chunks.push(
-      content.items
-        .map((it) => ("str" in it ? (it as { str: string }).str : ""))
-        .join(" "),
+      content.items.map((it) => ("str" in it ? (it as { str: string }).str : "")).join(" "),
     );
   }
   return chunks.join(" ").toUpperCase();
@@ -65,11 +65,12 @@ export async function mesclarPdfs(pdfs: ArrayBuffer[]): Promise<Uint8Array> {
     merged.setKeywords([]);
     merged.setProducer("");
     merged.setCreator("");
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return merged.save({
     useObjectStreams: true,
     addDefaultPage: false,
     objectsPerTick: 200,
   });
 }
-

@@ -44,9 +44,7 @@ function RegrasPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("system_settings")
-        .select("key, value");
+      const { data } = await supabase.from("system_settings").select("key, value");
       const map = Object.fromEntries((data ?? []).map((r: any) => [r.key, r.value]));
       if (map.toyota_regras) setToyota({ ...DEFAULT_TOYOTA, ...map.toyota_regras });
       if (map.upload?.max_mb) setUploadMb(Number(map.upload.max_mb));
@@ -61,11 +59,28 @@ function RegrasPage() {
     const { data: u } = await supabase.auth.getUser();
     const uid = u.user?.id ?? null;
     const rows = [
-      { key: "toyota_regras", value: toyota as unknown as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
-      { key: "upload", value: { max_mb: uploadMb } as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
-      { key: "alertas", value: { horario_diario: horarioAlerta } as Record<string, unknown>, updated_by: uid, updated_at: new Date().toISOString() },
+      {
+        key: "toyota_regras",
+        value: toyota as unknown as Record<string, unknown>,
+        updated_by: uid,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        key: "upload",
+        value: { max_mb: uploadMb } as Record<string, unknown>,
+        updated_by: uid,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        key: "alertas",
+        value: { horario_diario: horarioAlerta } as Record<string, unknown>,
+        updated_by: uid,
+        updated_at: new Date().toISOString(),
+      },
     ];
-    const { error } = await supabase.from("system_settings").upsert(rows as any, { onConflict: "key" });
+    const { error } = await supabase
+      .from("system_settings")
+      .upsert(rows as any, { onConflict: "key" });
     setSaving(false);
     if (error) {
       toast.error(error.message);
@@ -187,7 +202,15 @@ function RegrasPage() {
   );
 }
 
-function NumField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+function NumField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+}) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>

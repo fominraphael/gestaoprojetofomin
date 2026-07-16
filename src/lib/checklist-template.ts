@@ -70,10 +70,7 @@ export function detectarGrupoVeiculo(modelo: string, marca?: string | null): Tem
   return "passeio";
 }
 
-async function getTemplateBase64(
-  tipo: TemplateTipo,
-  grupo: TemplateGrupo,
-): Promise<string | null> {
+async function getTemplateBase64(tipo: TemplateTipo, grupo: TemplateGrupo): Promise<string | null> {
   const key = templateSettingKey(tipo, grupo);
   const { data, error } = await supabase
     .from("system_settings")
@@ -144,9 +141,7 @@ export async function gerarChecklistPreenchido(
 
     // Tratamento e quebra da Data (data01, data02, data03)
     const dataString = dados.data || "";
-    const dataParts = dataString.includes("/")
-      ? dataString.split("/")
-      : dataString.split("-");
+    const dataParts = dataString.includes("/") ? dataString.split("/") : dataString.split("-");
     if (dataParts.length >= 3) {
       const isAnoPrimeiro = dataParts[0].length === 4;
       preencherCampo("data01", isAnoPrimeiro ? dataParts[2] : dataParts[0]); // Dia
@@ -164,7 +159,6 @@ export async function gerarChecklistPreenchido(
   } catch (error) {
     console.error("Erro geral no processamento do cabeçalho do AcroForm:", error);
   }
-
 
   try {
     form.flatten();
@@ -201,9 +195,7 @@ export function formatarModeloCurto(modelo: string | null | undefined): string {
   if (nome.includes("SW4")) return "SW4";
 
   // 2. Modelos simples conhecidos
-  const modelosConhecidos = [
-    "COROLLA", "HILUX", "YARIS", "ETIOS", "RAV4", "PRIUS", "CAMRY",
-  ];
+  const modelosConhecidos = ["COROLLA", "HILUX", "YARIS", "ETIOS", "RAV4", "PRIUS", "CAMRY"];
   for (const m of modelosConhecidos) {
     if (nome.includes(m)) return m;
   }

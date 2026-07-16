@@ -3,13 +3,7 @@ import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { todasTarefasQuery, statusColor, type Tarefa } from "@/lib/tarefas";
 import { CheckCircle2, Clock, Circle, ListTodo, CalendarClock } from "lucide-react";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-} from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/_gestao/dashboard")({
   head: () => ({
@@ -102,9 +96,7 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-sm font-medium text-foreground mb-4">
-            Distribuição por status
-          </h2>
+          <h2 className="text-sm font-medium text-foreground mb-4">Distribuição por status</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -127,10 +119,7 @@ function Dashboard() {
             {chartData.map((d) => (
               <div key={d.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: d.color }}
-                  />
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
                   <span className="text-muted-foreground">{d.name}</span>
                 </div>
                 <span className="font-medium">{d.value}</span>
@@ -156,9 +145,7 @@ function Dashboard() {
       <div className="bg-card rounded-lg border border-border p-6">
         <h2 className="text-sm font-medium text-foreground mb-4">Próximas entregas</h2>
         {proximasEntregas.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Sem prazos definidos no roadmap.
-          </p>
+          <p className="text-sm text-muted-foreground">Sem prazos definidos no roadmap.</p>
         ) : (
           <ul className="divide-y divide-border">
             {proximasEntregas.map((t) => (
@@ -183,9 +170,7 @@ function MetricCard({
   return (
     <div className="bg-card rounded-lg border border-border p-5">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide">
-          {label}
-        </span>
+        <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
         {icon}
       </div>
       <div className="text-3xl font-semibold tracking-tight">{value}</div>
@@ -206,9 +191,7 @@ function TarefaRow({
     <li className="py-3 flex items-center justify-between gap-3">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium truncate">{t.titulo}</div>
-        <div className="text-xs text-muted-foreground truncate">
-          {t.projeto ?? "Sem projeto"}
-        </div>
+        <div className="text-xs text-muted-foreground truncate">{t.projeto ?? "Sem projeto"}</div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {mostrarPrazo && t.fim_previsto && (

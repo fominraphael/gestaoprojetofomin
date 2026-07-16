@@ -2,15 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Layers,
-  Building,
-  FileText,
-  Download,
-  Eye,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Layers, Building, FileText, Download, Eye, X } from "lucide-react";
 import JSZip from "jszip";
 import {
   obterArquivos,
@@ -167,7 +159,10 @@ function DocumentosPage() {
       <header className="border-b border-border bg-card backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
               <ArrowLeft className="w-4 h-4" /> Portal
             </Link>
             <span className="text-muted-foreground">/</span>
@@ -220,9 +215,13 @@ function DocumentosPage() {
                       }`}
                     >
                       <div className="font-semibold truncate">{emp.nome}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">CNPJ: {emp.cnpj}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        CNPJ: {emp.cnpj}
+                      </div>
                       {emp.email_notificacao && (
-                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">✉ {emp.email_notificacao}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                          ✉ {emp.email_notificacao}
+                        </div>
                       )}
                     </button>
                   );
@@ -236,7 +235,9 @@ function DocumentosPage() {
                 <div className="flex items-center justify-between border-b border-border pb-4 flex-wrap gap-3">
                   <div>
                     <h2 className="text-lg font-bold text-foreground">{selectedEmpresa.nome}</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">CNPJ: {selectedEmpresa.cnpj}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      CNPJ: {selectedEmpresa.cnpj}
+                    </p>
                   </div>
                   {arquivos.length > 0 && (
                     <button
@@ -264,11 +265,16 @@ function DocumentosPage() {
                   {docTypesWithFiles.map((type) => {
                     const typeFiles = arquivos.filter((f) => f.tipo_id === type.id);
                     return (
-                      <div key={type.id} className="bg-card border border-border rounded-xl p-4 hover:border-border transition-all">
+                      <div
+                        key={type.id}
+                        className="bg-card border border-border rounded-xl p-4 hover:border-border transition-all"
+                      >
                         <span className="text-[10px] bg-primary/10 border border-primary/25 text-foreground px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                           {type.nome}
                         </span>
-                        <h4 className="text-foreground font-semibold text-sm mt-2.5">{type.descricao || "Documentação"}</h4>
+                        <h4 className="text-foreground font-semibold text-sm mt-2.5">
+                          {type.descricao || "Documentação"}
+                        </h4>
                         <div className="mt-3 space-y-1.5">
                           {typeFiles.map((f) => (
                             <div
@@ -315,7 +321,9 @@ function DocumentosPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-3 border-b border-border gap-2">
-              <div className="text-sm font-semibold text-foreground truncate">{preview.arquivo_nome}</div>
+              <div className="text-sm font-semibold text-foreground truncate">
+                {preview.arquivo_nome}
+              </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => handleDownload(preview)}
@@ -335,7 +343,11 @@ function DocumentosPage() {
             <div className="flex-1 min-h-0 bg-muted/30">
               {/\.(png|jpe?g|gif|webp|svg)$/i.test(preview.arquivo_nome) ? (
                 <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
-                  <img src={preview.arquivo_url} alt={preview.arquivo_nome} className="max-w-full max-h-full object-contain" />
+                  <img
+                    src={preview.arquivo_url}
+                    alt={preview.arquivo_nome}
+                    className="max-w-full max-h-full object-contain"
+                  />
                 </div>
               ) : (
                 <iframe

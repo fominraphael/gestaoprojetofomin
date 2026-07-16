@@ -29,9 +29,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
-export const Route = createFileRoute(
-  "/_authenticated/_toyota/toyota/fila-posvendas",
-)({
+export const Route = createFileRoute("/_authenticated/_toyota/toyota/fila-posvendas")({
   component: FilaPosVendas,
   errorComponent: ModuleErrorBoundary,
 });
@@ -105,8 +103,12 @@ function FilaPosVendas() {
         base.map(async (v) => ({
           ...v,
           tamanhos: {
-            checklist: v.checklist_pdf_path ? await obterTamanhoStorage(v.checklist_pdf_path) : null,
-            health: v.health_check_pdf_path ? await obterTamanhoStorage(v.health_check_pdf_path) : null,
+            checklist: v.checklist_pdf_path
+              ? await obterTamanhoStorage(v.checklist_pdf_path)
+              : null,
+            health: v.health_check_pdf_path
+              ? await obterTamanhoStorage(v.health_check_pdf_path)
+              : null,
           },
         })),
       );
@@ -116,9 +118,7 @@ function FilaPosVendas() {
   };
 
   const obterTamanhoStorage = async (path: string): Promise<number | null> => {
-    const { data, error } = await supabase.storage
-      .from("documentos")
-      .createSignedUrl(path, 60);
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 60);
     if (error || !data?.signedUrl) return null;
     try {
       const res = await fetch(data.signedUrl, { method: "HEAD" });
@@ -131,15 +131,14 @@ function FilaPosVendas() {
 
   useEffect(() => {
     carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtrados = useMemo(() => {
     const t = busca.trim().toLowerCase();
     if (!t) return veiculos;
     return veiculos.filter((v) =>
-      [v.chassi, v.placa, v.modelo]
-        .filter(Boolean)
-        .some((s) => s!.toLowerCase().includes(t)),
+      [v.chassi, v.placa, v.modelo].filter(Boolean).some((s) => s!.toLowerCase().includes(t)),
     );
   }, [veiculos, busca]);
 
@@ -156,7 +155,6 @@ function FilaPosVendas() {
     if (e.includes("TSIM")) return "TSIM" as const;
     return null;
   }, [aberto]);
-
 
   const salvarChecklist = async () => {
     if (!aberto) return;
@@ -185,9 +183,8 @@ function FilaPosVendas() {
         if (data) filial = data as FilialInfo;
       }
 
-      const { gerarChecklistPreenchido, formatarDataHora } = await import(
-        "@/lib/checklist-template"
-      );
+      const { gerarChecklistPreenchido, formatarDataHora } =
+        await import("@/lib/checklist-template");
       const agora = new Date().toISOString();
       const { data: dataStr, hora } = formatarDataHora(agora);
       const responsavel = user?.username ?? "";
@@ -211,11 +208,10 @@ function FilaPosVendas() {
       const path = `toyota/checklists/${aberto.id}/${Date.now()}-checklist.pdf`;
       const { error: upErr } = await supabase.storage
         .from("documentos")
-        .upload(
-          path,
-          new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" }),
-          { upsert: true, contentType: "application/pdf" },
-        );
+        .upload(path, new Blob([pdfBytes as unknown as BlobPart], { type: "application/pdf" }), {
+          upsert: true,
+          contentType: "application/pdf",
+        });
       if (upErr) {
         toast.error(`Falha ao salvar PDF do check-list: ${upErr.message}`);
         return;
@@ -381,8 +377,8 @@ function FilaPosVendas() {
           <Wrench className="h-6 w-6" /> Fila do Pós-Vendas (Oficina)
         </h1>
         <p className="text-sm text-muted-foreground">
-          Execute as revisões, corrija as OS apontadas pelo ADM, preencha o
-          checklist e anexe o PDF do Health Check.
+          Execute as revisões, corrija as OS apontadas pelo ADM, preencha o checklist e anexe o PDF
+          do Health Check.
         </p>
       </div>
 
@@ -416,12 +412,8 @@ function FilaPosVendas() {
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-mono">
-                    {v.chassi}
-                  </CardTitle>
-                  <Badge variant="secondary">
-                    {v.elegibilidade ?? "—"}
-                  </Badge>
+                  <CardTitle className="text-sm font-mono">{v.chassi}</CardTitle>
+                  <Badge variant="secondary">{v.elegibilidade ?? "—"}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {v.modelo ?? "—"} · {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
@@ -431,15 +423,12 @@ function FilaPosVendas() {
                 {v.motivo_reprovacao && (
                   <div className="flex items-start gap-1.5 text-destructive">
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <span className="line-clamp-2">
-                      Retorno: {v.motivo_reprovacao}
-                    </span>
+                    <span className="line-clamp-2">Retorno: {v.motivo_reprovacao}</span>
                   </div>
                 )}
                 {v.hsv_revisoes_pendentes?.length ? (
                   <div>
-                    <strong>Revisões:</strong>{" "}
-                    {v.hsv_revisoes_pendentes.join(", ")}
+                    <strong>Revisões:</strong> {v.hsv_revisoes_pendentes.join(", ")}
                   </div>
                 ) : null}
                 {v.hsv_os_ajustes?.length ? (
@@ -454,7 +443,8 @@ function FilaPosVendas() {
                     ) : (
                       <FileText className="h-3.5 w-3.5" />
                     )}
-                    Checklist {v.checklist_pdf_path ? `· ${formatarBytes(v.tamanhos?.checklist)}` : ""}
+                    Checklist{" "}
+                    {v.checklist_pdf_path ? `· ${formatarBytes(v.tamanhos?.checklist)}` : ""}
                   </span>
                   <span className="flex items-center gap-1">
                     {v.health_check_pdf_path ? (
@@ -462,7 +452,8 @@ function FilaPosVendas() {
                     ) : (
                       <FileText className="h-3.5 w-3.5" />
                     )}
-                    Health Check {v.health_check_pdf_path ? `· ${formatarBytes(v.tamanhos?.health)}` : ""}
+                    Health Check{" "}
+                    {v.health_check_pdf_path ? `· ${formatarBytes(v.tamanhos?.health)}` : ""}
                   </span>
                 </div>
               </CardContent>
@@ -481,27 +472,21 @@ function FilaPosVendas() {
           {aberto && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-mono text-base">
-                  {aberto.chassi}
-                </DialogTitle>
+                <DialogTitle className="font-mono text-base">{aberto.chassi}</DialogTitle>
                 <DialogDescription>
-                  {aberto.modelo ?? "—"} · {aberto.placa ?? "—"} ·{" "}
-                  {aberto.ano_modelo ?? "—"} · {aberto.elegibilidade ?? "—"}
+                  {aberto.modelo ?? "—"} · {aberto.placa ?? "—"} · {aberto.ano_modelo ?? "—"} ·{" "}
+                  {aberto.elegibilidade ?? "—"}
                 </DialogDescription>
               </DialogHeader>
 
               {aberto.motivo_reprovacao && (
                 <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs">
                   <div className="flex items-center gap-1.5 font-semibold text-destructive">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Retorno da
-                    Análise Central
+                    <AlertTriangle className="h-3.5 w-3.5" /> Retorno da Análise Central
                   </div>
-                  <p className="mt-1 text-foreground">
-                    {aberto.motivo_reprovacao}
-                  </p>
+                  <p className="mt-1 text-foreground">{aberto.motivo_reprovacao}</p>
                   <p className="mt-1 text-muted-foreground">
-                    Você pode substituir os arquivos e ajustar o checklist
-                    antes de reenviar.
+                    Você pode substituir os arquivos e ajustar o checklist antes de reenviar.
                   </p>
                 </div>
               )}
@@ -509,20 +494,17 @@ function FilaPosVendas() {
               <div className="space-y-3 text-xs">
                 {aberto.hsv_revisoes_pendentes?.length ? (
                   <div>
-                    <strong>Revisões pendentes:</strong>{" "}
-                    {aberto.hsv_revisoes_pendentes.join(", ")}
+                    <strong>Revisões pendentes:</strong> {aberto.hsv_revisoes_pendentes.join(", ")}
                   </div>
                 ) : null}
                 {aberto.hsv_os_ajustes?.length ? (
                   <div>
-                    <strong>OS a corrigir:</strong>{" "}
-                    {aberto.hsv_os_ajustes.join(", ")}
+                    <strong>OS a corrigir:</strong> {aberto.hsv_os_ajustes.join(", ")}
                   </div>
                 ) : null}
                 {aberto.hsv_observacoes_preparador ? (
                   <div className="rounded-md bg-muted p-2">
-                    <strong>Observações do ADM:</strong>{" "}
-                    {aberto.hsv_observacoes_preparador}
+                    <strong>Observações do ADM:</strong> {aberto.hsv_observacoes_preparador}
                   </div>
                 ) : null}
               </div>
@@ -545,10 +527,9 @@ function FilaPosVendas() {
                     Check-list {tipoChecklist ? `— ${tipoChecklist}` : ""}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    O Template PDF configurado já vem previamente preenchido/marcado.
-                    Ao salvar, o sistema apenas escreve os dados do cabeçalho
-                    (Veículo, Chassi, KM, DN, Distribuidor, Avaliador, Técnico,
-                    Data e Hora) sobre o arquivo original.
+                    O Template PDF configurado já vem previamente preenchido/marcado. Ao salvar, o
+                    sistema apenas escreve os dados do cabeçalho (Veículo, Chassi, KM, DN,
+                    Distribuidor, Avaliador, Técnico, Data e Hora) sobre o arquivo original.
                   </p>
                 </div>
 
@@ -576,14 +557,11 @@ function FilaPosVendas() {
                     onClick={salvarChecklist}
                     disabled={salvando || !tipoChecklist || !Number(km.replace(/\D/g, ""))}
                   >
-                    {salvando && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                    )}
+                    {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                     Salvar e Concluir Check-list
                   </Button>
                 </div>
               </div>
-
 
               <div className="space-y-2">
                 <Label className="text-sm">Health Check (PDF)</Label>
@@ -615,26 +593,17 @@ function FilaPosVendas() {
                     ) : (
                       <FileUp className="h-3.5 w-3.5 mr-1" />
                     )}
-                    {aberto.health_check_pdf_path
-                      ? "Substituir PDF"
-                      : "Anexar PDF"}
+                    {aberto.health_check_pdf_path ? "Substituir PDF" : "Anexar PDF"}
                   </Button>
                 </div>
               </div>
-
-
-
 
               <DialogFooter>
                 <div className="mr-auto text-xs text-muted-foreground">
                   {!aberto.checklist_data?.preenchido_em && "• Preencha o check-list  "}
                   {!aberto.health_check_pdf_path && "• Anexe o Health Check"}
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setAberto(null)}
-                  disabled={enviando}
-                >
+                <Button variant="outline" onClick={() => setAberto(null)} disabled={enviando}>
                   Fechar
                 </Button>
                 <Button

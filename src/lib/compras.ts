@@ -44,10 +44,13 @@ export interface DocumentoRequisito {
  * Matriz de documentos por estado e pessoa (PF/PJ).
  * Comuns aparecem sempre; extras PJ complementam.
  */
-export const DOCUMENTOS_POR_ESTADO: Record<EstadoUF, {
-  pf: DocumentoRequisito[];
-  pj_extra: DocumentoRequisito[];
-}> = {
+export const DOCUMENTOS_POR_ESTADO: Record<
+  EstadoUF,
+  {
+    pf: DocumentoRequisito[];
+    pj_extra: DocumentoRequisito[];
+  }
+> = {
   GO: {
     pf: [
       { categoria: "dut_atpv_procuracao", label: "DUT ou ATPV ou Procuração" },
@@ -93,7 +96,11 @@ export const DOCUMENTOS_POR_ESTADO: Record<EstadoUF, {
   },
 };
 
-export function documentosRequeridos(uf: EstadoUF, tipo: TipoPessoa, temInscricaoEstadual?: boolean | null): DocumentoRequisito[] {
+export function documentosRequeridos(
+  uf: EstadoUF,
+  tipo: TipoPessoa,
+  temInscricaoEstadual?: boolean | null,
+): DocumentoRequisito[] {
   const base = DOCUMENTOS_POR_ESTADO[uf];
   if (tipo !== "PJ") return base.pf;
   let extras = [...base.pj_extra];
@@ -161,9 +168,13 @@ export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> 
   if (tipo === "suspensao") {
     query = query.eq("categoria", "motivo_pendencia").eq("grupo", "suspensao");
   } else if (tipo === "cancelamento") {
-    query = query.or("categoria.eq.motivo_cancelamento,and(categoria.eq.motivo_pendencia,grupo.eq.cancelamento)");
+    query = query.or(
+      "categoria.eq.motivo_cancelamento,and(categoria.eq.motivo_pendencia,grupo.eq.cancelamento)",
+    );
   } else {
-    query = query.or("and(categoria.eq.motivo_pendencia,grupo.is.null),and(categoria.eq.motivo_pendencia,grupo.eq.pendencia)");
+    query = query.or(
+      "and(categoria.eq.motivo_pendencia,grupo.is.null),and(categoria.eq.motivo_pendencia,grupo.eq.pendencia)",
+    );
   }
 
   const { data, error } = await query;
@@ -175,9 +186,12 @@ export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> 
   // Se houve erro OU retornou vazio, usa fallback hardcoded
   if (error || !data || data.length === 0) {
     switch (tipo) {
-      case "pendencia": return MOTIVOS_PENDENCIA;
-      case "cancelamento": return MOTIVOS_CANCELAMENTO;
-      case "suspensao": return MOTIVOS_SUSPENSAO;
+      case "pendencia":
+        return MOTIVOS_PENDENCIA;
+      case "cancelamento":
+        return MOTIVOS_CANCELAMENTO;
+      case "suspensao":
+        return MOTIVOS_SUSPENSAO;
     }
   }
 

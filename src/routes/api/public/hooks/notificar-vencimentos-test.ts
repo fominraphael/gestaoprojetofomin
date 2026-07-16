@@ -8,7 +8,6 @@ async function runSimulation() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { sendMail } = await import("@/lib/smtp.server");
 
-
   const hoje = new Date().toISOString().slice(0, 10);
   const NOME_EMPRESA = "AB COMERCIO DE VEICULOS LTDA";
   const NOME_DOC = "CNH THIAGO SILVA FERREIRA";
@@ -57,14 +56,16 @@ async function runSimulation() {
   } else {
     const { data: novoArq, error: aErr } = await supabaseAdmin
       .from("documentos_arquivo")
-      .insert([{
-        empresa_id: empresa.id,
-        tipo_id: tipo.id,
-        arquivo_url: "",
-        arquivo_nome: `${NOME_DOC}.pdf`,
-        storage_path: null,
-        data_vencimento: hoje,
-      }])
+      .insert([
+        {
+          empresa_id: empresa.id,
+          tipo_id: tipo.id,
+          arquivo_url: "",
+          arquivo_nome: `${NOME_DOC}.pdf`,
+          storage_path: null,
+          data_vencimento: hoje,
+        },
+      ])
       .select("id")
       .single();
     if (aErr) throw aErr;
@@ -86,7 +87,6 @@ async function runSimulation() {
 
   const TESTE_EMAIL = "fominraphael@gmail.com";
   await sendMail({ to: TESTE_EMAIL, subject: assunto, html });
-
 
   await supabaseAdmin
     .from("documentos_arquivo")
@@ -110,12 +110,11 @@ async function handle() {
     });
   } catch (e: any) {
     console.error("[notificar-vencimentos-test] falhou:", e?.message, e?.stack);
-    return new Response(
-      JSON.stringify({ ok: false, error: e?.message, stack: e?.stack }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ ok: false, error: e?.message, stack: e?.stack }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
-
 }
 
 export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos-test")({

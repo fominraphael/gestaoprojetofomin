@@ -37,6 +37,7 @@ Arquivo: `src/routes/_authenticated._toyota.toyota.painel.tsx` e `AppSidebar.tsx
 - Cards 2-5 são snapshot atual (não filtram por mês); card "Solicitados" usa o mês. Deixar isso claro na UI com legenda pequena.
 
 ## Fora de escopo
+
 - Integração com API externa de compressão (deixarei TODO). Se o usuário confirmar credenciais de PDF.co/Cloudmersive, faço em turno seguinte.
 - Testes automatizados dessa refatoração.
 

@@ -10,7 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,8 +27,15 @@ export const Route = createFileRoute("/_authenticated/_compras/compras/configura
 });
 
 type Categoria =
-  | "loja_estoque" | "tipo_compra" | "motivo_pendencia"
-  | "motivo_cancelamento" | "tipo_debito" | "estado_uf" | "campo_formulario" | "documento" | "status_debito";
+  | "loja_estoque"
+  | "tipo_compra"
+  | "motivo_pendencia"
+  | "motivo_cancelamento"
+  | "tipo_debito"
+  | "estado_uf"
+  | "campo_formulario"
+  | "documento"
+  | "status_debito";
 
 type MotivoTipo = "pendencia" | "cancelamento" | "suspensao";
 
@@ -51,19 +62,72 @@ interface Item {
 }
 
 const TABS: {
-  key: Categoria | "motivos"; title: string; hint: string;
-  usaUf?: boolean; usaTipoCampo?: boolean; usaGrupo?: boolean;
-  multiUf?: boolean; usaObrigatorio?: boolean; usaTipoPessoa?: boolean; multiTipoPessoa?: boolean;
-  usaStatusDebito?: boolean; usaMotivoTipo?: boolean;
+  key: Categoria | "motivos";
+  title: string;
+  hint: string;
+  usaUf?: boolean;
+  usaTipoCampo?: boolean;
+  usaGrupo?: boolean;
+  multiUf?: boolean;
+  usaObrigatorio?: boolean;
+  usaTipoPessoa?: boolean;
+  multiTipoPessoa?: boolean;
+  usaStatusDebito?: boolean;
+  usaMotivoTipo?: boolean;
 }[] = [
-  { key: "estado_uf", title: "Estados (UF)", hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES)." },
-  { key: "loja_estoque", title: "Lojas de estoque", hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.", usaUf: true },
-  { key: "campo_formulario", title: "Campos", hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.", usaUf: true, usaTipoCampo: true, usaGrupo: true, multiUf: true },
-  { key: "documento", title: "Documentos", hint: "Documentos exigidos por estado e pessoa (PF/PJ). Marque um ou vários estados e PF/PJ — o item é replicado para cada combinação. Marque como obrigatório para bloquear o envio à Central sem anexo.", usaUf: true, multiUf: true, usaObrigatorio: true, usaTipoPessoa: true, multiTipoPessoa: true },
-  { key: "tipo_compra", title: "Tipos de compra", hint: "Ex.: Somente compra, Troca por VU, Troca por VN." },
-  { key: "tipo_debito", title: "Itens de checagem / débitos", hint: "Itens marcados no chamado com um status configurado abaixo. Marque como obrigatório para bloquear o envio à Central.", usaObrigatorio: true },
-  { key: "status_debito", title: "Status de débito", hint: "Opções do seletor de status em cada item de checagem/débito. Vincule a um tipo específico (ex.: só aparece em Multas) ou deixe em Todos. Marque se ao selecionar exige descrição e/ou anexo.", usaStatusDebito: true },
-  { key: "motivos", title: "Motivos", hint: "Motivos para pendência, cancelamento e suspensão de chamados. Selecione o tipo ao adicionar.", usaMotivoTipo: true },
+  {
+    key: "estado_uf",
+    title: "Estados (UF)",
+    hint: "Estados disponíveis. O valor deve ser a sigla (ex.: GO, ES).",
+  },
+  {
+    key: "loja_estoque",
+    title: "Lojas de estoque",
+    hint: "Vincule cada loja ao estado. No formulário, apenas as lojas do estado selecionado aparecem.",
+    usaUf: true,
+  },
+  {
+    key: "campo_formulario",
+    title: "Campos",
+    hint: "Campos adicionais exigidos por estado. Selecione um ou mais estados — o campo é replicado para cada UF selecionada.",
+    usaUf: true,
+    usaTipoCampo: true,
+    usaGrupo: true,
+    multiUf: true,
+  },
+  {
+    key: "documento",
+    title: "Documentos",
+    hint: "Documentos exigidos por estado e pessoa (PF/PJ). Marque um ou vários estados e PF/PJ — o item é replicado para cada combinação. Marque como obrigatório para bloquear o envio à Central sem anexo.",
+    usaUf: true,
+    multiUf: true,
+    usaObrigatorio: true,
+    usaTipoPessoa: true,
+    multiTipoPessoa: true,
+  },
+  {
+    key: "tipo_compra",
+    title: "Tipos de compra",
+    hint: "Ex.: Somente compra, Troca por VU, Troca por VN.",
+  },
+  {
+    key: "tipo_debito",
+    title: "Itens de checagem / débitos",
+    hint: "Itens marcados no chamado com um status configurado abaixo. Marque como obrigatório para bloquear o envio à Central.",
+    usaObrigatorio: true,
+  },
+  {
+    key: "status_debito",
+    title: "Status de débito",
+    hint: "Opções do seletor de status em cada item de checagem/débito. Vincule a um tipo específico (ex.: só aparece em Multas) ou deixe em Todos. Marque se ao selecionar exige descrição e/ou anexo.",
+    usaStatusDebito: true,
+  },
+  {
+    key: "motivos",
+    title: "Motivos",
+    hint: "Motivos para pendência, cancelamento e suspensão de chamados. Selecione o tipo ao adicionar.",
+    usaMotivoTipo: true,
+  },
 ];
 
 const TIPOS_CAMPO = [
@@ -90,8 +154,14 @@ const GRUPOS = [
 const TIPOS_PESSOA_OPT: ("PF" | "PJ")[] = ["PF", "PJ"];
 
 interface NovoForm {
-  valor: string; label: string; ordem: string;
-  uf: string; ufs: string[]; tipo_campo: string; obrigatorio: boolean; grupo: string;
+  valor: string;
+  label: string;
+  ordem: string;
+  uf: string;
+  ufs: string[];
+  tipo_campo: string;
+  obrigatorio: boolean;
+  grupo: string;
   tipos_pessoa: ("PF" | "PJ")[];
   link_tipo_debito: string; // "" = todos
   exige_anexo: boolean;
@@ -99,7 +169,21 @@ interface NovoForm {
   motivo_tipo: MotivoTipo;
 }
 
-const NOVO_VAZIO: NovoForm = { valor: "", label: "", ordem: "", uf: "", ufs: [], tipo_campo: "texto", obrigatorio: false, grupo: "cliente", tipos_pessoa: [], link_tipo_debito: "", exige_anexo: false, exige_descricao: false, motivo_tipo: "pendencia" };
+const NOVO_VAZIO: NovoForm = {
+  valor: "",
+  label: "",
+  ordem: "",
+  uf: "",
+  ufs: [],
+  tipo_campo: "texto",
+  obrigatorio: false,
+  grupo: "cliente",
+  tipos_pessoa: [],
+  link_tipo_debito: "",
+  exige_anexo: false,
+  exige_descricao: false,
+  motivo_tipo: "pendencia",
+};
 
 function ConfiguracoesCompras() {
   const { isAdmin } = useAuth();
@@ -121,7 +205,9 @@ function ConfiguracoesCompras() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
 
   if (!isAdmin) return <div className="p-6">Acesso restrito.</div>;
 
@@ -142,22 +228,40 @@ function ConfiguracoesCompras() {
     setNovoField(cat, { tipos_pessoa: next });
   };
 
-
   async function adicionar(cat: Categoria | "motivos", tab: (typeof TABS)[number]) {
     const n = novo[tab.key] ?? NOVO_VAZIO;
-    if (!n.valor.trim() || !n.label.trim()) { toast.error("Preencha valor e rótulo."); return; }
-    if (tab.usaUf && !tab.multiUf && !n.uf) { toast.error("Selecione o estado (UF)."); return; }
-    if (tab.usaUf && tab.multiUf && n.ufs.length === 0) { toast.error("Selecione pelo menos um estado."); return; }
-    if (tab.usaMotivoTipo && !n.motivo_tipo) { toast.error("Selecione o tipo de motivo."); return; }
-    const valor = n.valor.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+    if (!n.valor.trim() || !n.label.trim()) {
+      toast.error("Preencha valor e rótulo.");
+      return;
+    }
+    if (tab.usaUf && !tab.multiUf && !n.uf) {
+      toast.error("Selecione o estado (UF).");
+      return;
+    }
+    if (tab.usaUf && tab.multiUf && n.ufs.length === 0) {
+      toast.error("Selecione pelo menos um estado.");
+      return;
+    }
+    if (tab.usaMotivoTipo && !n.motivo_tipo) {
+      toast.error("Selecione o tipo de motivo.");
+      return;
+    }
+    const valor = n.valor
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_");
     const ufsAlvo: (string | null)[] = tab.multiUf
       ? n.ufs.map((u) => u.toUpperCase())
-      : tab.usaUf ? [n.uf.toUpperCase()] : [null];
+      : tab.usaUf
+        ? [n.uf.toUpperCase()]
+        : [null];
     // Se multiTipoPessoa e nenhum selecionado => NULL (aplica a ambos)
     const tpsAlvo: (("PF" | "PJ") | null)[] = tab.usaTipoPessoa
-      ? (tab.multiTipoPessoa
-          ? (n.tipos_pessoa.length === 0 ? [null] : n.tipos_pessoa)
-          : [null])
+      ? tab.multiTipoPessoa
+        ? n.tipos_pessoa.length === 0
+          ? [null]
+          : n.tipos_pessoa
+        : [null]
       : [null];
     const rows: any[] = [];
     for (const uf of ufsAlvo) {
@@ -169,11 +273,14 @@ function ConfiguracoesCompras() {
           ordem: Number(n.ordem) || 0,
           uf,
           tipo_campo: tab.usaTipoCampo ? n.tipo_campo : null,
-          obrigatorio: (tab.usaTipoCampo || tab.usaObrigatorio) ? n.obrigatorio : false,
-          grupo: tab.usaMotivoTipo ? n.motivo_tipo
+          obrigatorio: tab.usaTipoCampo || tab.usaObrigatorio ? n.obrigatorio : false,
+          grupo: tab.usaMotivoTipo
+            ? n.motivo_tipo
             : tab.usaStatusDebito
-              ? (n.link_tipo_debito || null)
-              : (tab.usaGrupo ? n.grupo : null),
+              ? n.link_tipo_debito || null
+              : tab.usaGrupo
+                ? n.grupo
+                : null,
           tipo_pessoa: tp,
           exige_anexo: tab.usaStatusDebito ? n.exige_anexo : false,
           exige_descricao: tab.usaStatusDebito ? n.exige_descricao : false,
@@ -181,29 +288,50 @@ function ConfiguracoesCompras() {
       }
     }
     const { error } = await supabase.from("compras_cadastros").insert(rows as any);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setNovo((s) => ({ ...s, [tab.key]: NOVO_VAZIO }));
     toast.success(`${rows.length} item(ns) adicionado(s).`);
     carregar();
   }
 
   async function salvar(i: Item) {
-    const { error } = await supabase.from("compras_cadastros")
-      .update({ label: i.label, ordem: i.ordem, ativo: i.ativo, uf: i.uf, tipo_campo: i.tipo_campo, obrigatorio: i.obrigatorio, grupo: i.grupo, tipo_pessoa: i.tipo_pessoa, exige_anexo: i.exige_anexo, exige_descricao: i.exige_descricao } as any)
+    const { error } = await supabase
+      .from("compras_cadastros")
+      .update({
+        label: i.label,
+        ordem: i.ordem,
+        ativo: i.ativo,
+        uf: i.uf,
+        tipo_campo: i.tipo_campo,
+        obrigatorio: i.obrigatorio,
+        grupo: i.grupo,
+        tipo_pessoa: i.tipo_pessoa,
+        exige_anexo: i.exige_anexo,
+        exige_descricao: i.exige_descricao,
+      } as any)
       .eq("id", i.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Salvo.");
   }
 
   async function excluir(id: string) {
     if (!confirm("Excluir este item?")) return;
     const { error } = await supabase.from("compras_cadastros").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setItems((prev) => prev.filter((x) => x.id !== id));
   }
 
   function updateLocal(id: string, patch: Partial<Item>) {
-    setItems((prev) => prev.map((x) => x.id === id ? { ...x, ...patch } : x));
+    setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   }
 
   return (
@@ -221,7 +349,9 @@ function ConfiguracoesCompras() {
       <Tabs defaultValue="estado_uf" className="w-full">
         <TabsList className="flex-wrap h-auto">
           {TABS.map((t) => (
-            <TabsTrigger key={t.key} value={t.key}>{t.title}</TabsTrigger>
+            <TabsTrigger key={t.key} value={t.key}>
+              {t.title}
+            </TabsTrigger>
           ))}
         </TabsList>
 
@@ -230,27 +360,30 @@ function ConfiguracoesCompras() {
           const rawList = isMotivos
             ? items.filter((i) => i.categoria === "motivo_pendencia")
             : items.filter((i) => i.categoria === t.key);
-          const list = isMotivos && filtroMotivoTipo !== "todos"
-            ? rawList.filter((i) => i.grupo === filtroMotivoTipo)
-            : rawList;
+          const list =
+            isMotivos && filtroMotivoTipo !== "todos"
+              ? rawList.filter((i) => i.grupo === filtroMotivoTipo)
+              : rawList;
           const n = novo[t.key] ?? NOVO_VAZIO;
           // Column template for list rows
           const cols = [
-            "140px",            // valor
-            "minmax(200px,1fr)",// label
-            isMotivos ? "130px" : null,  // tipo (motivos)
-            t.usaUf ? "110px" : null,       // uf
-            t.usaTipoPessoa ? "90px" : null,// tipo_pessoa
-            t.usaGrupo ? "160px" : null,    // grupo
+            "140px", // valor
+            "minmax(200px,1fr)", // label
+            isMotivos ? "130px" : null, // tipo (motivos)
+            t.usaUf ? "110px" : null, // uf
+            t.usaTipoPessoa ? "90px" : null, // tipo_pessoa
+            t.usaGrupo ? "160px" : null, // grupo
             t.usaStatusDebito ? "180px" : null, // aplica-se a
-            t.usaStatusDebito ? "80px" : null,  // exige anexo
-            t.usaStatusDebito ? "80px" : null,  // exige descricao
-            t.usaTipoCampo ? "140px" : null,// tipo
-            (t.usaTipoCampo || t.usaObrigatorio) ? "70px" : null, // obrig
-            "80px",             // ordem
-            "100px",            // ativo
-            "90px",             // ações
-          ].filter(Boolean).join(" ");
+            t.usaStatusDebito ? "80px" : null, // exige anexo
+            t.usaStatusDebito ? "80px" : null, // exige descricao
+            t.usaTipoCampo ? "140px" : null, // tipo
+            t.usaTipoCampo || t.usaObrigatorio ? "70px" : null, // obrig
+            "80px", // ordem
+            "100px", // ativo
+            "90px", // ações
+          ]
+            .filter(Boolean)
+            .join(" ");
 
           return (
             <TabsContent key={t.key} value={t.key} className="space-y-4">
@@ -264,20 +397,37 @@ function ConfiguracoesCompras() {
                   <div className="flex flex-wrap gap-2 items-end border border-dashed border-border rounded-md p-3">
                     <div className="w-[160px]">
                       <Label>Valor (chave)</Label>
-                      <Input value={n.valor} onChange={(e) => setNovoField(t.key, { valor: e.target.value })} placeholder={t.key === "estado_uf" ? "GO" : "chave_curta"} />
+                      <Input
+                        value={n.valor}
+                        onChange={(e) => setNovoField(t.key, { valor: e.target.value })}
+                        placeholder={t.key === "estado_uf" ? "GO" : "chave_curta"}
+                      />
                     </div>
                     <div className="flex-1 min-w-[220px]">
                       <Label>Rótulo</Label>
-                      <Input value={n.label} onChange={(e) => setNovoField(t.key, { label: e.target.value })} placeholder="Nome exibido" />
+                      <Input
+                        value={n.label}
+                        onChange={(e) => setNovoField(t.key, { label: e.target.value })}
+                        placeholder="Nome exibido"
+                      />
                     </div>
                     {t.usaMotivoTipo && (
                       <div className="w-[170px]">
                         <Label>Tipo de Motivo</Label>
-                        <Select value={n.motivo_tipo} onValueChange={(v) => setNovoField(t.key, { motivo_tipo: v as MotivoTipo })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={n.motivo_tipo}
+                          onValueChange={(v) =>
+                            setNovoField(t.key, { motivo_tipo: v as MotivoTipo })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             {(Object.keys(MOTIVO_TIPO_LABELS) as MotivoTipo[]).map((mt) => (
-                              <SelectItem key={mt} value={mt}>{MOTIVO_TIPO_LABELS[mt]}</SelectItem>
+                              <SelectItem key={mt} value={mt}>
+                                {MOTIVO_TIPO_LABELS[mt]}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -287,10 +437,14 @@ function ConfiguracoesCompras() {
                       <div className="w-[140px]">
                         <Label>Estado (UF)</Label>
                         <Select value={n.uf} onValueChange={(v) => setNovoField(t.key, { uf: v })}>
-                          <SelectTrigger><SelectValue placeholder="UF…" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="UF…" />
+                          </SelectTrigger>
                           <SelectContent>
                             {ufs.map((u) => (
-                              <SelectItem key={u.id} value={u.valor.toUpperCase()}>{u.label}</SelectItem>
+                              <SelectItem key={u.id} value={u.valor.toUpperCase()}>
+                                {u.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -301,7 +455,10 @@ function ConfiguracoesCompras() {
                         <Label>Estados (UF)</Label>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between font-normal">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between font-normal"
+                            >
                               <span className="truncate">
                                 {n.ufs.length === 0
                                   ? "Selecione…"
@@ -313,7 +470,9 @@ function ConfiguracoesCompras() {
                           </PopoverTrigger>
                           <PopoverContent className="w-[240px] p-2" align="start">
                             {ufs.length === 0 ? (
-                              <div className="text-xs text-muted-foreground p-2">Cadastre estados primeiro.</div>
+                              <div className="text-xs text-muted-foreground p-2">
+                                Cadastre estados primeiro.
+                              </div>
                             ) : (
                               <div className="space-y-1 max-h-60 overflow-auto">
                                 {ufs.map((u) => {
@@ -344,25 +503,37 @@ function ConfiguracoesCompras() {
                         <Label>Pessoa (PF/PJ)</Label>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between font-normal">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between font-normal"
+                            >
                               <span className="truncate">
-                                {n.tipos_pessoa.length === 0 ? "Ambos (PF e PJ)" : n.tipos_pessoa.join(" + ")}
+                                {n.tipos_pessoa.length === 0
+                                  ? "Ambos (PF e PJ)"
+                                  : n.tipos_pessoa.join(" + ")}
                               </span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-[200px] p-2" align="start">
                             <div className="space-y-1">
                               {TIPOS_PESSOA_OPT.map((tp) => (
-                                <label key={tp} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm">
+                                <label
+                                  key={tp}
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                                >
                                   <Checkbox
                                     checked={n.tipos_pessoa.includes(tp)}
                                     onCheckedChange={() => toggleTipoPessoa(t.key, tp)}
                                   />
-                                  <span className="flex-1">{tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}</span>
+                                  <span className="flex-1">
+                                    {tp === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}
+                                  </span>
                                   <span className="text-xs text-muted-foreground">{tp}</span>
                                 </label>
                               ))}
-                              <p className="text-[10px] text-muted-foreground px-2 pt-1">Nenhum marcado = aplica a ambos.</p>
+                              <p className="text-[10px] text-muted-foreground px-2 pt-1">
+                                Nenhum marcado = aplica a ambos.
+                              </p>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -371,11 +542,18 @@ function ConfiguracoesCompras() {
                     {t.usaGrupo && (
                       <div className="w-[180px]">
                         <Label>Grupo</Label>
-                        <Select value={n.grupo} onValueChange={(v) => setNovoField(t.key, { grupo: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={n.grupo}
+                          onValueChange={(v) => setNovoField(t.key, { grupo: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             {GRUPOS.map((g) => (
-                              <SelectItem key={g.valor} value={g.valor}>{g.label}</SelectItem>
+                              <SelectItem key={g.valor} value={g.valor}>
+                                {g.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -384,11 +562,18 @@ function ConfiguracoesCompras() {
                     {t.usaTipoCampo && (
                       <div className="w-[170px]">
                         <Label>Tipo</Label>
-                        <Select value={n.tipo_campo} onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={n.tipo_campo}
+                          onValueChange={(v) => setNovoField(t.key, { tipo_campo: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             {TIPOS_CAMPO.map((tc) => (
-                              <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
+                              <SelectItem key={tc.valor} value={tc.valor}>
+                                {tc.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -402,36 +587,69 @@ function ConfiguracoesCompras() {
                           checked={n.obrigatorio}
                           onChange={(e) => setNovoField(t.key, { obrigatorio: e.target.checked })}
                         />
-                        <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">Obrigatório</Label>
+                        <Label htmlFor={`obr-${t.key}`} className="cursor-pointer">
+                          Obrigatório
+                        </Label>
                       </div>
                     )}
                     {t.usaStatusDebito && (
                       <>
                         <div className="w-[200px]">
                           <Label>Aplica-se a</Label>
-                          <Select value={n.link_tipo_debito || "__all"} onValueChange={(v) => setNovoField(t.key, { link_tipo_debito: v === "__all" ? "" : v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                          <Select
+                            value={n.link_tipo_debito || "__all"}
+                            onValueChange={(v) =>
+                              setNovoField(t.key, { link_tipo_debito: v === "__all" ? "" : v })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="__all">Todos os tipos</SelectItem>
-                              {items.filter((i) => i.categoria === "tipo_debito" && i.ativo).map((td) => (
-                                <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
-                              ))}
+                              {items
+                                .filter((i) => i.categoria === "tipo_debito" && i.ativo)
+                                .map((td) => (
+                                  <SelectItem key={td.id} value={td.valor}>
+                                    {td.label}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="flex items-center gap-2 h-10 px-2">
-                          <input id={`ea-${t.key}`} type="checkbox" checked={n.exige_anexo} onChange={(e) => setNovoField(t.key, { exige_anexo: e.target.checked })} />
-                          <Label htmlFor={`ea-${t.key}`} className="cursor-pointer">Exige anexo</Label>
+                          <input
+                            id={`ea-${t.key}`}
+                            type="checkbox"
+                            checked={n.exige_anexo}
+                            onChange={(e) => setNovoField(t.key, { exige_anexo: e.target.checked })}
+                          />
+                          <Label htmlFor={`ea-${t.key}`} className="cursor-pointer">
+                            Exige anexo
+                          </Label>
                         </div>
                         <div className="flex items-center gap-2 h-10 px-2">
-                          <input id={`ed-${t.key}`} type="checkbox" checked={n.exige_descricao} onChange={(e) => setNovoField(t.key, { exige_descricao: e.target.checked })} />
-                          <Label htmlFor={`ed-${t.key}`} className="cursor-pointer">Exige descrição</Label>
+                          <input
+                            id={`ed-${t.key}`}
+                            type="checkbox"
+                            checked={n.exige_descricao}
+                            onChange={(e) =>
+                              setNovoField(t.key, { exige_descricao: e.target.checked })
+                            }
+                          />
+                          <Label htmlFor={`ed-${t.key}`} className="cursor-pointer">
+                            Exige descrição
+                          </Label>
                         </div>
                       </>
                     )}
                     <div className="w-[90px]">
                       <Label>Ordem</Label>
-                      <Input type="number" value={n.ordem} onChange={(e) => setNovoField(t.key, { ordem: e.target.value })} />
+                      <Input
+                        type="number"
+                        value={n.ordem}
+                        onChange={(e) => setNovoField(t.key, { ordem: e.target.value })}
+                      />
                     </div>
                     <Button onClick={() => adicionar(t.key, t)}>
                       <Plus className="w-4 h-4 mr-2" /> Adicionar
@@ -442,12 +660,19 @@ function ConfiguracoesCompras() {
                   {isMotivos && (
                     <div className="flex items-center gap-2 mb-2">
                       <Label className="text-xs text-muted-foreground">Filtrar por tipo:</Label>
-                      <Select value={filtroMotivoTipo} onValueChange={(v) => setFiltroMotivoTipo(v as MotivoTipo | "todos")}>
-                        <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
+                      <Select
+                        value={filtroMotivoTipo}
+                        onValueChange={(v) => setFiltroMotivoTipo(v as MotivoTipo | "todos")}
+                      >
+                        <SelectTrigger className="h-8 w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="todos">Todos</SelectItem>
                           {(Object.keys(MOTIVO_TIPO_LABELS) as MotivoTipo[]).map((mt) => (
-                            <SelectItem key={mt} value={mt}>{MOTIVO_TIPO_LABELS[mt]}</SelectItem>
+                            <SelectItem key={mt} value={mt}>
+                              {MOTIVO_TIPO_LABELS[mt]}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -460,7 +685,10 @@ function ConfiguracoesCompras() {
                   ) : (
                     <div className="space-y-1.5">
                       {/* header */}
-                      <div className="hidden md:grid gap-2 px-2 text-[11px] uppercase tracking-wide text-muted-foreground" style={{ gridTemplateColumns: cols }}>
+                      <div
+                        className="hidden md:grid gap-2 px-2 text-[11px] uppercase tracking-wide text-muted-foreground"
+                        style={{ gridTemplateColumns: cols }}
+                      >
                         <div>Chave</div>
                         <div>Rótulo</div>
                         {isMotivos && <div>Tipo</div>}
@@ -482,26 +710,49 @@ function ConfiguracoesCompras() {
                           className="grid gap-2 items-center border border-border rounded-md p-2"
                           style={{ gridTemplateColumns: cols }}
                         >
-                          <div className="text-xs font-mono text-muted-foreground truncate">{i.valor}</div>
-                          <Input value={i.label} onChange={(e) => updateLocal(i.id, { label: e.target.value })} className="h-8" />
+                          <div className="text-xs font-mono text-muted-foreground truncate">
+                            {i.valor}
+                          </div>
+                          <Input
+                            value={i.label}
+                            onChange={(e) => updateLocal(i.id, { label: e.target.value })}
+                            className="h-8"
+                          />
                           {isMotivos && (
                             <Badge variant="outline" className="text-[10px] h-7 justify-center">
-                              {MOTIVO_TIPO_LABELS[(i.grupo as MotivoTipo) ?? "pendencia"] ?? i.grupo}
+                              {MOTIVO_TIPO_LABELS[(i.grupo as MotivoTipo) ?? "pendencia"] ??
+                                i.grupo}
                             </Badge>
                           )}
                           {t.usaUf && (
-                            <Select value={i.uf ?? ""} onValueChange={(v) => updateLocal(i.id, { uf: v })}>
-                              <SelectTrigger className="h-8"><SelectValue placeholder="UF" /></SelectTrigger>
+                            <Select
+                              value={i.uf ?? ""}
+                              onValueChange={(v) => updateLocal(i.id, { uf: v })}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="UF" />
+                              </SelectTrigger>
                               <SelectContent>
                                 {ufs.map((u) => (
-                                  <SelectItem key={u.id} value={u.valor.toUpperCase()}>{u.valor.toUpperCase()}</SelectItem>
+                                  <SelectItem key={u.id} value={u.valor.toUpperCase()}>
+                                    {u.valor.toUpperCase()}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           )}
                           {t.usaTipoPessoa && (
-                            <Select value={i.tipo_pessoa ?? "AMBOS"} onValueChange={(v) => updateLocal(i.id, { tipo_pessoa: v === "AMBOS" ? null : (v as "PF" | "PJ") })}>
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <Select
+                              value={i.tipo_pessoa ?? "AMBOS"}
+                              onValueChange={(v) =>
+                                updateLocal(i.id, {
+                                  tipo_pessoa: v === "AMBOS" ? null : (v as "PF" | "PJ"),
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="AMBOS">Ambos</SelectItem>
                                 <SelectItem value="PF">PF</SelectItem>
@@ -510,61 +761,115 @@ function ConfiguracoesCompras() {
                             </Select>
                           )}
                           {t.usaGrupo && (
-                            <Select value={i.grupo ?? "cliente"} onValueChange={(v) => updateLocal(i.id, { grupo: v })}>
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <Select
+                              value={i.grupo ?? "cliente"}
+                              onValueChange={(v) => updateLocal(i.id, { grupo: v })}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 {GRUPOS.map((g) => (
-                                  <SelectItem key={g.valor} value={g.valor}>{g.label}</SelectItem>
+                                  <SelectItem key={g.valor} value={g.valor}>
+                                    {g.label}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           )}
                           {t.usaStatusDebito && (
                             <>
-                              <Select value={i.grupo ?? "__all"} onValueChange={(v) => updateLocal(i.id, { grupo: v === "__all" ? null : v })}>
-                                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                              <Select
+                                value={i.grupo ?? "__all"}
+                                onValueChange={(v) =>
+                                  updateLocal(i.id, { grupo: v === "__all" ? null : v })
+                                }
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="__all">Todos</SelectItem>
-                                  {items.filter((x) => x.categoria === "tipo_debito" && x.ativo).map((td) => (
-                                    <SelectItem key={td.id} value={td.valor}>{td.label}</SelectItem>
-                                  ))}
+                                  {items
+                                    .filter((x) => x.categoria === "tipo_debito" && x.ativo)
+                                    .map((td) => (
+                                      <SelectItem key={td.id} value={td.valor}>
+                                        {td.label}
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                               <label className="flex items-center justify-center text-xs">
-                                <input type="checkbox" checked={i.exige_anexo} onChange={(e) => updateLocal(i.id, { exige_anexo: e.target.checked })} />
+                                <input
+                                  type="checkbox"
+                                  checked={i.exige_anexo}
+                                  onChange={(e) =>
+                                    updateLocal(i.id, { exige_anexo: e.target.checked })
+                                  }
+                                />
                               </label>
                               <label className="flex items-center justify-center text-xs">
-                                <input type="checkbox" checked={i.exige_descricao} onChange={(e) => updateLocal(i.id, { exige_descricao: e.target.checked })} />
+                                <input
+                                  type="checkbox"
+                                  checked={i.exige_descricao}
+                                  onChange={(e) =>
+                                    updateLocal(i.id, { exige_descricao: e.target.checked })
+                                  }
+                                />
                               </label>
                             </>
                           )}
                           {t.usaTipoCampo && (
-                            <Select value={i.tipo_campo ?? "texto"} onValueChange={(v) => updateLocal(i.id, { tipo_campo: v })}>
-                              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                            <Select
+                              value={i.tipo_campo ?? "texto"}
+                              onValueChange={(v) => updateLocal(i.id, { tipo_campo: v })}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 {TIPOS_CAMPO.map((tc) => (
-                                  <SelectItem key={tc.valor} value={tc.valor}>{tc.label}</SelectItem>
+                                  <SelectItem key={tc.valor} value={tc.valor}>
+                                    {tc.label}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           )}
                           {(t.usaTipoCampo || t.usaObrigatorio) && (
-                            <label className="flex items-center justify-center gap-1 text-xs" title="Obrigatório">
+                            <label
+                              className="flex items-center justify-center gap-1 text-xs"
+                              title="Obrigatório"
+                            >
                               <input
                                 type="checkbox"
                                 checked={i.obrigatorio}
-                                onChange={(e) => updateLocal(i.id, { obrigatorio: e.target.checked })}
+                                onChange={(e) =>
+                                  updateLocal(i.id, { obrigatorio: e.target.checked })
+                                }
                               />
                             </label>
                           )}
-                          <Input type="number" value={i.ordem} onChange={(e) => updateLocal(i.id, { ordem: Number(e.target.value) })} className="h-8" />
+                          <Input
+                            type="number"
+                            value={i.ordem}
+                            onChange={(e) => updateLocal(i.id, { ordem: Number(e.target.value) })}
+                            className="h-8"
+                          />
                           <Button
-                            variant="outline" size="sm"
-                            onClick={() => { updateLocal(i.id, { ativo: !i.ativo }); salvar({ ...i, ativo: !i.ativo }); }}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              updateLocal(i.id, { ativo: !i.ativo });
+                              salvar({ ...i, ativo: !i.ativo });
+                            }}
                             className="h-8"
                           >
                             <Power className="w-3 h-3 mr-1" />
-                            <Badge variant={i.ativo ? "default" : "secondary"} className="text-[10px]">
+                            <Badge
+                              variant={i.ativo ? "default" : "secondary"}
+                              className="text-[10px]"
+                            >
                               {i.ativo ? "Ativo" : "Inativo"}
                             </Badge>
                           </Button>
@@ -572,7 +877,12 @@ function ConfiguracoesCompras() {
                             <Button size="sm" onClick={() => salvar(i)} className="h-8 px-2">
                               <Save className="w-3 h-3" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => excluir(i.id)} className="h-8 px-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => excluir(i.id)}
+                              className="h-8 px-2"
+                            >
                               <Trash2 className="w-3 h-3 text-red-500" />
                             </Button>
                           </div>

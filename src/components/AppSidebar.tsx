@@ -1,15 +1,14 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import {
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Layers,
-  Users,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Layers, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { findModuleByPath, userCanAccess, navItemsForPerfil, perfilFromTipoUsuario } from "@/lib/modules";
+import {
+  findModuleByPath,
+  userCanAccess,
+  navItemsForPerfil,
+  perfilFromTipoUsuario,
+} from "@/lib/modules";
 import { APP_VERSION } from "@/lib/version";
 
 export function AppSidebar() {
@@ -48,14 +47,14 @@ export function AppSidebar() {
     <aside
       className={cn(
         "shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 sticky top-0 h-screen self-start",
-        isCollapsed ? "w-[70px]" : "w-60"
+        isCollapsed ? "w-[70px]" : "w-60",
       )}
     >
       {/* Header */}
       <div
         className={cn(
           "px-5 py-5 border-b border-sidebar-border flex items-center justify-between gap-2",
-          isCollapsed && "px-3 justify-center"
+          isCollapsed && "px-3 justify-center",
         )}
       >
         {!isCollapsed && (
@@ -72,7 +71,7 @@ export function AppSidebar() {
           onClick={toggleCollapse}
           className={cn(
             "p-1.5 rounded-md hover:bg-sidebar-accent/60 text-muted-foreground hover:text-foreground transition-colors shrink-0",
-            isCollapsed && "mx-auto"
+            isCollapsed && "mx-auto",
           )}
           title={isCollapsed ? "Expandir menu" : "Recolher menu"}
         >
@@ -97,7 +96,7 @@ export function AppSidebar() {
                 isCollapsed ? "justify-center px-2" : "",
                 active
                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
               )}
               title={isCollapsed ? item.label : undefined}
             >
@@ -110,17 +109,14 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div
-        className={cn(
-          "px-3 py-4 border-t border-sidebar-border space-y-1",
-          isCollapsed && "px-2"
-        )}
+        className={cn("px-3 py-4 border-t border-sidebar-border space-y-1", isCollapsed && "px-2")}
       >
         {/* Back to Portal */}
         <Link
           to="/"
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors",
-            isCollapsed && "justify-center px-2"
+            isCollapsed && "justify-center px-2",
           )}
           title={isCollapsed ? "Voltar ao Portal" : undefined}
         >
@@ -133,7 +129,7 @@ export function AppSidebar() {
             to="/admin/usuarios"
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors",
-              isCollapsed && "justify-center px-2"
+              isCollapsed && "justify-center px-2",
             )}
             title={isCollapsed ? "Painel Admin" : undefined}
           >
@@ -147,7 +143,7 @@ export function AppSidebar() {
           onClick={handleLogout}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors",
-            isCollapsed && "justify-center px-2"
+            isCollapsed && "justify-center px-2",
           )}
           title={isCollapsed ? "Sair" : undefined}
         >

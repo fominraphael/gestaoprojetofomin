@@ -29,7 +29,10 @@ export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos")(
           const tipoIds = [...new Set(arquivos.map((a) => a.tipo_id))];
 
           const [{ data: empresas }, { data: tipos }] = await Promise.all([
-            supabaseAdmin.from("empresas").select("id, nome, cnpj, email_notificacao").in("id", empresaIds),
+            supabaseAdmin
+              .from("empresas")
+              .select("id, nome, cnpj, email_notificacao")
+              .in("id", empresaIds),
             supabaseAdmin.from("documentos_tipo").select("id, nome").in("id", tipoIds),
           ]);
 
@@ -73,7 +76,7 @@ export const Route = createFileRoute("/api/public/hooks/notificar-vencimentos")(
 
           return new Response(
             JSON.stringify({ ok: true, enviados, total: arquivos.length, erros }),
-            { headers: { "Content-Type": "application/json" } }
+            { headers: { "Content-Type": "application/json" } },
           );
         } catch (e: any) {
           return new Response(JSON.stringify({ ok: false, error: e.message }), {

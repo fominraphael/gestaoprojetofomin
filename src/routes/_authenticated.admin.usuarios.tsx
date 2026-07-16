@@ -89,7 +89,9 @@ export function AdminUsuariosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sub-tabs
-  const [activeTab, setActiveTab] = useState<"users" | "import" | "companies" | "doctypes" | "usertypes">("users");
+  const [activeTab, setActiveTab] = useState<
+    "users" | "import" | "companies" | "doctypes" | "usertypes"
+  >("users");
 
   // General state
   const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
@@ -97,12 +99,13 @@ export function AdminUsuariosPage() {
   const [docTipos, setDocTipos] = useState<DocumentoTipo[]>([]);
   const [arquivos, setArquivos] = useState<DocumentoArquivo[]>([]);
   const [userTypes, setUserTypes] = useState<TipoUsuarioConfig[]>([]);
-  
+
   const [loadingData, setLoadingData] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-  const [emailTestError, setEmailTestError] = useState<{ message: string; stack?: string } | null>(null);
-
+  const [emailTestError, setEmailTestError] = useState<{ message: string; stack?: string } | null>(
+    null,
+  );
 
   // Forms states
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -118,7 +121,7 @@ export function AdminUsuariosPage() {
     active: true,
     campos_customizados: {} as Record<string, any>,
   });
-  
+
   const [editPassword, setEditPassword] = useState("");
 
   const [showCreateCompany, setShowCreateCompany] = useState(false);
@@ -132,7 +135,12 @@ export function AdminUsuariosPage() {
   const [newUserType, setNewUserType] = useState({
     nome: "",
     role: "user" as "admin" | "user",
-    campos_schema: [] as { nome: string; label: string; tipo: "text" | "number" | "boolean"; obrigatorio: boolean }[],
+    campos_schema: [] as {
+      nome: string;
+      label: string;
+      tipo: "text" | "number" | "boolean";
+      obrigatorio: boolean;
+    }[],
   });
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldLabel, setNewFieldLabel] = useState("");
@@ -155,7 +163,9 @@ export function AdminUsuariosPage() {
 
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "rejected" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "approved" | "pending" | "rejected" | "inactive"
+  >("all");
 
   // Edit modal states
   const [editingCompany, setEditingCompany] = useState<Empresa | null>(null);
@@ -207,7 +217,8 @@ export function AdminUsuariosPage() {
     e.preventDefault();
     if (!newUser.username) return showToast("error", "Login de acesso é obrigatório.");
     if (!newUser.password) return showToast("error", "Senha inicial é obrigatória.");
-    if (!newUser.nome_fantasia.trim()) return showToast("error", "Nome ou nome fantasia é obrigatório.");
+    if (!newUser.nome_fantasia.trim())
+      return showToast("error", "Nome ou nome fantasia é obrigatório.");
 
     // Dynamic field validation
     const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
@@ -216,7 +227,10 @@ export function AdminUsuariosPage() {
       const isRoot = currentUser?.username === "root";
       const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
       if (selectedType.role === "admin" && !canCreateAdmin) {
-        return showToast("error", "Você não tem permissão para cadastrar usuários do tipo Administrador.");
+        return showToast(
+          "error",
+          "Você não tem permissão para cadastrar usuários do tipo Administrador.",
+        );
       }
 
       for (const field of selectedType.campos_schema) {
@@ -234,7 +248,9 @@ export function AdminUsuariosPage() {
         nome_fantasia: newUser.nome_fantasia.trim(),
         role: selectedType?.role || "user",
         status: "approved",
-        cnpj: newUser.campos_customizados.cnpj ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj) : null,
+        cnpj: newUser.campos_customizados.cnpj
+          ? ((v: string) => v.trim())(newUser.campos_customizados.cnpj)
+          : null,
         empresa_id: null,
         modulos: newUser.modulos,
         active: newUser.active,
@@ -245,7 +261,17 @@ export function AdminUsuariosPage() {
       });
       showToast("success", `Usuário "${newUser.username}" criado com sucesso.`);
       setShowCreateUser(false);
-      setNewUser({ username: "", password: "", nome_fantasia: "", tipo_usuario: "Lojista", pode_criar_admin: false, central_compras: false, modulos: [], active: true, campos_customizados: {} });
+      setNewUser({
+        username: "",
+        password: "",
+        nome_fantasia: "",
+        tipo_usuario: "Lojista",
+        pode_criar_admin: false,
+        central_compras: false,
+        modulos: [],
+        active: true,
+        campos_customizados: {},
+      });
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao criar usuário.");
@@ -261,12 +287,15 @@ export function AdminUsuariosPage() {
         return showToast("error", "Nome ou nome fantasia é obrigatório.");
       }
       const selectedType = userTypes.find((t) => t.nome === userObj.tipo_usuario);
-      
+
       // Security Check: if changing/saving type admin but has no permissions
       const isRoot = currentUser?.username === "root";
       const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
       if (selectedType?.role === "admin" && !canCreateAdmin) {
-        return showToast("error", "Você não tem permissão para cadastrar ou editar usuários Administradores.");
+        return showToast(
+          "error",
+          "Você não tem permissão para cadastrar ou editar usuários Administradores.",
+        );
       }
 
       // Dynamic field validation
@@ -280,7 +309,9 @@ export function AdminUsuariosPage() {
 
       const updates: any = {
         role: selectedType?.role || "user",
-        cnpj: userObj.campos_customizados?.cnpj ? ((v: string) => v.trim())(userObj.campos_customizados.cnpj) : null,
+        cnpj: userObj.campos_customizados?.cnpj
+          ? ((v: string) => v.trim())(userObj.campos_customizados.cnpj)
+          : null,
         empresa_id: null,
         modulos: userObj.modulos || [],
         active: userObj.active,
@@ -366,14 +397,15 @@ export function AdminUsuariosPage() {
   };
 
   const handleAddFieldToNewType = () => {
-    if (!newFieldName || !newFieldLabel) return showToast("error", "Nome do campo e Rótulo são obrigatórios.");
+    if (!newFieldName || !newFieldLabel)
+      return showToast("error", "Nome do campo e Rótulo são obrigatórios.");
     const fieldNameClean = newFieldName.toLowerCase().replace(/\s+/g, "_").replace(/\W/g, "");
-    
-    if (newUserType.campos_schema.some(f => f.nome === fieldNameClean)) {
+
+    if (newUserType.campos_schema.some((f) => f.nome === fieldNameClean)) {
       return showToast("error", "Já existe um campo com este nome técnico.");
     }
 
-    setNewUserType(prev => ({
+    setNewUserType((prev) => ({
       ...prev,
       campos_schema: [
         ...prev.campos_schema,
@@ -382,8 +414,8 @@ export function AdminUsuariosPage() {
           label: newFieldLabel,
           tipo: newFieldType,
           obrigatorio: newFieldRequired,
-        }
-      ]
+        },
+      ],
     }));
 
     setNewFieldName("");
@@ -393,16 +425,17 @@ export function AdminUsuariosPage() {
   };
 
   const handleRemoveFieldFromNewType = (index: number) => {
-    setNewUserType(prev => ({
+    setNewUserType((prev) => ({
       ...prev,
-      campos_schema: prev.campos_schema.filter((_, i) => i !== index)
+      campos_schema: prev.campos_schema.filter((_, i) => i !== index),
     }));
   };
 
   // Company Actions
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCompany.cnpj || !newCompany.nome) return showToast("error", "CNPJ e Nome são obrigatórios.");
+    if (!newCompany.cnpj || !newCompany.nome)
+      return showToast("error", "CNPJ e Nome são obrigatórios.");
     setActionLoading("create-company");
     try {
       await criarEmpresa(newCompany.cnpj, newCompany.nome, newCompany.email_notificacao || null);
@@ -418,7 +451,12 @@ export function AdminUsuariosPage() {
   };
 
   const handleDeleteCompany = async (id: string, name: string) => {
-    if (!confirm(`Deseja realmente excluir a empresa "${name}"? Isso removerá todos os seus arquivos anexados.`)) return;
+    if (
+      !confirm(
+        `Deseja realmente excluir a empresa "${name}"? Isso removerá todos os seus arquivos anexados.`,
+      )
+    )
+      return;
     setActionLoading(id);
     try {
       await excluirEmpresa(id);
@@ -574,7 +612,6 @@ export function AdminUsuariosPage() {
     }
   };
 
-
   const handleToggleUserTypeAtivo = async (t: TipoUsuarioConfig) => {
     setActionLoading(t.id);
     try {
@@ -588,15 +625,18 @@ export function AdminUsuariosPage() {
     }
   };
 
-
-
   // File Upload Actions
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
     if (!filesList || filesList.length === 0 || !selectedCompanyId || !selectedDocTypeId) return;
     setUploadLoading(true);
     try {
-      await uploadArquivo(selectedCompanyId, selectedDocTypeId, filesList[0], uploadVencimento || null);
+      await uploadArquivo(
+        selectedCompanyId,
+        selectedDocTypeId,
+        filesList[0],
+        uploadVencimento || null,
+      );
       showToast("success", `Arquivo "${filesList[0].name}" enviado com sucesso.`);
       setSelectedDocTypeId("");
       setUploadVencimento("");
@@ -652,7 +692,7 @@ export function AdminUsuariosPage() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(sheet) as any[];
-        
+
         if (rows.length === 0) {
           showToast("error", "A planilha está vazia.");
           return;
@@ -661,12 +701,19 @@ export function AdminUsuariosPage() {
         // Validate structure (must have "Login de acesso" or "Username" and "Senha" or "Password")
         const first = rows[0];
         const keys = Object.keys(first);
-        
-        const hasLogin = keys.some(k => ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()));
-        const hasSenha = keys.some(k => ["senha", "password", "key"].includes(k.toLowerCase().trim()));
+
+        const hasLogin = keys.some((k) =>
+          ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()),
+        );
+        const hasSenha = keys.some((k) =>
+          ["senha", "password", "key"].includes(k.toLowerCase().trim()),
+        );
 
         if (!hasLogin || !hasSenha) {
-          showToast("error", 'Planilha inválida. As colunas obrigatórias são: "Login de acesso" e "Senha"');
+          showToast(
+            "error",
+            'Planilha inválida. As colunas obrigatórias são: "Login de acesso" e "Senha"',
+          );
           return;
         }
 
@@ -674,9 +721,10 @@ export function AdminUsuariosPage() {
         const missingFields: string[] = [];
         selectedType.campos_schema.forEach((field) => {
           if (field.obrigatorio) {
-            const hasField = keys.some(k => 
-              k.toLowerCase().trim() === field.label.toLowerCase().trim() || 
-              k.toLowerCase().trim() === field.nome.toLowerCase().trim()
+            const hasField = keys.some(
+              (k) =>
+                k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
+                k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
             );
             if (!hasField) {
               missingFields.push(field.label);
@@ -685,12 +733,18 @@ export function AdminUsuariosPage() {
         });
 
         if (missingFields.length > 0) {
-          showToast("error", `Planilha inválida. Faltam as seguintes colunas obrigatórias para o tipo ${selectedType.nome}: ${missingFields.join(", ")}`);
+          showToast(
+            "error",
+            `Planilha inválida. Faltam as seguintes colunas obrigatórias para o tipo ${selectedType.nome}: ${missingFields.join(", ")}`,
+          );
           return;
         }
 
         setImportRows(rows);
-        showToast("success", `${rows.length} registros do tipo "${selectedType.nome}" prontos para importação.`);
+        showToast(
+          "success",
+          `${rows.length} registros do tipo "${selectedType.nome}" prontos para importação.`,
+        );
       } catch {
         showToast("error", "Erro ao processar planilha Excel.");
       }
@@ -713,9 +767,13 @@ export function AdminUsuariosPage() {
 
     for (const row of importRows) {
       // Find Login de acesso (username)
-      const usernameKey = Object.keys(row).find(k => ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()));
+      const usernameKey = Object.keys(row).find((k) =>
+        ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()),
+      );
       // Find password
-      const passwordKey = Object.keys(row).find(k => ["senha", "password", "key"].includes(k.toLowerCase().trim()));
+      const passwordKey = Object.keys(row).find((k) =>
+        ["senha", "password", "key"].includes(k.toLowerCase().trim()),
+      );
 
       const username = usernameKey ? String(row[usernameKey]).trim() : "";
       const password = passwordKey ? String(row[passwordKey]).trim() : "";
@@ -728,17 +786,21 @@ export function AdminUsuariosPage() {
       // Map dynamic fields from row columns
       const campos_customizados: Record<string, any> = {};
       selectedType.campos_schema.forEach((field) => {
-        const colKey = Object.keys(row).find(k => 
-          k.toLowerCase().trim() === field.label.toLowerCase().trim() || 
-          k.toLowerCase().trim() === field.nome.toLowerCase().trim()
+        const colKey = Object.keys(row).find(
+          (k) =>
+            k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
+            k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
         );
-        
+
         if (colKey !== undefined) {
           const val = row[colKey];
           if (field.tipo === "number") {
             campos_customizados[field.nome] = Number(val);
           } else if (field.tipo === "boolean") {
-            campos_customizados[field.nome] = String(val).toLowerCase() === "true" || val === true || String(val).toLowerCase() === "sim";
+            campos_customizados[field.nome] =
+              String(val).toLowerCase() === "true" ||
+              val === true ||
+              String(val).toLowerCase() === "sim";
           } else {
             campos_customizados[field.nome] = String(val).trim();
           }
@@ -746,15 +808,25 @@ export function AdminUsuariosPage() {
       });
 
       // Special action: if CNPJ is a field, create/find the company automatically
-      const cnpj = campos_customizados.cnpj ? ((v: string) => v.trim())(String(campos_customizados.cnpj)) : "";
-      
+      const cnpj = campos_customizados.cnpj
+        ? ((v: string) => v.trim())(String(campos_customizados.cnpj))
+        : "";
+
       try {
         if (cnpj) {
-          let companyObj = empresas.find(e => ((v: string) => v.trim())(e.cnpj) === ((v: string) => v.trim())(cnpj));
+          let companyObj = empresas.find(
+            (e) => ((v: string) => v.trim())(e.cnpj) === ((v: string) => v.trim())(cnpj),
+          );
           if (!companyObj) {
             // Find a name for the company or use username
-            const razaoSocialKey = Object.keys(row).find(k => ["razão social", "razao social", "empresa", "nome da empresa"].includes(k.toLowerCase().trim()));
-            const companyName = razaoSocialKey ? String(row[razaoSocialKey]).trim() : `Empresa de ${username}`;
+            const razaoSocialKey = Object.keys(row).find((k) =>
+              ["razão social", "razao social", "empresa", "nome da empresa"].includes(
+                k.toLowerCase().trim(),
+              ),
+            );
+            const companyName = razaoSocialKey
+              ? String(row[razaoSocialKey]).trim()
+              : `Empresa de ${username}`;
             companyObj = await criarEmpresa(cnpj, companyName);
             empresas.push(companyObj);
           }
@@ -954,10 +1026,14 @@ export function AdminUsuariosPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">Adicionar Novo Usuário</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Adicionar Novo Usuário
+                </h3>
                 <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Login de acesso</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Login de acesso
+                    </label>
                     <input
                       type="text"
                       required
@@ -981,7 +1057,9 @@ export function AdminUsuariosPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Senha Inicial</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Senha Inicial
+                    </label>
                     <input
                       type="password"
                       required
@@ -992,7 +1070,9 @@ export function AdminUsuariosPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Tipo de Usuário
+                    </label>
                     <select
                       value={newUser.tipo_usuario}
                       onChange={(e) => {
@@ -1026,18 +1106,21 @@ export function AdminUsuariosPage() {
                     return selectedType?.campos_schema.map((field) => (
                       <div key={field.nome}>
                         <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                          {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                          {field.label}{" "}
+                          {field.obrigatorio && <span className="text-red-400">*</span>}
                         </label>
                         {field.tipo === "boolean" ? (
                           <select
                             value={newUser.campos_customizados[field.nome] ? "true" : "false"}
-                            onChange={(e) => setNewUser({
-                              ...newUser,
-                              campos_customizados: {
-                                ...newUser.campos_customizados,
-                                [field.nome]: e.target.value === "true",
-                              }
-                            })}
+                            onChange={(e) =>
+                              setNewUser({
+                                ...newUser,
+                                campos_customizados: {
+                                  ...newUser.campos_customizados,
+                                  [field.nome]: e.target.value === "true",
+                                },
+                              })
+                            }
                             className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           >
                             <option value="false">Não</option>
@@ -1049,13 +1132,18 @@ export function AdminUsuariosPage() {
                             required={field.obrigatorio}
                             placeholder={`Preencha o campo ${field.label}`}
                             value={newUser.campos_customizados[field.nome] || ""}
-                            onChange={(e) => setNewUser({
-                              ...newUser,
-                              campos_customizados: {
-                                ...newUser.campos_customizados,
-                                [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
-                              }
-                            })}
+                            onChange={(e) =>
+                              setNewUser({
+                                ...newUser,
+                                campos_customizados: {
+                                  ...newUser.campos_customizados,
+                                  [field.nome]:
+                                    field.tipo === "number"
+                                      ? Number(e.target.value)
+                                      : e.target.value,
+                                },
+                              })
+                            }
                             className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           />
                         )}
@@ -1068,13 +1156,18 @@ export function AdminUsuariosPage() {
                     const selectedType = userTypes.find((t) => t.nome === newUser.tipo_usuario);
                     const isRoot = currentUser?.username === "root";
                     const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
-                    
+
                     if (selectedType?.role === "admin" && canCreateAdmin) {
                       return (
                         <div className="flex items-center gap-2 md:col-span-2 pt-2">
                           <button
                             type="button"
-                            onClick={() => setNewUser({ ...newUser, pode_criar_admin: !newUser.pode_criar_admin })}
+                            onClick={() =>
+                              setNewUser({
+                                ...newUser,
+                                pode_criar_admin: !newUser.pode_criar_admin,
+                              })
+                            }
                             className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {newUser.pode_criar_admin ? (
@@ -1094,7 +1187,9 @@ export function AdminUsuariosPage() {
                   <div className="flex items-center gap-2 md:col-span-2 pt-2">
                     <button
                       type="button"
-                      onClick={() => setNewUser({ ...newUser, central_compras: !newUser.central_compras })}
+                      onClick={() =>
+                        setNewUser({ ...newUser, central_compras: !newUser.central_compras })
+                      }
                       className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                     >
                       {newUser.central_compras ? (
@@ -1107,7 +1202,9 @@ export function AdminUsuariosPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">
+                      Módulos Permitidos
+                    </label>
                     <div className="flex flex-wrap gap-4">
                       {[
                         { key: "gestao", label: "Gestão de Projetos" },
@@ -1115,7 +1212,10 @@ export function AdminUsuariosPage() {
                         { key: "toyota", label: "Certificação Toyota" },
                         { key: "compras", label: "Compras Seminovos" },
                       ].map(({ key, label }) => (
-                        <label key={key} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+                        >
                           <input
                             type="checkbox"
                             checked={newUser.modulos.includes(key)}
@@ -1125,7 +1225,6 @@ export function AdminUsuariosPage() {
                           {label}
                         </label>
                       ))}
-
                     </div>
                   </div>
                   <div className="md:col-span-2 flex items-center justify-end gap-3 mt-4">
@@ -1153,7 +1252,10 @@ export function AdminUsuariosPage() {
               <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
                 <div className="absolute top-4 right-4">
                   <button
-                    onClick={() => { setShowEditUser(null); setEditPassword(""); }}
+                    onClick={() => {
+                      setShowEditUser(null);
+                      setEditPassword("");
+                    }}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
@@ -1164,7 +1266,9 @@ export function AdminUsuariosPage() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Login de acesso</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Login de acesso
+                    </label>
                     <input
                       type="text"
                       disabled
@@ -1186,13 +1290,18 @@ export function AdminUsuariosPage() {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      E-mail de Recuperação <span className="text-muted-foreground">(recebe códigos de "Esqueci minha senha")</span>
+                      E-mail de Recuperação{" "}
+                      <span className="text-muted-foreground">
+                        (recebe códigos de "Esqueci minha senha")
+                      </span>
                     </label>
                     <input
                       type="email"
                       placeholder="usuario@exemplo.com"
                       value={showEditUser.email_recuperacao ?? ""}
-                      onChange={(e) => setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })}
+                      onChange={(e) =>
+                        setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })
+                      }
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
@@ -1205,12 +1314,16 @@ export function AdminUsuariosPage() {
                       required
                       placeholder="Ex.: João Silva ou Loja Central"
                       value={showEditUser.nome_fantasia ?? ""}
-                      onChange={(e) => setShowEditUser({ ...showEditUser, nome_fantasia: e.target.value })}
+                      onChange={(e) =>
+                        setShowEditUser({ ...showEditUser, nome_fantasia: e.target.value })
+                      }
                       className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Tipo de Usuário</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Tipo de Usuário
+                    </label>
                     <select
                       value={showEditUser.tipo_usuario || "Lojista"}
                       onChange={(e) => {
@@ -1240,23 +1353,28 @@ export function AdminUsuariosPage() {
 
                   {/* Render Dynamic Fields for Edit */}
                   {(() => {
-                    const selectedType = userTypes.find((t) => t.nome === (showEditUser.tipo_usuario || "Lojista"));
+                    const selectedType = userTypes.find(
+                      (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
+                    );
                     const customFields = showEditUser.campos_customizados || {};
                     return selectedType?.campos_schema.map((field) => (
                       <div key={field.nome}>
                         <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                          {field.label} {field.obrigatorio && <span className="text-red-400">*</span>}
+                          {field.label}{" "}
+                          {field.obrigatorio && <span className="text-red-400">*</span>}
                         </label>
                         {field.tipo === "boolean" ? (
                           <select
                             value={customFields[field.nome] ? "true" : "false"}
-                            onChange={(e) => setShowEditUser({
-                              ...showEditUser,
-                              campos_customizados: {
-                                ...customFields,
-                                [field.nome]: e.target.value === "true",
-                              }
-                            })}
+                            onChange={(e) =>
+                              setShowEditUser({
+                                ...showEditUser,
+                                campos_customizados: {
+                                  ...customFields,
+                                  [field.nome]: e.target.value === "true",
+                                },
+                              })
+                            }
                             className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           >
                             <option value="false">Não</option>
@@ -1268,13 +1386,18 @@ export function AdminUsuariosPage() {
                             required={field.obrigatorio}
                             placeholder={`Preencha o campo ${field.label}`}
                             value={customFields[field.nome] || ""}
-                            onChange={(e) => setShowEditUser({
-                              ...showEditUser,
-                              campos_customizados: {
-                                ...customFields,
-                                [field.nome]: field.tipo === "number" ? Number(e.target.value) : e.target.value,
-                              }
-                            })}
+                            onChange={(e) =>
+                              setShowEditUser({
+                                ...showEditUser,
+                                campos_customizados: {
+                                  ...customFields,
+                                  [field.nome]:
+                                    field.tipo === "number"
+                                      ? Number(e.target.value)
+                                      : e.target.value,
+                                },
+                              })
+                            }
                             className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                           />
                         )}
@@ -1283,7 +1406,9 @@ export function AdminUsuariosPage() {
                   })()}
 
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Status de Aprovação</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Status de Aprovação
+                    </label>
                     <div className="flex gap-4 mt-2">
                       <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
@@ -1319,10 +1444,14 @@ export function AdminUsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Status da Conta</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Status da Conta
+                    </label>
                     <button
                       type="button"
-                      onClick={() => setShowEditUser({ ...showEditUser, active: !showEditUser.active })}
+                      onClick={() =>
+                        setShowEditUser({ ...showEditUser, active: !showEditUser.active })
+                      }
                       className="flex items-center gap-2 text-sm text-foreground hover:text-foreground mt-2 transition-all"
                     >
                       {showEditUser.active ? (
@@ -1336,16 +1465,23 @@ export function AdminUsuariosPage() {
 
                   {/* pode_criar_admin Flag check for edit */}
                   {(() => {
-                    const selectedType = userTypes.find((t) => t.nome === (showEditUser.tipo_usuario || "Lojista"));
+                    const selectedType = userTypes.find(
+                      (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
+                    );
                     const isRoot = currentUser?.username === "root";
                     const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
-                    
+
                     if (selectedType?.role === "admin" && canCreateAdmin) {
                       return (
                         <div className="flex items-center gap-2 md:col-span-2 pt-2">
                           <button
                             type="button"
-                            onClick={() => setShowEditUser({ ...showEditUser, pode_criar_admin: !showEditUser.pode_criar_admin })}
+                            onClick={() =>
+                              setShowEditUser({
+                                ...showEditUser,
+                                pode_criar_admin: !showEditUser.pode_criar_admin,
+                              })
+                            }
                             className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                           >
                             {showEditUser.pode_criar_admin ? (
@@ -1365,7 +1501,12 @@ export function AdminUsuariosPage() {
                   <div className="flex items-center gap-2 md:col-span-2 pt-2">
                     <button
                       type="button"
-                      onClick={() => setShowEditUser({ ...showEditUser, central_compras: !showEditUser.central_compras })}
+                      onClick={() =>
+                        setShowEditUser({
+                          ...showEditUser,
+                          central_compras: !showEditUser.central_compras,
+                        })
+                      }
                       className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
                     >
                       {showEditUser.central_compras ? (
@@ -1378,7 +1519,9 @@ export function AdminUsuariosPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">Módulos Permitidos</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">
+                      Módulos Permitidos
+                    </label>
                     <div className="flex flex-wrap gap-4">
                       {[
                         { key: "gestao", label: "Gestão de Projetos" },
@@ -1386,7 +1529,10 @@ export function AdminUsuariosPage() {
                         { key: "toyota", label: "Certificação Toyota" },
                         { key: "compras", label: "Compras Seminovos" },
                       ].map(({ key, label }) => (
-                        <label key={key} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+                        >
                           <input
                             type="checkbox"
                             checked={(showEditUser.modulos || []).includes(key)}
@@ -1396,14 +1542,16 @@ export function AdminUsuariosPage() {
                           {label}
                         </label>
                       ))}
-
                     </div>
                   </div>
 
                   <div className="md:col-span-2 flex items-center justify-end gap-3 mt-4">
                     <button
                       type="button"
-                      onClick={() => { setShowEditUser(null); setEditPassword(""); }}
+                      onClick={() => {
+                        setShowEditUser(null);
+                        setEditPassword("");
+                      }}
                       className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
                       Cancelar
@@ -1474,114 +1622,144 @@ export function AdminUsuariosPage() {
                         u.tipo_usuario?.toLowerCase().includes(q) ||
                         u.cnpj?.toLowerCase().includes(q) ||
                         u.status?.toLowerCase().includes(q) ||
-                        JSON.stringify(u.campos_customizados || {}).toLowerCase().includes(q)
+                        JSON.stringify(u.campos_customizados || {})
+                          .toLowerCase()
+                          .includes(q)
                       );
                     })
                     .map((u, i) => (
-                    <tr
-                      key={u.id}
-                      className={`border-b border-border hover:bg-muted/20 transition-all ${
-                        !u.active ? "opacity-50" : ""
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="text-foreground font-medium flex items-center gap-2">
-                            {u.username}
-                            {u.pode_criar_admin && (
-                              <span className="text-[9px] bg-primary/20 text-muted-foreground border border-border/30 px-1.5 py-0.2 rounded-full font-semibold">
-                                Criador de Admin
+                      <tr
+                        key={u.id}
+                        className={`border-b border-border hover:bg-muted/20 transition-all ${
+                          !u.active ? "opacity-50" : ""
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="text-foreground font-medium flex items-center gap-2">
+                              {u.username}
+                              {u.pode_criar_admin && (
+                                <span className="text-[9px] bg-primary/20 text-muted-foreground border border-border/30 px-1.5 py-0.2 rounded-full font-semibold">
+                                  Criador de Admin
+                                </span>
+                              )}
+                            </div>
+                            {u.nome_fantasia && (
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {u.nome_fantasia}
+                              </div>
+                            )}
+                            {/* Render dynamic metadata summary */}
+                            {u.campos_customizados &&
+                              Object.keys(u.campos_customizados).length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {Object.keys(u.campos_customizados).map((k) => {
+                                    const val = u.campos_customizados?.[k];
+                                    if (val === undefined || val === null || val === "")
+                                      return null;
+                                    return (
+                                      <span
+                                        key={k}
+                                        className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border"
+                                      >
+                                        <strong className="text-muted-foreground font-medium uppercase text-[9px] mr-1">
+                                          {k}:
+                                        </strong>
+                                        {typeof val === "boolean"
+                                          ? val
+                                            ? "Sim"
+                                            : "Não"
+                                          : String(val)}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              u.role === "admin"
+                                ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                                : "bg-muted border border-border text-foreground"
+                            }`}
+                          >
+                            {u.tipo_usuario || (u.role === "admin" ? "Administrador" : "Lojista")}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {u.modulos && u.modulos.length > 0 ? (
+                              u.modulos.map((m) => <ModuleBadge key={m} moduleKey={m} />)
+                            ) : (
+                              <span className="text-xs text-muted-foreground font-medium">
+                                Nenhum
                               </span>
                             )}
                           </div>
-                          {u.nome_fantasia && (
-                            <div className="text-xs text-muted-foreground mt-0.5">{u.nome_fantasia}</div>
-                          )}
-                          {/* Render dynamic metadata summary */}
-                          {u.campos_customizados && Object.keys(u.campos_customizados).length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {Object.keys(u.campos_customizados).map((k) => {
-                                const val = u.campos_customizados?.[k];
-                                if (val === undefined || val === null || val === "") return null;
-                                return (
-                                  <span key={k} className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border">
-                                    <strong className="text-muted-foreground font-medium uppercase text-[9px] mr-1">{k}:</strong>
-                                    {typeof val === "boolean" ? (val ? "Sim" : "Não") : String(val)}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          u.role === "admin"
-                            ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
-                            : "bg-muted border border-border text-foreground"
-                        }`}>
-                          {u.tipo_usuario || (u.role === "admin" ? "Administrador" : "Lojista")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {u.modulos && u.modulos.length > 0 ? (
-                            u.modulos.map((m) => <ModuleBadge key={m} moduleKey={m} />)
-                          ) : (
-                            <span className="text-xs text-muted-foreground font-medium">Nenhum</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                            u.active
-                              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                              : "bg-red-500/10 border border-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {u.active ? "Ativa" : "Inativa"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {(() => {
-                          const s = (u.status ?? "approved") as string;
-                          const cfg: Record<string, { label: string; cls: string }> = {
-                            approved: { label: "Aprovado", cls: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
-                            pending: { label: "Pendente", cls: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
-                            rejected: { label: "Rejeitado", cls: "bg-red-500/10 border-red-500/20 text-red-400" },
-                          };
-                          const c = cfg[s] ?? cfg.approved;
-                          return (
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${c.cls}`}>
-                              {c.label}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setShowEditUser(u)}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            title="Editar usuário"
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span
+                            className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                              u.active
+                                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                                : "bg-red-500/10 border border-red-500/20 text-red-400"
+                            }`}
                           >
-                            <Key className="w-4 h-4" />
-                          </button>
-                          {u.username !== "root" && u.id !== currentUser?.id && (
+                            {u.active ? "Ativa" : "Inativa"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {(() => {
+                            const s = (u.status ?? "approved") as string;
+                            const cfg: Record<string, { label: string; cls: string }> = {
+                              approved: {
+                                label: "Aprovado",
+                                cls: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+                              },
+                              pending: {
+                                label: "Pendente",
+                                cls: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+                              },
+                              rejected: {
+                                label: "Rejeitado",
+                                cls: "bg-red-500/10 border-red-500/20 text-red-400",
+                              },
+                            };
+                            const c = cfg[s] ?? cfg.approved;
+                            return (
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${c.cls}`}
+                              >
+                                {c.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleDeleteUser(u.id, u.username)}
-                              disabled={actionLoading === u.id}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/15 transition-colors"
-                              title="Excluir usuário"
+                              onClick={() => setShowEditUser(u)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                              title="Editar usuário"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Key className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {u.username !== "root" && u.id !== currentUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(u.id, u.username)}
+                                disabled={actionLoading === u.id}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/15 transition-colors"
+                                title="Excluir usuário"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   {usuarios.length === 0 && (
                     <tr>
                       <td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
@@ -1602,7 +1780,8 @@ export function AdminUsuariosPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Importação em Massa</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma estruturada.
+                  Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma
+                  estruturada.
                 </p>
               </div>
               <button
@@ -1638,27 +1817,47 @@ export function AdminUsuariosPage() {
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-muted-foreground mx-auto border border-border/20">
                 <Upload className="w-6 h-6" />
               </div>
-              
-              <h3 className="text-base font-semibold text-foreground">Selecione sua planilha Excel</h3>
-              
+
+              <h3 className="text-base font-semibold text-foreground">
+                Selecione sua planilha Excel
+              </h3>
+
               {/* Dynamic instruction text based on selected user type */}
               {(() => {
-                const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
-                const reqFields = selectedType ? selectedType.campos_schema.filter(f => f.obrigatorio).map(f => f.label) : [];
-                const optFields = selectedType ? selectedType.campos_schema.filter(f => !f.obrigatorio).map(f => f.label) : [];
+                const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
+                const reqFields = selectedType
+                  ? selectedType.campos_schema.filter((f) => f.obrigatorio).map((f) => f.label)
+                  : [];
+                const optFields = selectedType
+                  ? selectedType.campos_schema.filter((f) => !f.obrigatorio).map((f) => f.label)
+                  : [];
                 return (
                   <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
-                    A planilha para importar <strong className="text-foreground font-semibold">{selectedUserTypeImportId}</strong> deve conter as colunas:{" "}
-                    <strong className="text-foreground">Login de acesso</strong> e <strong className="text-foreground">Senha</strong>.
+                    A planilha para importar{" "}
+                    <strong className="text-foreground font-semibold">
+                      {selectedUserTypeImportId}
+                    </strong>{" "}
+                    deve conter as colunas:{" "}
+                    <strong className="text-foreground">Login de acesso</strong> e{" "}
+                    <strong className="text-foreground">Senha</strong>.
                     {reqFields.length > 0 && (
                       <>
-                        {" "}Mais os campos obrigatórios:{" "}
-                        <span className="text-red-400 font-semibold">{reqFields.map(f => `"${f}"`).join(", ")}</span>.
+                        {" "}
+                        Mais os campos obrigatórios:{" "}
+                        <span className="text-red-400 font-semibold">
+                          {reqFields.map((f) => `"${f}"`).join(", ")}
+                        </span>
+                        .
                       </>
                     )}
                     {optFields.length > 0 && (
                       <>
-                        {" "}E campos opcionais: <span className="text-foreground">{optFields.map(f => `"${f}"`).join(", ")}</span>.
+                        {" "}
+                        E campos opcionais:{" "}
+                        <span className="text-foreground">
+                          {optFields.map((f) => `"${f}"`).join(", ")}
+                        </span>
+                        .
                       </>
                     )}
                   </p>
@@ -1680,7 +1879,9 @@ export function AdminUsuariosPage() {
 
               {/* Import instructions preview */}
               <div className="mt-8 pt-6 border-t border-border text-left">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Exemplo de Estrutura da Planilha:</h4>
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                  Exemplo de Estrutura da Planilha:
+                </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-[10px] text-muted-foreground border border-border rounded-lg">
                     <thead>
@@ -1688,10 +1889,13 @@ export function AdminUsuariosPage() {
                         <th className="px-3 py-1.5 border border-border">Login de acesso</th>
                         <th className="px-3 py-1.5 border border-border">Senha</th>
                         {(() => {
-                          const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
-                          return selectedType?.campos_schema.map(f => (
+                          const selectedType = userTypes.find(
+                            (t) => t.nome === selectedUserTypeImportId,
+                          );
+                          return selectedType?.campos_schema.map((f) => (
                             <th key={f.nome} className="px-3 py-1.5 border border-border">
-                              {f.label} {f.obrigatorio && <span className="text-red-400 font-bold">*</span>}
+                              {f.label}{" "}
+                              {f.obrigatorio && <span className="text-red-400 font-bold">*</span>}
                             </th>
                           ));
                         })()}
@@ -1699,13 +1903,24 @@ export function AdminUsuariosPage() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="px-3 py-1 border border-border font-medium text-foreground">usuario123</td>
+                        <td className="px-3 py-1 border border-border font-medium text-foreground">
+                          usuario123
+                        </td>
                         <td className="px-3 py-1 border border-border">senhaSegura123</td>
                         {(() => {
-                          const selectedType = userTypes.find(t => t.nome === selectedUserTypeImportId);
-                          return selectedType?.campos_schema.map(f => (
-                            <td key={f.nome} className="px-3 py-1 border border-border italic text-muted-foreground">
-                              {f.tipo === "number" ? "123" : f.tipo === "boolean" ? "Sim / Não" : `Exemplo ${f.label}`}
+                          const selectedType = userTypes.find(
+                            (t) => t.nome === selectedUserTypeImportId,
+                          );
+                          return selectedType?.campos_schema.map((f) => (
+                            <td
+                              key={f.nome}
+                              className="px-3 py-1 border border-border italic text-muted-foreground"
+                            >
+                              {f.tipo === "number"
+                                ? "123"
+                                : f.tipo === "boolean"
+                                  ? "Sim / Não"
+                                  : `Exemplo ${f.label}`}
                             </td>
                           ));
                         })()}
@@ -1745,7 +1960,11 @@ export function AdminUsuariosPage() {
                         <tr key={idx} className="border-b border-border hover:bg-muted/10">
                           {Object.keys(row).map((key) => (
                             <td key={key} className="px-4 py-2 text-foreground">
-                              {typeof row[key] === "boolean" ? (row[key] ? "Sim" : "Não") : String(row[key])}
+                              {typeof row[key] === "boolean"
+                                ? row[key]
+                                  ? "Sim"
+                                  : "Não"
+                                : String(row[key])}
                             </td>
                           ))}
                         </tr>
@@ -1792,14 +2011,19 @@ export function AdminUsuariosPage() {
                     onClick={async () => {
                       setEmailTestError(null);
                       try {
-                        const r = await fetch("/api/public/hooks/notificar-vencimentos-test", { method: "POST" });
+                        const r = await fetch("/api/public/hooks/notificar-vencimentos-test", {
+                          method: "POST",
+                        });
                         const j = await r.json();
                         console.log("[teste-email]", j);
                         if (j.ok) {
                           showToast("success", `E-mail de teste enviado para ${j.destinatario}`);
                         } else {
                           showToast("error", `Falha: ${j.error || "erro desconhecido"}`);
-                          setEmailTestError({ message: j.error || "erro desconhecido", stack: j.stack });
+                          setEmailTestError({
+                            message: j.error || "erro desconhecido",
+                            stack: j.stack,
+                          });
                         }
                       } catch (err: any) {
                         showToast("error", err.message);
@@ -1842,15 +2066,15 @@ export function AdminUsuariosPage() {
                 </div>
               )}
 
-
-
-
               {/* Add Company Form */}
               {showCreateCompany && (
                 <div className="bg-card border border-border rounded-xl p-4 animate-scale-up">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Nova Empresa</h3>
-                    <button onClick={() => setShowCreateCompany(false)} className="text-muted-foreground hover:text-foreground">
+                    <button
+                      onClick={() => setShowCreateCompany(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -1880,7 +2104,9 @@ export function AdminUsuariosPage() {
                         type="email"
                         placeholder="E-mail para Notificações de Vencimento (opcional)"
                         value={newCompany.email_notificacao}
-                        onChange={(e) => setNewCompany({ ...newCompany, email_notificacao: e.target.value })}
+                        onChange={(e) =>
+                          setNewCompany({ ...newCompany, email_notificacao: e.target.value })
+                        }
                         className="w-full px-3 py-1.5 text-sm rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
@@ -1917,9 +2143,13 @@ export function AdminUsuariosPage() {
                   >
                     <div className="min-w-0">
                       <div className="font-medium text-sm truncate">{c.nome}</div>
-                      <div className="text-xs text-muted-foreground mt-1 font-mono">{formatCnpj(c.cnpj)}</div>
+                      <div className="text-xs text-muted-foreground mt-1 font-mono">
+                        {formatCnpj(c.cnpj)}
+                      </div>
                       {c.email_notificacao && (
-                        <div className="text-xs text-muted-foreground mt-0.5 truncate">✉ {c.email_notificacao}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                          ✉ {c.email_notificacao}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-1 ml-4 shrink-0">
@@ -2041,7 +2271,9 @@ export function AdminUsuariosPage() {
 
                       {/* Attached Documents List */}
                       <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-foreground">Documentos Disponibilizados</h4>
+                        <h4 className="text-sm font-semibold text-foreground">
+                          Documentos Disponibilizados
+                        </h4>
                         <div className="space-y-2">
                           {companyFiles.map((file) => {
                             const typeObj = docTipos.find((t) => t.id === file.tipo_id);
@@ -2065,7 +2297,9 @@ export function AdminUsuariosPage() {
                                 </div>
                                 <div className="flex items-center gap-2 ml-auto">
                                   <div className="flex flex-col items-end">
-                                    <label className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">Vencimento</label>
+                                    <label className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                                      Vencimento
+                                    </label>
                                     <input
                                       type="date"
                                       defaultValue={file.data_vencimento ?? ""}
@@ -2142,14 +2376,21 @@ export function AdminUsuariosPage() {
             {showCreateDocType && (
               <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-xl mx-auto animate-scale-up">
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setShowCreateDocType(false)} className="text-muted-foreground hover:text-foreground">
+                  <button
+                    onClick={() => setShowCreateDocType(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Documento</h3>
+                <h3 className="text-md font-semibold text-foreground mb-4">
+                  Novo Tipo de Documento
+                </h3>
                 <form onSubmit={handleCreateDocType} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do Tipo</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                      Nome do Tipo
+                    </label>
                     <input
                       type="text"
                       required
@@ -2160,7 +2401,9 @@ export function AdminUsuariosPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Descrição / Observações</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                      Descrição / Observações
+                    </label>
                     <textarea
                       placeholder="Breve descrição do documento..."
                       value={newDocType.descricao}
@@ -2217,7 +2460,9 @@ export function AdminUsuariosPage() {
                         </button>
                       </div>
                     </div>
-                    <h3 className="text-foreground font-semibold text-sm truncate uppercase">{t.nome}</h3>
+                    <h3 className="text-foreground font-semibold text-sm truncate uppercase">
+                      {t.nome}
+                    </h3>
                     <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                       {t.descricao || "Sem descrição informada."}
                     </p>
@@ -2235,9 +2480,12 @@ export function AdminUsuariosPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-foreground">Configuração de Perfis (Tipos de Usuários)</h2>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Configuração de Perfis (Tipos de Usuários)
+                </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Gerencie perfis personalizados de usuários e configure campos dinâmicos obrigatórios ou opcionais.
+                  Gerencie perfis personalizados de usuários e configure campos dinâmicos
+                  obrigatórios ou opcionais.
                 </p>
               </div>
               <button
@@ -2252,16 +2500,21 @@ export function AdminUsuariosPage() {
             {showCreateUserType && (
               <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl max-w-2xl mx-auto animate-scale-up">
                 <div className="absolute top-4 right-4">
-                  <button onClick={() => setShowCreateUserType(false)} className="text-muted-foreground hover:text-foreground">
+                  <button
+                    onClick={() => setShowCreateUserType(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 <h3 className="text-md font-semibold text-foreground mb-4">Novo Tipo de Usuário</h3>
-                
+
                 <form onSubmit={handleCreateUserType} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Nome do Tipo / Perfil</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Nome do Tipo / Perfil
+                      </label>
                       <input
                         type="text"
                         required
@@ -2272,10 +2525,17 @@ export function AdminUsuariosPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">Nível de Permissão Padrão</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Nível de Permissão Padrão
+                      </label>
                       <select
                         value={newUserType.role}
-                        onChange={(e) => setNewUserType({ ...newUserType, role: e.target.value as "admin" | "user" })}
+                        onChange={(e) =>
+                          setNewUserType({
+                            ...newUserType,
+                            role: e.target.value as "admin" | "user",
+                          })
+                        }
                         className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                       >
                         <option value="user">Usuário Comum (Lojistas, etc.)</option>
@@ -2286,12 +2546,16 @@ export function AdminUsuariosPage() {
 
                   {/* Fields Creator Section */}
                   <div className="border-t border-border pt-4">
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campos Personalizados (Schema)</h4>
-                    
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                      Campos Personalizados (Schema)
+                    </h4>
+
                     <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Identificador Técnico</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">
+                            Identificador Técnico
+                          </label>
                           <input
                             type="text"
                             placeholder="Ex: razao_social, cnpj"
@@ -2301,7 +2565,9 @@ export function AdminUsuariosPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Rótulo (Label de Exibição)</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">
+                            Rótulo (Label de Exibição)
+                          </label>
                           <input
                             type="text"
                             placeholder="Ex: Razão Social, CNPJ"
@@ -2311,7 +2577,9 @@ export function AdminUsuariosPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">Tipo de Dado</label>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1 uppercase">
+                            Tipo de Dado
+                          </label>
                           <select
                             value={newFieldType}
                             onChange={(e) => setNewFieldType(e.target.value as any)}
@@ -2348,12 +2616,20 @@ export function AdminUsuariosPage() {
                     {/* Added fields list */}
                     {newUserType.campos_schema.length > 0 ? (
                       <div className="space-y-2">
-                        <label className="block text-xs font-medium text-muted-foreground">Campos adicionados:</label>
+                        <label className="block text-xs font-medium text-muted-foreground">
+                          Campos adicionados:
+                        </label>
                         <div className="flex flex-wrap gap-2">
                           {newUserType.campos_schema.map((f, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground"
+                            >
                               <span className="font-semibold text-foreground">{f.label}</span>
-                              <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
+                              <span className="text-[10px] text-muted-foreground">
+                                ({f.tipo}
+                                {f.obrigatorio ? ", obrigatório" : ""})
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveFieldFromNewType(idx)}
@@ -2366,7 +2642,9 @@ export function AdminUsuariosPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground italic">Nenhum campo personalizado adicionado a este perfil ainda.</p>
+                      <p className="text-xs text-muted-foreground italic">
+                        Nenhum campo personalizado adicionado a este perfil ainda.
+                      </p>
                     )}
                   </div>
 
@@ -2399,11 +2677,13 @@ export function AdminUsuariosPage() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className={`text-[10px] border px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                        t.role === "admin"
-                          ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
-                          : "bg-primary/15 text-muted-foreground border-border/20"
-                      }`}>
+                      <div
+                        className={`text-[10px] border px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                          t.role === "admin"
+                            ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
+                            : "bg-primary/15 text-muted-foreground border-border/20"
+                        }`}
+                      >
                         {t.role === "admin" ? "Administrador" : "Usuário Comum"}
                       </div>
                       <div className="flex items-center gap-1">
@@ -2423,7 +2703,11 @@ export function AdminUsuariosPage() {
                           }`}
                           title={t.ativo === false ? "Ativar perfil" : "Inativar perfil"}
                         >
-                          {t.ativo === false ? <ToggleLeft className="w-3.5 h-3.5" /> : <ToggleRight className="w-3.5 h-3.5" />}
+                          {t.ativo === false ? (
+                            <ToggleLeft className="w-3.5 h-3.5" />
+                          ) : (
+                            <ToggleRight className="w-3.5 h-3.5" />
+                          )}
                         </button>
                         {!["Administrador", "Lojista", "ADM de loja"].includes(t.nome) && (
                           <button
@@ -2437,18 +2721,25 @@ export function AdminUsuariosPage() {
                       </div>
                     </div>
                     <h3 className="text-foreground font-semibold text-sm uppercase">{t.nome}</h3>
-                    
+
                     <div className="mt-3 space-y-2">
-                      <span className="text-[10px] text-muted-foreground uppercase font-semibold">Campos do Perfil:</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                        Campos do Perfil:
+                      </span>
                       <div className="flex flex-wrap gap-1.5">
                         {t.campos_schema && t.campos_schema.length > 0 ? (
                           t.campos_schema.map((f, idx) => (
-                            <span key={idx} className="text-[10px] bg-muted/80 text-muted-foreground px-2 py-0.5 rounded border border-border">
+                            <span
+                              key={idx}
+                              className="text-[10px] bg-muted/80 text-muted-foreground px-2 py-0.5 rounded border border-border"
+                            >
                               {f.label} {f.obrigatorio && <span className="text-red-500">*</span>}
                             </span>
                           ))
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">Apenas Login e Senha</span>
+                          <span className="text-xs text-muted-foreground italic">
+                            Apenas Login e Senha
+                          </span>
                         )}
                       </div>
                     </div>
@@ -2465,15 +2756,26 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit Company Modal -------- */}
       {editingCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingCompany(null)}>
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingCompany(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4"
+          onClick={() => setEditingCompany(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEditingCompany(null)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            >
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-semibold text-foreground mb-4">Editar Empresa</h3>
             <form onSubmit={handleSaveEditCompany} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Razão Social / Nome</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  Razão Social / Nome
+                </label>
                 <input
                   type="text"
                   required
@@ -2483,7 +2785,9 @@ export function AdminUsuariosPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">CNPJ</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  CNPJ
+                </label>
                 <input
                   type="text"
                   required
@@ -2493,28 +2797,46 @@ export function AdminUsuariosPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail para Notificações de Vencimento</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  E-mail para Notificações de Vencimento
+                </label>
                 <input
                   type="email"
                   placeholder="notificacoes@empresa.com"
                   value={editingCompany.email_notificacao ?? ""}
-                  onChange={(e) => setEditingCompany({ ...editingCompany, email_notificacao: e.target.value })}
+                  onChange={(e) =>
+                    setEditingCompany({ ...editingCompany, email_notificacao: e.target.value })
+                  }
                   className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Receberá alertas automáticos no dia do vencimento de cada documento.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Receberá alertas automáticos no dia do vencimento de cada documento.
+                </p>
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={editingCompany.ativo ?? true}
-                  onChange={(e) => setEditingCompany({ ...editingCompany, ativo: e.target.checked })}
+                  onChange={(e) =>
+                    setEditingCompany({ ...editingCompany, ativo: e.target.checked })
+                  }
                   className="rounded border-border bg-card text-primary"
                 />
                 Empresa ativa
               </label>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setEditingCompany(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingCompany.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={() => setEditingCompany(null)}
+                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading === editingCompany.id}
+                  className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+                >
                   {actionLoading === editingCompany.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2525,15 +2847,26 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit DocType Modal -------- */}
       {editingDocType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4" onClick={() => setEditingDocType(null)}>
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingDocType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4"
+          onClick={() => setEditingDocType(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md relative animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEditingDocType(null)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            >
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-semibold text-foreground mb-4">Editar Tipo de Documento</h3>
             <form onSubmit={handleSaveEditDocType} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  Nome
+                </label>
                 <input
                   type="text"
                   required
@@ -2543,11 +2876,15 @@ export function AdminUsuariosPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Descrição</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  Descrição
+                </label>
                 <textarea
                   rows={3}
                   value={editingDocType.descricao ?? ""}
-                  onChange={(e) => setEditingDocType({ ...editingDocType, descricao: e.target.value })}
+                  onChange={(e) =>
+                    setEditingDocType({ ...editingDocType, descricao: e.target.value })
+                  }
                   className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                 />
               </div>
@@ -2555,14 +2892,26 @@ export function AdminUsuariosPage() {
                 <input
                   type="checkbox"
                   checked={editingDocType.ativo ?? true}
-                  onChange={(e) => setEditingDocType({ ...editingDocType, ativo: e.target.checked })}
+                  onChange={(e) =>
+                    setEditingDocType({ ...editingDocType, ativo: e.target.checked })
+                  }
                   className="rounded border-border bg-card text-primary"
                 />
                 Tipo ativo
               </label>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setEditingDocType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingDocType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={() => setEditingDocType(null)}
+                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading === editingDocType.id}
+                  className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+                >
                   {actionLoading === editingDocType.id ? "Salvando..." : "Salvar"}
                 </button>
               </div>
@@ -2573,29 +2922,49 @@ export function AdminUsuariosPage() {
 
       {/* -------- Edit UserType Modal -------- */}
       {editingUserType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => setEditingUserType(null)}>
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingUserType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-muted/80 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={() => setEditingUserType(null)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl relative animate-scale-up my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEditingUserType(null)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            >
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-semibold text-foreground mb-4">Editar Perfil de Usuário</h3>
             <form onSubmit={handleSaveEditUserType} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nome do Perfil</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Nome do Perfil
+                  </label>
                   <input
                     type="text"
                     required
                     value={editingUserType.nome}
-                    onChange={(e) => setEditingUserType({ ...editingUserType, nome: e.target.value })}
+                    onChange={(e) =>
+                      setEditingUserType({ ...editingUserType, nome: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Nível de Permissão</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Nível de Permissão
+                  </label>
                   <select
                     value={editingUserType.role}
-                    onChange={(e) => setEditingUserType({ ...editingUserType, role: e.target.value as "admin" | "user" })}
+                    onChange={(e) =>
+                      setEditingUserType({
+                        ...editingUserType,
+                        role: e.target.value as "admin" | "user",
+                      })
+                    }
                     className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
                   >
                     <option value="user">Usuário Comum</option>
@@ -2608,14 +2977,18 @@ export function AdminUsuariosPage() {
                 <input
                   type="checkbox"
                   checked={editingUserType.ativo ?? true}
-                  onChange={(e) => setEditingUserType({ ...editingUserType, ativo: e.target.checked })}
+                  onChange={(e) =>
+                    setEditingUserType({ ...editingUserType, ativo: e.target.checked })
+                  }
                   className="rounded border-border bg-card text-primary"
                 />
                 Perfil ativo
               </label>
 
               <div className="border-t border-border pt-4">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Campos Personalizados</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                  Campos Personalizados
+                </h4>
 
                 <div className="bg-muted/60 p-4 rounded-xl border border-border mb-4 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2666,23 +3039,45 @@ export function AdminUsuariosPage() {
                 {editingUserType.campos_schema.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {editingUserType.campos_schema.map((f, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground">
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 bg-background border border-border px-2.5 py-1 rounded-lg text-xs text-foreground"
+                      >
                         <span className="font-semibold text-foreground">{f.label}</span>
-                        <span className="text-[10px] text-muted-foreground">({f.tipo}{f.obrigatorio ? ", obrigatório" : ""})</span>
-                        <button type="button" onClick={() => handleRemoveFieldFromEditType(idx)} className="text-muted-foreground hover:text-red-400 ml-1">
+                        <span className="text-[10px] text-muted-foreground">
+                          ({f.tipo}
+                          {f.obrigatorio ? ", obrigatório" : ""})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFieldFromEditType(idx)}
+                          className="text-muted-foreground hover:text-red-400 ml-1"
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground italic">Nenhum campo personalizado.</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    Nenhum campo personalizado.
+                  </p>
                 )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                <button type="button" onClick={() => setEditingUserType(null)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm">Cancelar</button>
-                <button type="submit" disabled={actionLoading === editingUserType.id} className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={() => setEditingUserType(null)}
+                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading === editingUserType.id}
+                  className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+                >
                   {actionLoading === editingUserType.id ? "Salvando..." : "Salvar Perfil"}
                 </button>
               </div>
@@ -2697,7 +3092,8 @@ export function AdminUsuariosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
             <AlertDialogDescription>
-              O usuário <strong>{userToDelete?.name}</strong> será excluído permanentemente. Esta ação não pode ser desfeita.
+              O usuário <strong>{userToDelete?.name}</strong> será excluído permanentemente. Esta
+              ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

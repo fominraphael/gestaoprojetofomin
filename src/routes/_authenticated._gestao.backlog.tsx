@@ -29,8 +29,7 @@ export const Route = createFileRoute("/_authenticated/_gestao/backlog")({
   head: () => ({
     meta: [{ title: "Backlog — Gestão de Projetos" }],
   }),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(tarefasQuery("backlog")),
+  loader: ({ context }) => context.queryClient.ensureQueryData(tarefasQuery("backlog")),
   component: BacklogPage,
   errorComponent: ModuleErrorBoundary,
   notFoundComponent: () => <div className="p-8">Sem tarefas no backlog.</div>,
@@ -105,7 +104,9 @@ function BacklogPage() {
           <SelectContent>
             <SelectItem value="todos">Todos os projetos</SelectItem>
             {projetos.map((p) => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -116,7 +117,9 @@ function BacklogPage() {
           <SelectContent>
             <SelectItem value="todos">Todos os responsáveis</SelectItem>
             {responsaveis.map((r) => (
-              <SelectItem key={r} value={r}>{r}</SelectItem>
+              <SelectItem key={r} value={r}>
+                {r}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -197,7 +200,9 @@ function KanbanBoard({
                   )}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {t.prioridade && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${prioColor[t.prioridade]}`}>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded ${prioColor[t.prioridade]}`}
+                      >
                         {t.prioridade}
                       </span>
                     )}
@@ -265,7 +270,9 @@ function ListaView({
               </td>
               <td className="px-4 py-3 text-muted-foreground">{t.projeto ?? "—"}</td>
               <td className="px-4 py-3">
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[t.status]}`}
+                >
                   {t.status}
                 </span>
               </td>

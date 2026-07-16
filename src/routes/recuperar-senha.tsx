@@ -87,9 +87,7 @@ function RecuperarSenhaPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 shadow-lg mb-4">
             <KeyRound className="w-8 h-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Recuperar senha
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Recuperar senha</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {step === "username" && "Informe seu usuário para receber o código"}
             {step === "code" && "Digite o código enviado para seu e-mail"}
@@ -104,8 +102,8 @@ function RecuperarSenhaPage() {
             {(["username", "code", "newPassword"] as Step[]).map((s, i) => {
               const active = s === step;
               const done =
-                (["username", "code", "newPassword"] as Step[]).indexOf(step) >
-                  i || step === "done";
+                (["username", "code", "newPassword"] as Step[]).indexOf(step) > i ||
+                step === "done";
               return (
                 <div
                   key={s}
@@ -120,9 +118,7 @@ function RecuperarSenhaPage() {
           {step === "username" && (
             <form onSubmit={handleRequest} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Usuário
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Usuário</label>
                 <input
                   type="text"
                   value={username}
@@ -147,8 +143,8 @@ function RecuperarSenhaPage() {
                 {loading ? "Enviando..." : "Enviar código"}
               </button>
               <p className="text-xs text-muted-foreground text-center">
-                Se o usuário existir e tiver e-mail de recuperação cadastrado,
-                enviaremos um código de 6 dígitos.
+                Se o usuário existir e tiver e-mail de recuperação cadastrado, enviaremos um código
+                de 6 dígitos.
               </p>
             </form>
           )}
@@ -251,8 +247,7 @@ function RecuperarSenhaPage() {
                 <CheckCircle2 className="w-8 h-8 text-emerald-500" />
               </div>
               <p className="text-foreground">
-                Sua senha foi redefinida com sucesso. Você já pode entrar com a
-                nova senha.
+                Sua senha foi redefinida com sucesso. Você já pode entrar com a nova senha.
               </p>
               <button
                 onClick={() => navigate({ to: "/login" })}

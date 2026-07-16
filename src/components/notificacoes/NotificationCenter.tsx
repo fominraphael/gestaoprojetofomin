@@ -41,7 +41,7 @@ export function NotificationCenter() {
       .limit(50);
     setNotifs((data as any) ?? []);
     setLoading(false);
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     carregar();
@@ -52,7 +52,7 @@ export function NotificationCenter() {
     if (!user) return;
     const interval = setInterval(carregar, 30000);
     return () => clearInterval(interval);
-  }, [user?.id, carregar]);
+  }, [user, carregar]);
 
   async function marcarLido(n: Notificacao) {
     if (n.lido_em) return;

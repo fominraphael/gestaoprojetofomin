@@ -63,21 +63,14 @@ export function BotaoGerarPdfVeiculo({
       toast.success("PDF gerado com sucesso.");
     } catch (err) {
       console.error(err);
-      toast.error(
-        err instanceof Error ? err.message : "Falha ao gerar PDF do veículo.",
-      );
+      toast.error(err instanceof Error ? err.message : "Falha ao gerar PDF do veículo.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Button
-      type="button"
-      onClick={handleClick}
-      disabled={loading}
-      className={className}
-    >
+    <Button type="button" onClick={handleClick} disabled={loading} className={className}>
       {loading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (

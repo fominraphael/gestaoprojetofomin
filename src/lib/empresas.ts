@@ -41,7 +41,11 @@ export async function obterEmpresas(): Promise<Empresa[]> {
   return (data as Empresa[]) || [];
 }
 
-export async function criarEmpresa(cnpj: string, nome: string, email_notificacao?: string | null): Promise<Empresa> {
+export async function criarEmpresa(
+  cnpj: string,
+  nome: string,
+  email_notificacao?: string | null,
+): Promise<Empresa> {
   const { data, error } = await supabase
     .from("empresas")
     .insert([{ cnpj: cnpj.trim(), nome, email_notificacao: email_notificacao?.trim() || null }])
@@ -56,7 +60,7 @@ export async function criarEmpresa(cnpj: string, nome: string, email_notificacao
 
 export async function atualizarEmpresa(
   id: string,
-  updates: { cnpj?: string; nome?: string; ativo?: boolean; email_notificacao?: string | null }
+  updates: { cnpj?: string; nome?: string; ativo?: boolean; email_notificacao?: string | null },
 ): Promise<void> {
   const payload: any = { ...updates };
   if (payload.cnpj !== undefined) payload.cnpj = String(payload.cnpj).trim();
@@ -97,7 +101,7 @@ export async function criarDocumentoTipo(nome: string, descricao: string): Promi
 
 export async function atualizarDocumentoTipo(
   id: string,
-  updates: { nome?: string; descricao?: string | null; ativo?: boolean }
+  updates: { nome?: string; descricao?: string | null; ativo?: boolean },
 ): Promise<void> {
   const payload: any = { ...updates };
   if (payload.nome) payload.nome = String(payload.nome).toUpperCase().trim();
@@ -128,15 +132,15 @@ export async function uploadArquivo(
   empresaId: string,
   tipoId: string,
   file: File,
-  dataVencimento?: string | null
+  dataVencimento?: string | null,
 ): Promise<DocumentoArquivo> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(
-      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Limite: 100 MB.`
+      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Limite: 100 MB.`,
     );
   }
 
-  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+  const safeName = file.name.replace(/[^\w.-]+/g, "_");
   const storagePath = `${empresaId}/${tipoId}/${Date.now()}_${safeName}`;
 
   // Remove existing file of the same type for this company (one file per type)
@@ -151,7 +155,10 @@ export async function uploadArquivo(
     await supabase
       .from("documentos_arquivo")
       .delete()
-      .in("id", existing.map((e: any) => e.id));
+      .in(
+        "id",
+        existing.map((e: any) => e.id),
+      );
   }
 
   const { error: upErr } = await supabase.storage
@@ -166,22 +173,27 @@ export async function uploadArquivo(
 
   const { data: rec, error: insErr } = await supabase
     .from("documentos_arquivo")
-    .insert([{
-      empresa_id: empresaId,
-      tipo_id: tipoId,
-      arquivo_url,
-      arquivo_nome: file.name,
-      arquivo_tamanho: file.size,
-      storage_path: storagePath,
-      data_vencimento: dataVencimento || null,
-    }])
+    .insert([
+      {
+        empresa_id: empresaId,
+        tipo_id: tipoId,
+        arquivo_url,
+        arquivo_nome: file.name,
+        arquivo_tamanho: file.size,
+        storage_path: storagePath,
+        data_vencimento: dataVencimento || null,
+      },
+    ])
     .select("*")
     .single();
   if (insErr) throw insErr;
   return rec as DocumentoArquivo;
 }
 
-export async function atualizarVencimentoArquivo(id: string, data_vencimento: string | null): Promise<void> {
+export async function atualizarVencimentoArquivo(
+  id: string,
+  data_vencimento: string | null,
+): Promise<void> {
   const { error } = await supabase
     .from("documentos_arquivo")
     .update({ data_vencimento, notificado_em: null })

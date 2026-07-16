@@ -52,10 +52,16 @@ function isPdf(bytes: ArrayBuffer): boolean {
   return header.includes("%PDF");
 }
 
-async function baixarStorage(supabase: SupabaseClient, path: string, titulo: string): Promise<ArrayBuffer> {
+async function baixarStorage(
+  supabase: SupabaseClient,
+  path: string,
+  titulo: string,
+): Promise<ArrayBuffer> {
   const { data, error } = await supabase.storage.from(BUCKET).download(path);
   if (error || !data) {
-    throw new Error(`${titulo}: falha ao baixar do Storage (${error?.message ?? "arquivo vazio"}).`);
+    throw new Error(
+      `${titulo}: falha ao baixar do Storage (${error?.message ?? "arquivo vazio"}).`,
+    );
   }
   const bytes = await data.arrayBuffer();
   if (!bytes.byteLength) throw new Error(`${titulo}: arquivo baixado está vazio.`);
@@ -178,7 +184,9 @@ async function comprimirCloudConvert(pdfBytes: Uint8Array): Promise<Uint8Array> 
 
   // 2. Upload
   const formData = new FormData();
-  for (const [key, value] of Object.entries(importTask.result.form.parameters as Record<string, string>)) {
+  for (const [key, value] of Object.entries(
+    importTask.result.form.parameters as Record<string, string>,
+  )) {
     formData.append(key, value);
   }
   formData.append("file", new Blob([pdfBytes], { type: "application/pdf" }), "dossie.pdf");
@@ -217,7 +225,10 @@ async function comprimirCloudConvert(pdfBytes: Uint8Array): Promise<Uint8Array> 
 }
 
 async function processar(veiculo_id: string, pular_compressao = false) {
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
 
   const { error: clearErr } = await supabase
     .from("toyota_estoque_veiculos")
@@ -229,7 +240,9 @@ async function processar(veiculo_id: string, pular_compressao = false) {
 
   const { data: v, error } = await supabase
     .from("toyota_estoque_veiculos")
-    .select("id,chassi,placa,modelo,ano_modelo,checklist_pdf_path,laudo_arquivo_path,laudo_url,health_check_pdf_path")
+    .select(
+      "id,chassi,placa,modelo,ano_modelo,checklist_pdf_path,laudo_arquivo_path,laudo_url,health_check_pdf_path",
+    )
     .eq("id", veiculo_id)
     .maybeSingle();
   if (error || !v) {
@@ -261,9 +274,13 @@ async function processar(veiculo_id: string, pular_compressao = false) {
     },
   ];
 
-  const documentos = await Promise.all(entradas.map((entrada) => carregarDocumento(supabase, entrada)));
+  const documentos = await Promise.all(
+    entradas.map((entrada) => carregarDocumento(supabase, entrada)),
+  );
 
-  const resumo = documentos.map((d) => `${d.titulo}: ${d.paginas} pág., ${d.tamanhoBytes} bytes`).join(" | ");
+  const resumo = documentos
+    .map((d) => `${d.titulo}: ${d.paginas} pág., ${d.tamanhoBytes} bytes`)
+    .join(" | ");
   console.log(`[dossie] Documentos carregados para ${veiculo_id}: ${resumo}`);
 
   let pdfFinalBytes = await mesclarDossie(documentos);
