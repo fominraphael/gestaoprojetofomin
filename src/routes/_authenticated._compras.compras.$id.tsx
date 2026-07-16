@@ -933,10 +933,10 @@ function DetalheChamado() {
     "pendenciado",
   ];
   const podeEditarDados =
-    !readOnlyAdmin && (isAdmin || (!finalizado && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status)));
+    !readOnlyAdmin &&
+    (isAdmin || (!finalizado && STATUS_EDITAVEIS_CRIADOR.includes(chamado.status)));
   const podeAgirCentral = isAdmin && modoAdmin === "assumido" && !finalizado;
-  const podeEnviarFila =
-    chamado.status === "documentacao" && (isCriador || (isAdmin && !readOnlyAdmin));
+  const podeEnviarFila = chamado.status === "documentacao" && !readOnlyAdmin;
   const podePendenciar =
     podeAgirCentral &&
     (chamado.status === "em_analise" ||
