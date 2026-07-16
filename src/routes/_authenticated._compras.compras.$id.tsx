@@ -40,6 +40,7 @@ import {
   type EstadoUF,
   type TipoPessoa,
   type StatusChamado,
+  type DocumentoRequisito,
 } from "@/lib/compras";
 import { obterTiposUsuarioConfig } from "@/lib/usuarios";
 import { Input } from "@/components/ui/input";
@@ -366,17 +367,16 @@ function DetalheChamado() {
   const isCentral = isAdmin;
   const readOnlyAdmin = isAdmin && modoAdmin === "visualizar";
 
-  const requisitos = useMemo(
-    () =>
-      chamado
-        ? documentosRequeridos(
-            chamado.estado_uf,
-            chamado.tipo_pessoa,
-            chamado.tem_inscricao_estadual,
-          )
-        : [],
-    [chamado],
-  );
+  const [requisitos, setRequisitos] = useState<DocumentoRequisito[]>([]);
+
+  useEffect(() => {
+    if (!chamado) return;
+    documentosRequeridos(
+      chamado.estado_uf,
+      chamado.tipo_pessoa,
+      chamado.tem_inscricao_estadual,
+    ).then(setRequisitos);
+  }, [chamado?.estado_uf, chamado?.tipo_pessoa, chamado?.tem_inscricao_estadual]);
 
   const docsByCat = useMemo(() => {
     const map: Record<string, Documento[]> = {};
@@ -767,8 +767,6 @@ function DetalheChamado() {
       acao = "pendenciado";
     } else if (dialogo === "resolver") {
       updates.status = "na_fila_central";
-      updates.motivo_pendencia = null;
-      updates.observacao_pendencia = null;
       acao = "resolvido";
     } else if (dialogo === "comprar") {
       updates.status = "comprado";
@@ -790,10 +788,6 @@ function DetalheChamado() {
       acao = "suspenso";
     } else if (dialogo === "reativar") {
       updates.status = "em_analise";
-      updates.motivo_suspensao = null;
-      updates.observacao_suspensao = null;
-      updates.suspenso_em = null;
-      updates.suspenso_por = null;
       acao = "reativado";
     }
     const { error } = await supabase.from("compras_chamados").update(updates).eq("id", chamado.id);
@@ -1063,90 +1057,47 @@ function DetalheChamado() {
         </div>
       </div>
 
-      {chamado.status === "pendenciado" && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
-              <div>
-                <div className="font-medium">Chamado pendenciado</div>
-                <div className="text-sm">
-                  <strong>Motivo:</strong> {chamado.motivo_pendencia}
+      {(chamado.observacao_pendencia ||
+        chamado.observacao_cancelamento ||
+        chamado.observacao_compra ||
+        chamado.observacao_suspensao) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Observações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {chamado.observacao_pendencia && (
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                <div>
+                  <strong>Pendência:</strong> {chamado.observacao_pendencia}
                 </div>
-                {chamado.observacao_pendencia && (
-                  <div className="text-sm">
-                    <strong>Obs:</strong> {chamado.observacao_pendencia}
-                  </div>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {chamado.status === "suspenso" && (
-        <Card className="border-purple-500/50 bg-purple-500/5">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5" />
-              <div>
-                <div className="font-medium text-purple-300">
-                  Chamado suspenso — aguardando terceiros
+            )}
+            {chamado.observacao_cancelamento && (
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <strong>Cancelamento:</strong> {chamado.observacao_cancelamento}
                 </div>
-                {chamado.motivo_suspensao && (
-                  <div className="text-sm">
-                    <strong>Motivo:</strong> {chamado.motivo_suspensao}
-                  </div>
-                )}
-                {chamado.observacao_suspensao && (
-                  <div className="text-sm">
-                    <strong>Obs:</strong> {chamado.observacao_suspensao}
-                  </div>
-                )}
-                {chamado.suspenso_em && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Suspenso em: {new Date(chamado.suspenso_em).toLocaleString("pt-BR")}
-                  </div>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {chamado.status === "comprado" && (
-        <Card className="border-emerald-500/50 bg-emerald-500/5">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
-              <div>
-                <div className="font-medium text-emerald-400">Chamado comprado</div>
-                {chamado.observacao_compra && (
-                  <div className="text-sm">
-                    <strong>Obs:</strong> {chamado.observacao_compra}
-                  </div>
-                )}
-                {chamado.concluido_em && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Concluído em: {new Date(chamado.concluido_em).toLocaleString("pt-BR")}
-                  </div>
-                )}
+            )}
+            {chamado.observacao_compra && (
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                <div>
+                  <strong>Compra:</strong> {chamado.observacao_compra}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {chamado.observacao_compra && chamado.status !== "comprado" && (
-        <Card className="border-border">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
-                <div className="font-medium">Observação do solicitante</div>
-                <div className="text-sm">{chamado.observacao_compra}</div>
+            )}
+            {chamado.observacao_suspensao && (
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                <div>
+                  <strong>Suspensão:</strong> {chamado.observacao_suspensao}
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -1197,9 +1148,6 @@ function DetalheChamado() {
                     : chamado.tem_inscricao_estadual === false
                       ? "Não"
                       : "-"}
-                </div>
-                <div>
-                  <strong>Status NF:</strong> {chamado.nf_status ?? "-"}
                 </div>
               </>
             )}

@@ -96,19 +96,57 @@ export const DOCUMENTOS_POR_ESTADO: Record<
   },
 };
 
-export function documentosRequeridos(
+/**
+ * Carrega documentos obrigatórios do banco (compras_cadastros) para a UF e
+ * tipo de pessoa informados.  Retorna apenas itens ativos.
+ */
+export async function documentosRequeridos(
   uf: EstadoUF,
   tipo: TipoPessoa,
   temInscricaoEstadual?: boolean | null,
-): DocumentoRequisito[] {
-  const base = DOCUMENTOS_POR_ESTADO[uf];
-  if (tipo !== "PJ") return base.pf;
-  let extras = [...base.pj_extra];
-  // Se PJ não tem inscrição estadual, remove nf_emissor
-  if (temInscricaoEstadual === false) {
-    extras = extras.filter((d) => d.categoria !== "nf_emissor");
+): Promise<DocumentoRequisito[]> {
+  const { data, error } = await supabase
+    .from("compras_cadastros")
+    .select("valor, label, uf, tipo_pessoa")
+    .eq("categoria", "documento")
+    .eq("ativo", true)
+    .order("ordem");
+
+  if (error || !data || data.length === 0) {
+    // Fallback para a matriz hardcoded caso o banco falhe
+    const base = DOCUMENTOS_POR_ESTADO[uf];
+    if (!base) return [];
+    if (tipo !== "PJ") return base.pf;
+    let extras = [...base.pj_extra];
+    if (temInscricaoEstadual === false) {
+      extras = extras.filter((d) => d.categoria !== "nf_emissor");
+    }
+    return [...base.pf, ...extras];
   }
-  return [...base.pf, ...extras];
+
+  const allItems = data as {
+    valor: string;
+    label: string;
+    uf: string | null;
+    tipo_pessoa: string | null;
+  }[];
+
+  const filtered = allItems.filter((i) => {
+    if (i.uf && i.uf.toUpperCase() !== uf.toUpperCase()) return false;
+    if (i.tipo_pessoa && i.tipo_pessoa !== tipo) return false;
+    return true;
+  });
+
+  let result: DocumentoRequisito[] = filtered.map((i) => ({
+    categoria: i.valor,
+    label: i.label,
+  }));
+
+  if (temInscricaoEstadual === false) {
+    result = result.filter((d) => d.categoria !== "nf_emissor");
+  }
+
+  return result;
 }
 
 export const TIPOS_DEBITO = [

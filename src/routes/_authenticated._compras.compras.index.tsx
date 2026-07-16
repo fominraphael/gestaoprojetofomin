@@ -162,7 +162,7 @@ function ComprasIndex() {
   const [rows, setRows] = useState<ChamadoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [status, setStatus] = useState<string>("na_fila_central");
+  const [status, setStatus] = useState<string>("todos");
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes_atual");
   const [reordenando, setReordenando] = useState(false);
   const [sortBy, setSortBy] = useState<
