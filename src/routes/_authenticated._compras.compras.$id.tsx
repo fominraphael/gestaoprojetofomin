@@ -36,6 +36,7 @@ import {
   MOTIVOS_SUSPENSAO,
   ADMIN_SUSPENSAO_ID,
   documentosRequeridos,
+  formatPlaca,
   type EstadoUF,
   type TipoPessoa,
   type StatusChamado,
@@ -854,7 +855,7 @@ function DetalheChamado() {
         updates[key] =
           type === "number"
             ? depois
-              ? Number(String(depois).replace(",", "."))
+              ? Number(String(depois).replace(/\./g, "").replace(",", "."))
               : null
             : depois || null;
         mudancas.push({
@@ -1525,16 +1526,101 @@ function DetalheChamado() {
           </DialogHeader>
           {editForm && (
             <div className="grid md:grid-cols-2 gap-3">
-              {CAMPOS_EDITAVEIS.map(({ key, label, type }) => (
-                <div key={key}>
-                  <Label>{label}</Label>
-                  <Input
-                    type={type ?? "text"}
-                    value={editForm[key] as string}
-                    onChange={(e) => setEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
-                  />
-                </div>
-              ))}
+              {CAMPOS_EDITAVEIS.map(({ key, label, type }) => {
+                if (key === "placa") {
+                  return (
+                    <div key={key}>
+                      <Label>{label}</Label>
+                      <Input
+                        value={editForm[key] as string}
+                        onChange={(e) =>
+                          setEditForm((f) => (f ? { ...f, [key]: formatPlaca(e.target.value) } : f))
+                        }
+                        maxLength={8}
+                        className="uppercase"
+                      />
+                    </div>
+                  );
+                }
+                if (key === "chassi") {
+                  return (
+                    <div key={key}>
+                      <Label>{label}</Label>
+                      <Input
+                        value={editForm[key] as string}
+                        onChange={(e) =>
+                          setEditForm((f) =>
+                            f
+                              ? {
+                                  ...f,
+                                  [key]: e.target.value
+                                    .toUpperCase()
+                                    .replace(/[^A-Z0-9]/g, "")
+                                    .slice(0, 17),
+                                }
+                              : f,
+                          )
+                        }
+                        maxLength={17}
+                      />
+                    </div>
+                  );
+                }
+                if (key === "ano_modelo") {
+                  return (
+                    <div key={key}>
+                      <Label>{label}</Label>
+                      <Input
+                        value={editForm[key] as string}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                          const formatted =
+                            digits.length > 4 ? `${digits.slice(0, 4)}/${digits.slice(4)}` : digits;
+                          setEditForm((f) => (f ? { ...f, [key]: formatted } : f));
+                        }}
+                        inputMode="numeric"
+                        maxLength={9}
+                      />
+                    </div>
+                  );
+                }
+                if (key === "valor_avaliado") {
+                  return (
+                    <div key={key}>
+                      <Label>{label}</Label>
+                      <Input
+                        value={editForm[key] as string}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 13);
+                          if (!digits) {
+                            setEditForm((f) => (f ? { ...f, [key]: "" } : f));
+                            return;
+                          }
+                          const n = parseInt(digits, 10);
+                          const inteiro = Math.floor(n / 100)
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                          const cent = (n % 100).toString().padStart(2, "0");
+                          setEditForm((f) => (f ? { ...f, [key]: `${inteiro},${cent}` } : f));
+                        }}
+                        inputMode="numeric"
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div key={key}>
+                    <Label>{label}</Label>
+                    <Input
+                      type={type ?? "text"}
+                      value={editForm[key] as string}
+                      onChange={(e) =>
+                        setEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))
+                      }
+                    />
+                  </div>
+                );
+              })}
               <div>
                 <Label>Loja de estoque</Label>
                 <Select

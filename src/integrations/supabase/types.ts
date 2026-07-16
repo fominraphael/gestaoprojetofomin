@@ -100,6 +100,7 @@ export type Database = {
           status_entrou_em: string;
           suspenso_em: string | null;
           suspenso_por: string | null;
+          tem_inscricao_estadual: boolean | null;
           tipo_compra: string;
           tipo_pessoa: string;
           updated_at: string;
@@ -142,6 +143,7 @@ export type Database = {
           status_entrou_em?: string;
           suspenso_em?: string | null;
           suspenso_por?: string | null;
+          tem_inscricao_estadual?: boolean | null;
           tipo_compra: string;
           tipo_pessoa: string;
           updated_at?: string;
@@ -184,6 +186,7 @@ export type Database = {
           status_entrou_em?: string;
           suspenso_em?: string | null;
           suspenso_por?: string | null;
+          tem_inscricao_estadual?: boolean | null;
           tipo_compra?: string;
           tipo_pessoa?: string;
           updated_at?: string;

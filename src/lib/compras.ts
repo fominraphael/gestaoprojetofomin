@@ -197,3 +197,17 @@ export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> 
 
   return data.map((d: any) => d.label);
 }
+
+export function formatPlaca(v: string) {
+  const raw = v
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 7);
+  if (raw.length <= 3) return raw;
+  return `${raw.slice(0, 3)}-${raw.slice(3)}`;
+}
+
+export function isPlacaValida(v: string) {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return /^[A-Z]{3}[0-9]{4}$/.test(raw) || /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
+}

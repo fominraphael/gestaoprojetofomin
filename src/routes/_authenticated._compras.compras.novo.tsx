@@ -16,7 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { TIPO_COMPRA_LABEL, type EstadoUF, type TipoCompra, type TipoPessoa } from "@/lib/compras";
+import {
+  TIPO_COMPRA_LABEL,
+  formatPlaca,
+  isPlacaValida,
+  type EstadoUF,
+  type TipoCompra,
+  type TipoPessoa,
+} from "@/lib/compras";
 import { ArrowLeft, User, Car, MapPin, ShoppingBag, Store, ChevronRight } from "lucide-react";
 
 interface Cadastro {
@@ -122,6 +129,14 @@ function NovoChamado() {
     }
     if (tipoPessoa === "PJ" && temInscricaoEstadual === null) {
       toast.error("Selecione se a pessoa jurídica possui inscrição estadual.");
+      return;
+    }
+    if (!isPlacaValida(form.placa)) {
+      toast.error("Formato de placa inválido. Use o formato AAA-9999 ou AAA-9A99.");
+      return;
+    }
+    if (form.chassi.length !== 17) {
+      toast.error("O chassi deve ter exatamente 17 caracteres.");
       return;
     }
     setSaving(true);
@@ -377,16 +392,40 @@ function NovoChamado() {
                     <Label>Placa *</Label>
                     <Input
                       value={form.placa}
-                      onChange={(e) => set("placa", e.target.value.toUpperCase())}
+                      onChange={(e) => set("placa", formatPlaca(e.target.value))}
+                      placeholder="ABC-1234"
+                      maxLength={8}
                       className="uppercase"
+                      aria-invalid={form.placa.length > 0 && !isPlacaValida(form.placa)}
                     />
+                    {form.placa.length > 0 && !isPlacaValida(form.placa) && (
+                      <p className="text-xs text-destructive mt-1">
+                        Formato inválido (ex: ABC-1234 ou ABC-1D23)
+                      </p>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <Label>Chassi *</Label>
                     <Input
                       value={form.chassi}
-                      onChange={(e) => set("chassi", e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        set(
+                          "chassi",
+                          e.target.value
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9]/g, "")
+                            .slice(0, 17),
+                        )
+                      }
+                      maxLength={17}
+                      placeholder="17 caracteres"
+                      aria-invalid={form.chassi.length > 0 && form.chassi.length !== 17}
                     />
+                    {form.chassi.length > 0 && form.chassi.length !== 17 && (
+                      <p className="text-xs text-destructive mt-1">
+                        O chassi deve ter exatamente 17 caracteres ({form.chassi.length}/17)
+                      </p>
+                    )}
                   </div>
                   <div className="md:col-span-1">
                     <Label>Renavam *</Label>
@@ -401,8 +440,15 @@ function NovoChamado() {
                     <Label>Ano/Modelo *</Label>
                     <Input
                       value={form.ano_modelo}
-                      onChange={(e) => set("ano_modelo", e.target.value)}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        const formatted =
+                          digits.length > 4 ? `${digits.slice(0, 4)}/${digits.slice(4)}` : digits;
+                        set("ano_modelo", formatted);
+                      }}
                       placeholder="2024/2025"
+                      inputMode="numeric"
+                      maxLength={9}
                     />
                   </div>
                   <div className="md:col-span-1">
@@ -436,9 +482,22 @@ function NovoChamado() {
                       </span>
                       <Input
                         value={form.valor_avaliado}
-                        onChange={(e) => set("valor_avaliado", e.target.value)}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 13);
+                          if (!digits) {
+                            set("valor_avaliado", "");
+                            return;
+                          }
+                          const n = parseInt(digits, 10);
+                          const inteiro = Math.floor(n / 100)
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                          const cent = (n % 100).toString().padStart(2, "0");
+                          set("valor_avaliado", `${inteiro},${cent}`);
+                        }}
                         placeholder="0,00"
                         className="pl-10 bg-muted/40 font-semibold"
+                        inputMode="numeric"
                       />
                     </div>
                   </div>
@@ -546,21 +605,6 @@ function formatMoeda(v: string) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   const cent = (n % 100).toString().padStart(2, "0");
   return `R$ ${inteiro},${cent}`;
-}
-
-function formatPlaca(v: string) {
-  const raw = v
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 7);
-  if (raw.length <= 3) return raw;
-  return `${raw.slice(0, 3)}-${raw.slice(3)}`;
-}
-
-function isPlacaValida(v: string) {
-  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  // Antiga: AAA9999 | Mercosul: AAA9A99
-  return /^[A-Z]{3}[0-9]{4}$/.test(raw) || /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
 }
 
 function formatCPF(v: string) {
