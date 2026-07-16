@@ -704,7 +704,12 @@ function DetalheChamado() {
     const aplicaveis = ((cad as any[]) ?? []).filter(
       (c) => (!c.uf || c.uf === uf) && (!c.tipo_pessoa || c.tipo_pessoa === tp),
     );
-    const docsFalt = aplicaveis
+    // Se PJ não tem inscrição estadual, remove nf_emissor dos obrigatórios
+    const docsAplicaveis =
+      chamado.tem_inscricao_estadual === false
+        ? aplicaveis.filter((c) => !(c.categoria === "documento" && c.valor === "nf_emissor"))
+        : aplicaveis;
+    const docsFalt = docsAplicaveis
       .filter((c) => c.categoria === "documento")
       .filter((c) => !documentos.some((d) => d.categoria === c.valor))
       .map((c) => c.label);
