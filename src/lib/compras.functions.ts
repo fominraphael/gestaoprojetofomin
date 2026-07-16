@@ -53,3 +53,34 @@ export const notificarChamado = createServerFn({ method: "POST" })
       return { ok: false, reason: String(err) };
     }
   });
+
+/**
+ * Gera signed URL para visualização ou download de documento de compras.
+ * Usa supabaseAdmin (bypass RLS) para garantir que qualquer usuário autenticado
+ * com acesso ao módulo compras possa visualizar/baixar anexos.
+ * A verificação de permissão de edição é feita no frontend.
+ */
+export const getComprasDocSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { storagePath: string; download?: boolean }) => {
+    if (!input?.storagePath) throw new Error("storagePath é obrigatório.");
+    if (!input.storagePath.startsWith("compras/"))
+      throw new Error("Path inválido: deve iniciar com compras/");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const expiresIn = 300; // 5 minutos
+    const opts = data.download ? { download: true } : undefined;
+
+    const { data: result, error } = await supabaseAdmin.storage
+      .from("documentos")
+      .createSignedUrl(data.storagePath, expiresIn, opts);
+
+    if (error) {
+      throw new Error(`Erro ao gerar link: ${error.message}`);
+    }
+
+    return { signedUrl: result.signedUrl };
+  });

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { notificarChamado } from "@/lib/compras.functions";
+import { notificarChamado, getComprasDocSignedUrl } from "@/lib/compras.functions";
 import { forcarNotificacao } from "@/lib/notificacoes.functions";
 import {
   STATUS_LABEL,
@@ -531,29 +531,29 @@ function DetalheChamado() {
   }
 
   async function abrirDoc(path: string) {
-    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const result = await getComprasDocSignedUrl({ data: { storagePath: path } });
+      const nome = path.split("/").pop() || "documento";
+      setPreview({ url: result.signedUrl, nome });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao abrir documento");
     }
-    const nome = path.split("/").pop() || "documento";
-    setPreview({ url: data.signedUrl, nome });
   }
 
   async function baixarDoc(path: string) {
-    const { data, error } = await supabase.storage
-      .from("documentos")
-      .createSignedUrl(path, 300, { download: true });
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const result = await getComprasDocSignedUrl({
+        data: { storagePath: path, download: true },
+      });
+      const link = document.createElement("a");
+      link.href = result.signedUrl;
+      link.download = path.split("/").pop() || "documento";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao baixar documento");
     }
-    const link = document.createElement("a");
-    link.href = data.signedUrl;
-    link.download = path.split("/").pop() || "documento";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 
   async function excluirDoc(doc: Documento) {
