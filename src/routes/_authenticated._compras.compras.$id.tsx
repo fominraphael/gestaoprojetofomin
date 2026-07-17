@@ -256,7 +256,16 @@ function DetalheChamado() {
   }, []);
 
   const statusesFor = useCallback(
-    (tipo: string) => statusOpts.filter((s) => !s.grupo || s.grupo === tipo),
+    (tipo: string) =>
+      statusOpts.filter((s) => {
+        if (!s.grupo) return true;
+        try {
+          const arr = JSON.parse(s.grupo);
+          return Array.isArray(arr) ? arr.includes(tipo) : s.grupo === tipo;
+        } catch {
+          return s.grupo === tipo;
+        }
+      }),
     [statusOpts],
   );
 

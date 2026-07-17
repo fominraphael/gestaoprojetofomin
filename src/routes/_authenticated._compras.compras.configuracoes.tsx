@@ -153,6 +153,20 @@ const GRUPOS = [
 
 const TIPOS_PESSOA_OPT: ("PF" | "PJ")[] = ["PF", "PJ"];
 
+function parseGrupoLinks(grupo: string | null): string[] {
+  if (!grupo) return [];
+  try {
+    const parsed = JSON.parse(grupo);
+    return Array.isArray(parsed) ? parsed : [grupo];
+  } catch {
+    return [grupo];
+  }
+}
+
+function encodeGrupoLinks(arr: string[]): string | null {
+  return arr.length > 0 ? JSON.stringify(arr) : null;
+}
+
 interface NovoForm {
   valor: string;
   label: string;
@@ -163,7 +177,7 @@ interface NovoForm {
   obrigatorio: boolean;
   grupo: string;
   tipos_pessoa: ("PF" | "PJ")[];
-  link_tipo_debito: string; // "" = todos
+  link_tipo_debito: string[]; // vazio = todos
   exige_anexo: boolean;
   exige_descricao: boolean;
   motivo_tipo: MotivoTipo;
@@ -179,7 +193,7 @@ const NOVO_VAZIO: NovoForm = {
   obrigatorio: false,
   grupo: "cliente",
   tipos_pessoa: [],
-  link_tipo_debito: "",
+  link_tipo_debito: [],
   exige_anexo: false,
   exige_descricao: false,
   motivo_tipo: "pendencia",
@@ -277,7 +291,9 @@ function ConfiguracoesCompras() {
           grupo: tab.usaMotivoTipo
             ? n.motivo_tipo
             : tab.usaStatusDebito
-              ? n.link_tipo_debito || null
+              ? n.link_tipo_debito.length > 0
+                ? JSON.stringify(n.link_tipo_debito)
+                : null
               : tab.usaGrupo
                 ? n.grupo
                 : null,
@@ -373,7 +389,7 @@ function ConfiguracoesCompras() {
             t.usaUf ? "110px" : null, // uf
             t.usaTipoPessoa ? "90px" : null, // tipo_pessoa
             t.usaGrupo ? "160px" : null, // grupo
-            t.usaStatusDebito ? "180px" : null, // aplica-se a
+            t.usaStatusDebito ? "minmax(200px,1fr)" : null, // aplica-se a
             t.usaStatusDebito ? "80px" : null, // exige anexo
             t.usaStatusDebito ? "80px" : null, // exige descricao
             t.usaTipoCampo ? "140px" : null, // tipo
@@ -594,28 +610,36 @@ function ConfiguracoesCompras() {
                     )}
                     {t.usaStatusDebito && (
                       <>
-                        <div className="w-[200px]">
+                        <div className="min-w-[220px]">
                           <Label>Aplica-se a</Label>
-                          <Select
-                            value={n.link_tipo_debito || "__all"}
-                            onValueChange={(v) =>
-                              setNovoField(t.key, { link_tipo_debito: v === "__all" ? "" : v })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__all">Todos os tipos</SelectItem>
-                              {items
-                                .filter((i) => i.categoria === "tipo_debito" && i.ativo)
-                                .map((td) => (
-                                  <SelectItem key={td.id} value={td.valor}>
-                                    {td.label}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {items
+                              .filter((i) => i.categoria === "tipo_debito" && i.ativo)
+                              .map((td) => (
+                                <label
+                                  key={td.id}
+                                  className="flex items-center gap-1.5 text-xs cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="accent-primary"
+                                    checked={n.link_tipo_debito.includes(td.valor)}
+                                    onChange={(e) => {
+                                      const next = e.target.checked
+                                        ? [...n.link_tipo_debito, td.valor]
+                                        : n.link_tipo_debito.filter((v) => v !== td.valor);
+                                      setNovoField(t.key, { link_tipo_debito: next });
+                                    }}
+                                  />
+                                  {td.label}
+                                </label>
+                              ))}
+                          </div>
+                          {n.link_tipo_debito.length === 0 && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              Nenhum marcado = aplica a todos
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 h-10 px-2">
                           <input
@@ -779,26 +803,34 @@ function ConfiguracoesCompras() {
                           )}
                           {t.usaStatusDebito && (
                             <>
-                              <Select
-                                value={i.grupo ?? "__all"}
-                                onValueChange={(v) =>
-                                  updateLocal(i.id, { grupo: v === "__all" ? null : v })
-                                }
-                              >
-                                <SelectTrigger className="h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="__all">Todos</SelectItem>
-                                  {items
-                                    .filter((x) => x.categoria === "tipo_debito" && x.ativo)
-                                    .map((td) => (
-                                      <SelectItem key={td.id} value={td.valor}>
+                              <div className="flex flex-wrap gap-1">
+                                {items
+                                  .filter((x) => x.categoria === "tipo_debito" && x.ativo)
+                                  .map((td) => {
+                                    const current = parseGrupoLinks(i.grupo);
+                                    const checked = current.includes(td.valor);
+                                    return (
+                                      <label
+                                        key={td.id}
+                                        className="flex items-center gap-1 text-[10px] cursor-pointer whitespace-nowrap"
+                                        title={td.label}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="accent-primary scale-90"
+                                          checked={checked}
+                                          onChange={(e) => {
+                                            const next = e.target.checked
+                                              ? [...current, td.valor]
+                                              : current.filter((v) => v !== td.valor);
+                                            updateLocal(i.id, { grupo: encodeGrupoLinks(next) });
+                                          }}
+                                        />
                                         {td.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
+                                      </label>
+                                    );
+                                  })}
+                              </div>
                               <label className="flex items-center justify-center text-xs">
                                 <input
                                   type="checkbox"
