@@ -218,7 +218,7 @@ function DocumentosPage() {
                       <div className="text-[10px] text-muted-foreground mt-0.5">
                         CNPJ: {emp.cnpj}
                       </div>
-                      {emp.email_notificacao && (
+                      {isAdmin && emp.email_notificacao && (
                         <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                           ✉ {emp.email_notificacao}
                         </div>

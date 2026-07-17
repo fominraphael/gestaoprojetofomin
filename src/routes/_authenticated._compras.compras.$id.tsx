@@ -585,7 +585,16 @@ function DetalheChamado() {
 
   async function marcarDebito(tipo: string, statusValor: string) {
     if (!chamado) return;
-    const opt = statusOpts.find((s) => s.valor === statusValor && (!s.grupo || s.grupo === tipo));
+    const opt = statusOpts.find((s) => {
+      if (s.valor !== statusValor) return false;
+      if (!s.grupo) return true;
+      try {
+        const arr = JSON.parse(s.grupo);
+        return Array.isArray(arr) ? arr.includes(tipo) : s.grupo === tipo;
+      } catch {
+        return s.grupo === tipo;
+      }
+    });
     if (!opt) {
       toast.error("Status inválido.");
       return;
@@ -1390,27 +1399,73 @@ function DetalheChamado() {
               const atual = debitos.find((d) => d.tipo === t.key);
               const opts = statusesFor(t.key);
               return (
-                <div
-                  key={t.key}
-                  className="flex items-center justify-between gap-3 border border-border rounded-md p-2"
-                >
-                  <div className="text-sm font-medium">{t.label}</div>
-                  <Select
-                    value={atual?.status ?? ""}
-                    onValueChange={(v) => marcarDebito(t.key, v)}
-                    disabled={!podeEditarDados || opts.length === 0}
-                  >
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder={opts.length === 0 ? "Sem status" : "Marcar"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {opts.map((s) => (
-                        <SelectItem key={s.valor} value={s.valor}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div key={t.key} className="border border-border rounded-md p-2 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-medium">{t.label}</div>
+                    <Select
+                      value={atual?.status ?? ""}
+                      onValueChange={(v) => marcarDebito(t.key, v)}
+                      disabled={!podeEditarDados || opts.length === 0}
+                    >
+                      <SelectTrigger className="w-44">
+                        <SelectValue placeholder={opts.length === 0 ? "Sem status" : "Marcar"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {opts.map((s) => (
+                          <SelectItem key={s.valor} value={s.valor}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {atual?.observacao && (
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Obs:</strong> {atual.observacao}
+                    </div>
+                  )}
+                  {atual?.comprovante_path && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { data } = await supabase.storage
+                            .from("documentos")
+                            .createSignedUrl(atual.comprovante_path!, 600);
+                          if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          else toast.error("Não foi possível abrir o comprovante.");
+                        }}
+                        className="text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        <EyeIcon className="w-3 h-3" /> Ver comprovante
+                      </button>
+                      {podeEditarDados && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!confirm("Excluir este comprovante?")) return;
+                            await supabase.storage
+                              .from("documentos")
+                              .remove([atual.comprovante_path!]);
+                            await supabase
+                              .from("compras_debitos")
+                              .update({ comprovante_path: null })
+                              .eq("chamado_id", chamado!.id)
+                              .eq("tipo", t.key);
+                            setDebitos((prev) =>
+                              prev.map((d) =>
+                                d.tipo === t.key ? { ...d, comprovante_path: null } : d,
+                              ),
+                            );
+                            toast.success("Comprovante excluído.");
+                          }}
+                          className="text-destructive hover:underline inline-flex items-center gap-1"
+                        >
+                          <XIcon className="w-3 h-3" /> Excluir
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
