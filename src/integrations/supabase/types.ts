@@ -387,6 +387,36 @@ export type Database = {
           },
         ]
       }
+      cron_log: {
+        Row: {
+          created_at: string | null
+          detalhes: Json | null
+          finalizado_em: string | null
+          id: string
+          iniciado_em: string | null
+          job_name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          detalhes?: Json | null
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          job_name: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          detalhes?: Json | null
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          job_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       documentos_arquivo: {
         Row: {
           arquivo_nome: string
