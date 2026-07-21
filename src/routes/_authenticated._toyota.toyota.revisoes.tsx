@@ -50,7 +50,7 @@ function ToyotaRevisoesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Revisão Toyota Seminovos</h1>
           <p className="text-muted-foreground">Fluxo de revisão, certificação e pós-vendas</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate({ to: '/toyota/revisoes/nova' })}>
           <Plus className="h-4 w-4" /> Nova Solicitação
         </Button>
       </div>
