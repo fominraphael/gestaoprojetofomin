@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_authenticated/_toyota/toyota/revisoes')(
 });
 
 function ToyotaRevisoesPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pendentes');
 
