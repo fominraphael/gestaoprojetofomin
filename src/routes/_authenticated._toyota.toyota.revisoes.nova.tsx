@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,10 +24,9 @@ const formSchema = z.object({
   certificacao: z.boolean().default(false),
   prioridade: z.string().default("NORMAL"),
   observacao_seminovos: z.string().optional(),
-}).refine(data => data.revisao || data.certificacao, {
-  message: "Selecione pelo menos um serviço (Revisão ou Certificação)",
-  path: ["revisao"],
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 export const Route = createFileRoute('/_authenticated/_toyota/toyota/revisoes/nova' as any)({
   component: NovaRevisaoPage,
@@ -37,7 +36,7 @@ function NovaRevisaoPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       placa: "",
@@ -52,7 +51,12 @@ function NovaRevisaoPage() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
+    if (!values.revisao && !values.certificacao) {
+      toast.error("Selecione pelo menos um serviço (Revisão ou Certificação)");
+      return;
+    }
+
     try {
       const { error } = await supabase.from('toyota_revisoes').insert({
         placa: values.placa.toUpperCase(),
@@ -113,7 +117,7 @@ function NovaRevisaoPage() {
                 name="chassi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Chassi (Resumido ou completo)</FormLabel>
+                    <FormLabel>Chassi</FormLabel>
                     <FormControl>
                       <Input placeholder="Digite o chassi" {...field} className="uppercase" />
                     </FormControl>
@@ -168,7 +172,7 @@ function NovaRevisaoPage() {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel className="font-bold">Solicitar Revisão</FormLabel>
+                        <FormLabel className="font-bold cursor-pointer">Solicitar Revisão</FormLabel>
                       </div>
                     </FormItem>
                   )}
@@ -185,7 +189,7 @@ function NovaRevisaoPage() {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel className="font-bold">Solicitar Certificação</FormLabel>
+                        <FormLabel className="font-bold cursor-pointer">Solicitar Certificação</FormLabel>
                       </div>
                     </FormItem>
                   )}
