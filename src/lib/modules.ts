@@ -24,12 +24,22 @@ import {
  * Perfis específicos do módulo Toyota (definidos em `profiles.tipo_usuario`).
  * Administrador tem acesso a tudo; demais perfis são restritos por rota.
  */
-export type PerfilToyota = "Administrador" | "Preparador" | "Consultor Pós-Vendas" | "Outro";
+export type PerfilToyota = 
+  | "Administrador" 
+  | "Preparador" 
+  | "Consultor Pós-Vendas" 
+  | "Gestora de Seminovos"
+  | "Mecânico Toyota"
+  | "Vendedor de Seminovos"
+  | "Outro";
 
 export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilToyota {
   const t = (tipo ?? "").trim().toLowerCase();
   if (t === "administrador") return "Administrador";
   if (t === "preparador") return "Preparador";
+  if (t === "gestora de seminovos") return "Gestora de Seminovos";
+  if (t === "mecânico toyota" || t === "mecanico toyota") return "Mecânico Toyota";
+  if (t === "vendedor de seminovos") return "Vendedor de Seminovos";
   if (
     t === "consultor pós-vendas" ||
     t === "consultor pos-vendas" ||
@@ -147,6 +157,18 @@ export const MODULES: ModuleDef[] = [
         perfis: ["Administrador"],
       },
       {
+        to: "/toyota/revisoes",
+        label: "Revisão de Seminovos",
+        icon: ClipboardList,
+        perfis: [
+          "Administrador",
+          "Gestora de Seminovos",
+          "Mecânico Toyota",
+          "Vendedor de Seminovos",
+          "Consultor Pós-Vendas",
+        ],
+      },
+      {
         to: "/toyota/configuracoes",
         label: "Configurações",
         icon: Settings,
@@ -174,6 +196,17 @@ export const MODULES: ModuleDef[] = [
         perfis: ["Administrador"],
       },
     ],
+  },
+  {
+    id: "toyota_revisoes",
+    label: "Revisão Toyota",
+    description:
+      "Controle de solicitações de revisão e certificação Toyota, fluxo de aprovação e OS.",
+    icon: ClipboardList,
+    href: "/toyota/revisoes",
+    requiredModule: "toyota_revisoes",
+    gradient: "from-blue-500/15 to-blue-700/15",
+    iconBg: "from-blue-500 to-blue-700",
   },
 ];
 

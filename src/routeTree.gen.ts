@@ -31,6 +31,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
 import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
 import { Route as ApiPublicCronVerificarNotificacoesRouteImport } from './routes/api/public/cron/verificar-notificacoes'
+import { Route as AuthenticatedToyotaToyotaRevisoesRouteImport } from './routes/_authenticated._toyota.toyota.revisoes'
 import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
 import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
 import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
@@ -161,6 +162,12 @@ const ApiPublicCronVerificarNotificacoesRoute =
     path: '/api/public/cron/verificar-notificacoes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedToyotaToyotaRevisoesRoute =
+  AuthenticatedToyotaToyotaRevisoesRouteImport.update({
+    id: '/toyota/revisoes',
+    path: '/toyota/revisoes',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
 const AuthenticatedToyotaToyotaRegrasRoute =
   AuthenticatedToyotaToyotaRegrasRouteImport.update({
     id: '/toyota/regras',
@@ -251,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/toyota/revisoes': typeof AuthenticatedToyotaToyotaRevisoesRoute
   '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -281,6 +289,7 @@ export interface FileRoutesByTo {
   '/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/toyota/revisoes': typeof AuthenticatedToyotaToyotaRevisoesRoute
   '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -317,6 +326,7 @@ export interface FileRoutesById {
   '/_authenticated/_toyota/toyota/painel': typeof AuthenticatedToyotaToyotaPainelRoute
   '/_authenticated/_toyota/toyota/painel-geral': typeof AuthenticatedToyotaToyotaPainelGeralRoute
   '/_authenticated/_toyota/toyota/regras': typeof AuthenticatedToyotaToyotaRegrasRoute
+  '/_authenticated/_toyota/toyota/revisoes': typeof AuthenticatedToyotaToyotaRevisoesRoute
   '/api/public/cron/verificar-notificacoes': typeof ApiPublicCronVerificarNotificacoesRoute
   '/api/public/hooks/notificar-vencimentos': typeof ApiPublicHooksNotificarVencimentosRoute
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/painel-geral'
     | '/toyota/regras'
+    | '/toyota/revisoes'
     | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/toyota/painel'
     | '/toyota/painel-geral'
     | '/toyota/regras'
+    | '/toyota/revisoes'
     | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -414,6 +426,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota/toyota/painel'
     | '/_authenticated/_toyota/toyota/painel-geral'
     | '/_authenticated/_toyota/toyota/regras'
+    | '/_authenticated/_toyota/toyota/revisoes'
     | '/api/public/cron/verificar-notificacoes'
     | '/api/public/hooks/notificar-vencimentos'
     | '/api/public/hooks/notificar-vencimentos-test'
@@ -589,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronVerificarNotificacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_toyota/toyota/revisoes': {
+      id: '/_authenticated/_toyota/toyota/revisoes'
+      path: '/toyota/revisoes'
+      fullPath: '/toyota/revisoes'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaRevisoesRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
     '/_authenticated/_toyota/toyota/regras': {
       id: '/_authenticated/_toyota/toyota/regras'
       path: '/toyota/regras'
@@ -731,6 +751,7 @@ interface AuthenticatedToyotaRouteChildren {
   AuthenticatedToyotaToyotaPainelRoute: typeof AuthenticatedToyotaToyotaPainelRoute
   AuthenticatedToyotaToyotaPainelGeralRoute: typeof AuthenticatedToyotaToyotaPainelGeralRoute
   AuthenticatedToyotaToyotaRegrasRoute: typeof AuthenticatedToyotaToyotaRegrasRoute
+  AuthenticatedToyotaToyotaRevisoesRoute: typeof AuthenticatedToyotaToyotaRevisoesRoute
   AuthenticatedToyotaToyotaEstoqueImportarRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
 }
 
@@ -747,6 +768,8 @@ const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
   AuthenticatedToyotaToyotaPainelGeralRoute:
     AuthenticatedToyotaToyotaPainelGeralRoute,
   AuthenticatedToyotaToyotaRegrasRoute: AuthenticatedToyotaToyotaRegrasRoute,
+  AuthenticatedToyotaToyotaRevisoesRoute:
+    AuthenticatedToyotaToyotaRevisoesRoute,
   AuthenticatedToyotaToyotaEstoqueImportarRoute:
     AuthenticatedToyotaToyotaEstoqueImportarRoute,
 }
@@ -792,13 +815,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
