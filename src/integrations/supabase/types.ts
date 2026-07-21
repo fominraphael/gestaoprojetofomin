@@ -1189,6 +1189,111 @@ export type Database = {
           },
         ]
       }
+      toyota_revisoes: {
+        Row: {
+          certificacao: boolean | null
+          chassi: string
+          consultor_seminovos: string
+          created_at: string | null
+          data_abertura_os: string | null
+          data_aprovacao: string | null
+          data_execucao_concluida: string | null
+          data_finalizacao: string | null
+          data_inicio_execucao: string | null
+          gestora_id: string | null
+          id: string
+          km_atual: number | null
+          km_validado_mecanico: number | null
+          link_health_check: string | null
+          link_pdf_certificacao: string | null
+          link_pdf_revalidacao: string | null
+          mecanico_id: string | null
+          modelo: string
+          numero_os: string | null
+          observacao_finalizacao: string | null
+          observacao_gestora: string | null
+          observacao_mecanico: string | null
+          observacao_pos_vendas: string | null
+          observacao_seminovos: string | null
+          placa: string
+          prioridade: string | null
+          responsavel_pos_vendas_id: string | null
+          revisao: boolean | null
+          solicitante_id: string | null
+          status: Database["public"]["Enums"]["toyota_revisao_status"] | null
+          tipo_os: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          certificacao?: boolean | null
+          chassi: string
+          consultor_seminovos: string
+          created_at?: string | null
+          data_abertura_os?: string | null
+          data_aprovacao?: string | null
+          data_execucao_concluida?: string | null
+          data_finalizacao?: string | null
+          data_inicio_execucao?: string | null
+          gestora_id?: string | null
+          id?: string
+          km_atual?: number | null
+          km_validado_mecanico?: number | null
+          link_health_check?: string | null
+          link_pdf_certificacao?: string | null
+          link_pdf_revalidacao?: string | null
+          mecanico_id?: string | null
+          modelo: string
+          numero_os?: string | null
+          observacao_finalizacao?: string | null
+          observacao_gestora?: string | null
+          observacao_mecanico?: string | null
+          observacao_pos_vendas?: string | null
+          observacao_seminovos?: string | null
+          placa: string
+          prioridade?: string | null
+          responsavel_pos_vendas_id?: string | null
+          revisao?: boolean | null
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["toyota_revisao_status"] | null
+          tipo_os?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          certificacao?: boolean | null
+          chassi?: string
+          consultor_seminovos?: string
+          created_at?: string | null
+          data_abertura_os?: string | null
+          data_aprovacao?: string | null
+          data_execucao_concluida?: string | null
+          data_finalizacao?: string | null
+          data_inicio_execucao?: string | null
+          gestora_id?: string | null
+          id?: string
+          km_atual?: number | null
+          km_validado_mecanico?: number | null
+          link_health_check?: string | null
+          link_pdf_certificacao?: string | null
+          link_pdf_revalidacao?: string | null
+          mecanico_id?: string | null
+          modelo?: string
+          numero_os?: string | null
+          observacao_finalizacao?: string | null
+          observacao_gestora?: string | null
+          observacao_mecanico?: string | null
+          observacao_pos_vendas?: string | null
+          observacao_seminovos?: string | null
+          placa?: string
+          prioridade?: string | null
+          responsavel_pos_vendas_id?: string | null
+          revisao?: boolean | null
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["toyota_revisao_status"] | null
+          tipo_os?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       toyota_usuario_filial: {
         Row: {
           created_at: string
@@ -1466,6 +1571,15 @@ export type Database = {
         | "Desenho"
         | "Estudo de caso"
         | "Outro"
+      toyota_revisao_status:
+        | "aguardando_aprovacao"
+        | "aprovado_pos_vendas"
+        | "devolvido_seminovos"
+        | "os_aberta"
+        | "em_execucao"
+        | "aguardando_documentos"
+        | "finalizado"
+        | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1603,6 +1717,16 @@ export const Constants = {
         "Desenho",
         "Estudo de caso",
         "Outro",
+      ],
+      toyota_revisao_status: [
+        "aguardando_aprovacao",
+        "aprovado_pos_vendas",
+        "devolvido_seminovos",
+        "os_aberta",
+        "em_execucao",
+        "aguardando_documentos",
+        "finalizado",
+        "cancelado",
       ],
     },
   },
