@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/cron/verificar-notificacoes")(
 
           // Log no banco
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          await supabaseAdmin.from("cron_log").insert({
+          await (supabaseAdmin as any).from("cron_log").insert({
             job_name: "verificar_notificacoes",
             status: "ok",
             detalhes: resultado,
