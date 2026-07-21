@@ -157,6 +157,18 @@ export const MODULES: ModuleDef[] = [
         perfis: ["Administrador"],
       },
       {
+        to: "/toyota/revisoes",
+        label: "Revisão de Seminovos",
+        icon: ClipboardList,
+        perfis: [
+          "Administrador",
+          "Gestora de Seminovos",
+          "Mecânico Toyota",
+          "Vendedor de Seminovos",
+          "Consultor Pós-Vendas",
+        ],
+      },
+      {
         to: "/toyota/configuracoes",
         label: "Configurações",
         icon: Settings,
