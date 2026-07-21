@@ -197,6 +197,17 @@ export const MODULES: ModuleDef[] = [
       },
     ],
   },
+  {
+    id: "toyota_revisoes",
+    label: "Revisão Toyota",
+    description:
+      "Controle de solicitações de revisão e certificação Toyota, fluxo de aprovação e OS.",
+    icon: ClipboardList,
+    href: "/toyota/revisoes",
+    requiredModule: "toyota_revisoes",
+    gradient: "from-blue-500/15 to-blue-700/15",
+    iconBg: "from-blue-500 to-blue-700",
+  },
 ];
 
 /** All routes owned by registered modules (entry + sidebar nav items). */
