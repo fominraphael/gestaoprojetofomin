@@ -37,7 +37,7 @@ function NovaRevisaoPage() {
   const { user } = useAuth();
   
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       placa: "",
       modelo: "",
