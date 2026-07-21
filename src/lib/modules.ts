@@ -24,12 +24,22 @@ import {
  * Perfis específicos do módulo Toyota (definidos em `profiles.tipo_usuario`).
  * Administrador tem acesso a tudo; demais perfis são restritos por rota.
  */
-export type PerfilToyota = "Administrador" | "Preparador" | "Consultor Pós-Vendas" | "Outro";
+export type PerfilToyota = 
+  | "Administrador" 
+  | "Preparador" 
+  | "Consultor Pós-Vendas" 
+  | "Gestora de Seminovos"
+  | "Mecânico Toyota"
+  | "Vendedor de Seminovos"
+  | "Outro";
 
 export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilToyota {
   const t = (tipo ?? "").trim().toLowerCase();
   if (t === "administrador") return "Administrador";
   if (t === "preparador") return "Preparador";
+  if (t === "gestora de seminovos") return "Gestora de Seminovos";
+  if (t === "mecânico toyota" || t === "mecanico toyota") return "Mecânico Toyota";
+  if (t === "vendedor de seminovos") return "Vendedor de Seminovos";
   if (
     t === "consultor pós-vendas" ||
     t === "consultor pos-vendas" ||
