@@ -132,15 +132,15 @@ function ToyotaRevisoesPage() {
                 revisoes?.map((rev) => (
                   <TableRow key={rev.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {rev.id.split('-')[0].toUpperCase()}
+                      {rev.id?.split('-')[0].toUpperCase()}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">
-                          {format(new Date(rev.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                          {rev.created_at ? format(new Date(rev.created_at), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(rev.created_at), 'HH:mm', { locale: ptBR })}
+                          {rev.created_at ? format(new Date(rev.created_at), 'HH:mm', { locale: ptBR }) : '-'}
                         </span>
                       </div>
                     </TableCell>
@@ -162,8 +162,8 @@ function ToyotaRevisoesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`font-black text-[10px] uppercase border ${statusMap[rev.status]?.color || ''}`}>
-                        {statusMap[rev.status]?.label || rev.status}
+                      <Badge variant="outline" className={`font-black text-[10px] uppercase border ${rev.status && statusMap[rev.status] ? statusMap[rev.status].color : ''}`}>
+                        {rev.status && statusMap[rev.status] ? statusMap[rev.status].label : rev.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
