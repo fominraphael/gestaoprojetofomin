@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Car, ClipboardList, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Car, ClipboardList, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
@@ -64,28 +64,9 @@ function Index() {
         </Card>
       </div>
 
-      <Button size="lg" onClick={() => navigate({ to: '/toyota/revisoes' })} className="gap-2 px-8">
+      <Button size="lg" onClick={() => navigate({ to: '/toyota/revisoes' } as any)} className="gap-2 px-8">
         Acessar Novo Módulo <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
-  );
-}
-
-function ChevronRight(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
   );
 }
