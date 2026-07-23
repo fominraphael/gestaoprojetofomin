@@ -34,7 +34,9 @@ export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilTo
     t === "consultor pós-vendas" ||
     t === "consultor pos-vendas" ||
     t === "consultor de pós-vendas" ||
-    t === "consultor de pos-vendas"
+    t === "consultor de pos-vendas" ||
+    t === "gestor de pós vendas" ||
+    t === "gestor de pos vendas"
   )
     return "Consultor Pós-Vendas";
   return "Outro";
