@@ -29,7 +29,7 @@ export type PerfilToyota = "Administrador" | "Preparador" | "Consultor Pós-Vend
 export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilToyota {
   const t = (tipo ?? "").trim().toLowerCase();
   if (t === "administrador") return "Administrador";
-  if (t === "preparador") return "Preparador";
+  if (t === "preparador" || t === "gestor de seminovos") return "Preparador";
   if (
     t === "consultor pós-vendas" ||
     t === "consultor pos-vendas" ||
