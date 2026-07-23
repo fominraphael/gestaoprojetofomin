@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardCheck,
@@ -103,6 +103,7 @@ const PRIORIDADES: Record<string, { label: string; cls: string }> = {
 
 function RevisoesPage() {
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const perfil = perfilFromTipoUsuario(user?.tipo_usuario);
 
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
@@ -323,11 +324,9 @@ function RevisoesPage() {
           </p>
         </div>
         {podeCriar && (
-          <Link to="/toyota/revisoes/nova">
-            <Button>
-              <Plus className="h-4 w-4 mr-1" /> Nova Solicitação
-            </Button>
-          </Link>
+          <Button onClick={() => navigate({ to: "/toyota/revisoes/nova" })}>
+            <Plus className="h-4 w-4 mr-1" /> Nova Solicitação
+          </Button>
         )}
       </div>
 
