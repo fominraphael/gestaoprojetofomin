@@ -9,6 +9,7 @@ import {
   FileUp,
   FileText,
   CheckCircle2,
+  ClipboardCheck,
 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,8 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { perfilFromTipoUsuario } from "@/lib/modules";
+import { RevisaoExecucaoDialog } from "@/components/toyota/RevisaoExecucaoDialog";
 
 export const Route = createFileRoute("/_authenticated/_toyota/toyota/fila-posvendas")({
   component: FilaPosVendas,
@@ -60,6 +63,39 @@ interface Veiculo {
   };
 }
 
+interface RevisaoItem {
+  id: string;
+  created_at: string | null;
+  placa: string;
+  modelo: string | null;
+  chassi: string;
+  km_atual: number | null;
+  km_validado_mecanico: number | null;
+  revisao: boolean | null;
+  certificacao: boolean | null;
+  prioridade: string | null;
+  observacao_seminovos: string | null;
+  status: string | null;
+  filial_id: string | null;
+  consultor_seminovos: string;
+  mecanico_id: string | null;
+  numero_os: string | null;
+  tipo_os: string | null;
+  data_inicio_execucao: string | null;
+  observacao_mecanico: string | null;
+  data_finalizacao: string | null;
+  observacao_finalizacao: string | null;
+}
+
+interface FilaItem {
+  tipo: "certificacao" | "revisao" | "ambos";
+  placa: string;
+  chassi: string;
+  modelo: string | null;
+  veiculo?: Veiculo;
+  revisao?: RevisaoItem;
+}
+
 interface FilialInfo {
   dealer_number: string | null;
   nome_bi_toyota: string | null;
@@ -72,48 +108,78 @@ function formatarBytes(bytes?: number | null): string {
 }
 
 function FilaPosVendas() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const perfil = perfilFromTipoUsuario(user?.tipo_usuario);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [revisoes, setRevisoes] = useState<RevisaoItem[]>([]);
+  const [filiaisVinculadas, setFiliaisVinculadas] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<Veiculo | null>(null);
   const [obs, setObs] = useState("");
   const [km, setKm] = useState("");
-  // Marcações removidas: o Template PDF já vem previamente preenchido.
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [uploadando, setUploadando] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Revisão dialog
+  const [revisaoDialog, setRevisaoDialog] = useState<RevisaoItem | null>(null);
+
   const carregar = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("toyota_estoque_veiculos")
-      .select(
-        "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,checklist_itens,checklist_pdf_path,health_check_pdf_path,health_check_uploaded_at,posvendas_km,filial_destino_id",
-      )
-      .eq("status_aprovacao", "em_posvendas")
-      .order("updated_at", { ascending: false });
-    if (error) {
-      toast.error("Erro ao carregar fila");
-      setVeiculos([]);
-    } else {
-      const base = (data ?? []) as Veiculo[];
-      const comTamanhos = await Promise.all(
-        base.map(async (v) => ({
-          ...v,
-          tamanhos: {
-            checklist: v.checklist_pdf_path
-              ? await obterTamanhoStorage(v.checklist_pdf_path)
-              : null,
-            health: v.health_check_pdf_path
-              ? await obterTamanhoStorage(v.health_check_pdf_path)
-              : null,
-          },
-        })),
-      );
-      setVeiculos(comTamanhos);
-    }
+
+    const [resVeiculos, resRevisoes, resVinculos] = await Promise.all([
+      supabase
+        .from("toyota_estoque_veiculos")
+        .select(
+          "id,chassi,placa,modelo,marca,ano_modelo,elegibilidade,status_aprovacao,motivo_reprovacao,hsv_revisoes_pendentes,hsv_os_ajustes,hsv_observacoes_preparador,checklist_data,checklist_itens,checklist_pdf_path,health_check_pdf_path,health_check_uploaded_at,posvendas_km,filial_destino_id",
+        )
+        .eq("status_aprovacao", "em_posvendas")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("toyota_revisoes")
+        .select("*")
+        .in("status", ["aprovado_pos_vendas", "em_execucao"])
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("toyota_usuario_filial")
+        .select("filial_id")
+        .eq("user_id", user?.id ?? ""),
+    ]);
+
+    const vinculos = (resVinculos.data ?? []).map((v) => v.filial_id);
+    setFiliaisVinculadas(vinculos);
+
+    const filialVisivel = (filialId: string | null) => {
+      if (isAdmin || perfil === "Administrador") return true;
+      if (!filialId) return true;
+      return vinculos.includes(filialId);
+    };
+
+    const veiculosFiltrados = ((resVeiculos.data ?? []) as Veiculo[]).filter((v) =>
+      filialVisivel(v.filial_destino_id),
+    );
+    const revisoesFiltradas = ((resRevisoes.data ?? []) as RevisaoItem[]).filter((r) =>
+      filialVisivel(r.filial_id),
+    );
+
+    const comTamanhos = await Promise.all(
+      veiculosFiltrados.map(async (v) => ({
+        ...v,
+        tamanhos: {
+          checklist: v.checklist_pdf_path
+            ? await obterTamanhoStorage(v.checklist_pdf_path)
+            : null,
+          health: v.health_check_pdf_path
+            ? await obterTamanhoStorage(v.health_check_pdf_path)
+            : null,
+        },
+      })),
+    );
+
+    setVeiculos(comTamanhos);
+    setRevisoes(revisoesFiltradas);
     setLoading(false);
   };
 
@@ -131,17 +197,52 @@ function FilaPosVendas() {
 
   useEffect(() => {
     carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtrados = useMemo(() => {
-    const t = busca.trim().toLowerCase();
-    if (!t) return veiculos;
-    return veiculos.filter((v) =>
-      [v.chassi, v.placa, v.modelo].filter(Boolean).some((s) => s!.toLowerCase().includes(t)),
-    );
-  }, [veiculos, busca]);
+  // Combinar veículos e revisões numa lista unificada, agrupada por placa
+  const itensUnificados = useMemo(() => {
+    const normalizar = (s: string | null) => (s ?? "").trim().toUpperCase();
+    const mapa = new Map<string, FilaItem>();
 
+    for (const v of veiculos) {
+      const placa = normalizar(v.placa);
+      const chave = placa || v.chassi;
+      const existente = mapa.get(chave);
+      if (existente) {
+        existente.veiculo = v;
+        existente.tipo = "ambos";
+      } else {
+        mapa.set(chave, { tipo: "certificacao", placa, chassi: v.chassi, modelo: v.modelo, veiculo: v });
+      }
+    }
+
+    for (const r of revisoes) {
+      const placa = normalizar(r.placa);
+      const chave = placa || r.chassi;
+      const existente = mapa.get(chave);
+      if (existente) {
+        existente.revisao = r;
+        existente.tipo = "ambos";
+      } else {
+        mapa.set(chave, { tipo: "revisao", placa, chassi: r.chassi, modelo: r.modelo, revisao: r });
+      }
+    }
+
+    return Array.from(mapa.values());
+  }, [veiculos, revisoes]);
+
+  const itensFiltrados = useMemo(() => {
+    const t = busca.trim().toLowerCase();
+    if (!t) return itensUnificados;
+    return itensUnificados.filter((item) =>
+      [item.placa, item.chassi, item.modelo].filter(Boolean).some((s) => s!.toLowerCase().includes(t)),
+    );
+  }, [itensUnificados, busca]);
+
+  const podeCertificacao = isAdmin || perfil === "Administrador" || perfil === "Consultor Pós-Vendas";
+  const podeRevisao = isAdmin || perfil === "Administrador" || perfil === "Consultor Pós-Vendas" || perfil === "Mecânico Toyota";
+
+  // Handlers de certificação (mantidos do original)
   const abrir = (v: Veiculo) => {
     setAberto(v);
     setObs(v.checklist_data?.observacoes ?? "");
@@ -162,7 +263,6 @@ function FilaPosVendas() {
       toast.error("Elegibilidade do veículo não corresponde a TCUV ou TSIM.");
       return;
     }
-    // Não há mais marcação de itens em tela: o Template PDF já vem pré-preenchido.
 
     const kmNum = Number(km.replace(/\D/g, ""));
     if (!kmNum || kmNum <= 0) {
@@ -172,7 +272,6 @@ function FilaPosVendas() {
 
     setSalvando(true);
     try {
-      // Busca dados da filial para o cabeçalho
       let filial: FilialInfo = { dealer_number: null, nome_bi_toyota: null };
       if (aberto.filial_destino_id) {
         const { data } = await supabase
@@ -268,7 +367,6 @@ function FilaPosVendas() {
     }
     setUploadando(true);
     try {
-      // 1. Ler bytes e validar chassi no PDF antes de subir
       const bytes = await file.arrayBuffer();
       const { extractPdfText, pdfContemChassi } = await import("@/lib/pdf-utils");
       let texto = "";
@@ -363,8 +461,6 @@ function FilaPosVendas() {
     setAberto(null);
     carregar();
 
-    // Fire-and-forget: dispara a Edge Function que mescla + comprime o dossiê
-    // no servidor. Não aguarda a resposta para liberar a UI imediatamente.
     void supabase.functions
       .invoke("gerar-dossie", { body: { veiculo_id: veiculoId } })
       .catch((e) => console.warn("Falha ao disparar gerar-dossie:", e));
@@ -377,8 +473,7 @@ function FilaPosVendas() {
           <Wrench className="h-6 w-6" /> Fila do Pós-Vendas (Oficina)
         </h1>
         <p className="text-sm text-muted-foreground">
-          Execute as revisões, corrija as OS apontadas pelo ADM, preencha o checklist e anexe o PDF
-          do Health Check.
+          Execute revisões e certificações, preencha checklists e anexe PDFs do Health Check.
         </p>
       </div>
 
@@ -396,72 +491,131 @@ function FilaPosVendas() {
         <div className="flex justify-center py-12 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
-      ) : filtrados.length === 0 ? (
+      ) : itensFiltrados.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Nenhum veículo na fila do Pós-Vendas.
+            Nenhum item na fila do Pós-Vendas.
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtrados.map((v) => (
-            <Card
-              key={v.id}
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => abrir(v)}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-mono">{v.chassi}</CardTitle>
-                  <Badge variant="secondary">{v.elegibilidade ?? "—"}</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {v.modelo ?? "—"} · {v.placa ?? "—"} · {v.ano_modelo ?? "—"}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                {v.motivo_reprovacao && (
-                  <div className="flex items-start gap-1.5 text-destructive">
-                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <span className="line-clamp-2">Retorno: {v.motivo_reprovacao}</span>
+          {itensFiltrados.map((item) => {
+            const v = item.veiculo;
+            const r = item.revisao;
+            const showCert = item.tipo === "certificacao" || item.tipo === "ambos";
+            const showRev = item.tipo === "revisao" || item.tipo === "ambos";
+
+            return (
+              <Card
+                key={`${item.chassi}-${item.placa}`}
+                className="cursor-pointer hover:border-primary transition-colors"
+                onClick={() => {
+                  if (showCert && v && podeCertificacao) abrir(v);
+                  else if (showRev && r && podeRevisao) setRevisaoDialog(r);
+                }}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-sm font-mono">{item.chassi}</CardTitle>
+                    <div className="flex gap-1">
+                      {showCert && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {v?.elegibilidade ?? "TCUV"}
+                        </Badge>
+                      )}
+                      {showRev && (
+                        <Badge className="text-[10px] bg-blue-500/10 border-blue-500/20 text-blue-400">
+                          Revisão
+                        </Badge>
+                      )}
+                      {item.tipo === "ambos" && (
+                        <Badge className="text-[10px] bg-violet-500/10 border-violet-500/20 text-violet-400">
+                          TCUV + Revisão
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                )}
-                {v.hsv_revisoes_pendentes?.length ? (
-                  <div>
-                    <strong>Revisões:</strong> {v.hsv_revisoes_pendentes.join(", ")}
-                  </div>
-                ) : null}
-                {v.hsv_os_ajustes?.length ? (
-                  <div>
-                    <strong>OS:</strong> {v.hsv_os_ajustes.join(", ")}
-                  </div>
-                ) : null}
-                <div className="flex items-center gap-3 pt-2 text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    {v.checklist_data?.preenchido_em ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5" />
-                    )}
-                    Checklist{" "}
-                    {v.checklist_pdf_path ? `· ${formatarBytes(v.tamanhos?.checklist)}` : ""}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    {v.health_check_pdf_path ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5" />
-                    )}
-                    Health Check{" "}
-                    {v.health_check_pdf_path ? `· ${formatarBytes(v.tamanhos?.health)}` : ""}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <p className="text-xs text-muted-foreground">
+                    {item.modelo ?? "—"} · {item.placa ?? "—"} · {v?.ano_modelo ?? "—"}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs">
+                  {/* Dados da certificação */}
+                  {showCert && v && (
+                    <>
+                      {v.motivo_reprovacao && (
+                        <div className="flex items-start gap-1.5 text-destructive">
+                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <span className="line-clamp-2">Retorno: {v.motivo_reprovacao}</span>
+                        </div>
+                      )}
+                      {v.hsv_revisoes_pendentes?.length ? (
+                        <div>
+                          <strong>Revisões:</strong> {v.hsv_revisoes_pendentes.join(", ")}
+                        </div>
+                      ) : null}
+                      {v.hsv_os_ajustes?.length ? (
+                        <div>
+                          <strong>OS:</strong> {v.hsv_os_ajustes.join(", ")}
+                        </div>
+                      ) : null}
+                      <div className="flex items-center gap-3 pt-2 text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          {v.checklist_data?.preenchido_em ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                          ) : (
+                            <FileText className="h-3.5 w-3.5" />
+                          )}
+                          Checklist{" "}
+                          {v.checklist_pdf_path ? `· ${formatarBytes(v.tamanhos?.checklist)}` : ""}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          {v.health_check_pdf_path ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                          ) : (
+                            <FileText className="h-3.5 w-3.5" />
+                          )}
+                          Health Check{" "}
+                          {v.health_check_pdf_path ? `· ${formatarBytes(v.tamanhos?.health)}` : ""}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Dados da revisão */}
+                  {showRev && r && (
+                    <>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {r.revisao && <Badge variant="outline" className="text-[10px]">Revisão</Badge>}
+                        {r.certificacao && <Badge variant="outline" className="text-[10px]">Certificação</Badge>}
+                        {r.numero_os && (
+                          <span className="text-muted-foreground">OS: {r.numero_os}</span>
+                        )}
+                      </div>
+                      {r.status === "em_execucao" && (
+                        <div className="flex items-center gap-1.5 text-violet-400">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Em execução por {r.mecanico_id ? "mecânico" : "—"}</span>
+                        </div>
+                      )}
+                      {r.status === "aprovado_pos_vendas" && (
+                        <div className="text-blue-400">Aguardando execução na Oficina</div>
+                      )}
+                      {r.observacao_seminovos && (
+                        <div className="text-muted-foreground italic line-clamp-1">
+                          Obs: {r.observacao_seminovos}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
+      {/* Dialog Certificação */}
       <Dialog
         open={!!aberto}
         onOpenChange={(o) => {
@@ -528,8 +682,7 @@ function FilaPosVendas() {
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     O Template PDF configurado já vem previamente preenchido/marcado. Ao salvar, o
-                    sistema apenas escreve os dados do cabeçalho (Veículo, Chassi, KM, DN,
-                    Distribuidor, Avaliador, Técnico, Data e Hora) sobre o arquivo original.
+                    sistema apenas escreve os dados do cabeçalho sobre o arquivo original.
                   </p>
                 </div>
 
@@ -627,6 +780,15 @@ function FilaPosVendas() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Execução de Revisão */}
+      <RevisaoExecucaoDialog
+        revisao={revisaoDialog}
+        open={!!revisaoDialog}
+        onOpenChange={(o) => !o && setRevisaoDialog(null)}
+        onComplete={carregar}
+        userId={user?.id ?? ""}
+      />
     </div>
   );
 }

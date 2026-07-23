@@ -1230,6 +1230,7 @@ export type Database = {
           data_execucao_concluida: string | null
           data_finalizacao: string | null
           data_inicio_execucao: string | null
+          filial_id: string | null
           gestora_id: string | null
           id: string
           km_atual: number | null
@@ -1264,6 +1265,7 @@ export type Database = {
           data_execucao_concluida?: string | null
           data_finalizacao?: string | null
           data_inicio_execucao?: string | null
+          filial_id?: string | null
           gestora_id?: string | null
           id?: string
           km_atual?: number | null
@@ -1298,6 +1300,7 @@ export type Database = {
           data_execucao_concluida?: string | null
           data_finalizacao?: string | null
           data_inicio_execucao?: string | null
+          filial_id?: string | null
           gestora_id?: string | null
           id?: string
           km_atual?: number | null
