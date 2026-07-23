@@ -437,6 +437,16 @@ export const verificarNotificacoes = createServerFn({ method: "POST" }).handler(
           link: `/compras/${n.chamado_id}`,
           enviado_em: new Date().toISOString(),
         });
+        await admin.from("compras_notificacoes").insert({
+          chamado_id: n.chamado_id,
+          destinatario_id: n.destinatario_id,
+          tipo: "popup",
+          status_notif: "enviado",
+          titulo: `GOSYSTEM — ${label}`,
+          mensagem: pushBody,
+          link: `/compras/${n.chamado_id}`,
+          enviado_em: new Date().toISOString(),
+        });
       }
 
       const { data: atual } = await admin
@@ -560,6 +570,16 @@ export const forcarNotificacao = createServerFn({ method: "POST" })
             chamado_id: chamado.id,
             destinatario_id: dest.id,
             tipo: "push",
+            status_notif: "enviado",
+            titulo: `GOSYSTEM — ${label}`,
+            mensagem: pushBody,
+            link: `/compras/${chamado.id}`,
+            enviado_em: new Date().toISOString(),
+          });
+          await admin.from("compras_notificacoes").insert({
+            chamado_id: chamado.id,
+            destinatario_id: dest.id,
+            tipo: "popup",
             status_notif: "enviado",
             titulo: `GOSYSTEM — ${label}`,
             mensagem: pushBody,
