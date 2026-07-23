@@ -237,12 +237,10 @@ export async function carregarMotivos(tipo: MotivoCategoria): Promise<string[]> 
 }
 
 export function formatPlaca(v: string) {
-  const raw = v
+  return v
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
     .slice(0, 7);
-  if (raw.length <= 3) return raw;
-  return `${raw.slice(0, 3)}-${raw.slice(3)}`;
 }
 
 export function isPlacaValida(v: string) {
