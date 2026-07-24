@@ -144,7 +144,8 @@ function DocumentosPage() {
   }
 
   const userModules = user?.modulos || [];
-  if (!isAdmin && !userModules.includes("documentos")) {
+  const isLojista = user?.tipo_usuario === "Lojista";
+  if (!isAdmin && !isLojista && !userModules.includes("documentos")) {
     return (
       <div className="min-h-screen bg-card flex items-center justify-center text-foreground text-sm">
         Você não tem acesso ao módulo de Documentos.

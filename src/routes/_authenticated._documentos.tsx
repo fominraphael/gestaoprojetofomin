@@ -14,8 +14,9 @@ export const Route = createFileRoute("/_authenticated/_documentos")({
 function DocumentosLayout() {
   const { user, isAdmin } = useAuth();
   const userModules = user?.modulos ?? [];
+  const isLojista = user?.tipo_usuario === "Lojista";
 
-  if (!userCanAccess(docsModule, isAdmin, userModules)) {
+  if (!isAdmin && !isLojista && !userCanAccess(docsModule, isAdmin, userModules)) {
     return <ModuleAccessDenied label={docsModule.label} />;
   }
 
