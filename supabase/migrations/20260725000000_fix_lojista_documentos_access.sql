@@ -1,6 +1,11 @@
 -- Fix: Allow Lojista users to view and download documents from ALL companies
 -- Lojistas need full read access to documents across all empresas
 
+-- 0. Restore empresas read policy (dropped by 20260724153323)
+DROP POLICY IF EXISTS empresas_read_auth ON public.empresas;
+CREATE POLICY empresas_read_auth ON public.empresas
+  FOR SELECT TO authenticated USING (true);
+
 -- 1. Update documentos_arquivo RLS policy to allow Lojistas
 DROP POLICY IF EXISTS docarq_select_scoped ON public.documentos_arquivo;
 
