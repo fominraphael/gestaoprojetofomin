@@ -6,6 +6,7 @@ import {
   type UsuarioSistema,
   obterUsuarios,
   criarUsuario,
+  criarUsuarioAdmin,
   atualizarUsuario,
   excluirUsuario,
   type TipoUsuarioConfig,
@@ -977,7 +978,7 @@ export function AdminUsuariosPage() {
                 empresaId = companyObj.id;
               }
 
-              await criarUsuario({
+              await criarUsuarioAdmin({
                 username,
                 password,
                 role,

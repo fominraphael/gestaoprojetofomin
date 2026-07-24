@@ -256,6 +256,51 @@ export async function excluirUsuario(id: string): Promise<void> {
   await adminDeleteUser({ data: { userId: id } });
 }
 
+/**
+ * Cria um usuário via server function admin (service role).
+ * NÃO afeta a sessão do admin logado — seguro para importação em massa.
+ */
+export async function criarUsuarioAdmin(
+  usuario: Omit<UsuarioSistema, "id" | "created_at"> & { password?: string },
+): Promise<UsuarioSistema> {
+  const password = usuario.password || "Trocar@2026!";
+  const email = usernameToEmail(usuario.username);
+
+  const { adminCreateUser } = await import("./admin-users.functions");
+  const result = await adminCreateUser({
+    data: {
+      email,
+      password,
+      username: usuario.username,
+      tipo_usuario: usuario.tipo_usuario ?? "Lojista",
+      modulos: usuario.modulos ?? ["gestao"],
+      status: usuario.status ?? "approved",
+      ativo: usuario.active ?? true,
+      cnpj: usuario.cnpj ?? null,
+      empresa_id: usuario.empresa_id ?? null,
+      nome_fantasia: usuario.nome_fantasia ?? null,
+      pode_criar_admin: usuario.pode_criar_admin ?? false,
+      central_compras: usuario.central_compras ?? false,
+      campos_customizados: usuario.campos_customizados ?? {},
+    },
+  });
+
+  return {
+    id: result.id,
+    username: result.username,
+    role: usuario.role ?? "user",
+    status: usuario.status ?? "approved",
+    cnpj: usuario.cnpj ?? null,
+    nome_fantasia: usuario.nome_fantasia ?? null,
+    empresa_id: usuario.empresa_id ?? null,
+    modulos: usuario.modulos ?? [],
+    active: usuario.active ?? true,
+    tipo_usuario: usuario.tipo_usuario ?? "Lojista",
+    pode_criar_admin: usuario.pode_criar_admin ?? false,
+    campos_customizados: usuario.campos_customizados ?? {},
+  };
+}
+
 // ============================================================
 // TIPOS DE USUÁRIO (perfis) — sem mudanças estruturais
 // ============================================================
