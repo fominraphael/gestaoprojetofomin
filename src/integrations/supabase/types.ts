@@ -1325,7 +1325,15 @@ export type Database = {
           tipo_os?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "toyota_revisoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "toyota_filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       toyota_usuario_filial: {
         Row: {
