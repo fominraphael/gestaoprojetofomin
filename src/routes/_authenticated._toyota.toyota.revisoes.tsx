@@ -320,7 +320,7 @@ function RevisoesPage() {
             <ClipboardCheck className="h-6 w-6" /> Revisão de Seminovos
           </h1>
           <p className="text-sm text-muted-foreground">
-            Solicite, aprove e acompanhe revisões de veículos seminovos.
+            Detalhe como está funcionando o fluxo de solicitação revisão, sem processo de certificação.
           </p>
         </div>
         {podeCriar && (
