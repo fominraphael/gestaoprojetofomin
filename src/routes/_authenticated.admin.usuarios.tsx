@@ -160,6 +160,21 @@ export function AdminUsuariosPage() {
   const [selectedUserTypeImportId, setSelectedUserTypeImportId] = useState("Lojista");
   const [importRows, setImportRows] = useState<any[]>([]);
   const [importLoading, setImportLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [importResults, setImportResults] = useState<{
+    created: number;
+    updated: number;
+    failed: number;
+    errors: string[];
+  }>({ created: 0, updated: 0, failed: 0, errors: [] });
+  const [importDefaultStatus, setImportDefaultStatus] = useState<
+    "approved" | "pending" | "rejected"
+  >("approved");
+  const [importDefaultAtivo, setImportDefaultAtivo] = useState(true);
+  const [importDefaultModulos, setImportDefaultModulos] = useState<string[]>([
+    "gestao",
+    "documentos",
+  ]);
 
   // Search state for users
   const [userSearch, setUserSearch] = useState("");
@@ -678,12 +693,6 @@ export function AdminUsuariosPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
-    if (!selectedType) {
-      showToast("error", "Selecione um tipo de usuário válido primeiro.");
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -698,52 +707,52 @@ export function AdminUsuariosPage() {
           return;
         }
 
-        // Validate structure (must have "Login de acesso" or "Username" and "Senha" or "Password")
         const first = rows[0];
         const keys = Object.keys(first);
 
+        // Login is always required
         const hasLogin = keys.some((k) =>
           ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()),
         );
-        const hasSenha = keys.some((k) =>
-          ["senha", "password", "key"].includes(k.toLowerCase().trim()),
-        );
-
-        if (!hasLogin || !hasSenha) {
+        if (!hasLogin) {
           showToast(
             "error",
-            'Planilha inválida. As colunas obrigatórias são: "Login de acesso" e "Senha"',
+            'Planilha inválida. A coluna obrigatória é: "Login de acesso"',
           );
           return;
         }
 
         // Validate required custom fields for the selected user type
-        const missingFields: string[] = [];
-        selectedType.campos_schema.forEach((field) => {
-          if (field.obrigatorio) {
-            const hasField = keys.some(
-              (k) =>
-                k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
-                k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
-            );
-            if (!hasField) {
-              missingFields.push(field.label);
+        const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
+        if (selectedType) {
+          const missingFields: string[] = [];
+          selectedType.campos_schema.forEach((field) => {
+            if (field.obrigatorio) {
+              const hasField = keys.some(
+                (k) =>
+                  k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
+                  k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
+              );
+              if (!hasField) {
+                missingFields.push(field.label);
+              }
             }
-          }
-        });
+          });
 
-        if (missingFields.length > 0) {
-          showToast(
-            "error",
-            `Planilha inválida. Faltam as seguintes colunas obrigatórias para o tipo ${selectedType.nome}: ${missingFields.join(", ")}`,
-          );
-          return;
+          if (missingFields.length > 0) {
+            showToast(
+              "error",
+              `Planilha inválida. Faltam as seguintes colunas obrigatórias para o tipo ${selectedType.nome}: ${missingFields.join(", ")}`,
+            );
+            return;
+          }
         }
 
         setImportRows(rows);
+        setImportResults({ created: 0, updated: 0, failed: 0, errors: [] });
         showToast(
           "success",
-          `${rows.length} registros do tipo "${selectedType.nome}" prontos para importação.`,
+          `${rows.length} registros prontos para importação.`,
         );
       } catch {
         showToast("error", "Erro ao processar planilha Excel.");
@@ -755,107 +764,265 @@ export function AdminUsuariosPage() {
   const handleProcessImport = async () => {
     if (importRows.length === 0) return;
     setImportLoading(true);
-    let successCount = 0;
-    let failCount = 0;
+    setImportResults({ created: 0, updated: 0, failed: 0, errors: [] });
+    setImportProgress({ current: 0, total: importRows.length });
 
     const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
-    if (!selectedType) {
-      showToast("error", "Erro ao recuperar as configurações do tipo de usuário.");
-      setImportLoading(false);
-      return;
+
+    // Fetch all existing users to detect duplicates (for upsert)
+    let existingUsers: UsuarioSistema[] = [];
+    try {
+      existingUsers = await obterUsuarios();
+    } catch {
+      // ignore — will treat all as new
     }
+    const existingMap = new Map<string, UsuarioSistema>(
+      existingUsers.map((u) => [u.username.toLowerCase().trim(), u]),
+    );
 
-    for (const row of importRows) {
-      // Find Login de acesso (username)
-      const usernameKey = Object.keys(row).find((k) =>
-        ["login de acesso", "login", "username", "usuario"].includes(k.toLowerCase().trim()),
+    const MODULE_IDS = ["gestao", "documentos", "toyota", "compras"];
+
+    const results = { created: 0, updated: 0, failed: 0, errors: [] as string[] };
+
+    // Helper: resolve a value from row by multiple possible column names
+    const findCol = (row: any, names: string[]): string | undefined => {
+      const keys = Object.keys(row);
+      const found = keys.find((k) =>
+        names.includes(k.toLowerCase().trim()),
       );
-      // Find password
-      const passwordKey = Object.keys(row).find((k) =>
-        ["senha", "password", "key"].includes(k.toLowerCase().trim()),
-      );
+      return found;
+    };
 
-      const username = usernameKey ? String(row[usernameKey]).trim() : "";
-      const password = passwordKey ? String(row[passwordKey]).trim() : "";
-
-      if (!username || !password) {
-        failCount++;
-        continue;
+    // Helper: parse module list from a row (comma-separated string or per-module columns)
+    const parseModulos = (row: any): string[] | null => {
+      // First check for a single "Modulos" / "Módulos" column with comma-separated values
+      const modCol = findCol(row, ["modulos", "módulos", "modules", "modulo", "módulo"]);
+      if (modCol !== undefined) {
+        const val = String(row[modCol]).trim();
+        if (!val) return null; // empty = use defaults
+        const parsed = val
+          .split(/[,;]+/)
+          .map((s) => s.trim().toLowerCase())
+          .filter((s) => MODULE_IDS.includes(s));
+        return parsed.length > 0 ? parsed : null;
       }
 
-      // Map dynamic fields from row columns
-      const campos_customizados: Record<string, any> = {};
-      selectedType.campos_schema.forEach((field) => {
-        const colKey = Object.keys(row).find(
-          (k) =>
-            k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
-            k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
-        );
+      // Fallback: check individual per-module columns like "Gestão", "Documentos", etc.
+      const modulos: string[] = [];
+      const moduleAliases: Record<string, string[]> = {
+        gestao: ["gestão", "gestao", "management", "projetos"],
+        documentos: ["documentos", "documents", "docs"],
+        toyota: ["toyota", "certificação toyota", "certificacao toyota"],
+        compras: ["compras", "purchases", "seminovos"],
+      };
+      for (const [modId, aliases] of Object.entries(moduleAliases)) {
+        const col = findCol(row, aliases);
+        if (col !== undefined) {
+          const val = String(row[col]).trim().toLowerCase();
+          if (["sim", "true", "1", "yes", "s"].includes(val)) {
+            modulos.push(modId);
+          }
+          // "nao", "false", "0", "no" → explicitly not added = module NOT granted
+        }
+      }
+      return modulos.length > 0 ? modulos : null;
+    };
 
-        if (colKey !== undefined) {
-          const val = row[colKey];
-          if (field.tipo === "number") {
-            campos_customizados[field.nome] = Number(val);
-          } else if (field.tipo === "boolean") {
-            campos_customizados[field.nome] =
-              String(val).toLowerCase() === "true" ||
-              val === true ||
-              String(val).toLowerCase() === "sim";
+    // Helper: parse boolean from various string formats
+    const parseBool = (val: any): boolean | null => {
+      if (val === null || val === undefined || val === "") return null;
+      const s = String(val).trim().toLowerCase();
+      if (["sim", "true", "1", "yes", "s", "ativo", "ativa"].includes(s)) return true;
+      if (["não", "nao", "false", "0", "no", "inativo", "inativa", "n"].includes(s)) return false;
+      return null;
+    };
+
+    // Process in batches of 10 to avoid UI freeze
+    const BATCH_SIZE = 10;
+    const processBatch = (startIndex: number) => {
+      return new Promise<void>((resolve) => {
+        const endIndex = Math.min(startIndex + BATCH_SIZE, importRows.length);
+        const batch = importRows.slice(startIndex, endIndex);
+
+        const processRow = async (row: any, idx: number) => {
+          const globalIdx = startIndex + idx + 1;
+          setImportProgress({ current: globalIdx, total: importRows.length });
+
+          // Extract username
+          const usernameKey = findCol(row, [
+            "login de acesso", "login", "username", "usuario",
+          ]);
+          const username = usernameKey ? String(row[usernameKey]).trim() : "";
+          if (!username) {
+            results.failed++;
+            results.errors.push(`Linha ${globalIdx}: Login de acesso vazio`);
+            return;
+          }
+
+          // Extract password (optional for updates)
+          const passwordKey = findCol(row, ["senha", "password", "key"]);
+          const password = passwordKey ? String(row[passwordKey]).trim() : "";
+
+          // Extract per-row overrides
+          const tipoCol = findCol(row, [
+            "tipo de usuario", "tipo de usuário", "tipo usuario", "tipo usuário", "perfil",
+          ]);
+          const rowTipoUsuario = tipoCol !== undefined
+            ? String(row[tipoCol]).trim()
+            : selectedType?.nome ?? selectedUserTypeImportId;
+
+          const statusCol = findCol(row, [
+            "status", "status aprovação", "status aprovacao", "aprovação", "aprovacao",
+          ]);
+          let rowStatus: "approved" | "pending" | "rejected" = importDefaultStatus;
+          if (statusCol !== undefined) {
+            const s = String(row[statusCol]).trim().toLowerCase();
+            if (["aprovado", "approved", "aprovada"].includes(s)) rowStatus = "approved";
+            else if (["pendente", "pending", "aguardando"].includes(s)) rowStatus = "pending";
+            else if (["rejeitado", "rejected", "rejeitada", "reprovado", "reprovada"].includes(s))
+              rowStatus = "rejected";
+          }
+
+          const ativoCol = findCol(row, [
+            "ativo", "conta ativa", "status conta", "active",
+          ]);
+          let rowAtivo = importDefaultAtivo;
+          if (ativoCol !== undefined) {
+            const parsed = parseBool(row[ativoCol]);
+            if (parsed !== null) rowAtivo = parsed;
+          }
+
+          const rowModulos = parseModulos(row) ?? importDefaultModulos;
+
+          // Resolve role from tipo_usuario
+          const tipoConfig = userTypes.find((t) => t.nome === rowTipoUsuario);
+          const role = tipoConfig?.role ?? "user";
+
+          // Map dynamic custom fields from row columns
+          const campos_customizados: Record<string, any> = {};
+          const typeForFields = tipoConfig ?? selectedType;
+          if (typeForFields) {
+            typeForFields.campos_schema.forEach((field) => {
+              const colKey = Object.keys(row).find(
+                (k) =>
+                  k.toLowerCase().trim() === field.label.toLowerCase().trim() ||
+                  k.toLowerCase().trim() === field.nome.toLowerCase().trim(),
+              );
+              if (colKey !== undefined) {
+                const val = row[colKey];
+                if (field.tipo === "number") {
+                  campos_customizados[field.nome] = Number(val);
+                } else if (field.tipo === "boolean") {
+                  campos_customizados[field.nome] =
+                    String(val).toLowerCase() === "true" ||
+                    val === true ||
+                    String(val).toLowerCase() === "sim";
+                } else {
+                  campos_customizados[field.nome] = String(val).trim();
+                }
+              }
+            });
+          }
+
+          // Auto-create company if CNPJ exists
+          const cnpjCol = findCol(row, ["cnpj"]);
+          const cnpj = cnpjCol !== undefined ? String(row[cnpjCol]).trim() : "";
+
+          try {
+            const existing = existingMap.get(username.toLowerCase().trim());
+
+            if (existing) {
+              // ── UPDATE existing user ──
+              const updatePayload: Partial<UsuarioSistema> & { password?: string } = {
+                tipo_usuario: rowTipoUsuario,
+                status: rowStatus,
+                active: rowAtivo,
+                modulos: rowModulos,
+                campos_customizados:
+                  Object.keys(campos_customizados).length > 0
+                    ? { ...existing.campos_customizados, ...campos_customizados }
+                    : existing.campos_customizados,
+              };
+              if (password) updatePayload.password = password;
+              if (cnpj) updatePayload.cnpj = cnpj;
+
+              await atualizarUsuario(existing.id, updatePayload);
+              results.updated++;
+            } else {
+              // ── CREATE new user ──
+              if (!password) {
+                results.failed++;
+                results.errors.push(
+                  `Linha ${globalIdx}: Usuário "${username}" não existe e nenhuma senha fornecida`,
+                );
+                return;
+              }
+
+              // Auto-create company if CNPJ
+              let empresaId = null;
+              if (cnpj) {
+                let companyObj = empresas.find(
+                  (e) => e.cnpj.trim() === cnpj,
+                );
+                if (!companyObj) {
+                  const razaoCol = findCol(row, [
+                    "razão social", "razao social", "empresa", "nome da empresa",
+                  ]);
+                  const companyName = razaoCol
+                    ? String(row[razaoCol]).trim()
+                    : `Empresa de ${username}`;
+                  companyObj = await criarEmpresa(cnpj, companyName);
+                  empresas.push(companyObj);
+                }
+                empresaId = companyObj.id;
+              }
+
+              await criarUsuario({
+                username,
+                password,
+                role,
+                status: rowStatus,
+                cnpj: cnpj || null,
+                empresa_id: empresaId,
+                modulos: rowModulos,
+                active: rowAtivo,
+                tipo_usuario: rowTipoUsuario,
+                pode_criar_admin: false,
+                campos_customizados,
+              });
+              results.created++;
+            }
+          } catch (err: any) {
+            results.failed++;
+            const msg = err.message || "Erro desconhecido";
+            results.errors.push(`Linha ${globalIdx} (${username}): ${msg}`);
+          }
+        };
+
+        // Process all rows in this batch concurrently
+        Promise.all(batch.map((row, idx) => processRow(row, idx))).then(() => {
+          setImportResults({ ...results });
+
+          if (endIndex < importRows.length) {
+            // Yield to UI thread before next batch
+            setTimeout(() => {
+              processBatch(endIndex).then(resolve);
+            }, 0);
           } else {
-            campos_customizados[field.nome] = String(val).trim();
+            resolve();
           }
-        }
-      });
-
-      // Special action: if CNPJ is a field, create/find the company automatically
-      const cnpj = campos_customizados.cnpj
-        ? ((v: string) => v.trim())(String(campos_customizados.cnpj))
-        : "";
-
-      try {
-        if (cnpj) {
-          let companyObj = empresas.find(
-            (e) => ((v: string) => v.trim())(e.cnpj) === ((v: string) => v.trim())(cnpj),
-          );
-          if (!companyObj) {
-            // Find a name for the company or use username
-            const razaoSocialKey = Object.keys(row).find((k) =>
-              ["razão social", "razao social", "empresa", "nome da empresa"].includes(
-                k.toLowerCase().trim(),
-              ),
-            );
-            const companyName = razaoSocialKey
-              ? String(row[razaoSocialKey]).trim()
-              : `Empresa de ${username}`;
-            companyObj = await criarEmpresa(cnpj, companyName);
-            empresas.push(companyObj);
-          }
-        }
-
-        await criarUsuario({
-          username,
-          password,
-          role: selectedType.role,
-          status: "approved",
-          cnpj: cnpj || null,
-          empresa_id: null,
-          modulos: ["gestao", "documentos"], // default active modules
-          active: true,
-          tipo_usuario: selectedType.nome,
-          pode_criar_admin: false,
-          campos_customizados,
         });
-        successCount++;
-      } catch (err) {
-        console.error("Failed importing row:", row, err);
-        failCount++;
-      }
-    }
+      });
+    };
 
-    showToast("success", `Importação finalizada: ${successCount} criados, ${failCount} falhas.`);
-    setImportRows([]);
-    await loadAllData();
+    await processBatch(0);
+
+    showToast(
+      "success",
+      `Importação finalizada: ${results.created} criados, ${results.updated} atualizados, ${results.failed} falhas.`,
+    );
     setImportLoading(false);
+    await loadAllData();
   };
 
   const toggleModuleInNewUser = (module: string) => {
@@ -1780,8 +1947,7 @@ export function AdminUsuariosPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Importação em Massa</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Suba uma planilha Excel (.xlsx) para cadastrar múltiplos usuários de forma
-                  estruturada.
+                  Suba uma planilha Excel (.xlsx) para criar ou atualizar múltiplos usuários.
                 </p>
               </div>
               <button
@@ -1792,28 +1958,111 @@ export function AdminUsuariosPage() {
               </button>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
-              {/* User Type Selection for Import */}
-              <div className="max-w-xs mx-auto text-left">
-                <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                  Tipo de Usuário para Importar
-                </label>
-                <select
-                  value={selectedUserTypeImportId}
-                  onChange={(e) => {
-                    setSelectedUserTypeImportId(e.target.value);
-                    setImportRows([]); // reset preview when type changes
-                  }}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs font-semibold"
-                >
-                  {userTypes.map((t) => (
-                    <option key={t.id} value={t.nome}>
-                      {t.nome}
-                    </option>
-                  ))}
-                </select>
+            {/* Default Settings Panel */}
+            <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-sm max-w-4xl mx-auto space-y-5">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                Configurações Padrão da Importação
+              </h3>
+              <p className="text-xs text-muted-foreground -mt-3">
+                Valores aplicados quando a planilha não especifica por linha. Colunas na planilha sobrepõem esses padrões.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Default User Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Tipo de Usuário Padrão
+                  </label>
+                  <select
+                    value={selectedUserTypeImportId}
+                    onChange={(e) => {
+                      setSelectedUserTypeImportId(e.target.value);
+                      setImportRows([]);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs font-semibold"
+                  >
+                    {userTypes.map((t) => (
+                      <option key={t.id} value={t.nome}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Default Status */}
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Status de Aprovação
+                  </label>
+                  <select
+                    value={importDefaultStatus}
+                    onChange={(e) =>
+                      setImportDefaultStatus(e.target.value as "approved" | "pending" | "rejected")
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs font-semibold"
+                  >
+                    <option value="approved">Aprovado</option>
+                    <option value="pending">Pendente</option>
+                    <option value="rejected">Rejeitado</option>
+                  </select>
+                </div>
+
+                {/* Default Account Status */}
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                    Status da Conta
+                  </label>
+                  <select
+                    value={importDefaultAtivo ? "true" : "false"}
+                    onChange={(e) => setImportDefaultAtivo(e.target.value === "true")}
+                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-xs font-semibold"
+                  >
+                    <option value="true">Ativa</option>
+                    <option value="false">Inativa</option>
+                  </select>
+                </div>
               </div>
 
+              {/* Default Modules */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                  Módulos Permitidos (padrão)
+                </label>
+                <p className="text-[10px] text-muted-foreground mb-2 -mt-1">
+                  Marque os módulos que serão liberados. Desmarcado = módulo não liberado.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { id: "gestao", label: "Gestão de Projetos" },
+                    { id: "documentos", label: "Documentos" },
+                    { id: "toyota", label: "Certificação Toyota" },
+                    { id: "compras", label: "Compras Seminovos" },
+                  ].map((mod) => (
+                    <label
+                      key={mod.id}
+                      className="flex items-center gap-2 text-xs text-foreground cursor-pointer bg-background border border-border rounded-lg px-3 py-2 hover:bg-muted/50 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={importDefaultModulos.includes(mod.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setImportDefaultModulos((prev) => [...prev, mod.id]);
+                          } else {
+                            setImportDefaultModulos((prev) => prev.filter((m) => m !== mod.id));
+                          }
+                        }}
+                        className="rounded border-border"
+                      />
+                      {mod.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Area */}
+            <div className="bg-card border border-border rounded-2xl p-8 backdrop-blur-sm text-center max-w-2xl mx-auto space-y-6">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-muted-foreground mx-auto border border-border/20">
                 <Upload className="w-6 h-6" />
               </div>
@@ -1822,47 +2071,11 @@ export function AdminUsuariosPage() {
                 Selecione sua planilha Excel
               </h3>
 
-              {/* Dynamic instruction text based on selected user type */}
-              {(() => {
-                const selectedType = userTypes.find((t) => t.nome === selectedUserTypeImportId);
-                const reqFields = selectedType
-                  ? selectedType.campos_schema.filter((f) => f.obrigatorio).map((f) => f.label)
-                  : [];
-                const optFields = selectedType
-                  ? selectedType.campos_schema.filter((f) => !f.obrigatorio).map((f) => f.label)
-                  : [];
-                return (
-                  <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
-                    A planilha para importar{" "}
-                    <strong className="text-foreground font-semibold">
-                      {selectedUserTypeImportId}
-                    </strong>{" "}
-                    deve conter as colunas:{" "}
-                    <strong className="text-foreground">Login de acesso</strong> e{" "}
-                    <strong className="text-foreground">Senha</strong>.
-                    {reqFields.length > 0 && (
-                      <>
-                        {" "}
-                        Mais os campos obrigatórios:{" "}
-                        <span className="text-red-400 font-semibold">
-                          {reqFields.map((f) => `"${f}"`).join(", ")}
-                        </span>
-                        .
-                      </>
-                    )}
-                    {optFields.length > 0 && (
-                      <>
-                        {" "}
-                        E campos opcionais:{" "}
-                        <span className="text-foreground">
-                          {optFields.map((f) => `"${f}"`).join(", ")}
-                        </span>
-                        .
-                      </>
-                    )}
-                  </p>
-                );
-              })()}
+              <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto">
+                Coluna obrigatória: <strong className="text-foreground">Login de acesso</strong>.
+                Colunas opcionais: <strong className="text-foreground">Senha</strong> (obrigatória apenas para novos usuários),
+                Tipo de Usuario, Status, Ativo, Módulos, e campos personalizados do tipo de usuário.
+              </p>
 
               <div className="flex flex-col items-center gap-4 pt-2">
                 <label className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary text-primary-foreground font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-muted/20">
@@ -1877,7 +2090,7 @@ export function AdminUsuariosPage() {
                 </label>
               </div>
 
-              {/* Import instructions preview */}
+              {/* Example table */}
               <div className="mt-8 pt-6 border-t border-border text-left">
                 <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
                   Exemplo de Estrutura da Planilha:
@@ -1888,6 +2101,10 @@ export function AdminUsuariosPage() {
                       <tr className="bg-background text-foreground">
                         <th className="px-3 py-1.5 border border-border">Login de acesso</th>
                         <th className="px-3 py-1.5 border border-border">Senha</th>
+                        <th className="px-3 py-1.5 border border-border">Tipo de Usuario</th>
+                        <th className="px-3 py-1.5 border border-border">Status</th>
+                        <th className="px-3 py-1.5 border border-border">Ativo</th>
+                        <th className="px-3 py-1.5 border border-border">Módulos</th>
                         {(() => {
                           const selectedType = userTypes.find(
                             (t) => t.nome === selectedUserTypeImportId,
@@ -1906,7 +2123,11 @@ export function AdminUsuariosPage() {
                         <td className="px-3 py-1 border border-border font-medium text-foreground">
                           usuario123
                         </td>
-                        <td className="px-3 py-1 border border-border">senhaSegura123</td>
+                        <td className="px-3 py-1 border border-border italic">Opcional p/ update</td>
+                        <td className="px-3 py-1 border border-border italic">Lojista</td>
+                        <td className="px-3 py-1 border border-border italic">aprovado</td>
+                        <td className="px-3 py-1 border border-border italic">sim</td>
+                        <td className="px-3 py-1 border border-border italic">gestao, toyota</td>
                         {(() => {
                           const selectedType = userTypes.find(
                             (t) => t.nome === selectedUserTypeImportId,
@@ -1931,8 +2152,79 @@ export function AdminUsuariosPage() {
               </div>
             </div>
 
+            {/* Progress Bar */}
+            {importLoading && importProgress.total > 0 && (
+              <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-xl max-w-4xl mx-auto space-y-3">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-semibold">Processando...</span>
+                  <span>
+                    {importProgress.current} / {importProgress.total}
+                  </span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.round((importProgress.current / importProgress.total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex gap-4 text-[10px] text-muted-foreground">
+                  <span className="text-emerald-500">
+                    Criados: {importResults.created}
+                  </span>
+                  <span className="text-blue-500">
+                    Atualizados: {importResults.updated}
+                  </span>
+                  <span className="text-red-500">
+                    Falhas: {importResults.failed}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Results Summary */}
+            {!importLoading &&
+              (importResults.created > 0 || importResults.updated > 0 || importResults.failed > 0) && (
+                <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-xl max-w-4xl mx-auto space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">Resultado da Importação</h3>
+                  <div className="flex gap-4 text-xs">
+                    <span className="text-emerald-500 font-semibold">
+                      {importResults.created} criados
+                    </span>
+                    <span className="text-blue-500 font-semibold">
+                      {importResults.updated} atualizados
+                    </span>
+                    <span className="text-red-500 font-semibold">
+                      {importResults.failed} falhas
+                    </span>
+                  </div>
+                  {importResults.errors.length > 0 && (
+                    <div className="mt-2 max-h-40 overflow-y-auto">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Erros:
+                      </p>
+                      {importResults.errors.map((err, i) => (
+                        <p key={i} className="text-[10px] text-red-400">
+                          {err}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      setImportRows([]);
+                      setImportResults({ created: 0, updated: 0, failed: 0, errors: [] });
+                    }}
+                    className="mt-2 px-4 py-1.5 rounded-lg bg-muted hover:bg-muted text-foreground text-xs font-semibold transition-all"
+                  >
+                    Limpar e Importar Novamente
+                  </button>
+                </div>
+              )}
+
             {/* Imported Rows Preview */}
-            {importRows.length > 0 && (
+            {importRows.length > 0 && !importLoading && (
               <div className="bg-card border border-border rounded-2xl p-6 backdrop-blur-xl animate-scale-up max-w-4xl mx-auto">
                 <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center justify-between">
                   <span>Visualizando Registros da Planilha ({importRows.length})</span>
@@ -1947,7 +2239,6 @@ export function AdminUsuariosPage() {
                   <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="border-b border-border bg-background text-muted-foreground">
-                        {/* Dynamic headers list based on spreadsheet keys */}
                         {Object.keys(importRows[0]).map((key) => (
                           <th key={key} className="px-4 py-2 uppercase text-[10px] font-bold">
                             {key}
