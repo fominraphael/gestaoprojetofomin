@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ClipboardCheck,
@@ -104,6 +104,7 @@ const PRIORIDADES: Record<string, { label: string; cls: string }> = {
 function RevisoesPage() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const childMatches = useChildMatches();
   const perfil = perfilFromTipoUsuario(user?.tipo_usuario);
 
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
@@ -311,6 +312,10 @@ function RevisoesPage() {
 
   const formatarData = (s: string | null) =>
     s ? new Date(s).toLocaleString("pt-BR") : "—";
+
+  if (childMatches.length > 0) {
+    return <Outlet />;
+  }
 
   return (
     <div className="space-y-6 p-6">
