@@ -45,6 +45,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Users,
   Check,
   X,
@@ -1415,315 +1423,320 @@ export function AdminUsuariosPage() {
               </div>
             )}
 
-            {/* Edit User Form Box */}
-            {showEditUser && (
-              <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl animate-scale-up">
-                <div className="absolute top-4 right-4">
+            {/* Edit User Dialog */}
+            <Dialog
+              open={!!showEditUser}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setShowEditUser(null);
+                  setEditPassword("");
+                }
+              }}
+            >
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    Editar Usuário: {showEditUser?.username}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Altere os dados do usuário e clique em Salvar.
+                  </DialogDescription>
+                </DialogHeader>
+                {showEditUser && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-2">
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Login de acesso
+                      </label>
+                      <input
+                        type="text"
+                        disabled
+                        value={showEditUser.username}
+                        className="w-full px-4 py-2 rounded-lg bg-muted/50 border border-border text-muted-foreground cursor-not-allowed text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Alterar Senha <span className="text-muted-foreground">(Opcional)</span>
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Preencha apenas para alterar"
+                        value={editPassword}
+                        onChange={(e) => setEditPassword(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        E-mail de Recuperação{" "}
+                        <span className="text-muted-foreground">
+                          (recebe códigos de "Esqueci minha senha")
+                        </span>
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="usuario@exemplo.com"
+                        value={showEditUser.email_recuperacao ?? ""}
+                        onChange={(e) =>
+                          setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })
+                        }
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Nome ou nome fantasia <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex.: João Silva ou Loja Central"
+                        value={showEditUser.nome_fantasia ?? ""}
+                        onChange={(e) =>
+                          setShowEditUser({ ...showEditUser, nome_fantasia: e.target.value })
+                        }
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Tipo de Usuário
+                      </label>
+                      <select
+                        value={showEditUser.tipo_usuario || "Lojista"}
+                        onChange={(e) => {
+                          const selectedType = userTypes.find((t) => t.nome === e.target.value);
+                          setShowEditUser({
+                            ...showEditUser,
+                            tipo_usuario: e.target.value,
+                            role: selectedType?.role || "user",
+                            pode_criar_admin: false,
+                            campos_customizados: {},
+                          });
+                        }}
+                        className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      >
+                        {userTypes.map((t) => {
+                          const isRoot = currentUser?.username === "root";
+                          const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+                          if (t.role === "admin" && !canCreateAdmin) return null;
+                          return (
+                            <option key={t.id} value={t.nome}>
+                              {t.nome}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {/* Render Dynamic Fields for Edit */}
+                    {(() => {
+                      const selectedType = userTypes.find(
+                        (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
+                      );
+                      const customFields = showEditUser.campos_customizados || {};
+                      return selectedType?.campos_schema.map((field) => (
+                        <div key={field.nome}>
+                          <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                            {field.label}{" "}
+                            {field.obrigatorio && <span className="text-red-400">*</span>}
+                          </label>
+                          {field.tipo === "boolean" ? (
+                            <select
+                              value={customFields[field.nome] ? "true" : "false"}
+                              onChange={(e) =>
+                                setShowEditUser({
+                                  ...showEditUser,
+                                  campos_customizados: {
+                                    ...customFields,
+                                    [field.nome]: e.target.value === "true",
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                            >
+                              <option value="false">Não</option>
+                              <option value="true">Sim</option>
+                            </select>
+                          ) : (
+                            <input
+                              type={field.tipo === "number" ? "number" : "text"}
+                              required={field.obrigatorio}
+                              placeholder={`Preencha o campo ${field.label}`}
+                              value={customFields[field.nome] || ""}
+                              onChange={(e) =>
+                                setShowEditUser({
+                                  ...showEditUser,
+                                  campos_customizados: {
+                                    ...customFields,
+                                    [field.nome]:
+                                      field.tipo === "number"
+                                        ? Number(e.target.value)
+                                        : e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                            />
+                          )}
+                        </div>
+                      ));
+                    })()}
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Status de Aprovação
+                      </label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="edit-status"
+                            checked={showEditUser.status === "approved"}
+                            onChange={() => setShowEditUser({ ...showEditUser, status: "approved" })}
+                            className="text-primary focus:ring-0"
+                          />
+                          Aprovado
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="edit-status"
+                            checked={showEditUser.status === "pending"}
+                            onChange={() => setShowEditUser({ ...showEditUser, status: "pending" })}
+                            className="text-primary focus:ring-0"
+                          />
+                          Pendente
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="edit-status"
+                            checked={showEditUser.status === "rejected"}
+                            onChange={() => setShowEditUser({ ...showEditUser, status: "rejected" })}
+                            className="text-primary focus:ring-0"
+                          />
+                          Rejeitado
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                        Status da Conta
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowEditUser({ ...showEditUser, active: !showEditUser.active })
+                        }
+                        className="flex items-center gap-2 text-sm text-foreground hover:text-foreground mt-2 transition-all"
+                      >
+                        {showEditUser.active ? (
+                          <ToggleRight className="w-9 h-6 text-primary" />
+                        ) : (
+                          <ToggleLeft className="w-9 h-6 text-muted-foreground" />
+                        )}
+                        {showEditUser.active ? "Conta Ativa" : "Conta Inativa"}
+                      </button>
+                    </div>
+
+                    {/* pode_criar_admin Flag check for edit */}
+                    {(() => {
+                      const selectedType = userTypes.find(
+                        (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
+                      );
+                      const isRoot = currentUser?.username === "root";
+                      const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
+
+                      if (selectedType?.role === "admin" && canCreateAdmin) {
+                        return (
+                          <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowEditUser({
+                                  ...showEditUser,
+                                  pode_criar_admin: !showEditUser.pode_criar_admin,
+                                })
+                              }
+                              className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
+                            >
+                              {showEditUser.pode_criar_admin ? (
+                                <ToggleRight className="w-8 h-5 text-primary" />
+                              ) : (
+                                <ToggleLeft className="w-8 h-5 text-muted-foreground" />
+                              )}
+                              Permitir que este administrador cadastre outros administradores
+                            </button>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                    {/* central_compras Flag check for edit dialog */}
+                    <div className="flex items-center gap-2 md:col-span-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowEditUser({
+                            ...showEditUser,
+                            central_compras: !showEditUser.central_compras,
+                          })
+                        }
+                        className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
+                      >
+                        {showEditUser.central_compras ? (
+                          <ToggleRight className="w-8 h-5 text-primary" />
+                        ) : (
+                          <ToggleLeft className="w-8 h-5 text-muted-foreground" />
+                        )}
+                        Central de Compras (recebe notificações de fila)
+                      </button>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">
+                        Módulos Permitidos
+                      </label>
+                      <div className="flex flex-wrap gap-4">
+                        {[
+                          { key: "gestao", label: "Gestão de Projetos" },
+                          { key: "documentos", label: "Documentos" },
+                          { key: "toyota", label: "Certificação Toyota" },
+                          { key: "compras", label: "Compras Seminovos" },
+                        ].map(({ key, label }) => (
+                          <label
+                            key={key}
+                            className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={(showEditUser.modulos || []).includes(key)}
+                              onChange={() => toggleModuleInEditUser(key)}
+                              className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowEditUser(null);
                       setEditPassword("");
                     }}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                   >
-                    <X className="w-5 h-5" />
+                    Cancelar
                   </button>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">
-                  Editar Usuário: {showEditUser.username}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Login de acesso
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={showEditUser.username}
-                      className="w-full px-4 py-2 rounded-lg bg-muted/50 border border-border text-muted-foreground cursor-not-allowed text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Alterar Senha <span className="text-muted-foreground">(Opcional)</span>
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Preencha apenas para alterar"
-                      value={editPassword}
-                      onChange={(e) => setEditPassword(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      E-mail de Recuperação{" "}
-                      <span className="text-muted-foreground">
-                        (recebe códigos de "Esqueci minha senha")
-                      </span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="usuario@exemplo.com"
-                      value={showEditUser.email_recuperacao ?? ""}
-                      onChange={(e) =>
-                        setShowEditUser({ ...showEditUser, email_recuperacao: e.target.value })
-                      }
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Nome ou nome fantasia <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex.: João Silva ou Loja Central"
-                      value={showEditUser.nome_fantasia ?? ""}
-                      onChange={(e) =>
-                        setShowEditUser({ ...showEditUser, nome_fantasia: e.target.value })
-                      }
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Tipo de Usuário
-                    </label>
-                    <select
-                      value={showEditUser.tipo_usuario || "Lojista"}
-                      onChange={(e) => {
-                        const selectedType = userTypes.find((t) => t.nome === e.target.value);
-                        setShowEditUser({
-                          ...showEditUser,
-                          tipo_usuario: e.target.value,
-                          role: selectedType?.role || "user",
-                          pode_criar_admin: false,
-                          campos_customizados: {},
-                        });
-                      }}
-                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    >
-                      {userTypes.map((t) => {
-                        const isRoot = currentUser?.username === "root";
-                        const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
-                        if (t.role === "admin" && !canCreateAdmin) return null;
-                        return (
-                          <option key={t.id} value={t.nome}>
-                            {t.nome}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-
-                  {/* Render Dynamic Fields for Edit */}
-                  {(() => {
-                    const selectedType = userTypes.find(
-                      (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
-                    );
-                    const customFields = showEditUser.campos_customizados || {};
-                    return selectedType?.campos_schema.map((field) => (
-                      <div key={field.nome}>
-                        <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                          {field.label}{" "}
-                          {field.obrigatorio && <span className="text-red-400">*</span>}
-                        </label>
-                        {field.tipo === "boolean" ? (
-                          <select
-                            value={customFields[field.nome] ? "true" : "false"}
-                            onChange={(e) =>
-                              setShowEditUser({
-                                ...showEditUser,
-                                campos_customizados: {
-                                  ...customFields,
-                                  [field.nome]: e.target.value === "true",
-                                },
-                              })
-                            }
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                          >
-                            <option value="false">Não</option>
-                            <option value="true">Sim</option>
-                          </select>
-                        ) : (
-                          <input
-                            type={field.tipo === "number" ? "number" : "text"}
-                            required={field.obrigatorio}
-                            placeholder={`Preencha o campo ${field.label}`}
-                            value={customFields[field.nome] || ""}
-                            onChange={(e) =>
-                              setShowEditUser({
-                                ...showEditUser,
-                                campos_customizados: {
-                                  ...customFields,
-                                  [field.nome]:
-                                    field.tipo === "number"
-                                      ? Number(e.target.value)
-                                      : e.target.value,
-                                },
-                              })
-                            }
-                            className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                          />
-                        )}
-                      </div>
-                    ));
-                  })()}
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Status de Aprovação
-                    </label>
-                    <div className="flex gap-4 mt-2">
-                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                        <input
-                          type="radio"
-                          name="edit-status"
-                          checked={showEditUser.status === "approved"}
-                          onChange={() => setShowEditUser({ ...showEditUser, status: "approved" })}
-                          className="text-primary focus:ring-0"
-                        />
-                        Aprovado
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                        <input
-                          type="radio"
-                          name="edit-status"
-                          checked={showEditUser.status === "pending"}
-                          onChange={() => setShowEditUser({ ...showEditUser, status: "pending" })}
-                          className="text-primary focus:ring-0"
-                        />
-                        Pendente
-                      </label>
-                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                        <input
-                          type="radio"
-                          name="edit-status"
-                          checked={showEditUser.status === "rejected"}
-                          onChange={() => setShowEditUser({ ...showEditUser, status: "rejected" })}
-                          className="text-primary focus:ring-0"
-                        />
-                        Rejeitado
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                      Status da Conta
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowEditUser({ ...showEditUser, active: !showEditUser.active })
-                      }
-                      className="flex items-center gap-2 text-sm text-foreground hover:text-foreground mt-2 transition-all"
-                    >
-                      {showEditUser.active ? (
-                        <ToggleRight className="w-9 h-6 text-primary" />
-                      ) : (
-                        <ToggleLeft className="w-9 h-6 text-muted-foreground" />
-                      )}
-                      {showEditUser.active ? "Conta Ativa" : "Conta Inativa"}
-                    </button>
-                  </div>
-
-                  {/* pode_criar_admin Flag check for edit */}
-                  {(() => {
-                    const selectedType = userTypes.find(
-                      (t) => t.nome === (showEditUser.tipo_usuario || "Lojista"),
-                    );
-                    const isRoot = currentUser?.username === "root";
-                    const canCreateAdmin = isRoot || currentUser?.pode_criar_admin;
-
-                    if (selectedType?.role === "admin" && canCreateAdmin) {
-                      return (
-                        <div className="flex items-center gap-2 md:col-span-2 pt-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowEditUser({
-                                ...showEditUser,
-                                pode_criar_admin: !showEditUser.pode_criar_admin,
-                              })
-                            }
-                            className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
-                          >
-                            {showEditUser.pode_criar_admin ? (
-                              <ToggleRight className="w-8 h-5 text-primary" />
-                            ) : (
-                              <ToggleLeft className="w-8 h-5 text-muted-foreground" />
-                            )}
-                            Permitir que este administrador cadastre outros administradores
-                          </button>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-
-                  {/* central_compras Flag check for edit dialog */}
-                  <div className="flex items-center gap-2 md:col-span-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowEditUser({
-                          ...showEditUser,
-                          central_compras: !showEditUser.central_compras,
-                        })
-                      }
-                      className="flex items-center gap-2 text-xs text-foreground hover:text-foreground transition-all"
-                    >
-                      {showEditUser.central_compras ? (
-                        <ToggleRight className="w-8 h-5 text-primary" />
-                      ) : (
-                        <ToggleLeft className="w-8 h-5 text-muted-foreground" />
-                      )}
-                      Central de Compras (recebe notificações de fila)
-                    </button>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-muted-foreground mb-2 font-semibold">
-                      Módulos Permitidos
-                    </label>
-                    <div className="flex flex-wrap gap-4">
-                      {[
-                        { key: "gestao", label: "Gestão de Projetos" },
-                        { key: "documentos", label: "Documentos" },
-                        { key: "toyota", label: "Certificação Toyota" },
-                        { key: "compras", label: "Compras Seminovos" },
-                      ].map(({ key, label }) => (
-                        <label
-                          key={key}
-                          className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={(showEditUser.modulos || []).includes(key)}
-                            onChange={() => toggleModuleInEditUser(key)}
-                            className="rounded border-border bg-background text-primary focus:ring-0 w-4 h-4"
-                          />
-                          {label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 flex items-center justify-end gap-3 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowEditUser(null);
-                        setEditPassword("");
-                      }}
-                      className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
-                    >
-                      Cancelar
-                    </button>
+                  {showEditUser && (
                     <button
                       type="button"
                       onClick={() => handleUpdateUser(showEditUser)}
@@ -1732,10 +1745,10 @@ export function AdminUsuariosPage() {
                     >
                       {actionLoading === showEditUser.id ? "Salvando..." : "Salvar Alterações"}
                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Search + Status Filter */}
             <div className="flex flex-col sm:flex-row gap-3">
