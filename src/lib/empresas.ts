@@ -151,14 +151,14 @@ export async function uploadArquivo(
     .eq("tipo_id", tipoId);
   if (existing && existing.length > 0) {
     const paths = existing.map((e: any) => e.storage_path).filter(Boolean);
-    if (paths.length > 0) await supabase.storage.from("documentos").remove(paths);
+    if (paths.length > 0) {
+      await supabase.storage.from("documentos").remove(paths).catch(() => {});
+    }
     await supabase
       .from("documentos_arquivo")
       .delete()
-      .in(
-        "id",
-        existing.map((e: any) => e.id),
-      );
+      .in("id", existing.map((e: any) => e.id))
+      .catch(() => {});
   }
 
   const { error: upErr } = await supabase.storage

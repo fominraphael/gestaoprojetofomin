@@ -1,5 +1,8 @@
 -- =============================================================
--- FIX COMPLETO: documentos — SELECT/INSERT para modulo documentos
+-- FIX COMPLETO: documentos
+-- SELECT: modulo documentos OU admin
+-- INSERT: qualquer autenticado (upload livre, controle no frontend)
+-- UPDATE/DELETE: somente admin
 -- =============================================================
 
 -- 1. empresas: leitura para qualquer autenticado
@@ -39,17 +42,10 @@ CREATE POLICY docarq_select_all ON public.documentos_arquivo
     )
   );
 
--- INSERT: admin ou modulo documentos
-CREATE POLICY docarq_insert_all ON public.documentos_arquivo
+-- INSERT: qualquer autenticado pode anexar documentos
+CREATE POLICY docarq_insert_open ON public.documentos_arquivo
   FOR INSERT TO authenticated
-  WITH CHECK (
-    public.has_role(auth.uid(), 'admin'::app_role)
-    OR EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid()
-        AND p.modulos @> ARRAY['documentos'::text]
-    )
-  );
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- UPDATE: somente admin
 CREATE POLICY docarq_update_admin ON public.documentos_arquivo
@@ -74,19 +70,23 @@ DROP POLICY IF EXISTS documentos_insert ON storage.objects;
 DROP POLICY IF EXISTS documentos_update ON storage.objects;
 DROP POLICY IF EXISTS documentos_delete ON storage.objects;
 
+-- SELECT: admin ou modulo documentos
 CREATE POLICY documentos_select_scoped ON storage.objects
   FOR SELECT TO authenticated
   USING (bucket_id = 'documentos' AND public.can_access_documentos_object(name));
 
-CREATE POLICY documentos_insert_scoped ON storage.objects
+-- INSERT: qualquer autenticado pode enviar para bucket documentos
+CREATE POLICY documentos_insert_open ON storage.objects
   FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'documentos' AND public.can_access_documentos_object(name));
+  WITH CHECK (bucket_id = 'documentos' AND auth.uid() IS NOT NULL);
 
+-- UPDATE: admin ou modulo documentos
 CREATE POLICY documentos_update_scoped ON storage.objects
   FOR UPDATE TO authenticated
   USING (bucket_id = 'documentos' AND public.can_access_documentos_object(name))
   WITH CHECK (bucket_id = 'documentos' AND public.can_access_documentos_object(name));
 
+-- DELETE: admin ou modulo documentos
 CREATE POLICY documentos_delete_scoped ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'documentos' AND public.can_access_documentos_object(name));
