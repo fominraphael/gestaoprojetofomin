@@ -34,11 +34,16 @@ CREATE POLICY docarq_select_all ON public.documentos_arquivo
     )
   );
 
--- INSERT: somente admin
-CREATE POLICY docarq_insert_admin ON public.documentos_arquivo
+-- INSERT: admin OU usuario com modulo documentos
+CREATE POLICY docarq_insert_all ON public.documentos_arquivo
   FOR INSERT TO authenticated
   WITH CHECK (
     public.has_role(auth.uid(), 'admin'::app_role)
+    OR EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid()
+        AND p.modulos @> ARRAY['documentos'::text]
+    )
   );
 
 -- UPDATE: somente admin
