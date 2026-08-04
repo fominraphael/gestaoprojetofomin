@@ -1,4 +1,4 @@
-import { Shield, Layers, FileText, Landmark, Package } from "lucide-react";
+import { Shield, Layers, FileText, Landmark, Package, CalendarCheck } from "lucide-react";
 
 const MODULE_CONFIGS: Record<string, { label: string; icon: any; color: string }> = {
   documentos: {
@@ -20,6 +20,11 @@ const MODULE_CONFIGS: Record<string, { label: string; icon: any; color: string }
     label: "Estoque",
     icon: Package,
     color: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+  },
+  rotina: {
+    label: "Rotina",
+    icon: CalendarCheck,
+    color: "bg-indigo-500/10 border-indigo-500/30 text-indigo-400",
   },
 };
 
