@@ -5,12 +5,32 @@ export type Frequencia = "semanal" | "mensal" | "sob_demanda";
 export type StatusTarefa = "a_fazer" | "fazendo" | "concluido";
 
 export const DIAS_SEMANA = [
-  { valor: 1, label: "Segunda" },
-  { valor: 2, label: "Terça" },
-  { valor: 3, label: "Quarta" },
-  { valor: 4, label: "Quinta" },
-  { valor: 5, label: "Sexta" },
+  { valor: 0, label: "Dom" },
+  { valor: 1, label: "Seg" },
+  { valor: 2, label: "Ter" },
+  { valor: 3, label: "Qua" },
+  { valor: 4, label: "Qui" },
+  { valor: 5, label: "Sex" },
+  { valor: 6, label: "Sáb" },
 ] as const;
+
+export const DIAS_SEMANA_LABELS: Record<number, string> = {
+  0: "Domingo",
+  1: "Segunda",
+  2: "Terça",
+  3: "Quarta",
+  4: "Quinta",
+  5: "Sexta",
+  6: "Sábado",
+};
+
+export function getDiaSemanaAtual(): number {
+  return new Date().getDay();
+}
+
+export function formatDiaSemanaCurto(d: number): string {
+  return DIAS_SEMANA.find((ds) => ds.valor === d)?.label ?? "";
+}
 
 export const FREQUENCIA_LABELS: Record<Frequencia, string> = {
   semanal: "Semanal",
@@ -34,6 +54,8 @@ export interface Setor {
   id: string;
   nome: string;
   cor: string;
+  icone: string;
+  descricao: string;
   ativo: boolean;
   ordem: number;
   created_at: string;
@@ -65,6 +87,14 @@ export interface Tarefa {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Checkpoint {
+  id: string;
+  atividade_id: string;
+  data: string;
+  concluido_por: string | null;
+  created_at: string;
 }
 
 export interface Anexo {
@@ -127,6 +157,47 @@ export function formatTamanho(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1048576).toFixed(1)} MB`;
+}
+
+export async function toggleCheckpoint(
+  atividadeId: string,
+  data: string,
+  userId: string,
+): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from("rotina_checkpoints")
+    .select("id")
+    .eq("atividade_id", atividadeId)
+    .eq("data", data)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("rotina_checkpoints")
+      .delete()
+      .eq("id", existing.id);
+    return !error;
+  } else {
+    const { error } = await supabase.from("rotina_checkpoints").insert({
+      atividade_id: atividadeId,
+      data,
+      concluido_por: userId,
+    });
+    return !error;
+  }
+}
+
+export async function getCheckpoints(
+  atividadeIds: string[],
+  data: string,
+): Promise<Set<string>> {
+  if (atividadeIds.length === 0) return new Set();
+  const { data: rows } = await supabase
+    .from("rotina_checkpoints")
+    .select("atividade_id")
+    .in("atividade_id", atividadeIds)
+    .eq("data", data);
+  return new Set((rows ?? []).map((r: any) => r.atividade_id));
 }
 
 export async function uploadAnexo(

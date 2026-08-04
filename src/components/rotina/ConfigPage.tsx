@@ -7,13 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Settings,
@@ -21,11 +15,22 @@ import {
   Trash2,
   Save,
   Users,
-  Palette,
   BarChart3,
   GripVertical,
 } from "lucide-react";
 import type { Setor, Kpi } from "@/lib/rotina";
+
+const EMOJIS = [
+  "📋", "🎯", "📝", "💼", "📊", "📈", "🔧", "⚙️", "🗂️", "📁",
+  "🚀", "💡", "📌", "🔖", "🏷️", "📎", "✅", "⭐", "🔥", "💎",
+  "🎨", "🏗️", "🛠️", "📦", "🗄️", "🗓️", "⏰", "📍", "🔗", "📄",
+];
+
+const CORES = [
+  "#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#ef4444",
+  "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
+  "#3b82f6", "#64748b",
+];
 
 export function ConfigPage() {
   const { isAdmin } = useAuth();
@@ -35,10 +40,12 @@ export function ConfigPage() {
   const [setorFuncoes, setSetorFuncoes] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
-  // Novo setor
+  // Nova frente
   const [novoSetor, setNovoSetor] = useState(false);
   const [setorNome, setSetorNome] = useState("");
   const [setorCor, setSetorCor] = useState("#6366f1");
+  const [setorIcone, setSetorIcone] = useState("📋");
+  const [setorDesc, setSetorDesc] = useState("");
 
   // Novo KPI
   const [novoKpi, setNovoKpi] = useState(false);
@@ -82,48 +89,52 @@ export function ConfigPage() {
     );
   }
 
-  // Setor CRUD
+  // Frente CRUD
   async function criarSetor() {
     if (!setorNome.trim()) {
-      toast.error("Preencha o nome do setor.");
+      toast.error("Preencha o nome da frente.");
       return;
     }
     const { error } = await supabase.from("rotina_setores").insert({
       nome: setorNome.trim(),
       cor: setorCor,
+      icone: setorIcone,
+      descricao: setorDesc.trim(),
     });
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Setor criado.");
+    toast.success("Frente criada.");
     setNovoSetor(false);
     setSetorNome("");
     setSetorCor("#6366f1");
+    setSetorIcone("📋");
+    setSetorDesc("");
     carregar();
   }
 
   async function excluirSetor(id: string) {
-    if (!confirm("Excluir este setor? As atividades e tarefas vinculadas perderão o vínculo.")) return;
+    if (!confirm("Excluir esta frente? As atividades e tarefas vinculadas perderão o vínculo.")) return;
     const { error } = await supabase.from("rotina_setores").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Setor excluído.");
+    toast.success("Frente excluída.");
     carregar();
   }
 
   async function salvarSetor(s: Setor) {
     const { error } = await supabase
       .from("rotina_setores")
-      .update({ nome: s.nome, cor: s.cor, ordem: s.ordem })
+      .update({ nome: s.nome, cor: s.cor, icone: s.icone, descricao: s.descricao, ordem: s.ordem })
       .eq("id", s.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Setor salvo.");
+    toast.success("Frente salva.");
   }
 
   async function toggleSetorAtivo(s: Setor) {
@@ -138,7 +149,7 @@ export function ConfigPage() {
     carregar();
   }
 
-  // Funções do setor
+  // Funções da frente
   async function toggleFuncaoSetor(setorId: string, funcaoValor: string) {
     const current = setorFuncoes[setorId] ?? [];
     const has = current.includes(funcaoValor);
@@ -184,7 +195,6 @@ export function ConfigPage() {
       toast.error(error.message);
       return;
     }
-    // Adicionar primeiro registro de histórico
     if (data && kpiMes) {
       await supabase.from("rotina_kpi_historico").insert({
         kpi_id: data.id,
@@ -210,7 +220,6 @@ export function ConfigPage() {
       toast.error(error.message);
       return;
     }
-    // Registrar no histórico
     await supabase.from("rotina_kpi_historico").upsert(
       { kpi_id: kpi.id, mes: kpiMes, valor },
       { onConflict: "kpi_id,mes" },
@@ -229,12 +238,6 @@ export function ConfigPage() {
     carregar();
   }
 
-  const CORES = [
-    "#6366f1", "#8b5cf6", "#a855f7", "#ec4899", "#ef4444",
-    "#f97316", "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
-    "#3b82f6", "#64748b",
-  ];
-
   return (
     <div className="p-6 space-y-4 max-w-5xl mx-auto">
       <div>
@@ -242,39 +245,55 @@ export function ConfigPage() {
           <Settings className="w-5 h-5 text-primary" /> Configurações
         </h1>
         <p className="text-sm text-muted-foreground">
-          Gerencie setores, funções vinculadas, indicadores e permissões
+          Gerencie frentes, funções vinculadas, indicadores e permissões
         </p>
       </div>
 
-      <Tabs defaultValue="setores" className="w-full">
+      <Tabs defaultValue="frentes" className="w-full">
         <TabsList>
-          <TabsTrigger value="setores" className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" /> Setores
+          <TabsTrigger value="frentes" className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5" /> Frentes
           </TabsTrigger>
           <TabsTrigger value="kpis" className="flex items-center gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" /> Indicadores
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB: Setores */}
-        <TabsContent value="setores" className="space-y-4 mt-4">
+        {/* TAB: Frentes */}
+        <TabsContent value="frentes" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <h2 className="font-medium">Setores do Núcleo</h2>
+            <h2 className="font-medium">Frentes de Trabalho</h2>
             <Button size="sm" onClick={() => setNovoSetor(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> Novo setor
+              <Plus className="w-3.5 h-3.5 mr-1" /> Nova frente
             </Button>
           </div>
 
           {novoSetor && (
             <Card className="border-dashed">
               <CardContent className="p-4 space-y-3">
-                <div className="flex gap-3 items-end flex-wrap">
+                <div className="flex gap-3 items-start flex-wrap">
+                  <div>
+                    <Label>Ícone</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {EMOJIS.map((e) => (
+                        <button
+                          key={e}
+                          className={`w-8 h-8 rounded-md border-2 text-lg flex items-center justify-center transition-all ${
+                            setorIcone === e ? "border-primary bg-primary/10" : "border-transparent hover:bg-accent"
+                          }`}
+                          onClick={() => setSetorIcone(e)}
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex-1 min-w-[200px]">
-                    <Label>Nome do setor</Label>
+                    <Label>Nome da frente</Label>
                     <Input
                       value={setorNome}
                       onChange={(e) => setSetorNome(e.target.value)}
-                      placeholder="Ex: Anúncios/Análise"
+                      placeholder="Ex: Gestão de Anúncios"
                     />
                   </div>
                   <div>
@@ -292,6 +311,17 @@ export function ConfigPage() {
                       ))}
                     </div>
                   </div>
+                </div>
+                <div>
+                  <Label>Descrição (opcional)</Label>
+                  <Textarea
+                    value={setorDesc}
+                    onChange={(e) => setSetorDesc(e.target.value)}
+                    placeholder="Breve descrição sobre esta frente de trabalho"
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
                   <Button onClick={criarSetor}>
                     <Save className="w-3.5 h-3.5 mr-1" /> Criar
                   </Button>
@@ -306,7 +336,7 @@ export function ConfigPage() {
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : setores.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum setor cadastrado.</p>
+            <p className="text-sm text-muted-foreground">Nenhuma frente cadastrada.</p>
           ) : (
             <div className="space-y-3">
               {setores.map((s) => (
@@ -314,19 +344,29 @@ export function ConfigPage() {
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <GripVertical className="w-4 h-4 text-muted-foreground" />
-                      <div
-                        className="w-8 h-8 rounded-md flex items-center justify-center text-white font-bold text-xs shrink-0"
-                        style={{ backgroundColor: s.cor }}
+                      <button
+                        className="w-10 h-10 rounded-lg border-2 text-xl flex items-center justify-center transition-all hover:bg-accent"
+                        style={{ borderColor: s.cor + "60" }}
                       >
-                        {s.nome.slice(0, 2).toUpperCase()}
+                        {s.icone || "📋"}
+                      </button>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <Input
+                          value={s.nome}
+                          onChange={(e) => setSetores((prev) =>
+                            prev.map((x) => (x.id === s.id ? { ...x, nome: e.target.value } : x)),
+                          )}
+                          className="font-medium"
+                        />
+                        <Input
+                          value={s.descricao}
+                          onChange={(e) => setSetores((prev) =>
+                            prev.map((x) => (x.id === s.id ? { ...x, descricao: e.target.value } : x)),
+                          )}
+                          placeholder="Descrição (opcional)"
+                          className="text-xs h-7"
+                        />
                       </div>
-                      <Input
-                        value={s.nome}
-                        onChange={(e) => setSetores((prev) =>
-                          prev.map((x) => (x.id === s.id ? { ...x, nome: e.target.value } : x)),
-                        )}
-                        className="flex-1"
-                      />
                       <div className="flex gap-1">
                         {CORES.map((c) => (
                           <button
@@ -366,9 +406,9 @@ export function ConfigPage() {
                     </div>
 
                     {/* Funções vinculadas */}
-                    <div className="ml-12">
+                    <div className="ml-14">
                       <Label className="text-xs text-muted-foreground">
-                        Funções vinculadas (quais funções enxergam este setor):
+                        Funções vinculadas (quais funções enxergam esta frente):
                       </Label>
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {funcoes.length === 0 ? (
@@ -396,7 +436,7 @@ export function ConfigPage() {
                         )}
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        Se nenhuma função for marcada, todos os usuários com acesso ao módulo enxergam o setor.
+                        Se nenhuma função for marcada, todos os usuários com acesso ao módulo enxergam a frente.
                       </p>
                     </div>
                   </CardContent>

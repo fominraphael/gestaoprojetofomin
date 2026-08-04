@@ -36,14 +36,14 @@ export function AppSidebar() {
     async function load() {
       const { data } = await supabase
         .from("rotina_setores")
-        .select("id, nome, cor")
+        .select("id, nome, cor, icone")
         .eq("ativo", true)
         .order("ordem");
       if (cancelled || !data) return;
       const items: ModuleNavItem[] = data.map((s: any) => ({
         to: `/rotina/${s.id}`,
         label: s.nome,
-        icon: Circle,
+        icon: () => <span className="text-base leading-none">{s.icone || "📋"}</span>,
       }));
       setSetorItems(items);
     }

@@ -131,17 +131,17 @@ export function HubPage() {
       {/* Mural de Avisos */}
       <AvisosMural />
 
-      {/* Cards dos Setores */}
+      {/* Cards das Frentes */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Setores</h2>
+        <h2 className="text-lg font-semibold mb-3">Frentes de Trabalho</h2>
         {loading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : setores.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nenhum setor cadastrado.{" "}
+            Nenhuma frente cadastrada.{" "}
             {isAdmin && (
               <Link to="/rotina/configuracoes" className="text-primary hover:underline">
-                Cadastrar setores
+                Cadastrar frentes
               </Link>
             )}
           </p>
@@ -155,18 +155,22 @@ export function HubPage() {
                 >
                   <CardContent className="p-4 flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
-                      style={{ backgroundColor: s.cor }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                      style={{ backgroundColor: s.cor + "15" }}
                     >
-                      {s.nome.slice(0, 2).toUpperCase()}
+                      {s.icone || "📋"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm truncate">{s.nome}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Acessar setor
+                      {s.descricao && (
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">
+                          {s.descricao}
+                        </div>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Acessar frente →
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </CardContent>
                 </Card>
               </Link>

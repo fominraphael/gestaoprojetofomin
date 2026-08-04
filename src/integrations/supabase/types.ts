@@ -1555,11 +1555,45 @@ export type Database = {
           },
         ]
       }
+      rotina_checkpoints: {
+        Row: {
+          id: string
+          atividade_id: string
+          data: string
+          concluido_por: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          atividade_id: string
+          data?: string
+          concluido_por?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          atividade_id?: string
+          data?: string
+          concluido_por?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_checkpoints_atividade_id_fkey"
+            columns: ["atividade_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_atividades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rotina_setores: {
         Row: {
           ativo: boolean
           cor: string
           created_at: string
+          descricao: string
+          icone: string
           id: string
           nome: string
           ordem: number
@@ -1569,6 +1603,8 @@ export type Database = {
           ativo?: boolean
           cor?: string
           created_at?: string
+          descricao?: string
+          icone?: string
           id?: string
           nome: string
           ordem?: number
@@ -1578,6 +1614,8 @@ export type Database = {
           ativo?: boolean
           cor?: string
           created_at?: string
+          descricao?: string
+          icone?: string
           id?: string
           nome?: string
           ordem?: number

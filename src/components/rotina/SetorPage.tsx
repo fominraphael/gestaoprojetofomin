@@ -8,13 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
@@ -25,46 +18,66 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   type Atividade,
   type Tarefa,
-  type Frequencia,
   type StatusTarefa,
-  FREQUENCIA_LABELS,
   STATUS_TAREFA_LABELS,
   STATUS_TAREFA_COLORS,
   DIAS_SEMANA,
+  DIAS_SEMANA_LABELS,
   formatDiasSemana,
+  toggleCheckpoint,
+  getCheckpoints,
+  getDiaSemanaAtual,
 } from "@/lib/rotina";
+
+const EMOJIS = [
+  "📋", "🎯", "📝", "💼", "📊", "📈", "🔧", "⚙️", "🗂️", "📁",
+  "🚀", "💡", "📌", "🔖", "🏷️", "📎", "✅", "⭐", "🔥", "💎",
+  "🎨", "🏗️", "🛠️", "📦", "🗄️", "🗓️", "⏰", "📍", "🔗", "📄",
+];
 
 export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
   const { user, isAdmin } = useAuth();
 
-  const [setor, setSetor] = useState<{ id: string; nome: string; cor: string } | null>(null);
+  const [setor, setSetor] = useState<{
+    id: string; nome: string; cor: string; icone: string; descricao: string;
+  } | null>(null);
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [checkpoints, setCheckpoints] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Nova atividade
-  const [novaAtiv, setNovaAtiv] = useState(false);
-  const [ativNome, setAtivNome] = useState("");
-  const [ativFrequencia, setAtivFrequencia] = useState<Frequencia>("semanal");
-  const [ativDias, setAtivDias] = useState<number[]>([]);
-  const [ativPeriodo, setAtivPeriodo] = useState("");
-  const [ativDesc, setAtivDesc] = useState("");
+  const [expandedRotina, setExpandedRotina] = useState(true);
+  const [expandedPontual, setExpandedPontual] = useState(true);
+  const [filtroDia, setFiltroDia] = useState<number | null>(null);
 
-  // Nova tarefa
-  const [novaTarefa, setNovaTarefa] = useState(false);
-  const [tarefaNome, setTarefaNome] = useState("");
-  const [tarefaPrazo, setTarefaPrazo] = useState("");
-  const [tarefaDesc, setTarefaDesc] = useState("");
+  // Nova atividade inline
+  const [novaAtivNome, setNovaAtivNome] = useState("");
+  const [novaAtivDias, setNovaAtivDias] = useState<number[]>([]);
+  const [showNovaAtiv, setShowNovaAtiv] = useState(false);
+
+  // Nova tarefa inline
+  const [novaTarefaNome, setNovaTarefaNome] = useState("");
+  const [novaTarefaPrazo, setNovaTarefaPrazo] = useState("");
+  const [showNovaTarefa, setShowNovaTarefa] = useState(false);
+
+  const hoje = new Date().toISOString().split("T")[0];
+  const diaAtual = getDiaSemanaAtual();
 
   const carregar = useCallback(async () => {
     setLoading(true);
     const [setorRes, ativRes, tarefaRes] = await Promise.all([
-      supabase.from("rotina_setores").select("id, nome, cor").eq("id", setorId).single(),
+      supabase
+        .from("rotina_setores")
+        .select("id, nome, cor, icone, descricao")
+        .eq("id", setorId)
+        .single(),
       supabase
         .from("rotina_atividades")
         .select("*")
@@ -80,25 +93,28 @@ export function SetorPage() {
     if (setorRes.data) setSetor(setorRes.data as any);
     setAtividades((ativRes.data as any) ?? []);
     setTarefas((tarefaRes.data as any) ?? []);
+
+    const ativIds = (ativRes.data ?? []).map((a: any) => a.id);
+    const cps = await getCheckpoints(ativIds, hoje);
+    setCheckpoints(cps);
+
     setLoading(false);
-  }, [setorId]);
+  }, [setorId, hoje]);
 
   useEffect(() => {
     carregar();
   }, [carregar]);
 
   async function criarAtividade() {
-    if (!ativNome.trim()) {
+    if (!novaAtivNome.trim()) {
       toast.error("Preencha o nome da atividade.");
       return;
     }
     const { error } = await supabase.from("rotina_atividades").insert({
-      nome: ativNome.trim(),
+      nome: novaAtivNome.trim(),
       setor_id: setorId,
-      frequencia: ativFrequencia,
-      dias_semana: ativFrequencia === "semanal" ? ativDias : [],
-      periodo_mensal: ativFrequencia === "mensal" ? ativPeriodo.trim() || null : null,
-      descricao: ativDesc.trim(),
+      frequencia: "semanal",
+      dias_semana: novaAtivDias.length > 0 ? novaAtivDias : [diaAtual],
       created_by: user?.id,
     });
     if (error) {
@@ -106,24 +122,21 @@ export function SetorPage() {
       return;
     }
     toast.success("Atividade criada.");
-    setNovaAtiv(false);
-    setAtivNome("");
-    setAtivDias([]);
-    setAtivPeriodo("");
-    setAtivDesc("");
+    setNovaAtivNome("");
+    setNovaAtivDias([]);
+    setShowNovaAtiv(false);
     carregar();
   }
 
   async function criarTarefa() {
-    if (!tarefaNome.trim()) {
+    if (!novaTarefaNome.trim()) {
       toast.error("Preencha o nome da tarefa.");
       return;
     }
     const { error } = await supabase.from("rotina_tarefas").insert({
-      nome: tarefaNome.trim(),
+      nome: novaTarefaNome.trim(),
       setor_id: setorId,
-      prazo: tarefaPrazo || null,
-      descricao: tarefaDesc.trim(),
+      prazo: novaTarefaPrazo || null,
       created_by: user?.id,
     });
     if (error) {
@@ -131,11 +144,28 @@ export function SetorPage() {
       return;
     }
     toast.success("Tarefa criada.");
-    setNovaTarefa(false);
-    setTarefaNome("");
-    setTarefaPrazo("");
-    setTarefaDesc("");
+    setNovaTarefaNome("");
+    setNovaTarefaPrazo("");
+    setShowNovaTarefa(false);
     carregar();
+  }
+
+  async function handleToggleCheckpoint(atividadeId: string) {
+    if (!user?.id) return;
+    const ok = await toggleCheckpoint(atividadeId, hoje, user.id);
+    if (!ok) {
+      toast.error("Erro ao registrar checkpoint.");
+      return;
+    }
+    setCheckpoints((prev) => {
+      const next = new Set(prev);
+      if (next.has(atividadeId)) {
+        next.delete(atividadeId);
+      } else {
+        next.add(atividadeId);
+      }
+      return next;
+    });
   }
 
   async function alterarStatusTarefa(id: string, status: StatusTarefa) {
@@ -150,9 +180,25 @@ export function SetorPage() {
     setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
   }
 
-  function toggleDia(d: number) {
-    setAtivDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
+  function toggleDiaAtiv(d: number) {
+    setNovaAtivDias((prev) =>
+      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+    );
   }
+
+  const atividadesPorDia = DIAS_SEMANA.reduce(
+    (acc, d) => {
+      acc[d.valor] = atividades.filter(
+        (a) => a.dias_semana?.includes(d.valor),
+      );
+      return acc;
+    },
+    {} as Record<number, Atividade[]>,
+  );
+
+  const diasParaMostrar = filtroDia !== null
+    ? DIAS_SEMANA.filter((d) => d.valor === filtroDia)
+    : DIAS_SEMANA.filter((d) => atividadesPorDia[d.valor]?.length > 0);
 
   const tarefasPorStatus = {
     a_fazer: tarefas.filter((t) => t.status === "a_fazer"),
@@ -160,8 +206,14 @@ export function SetorPage() {
     concluido: tarefas.filter((t) => t.status === "concluido"),
   };
 
+  const totalConcluidoHoje = atividades.filter((a) => checkpoints.has(a.id)).length;
+  const totalAtividades = atividades.length;
+  const percentConcluido = totalAtividades > 0
+    ? Math.round((totalConcluidoHoje / totalAtividades) * 100)
+    : 0;
+
   return (
-    <div className="p-6 space-y-4 max-w-5xl mx-auto">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/rotina">
@@ -170,29 +222,47 @@ export function SetorPage() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-3">
-        {setor && (
-          <div
-            className="w-8 h-8 rounded-md flex items-center justify-center text-white font-bold text-xs shrink-0"
-            style={{ backgroundColor: setor.cor }}
-          >
-            {setor.nome.slice(0, 2).toUpperCase()}
+      {/* Header da Frente */}
+      <div className="flex items-start gap-4">
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
+          style={{ backgroundColor: setor?.cor + "20" }}
+        >
+          {setor?.icone ?? "📋"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold">{setor?.nome ?? "Frente"}</h1>
+          {setor?.descricao && (
+            <p className="text-sm text-muted-foreground mt-1">{setor.descricao}</p>
+          )}
+          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <span>
+              <CalendarCheck className="w-3.5 h-3.5 inline mr-1" />
+              {totalConcluidoHoje}/{totalAtividades} concluídas hoje
+            </span>
+            {totalAtividades > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${percentConcluido}%` }}
+                  />
+                </div>
+                <span>{percentConcluido}%</span>
+              </div>
+            )}
           </div>
-        )}
-        <div>
-          <h1 className="text-2xl font-semibold">{setor?.nome ?? "Setor"}</h1>
-          <p className="text-sm text-muted-foreground">Atividades de rotina e tarefas pontuais</p>
         </div>
       </div>
 
       <Tabs defaultValue="rotina" className="w-full">
         <TabsList>
           <TabsTrigger value="rotina" className="flex items-center gap-1.5">
-            <CalendarCheck className="w-3.5 h-3.5" /> Rotina
+            <CalendarCheck className="w-3.5 h-3.5" /> Rotina Diária
           </TabsTrigger>
           <TabsTrigger value="tarefas" className="flex items-center gap-1.5">
-            <ListTodo className="w-3.5 h-3.5" /> Tarefas Pontuais
-            {tarefas.length > 0 && (
+            <ListTodo className="w-3.5 h-3.5" /> Atividades Pontuais
+            {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
                 {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length}
               </Badge>
@@ -200,77 +270,151 @@ export function SetorPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB: Rotina */}
+        {/* TAB: Rotina Diária */}
         <TabsContent value="rotina" className="space-y-4 mt-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-medium">Atividades de Rotina</h2>
-            <Button size="sm" onClick={() => setNovaAtiv(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> Nova atividade
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              variant={filtroDia === null ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroDia(null)}
+            >
+              Todos
             </Button>
+            {DIAS_SEMANA.map((d) => (
+              <Button
+                key={d.valor}
+                variant={filtroDia === d.valor ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroDia(d.valor)}
+              >
+                {d.label}
+              </Button>
+            ))}
           </div>
 
-          {novaAtiv && (
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : atividades.length === 0 && !showNovaAtiv ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground mb-3">
+                Nenhuma atividade de rotina cadastrada.
+              </p>
+              <Button size="sm" onClick={() => setShowNovaAtiv(true)}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar primeira atividade
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {diasParaMostrar.map((d) => {
+                const itens = atividadesPorDia[d.valor] ?? [];
+                const isHoje = d.valor === diaAtual;
+                return (
+                  <div key={d.valor} className="space-y-2">
+                    <button
+                      className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors w-full text-left"
+                      onClick={() =>
+                        setExpandedRotina((prev) => !prev)
+                      }
+                    >
+                      {expandedRotina ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                      {DIAS_SEMANA_LABELS[d.valor]}
+                      {isHoje && (
+                        <Badge variant="default" className="text-[10px] h-5 px-1.5 ml-1">
+                          Hoje
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                        {itens.length}
+                      </Badge>
+                    </button>
+                    {expandedRotina && (
+                      <div className="space-y-1 pl-6">
+                        {itens.map((a) => {
+                          const concluido = checkpoints.has(a.id);
+                          return (
+                            <div
+                              key={a.id}
+                              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                                concluido
+                                  ? "bg-primary/10 text-primary"
+                                  : "hover:bg-accent"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={concluido}
+                                onCheckedChange={() => handleToggleCheckpoint(a.id)}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                              />
+                              <span
+                                className={`text-sm flex-1 ${
+                                  concluido ? "line-through opacity-70" : ""
+                                }`}
+                              >
+                                {a.nome}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {itens.length === 0 && (
+                          <p className="text-xs text-muted-foreground py-1">
+                            Nenhuma atividade para este dia.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {showNovaAtiv && (
             <Card className="border-dashed">
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-3 space-y-2">
                 <Input
                   placeholder="Nome da atividade"
-                  value={ativNome}
-                  onChange={(e) => setAtivNome(e.target.value)}
+                  value={novaAtivNome}
+                  onChange={(e) => setNovaAtivNome(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && criarAtividade()}
+                  autoFocus
                 />
-                <div className="flex gap-3 flex-wrap">
-                  <div className="w-48">
-                    <Select
-                      value={ativFrequencia}
-                      onValueChange={(v) => setAtivFrequencia(v as Frequencia)}
+                <div className="flex gap-1 flex-wrap">
+                  {DIAS_SEMANA.map((d) => (
+                    <label
+                      key={d.valor}
+                      className={`flex items-center gap-1 px-2 py-1 rounded border text-xs cursor-pointer transition-colors ${
+                        novaAtivDias.includes(d.valor)
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-accent"
+                      }`}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(Object.keys(FREQUENCIA_LABELS) as Frequencia[]).map((f) => (
-                          <SelectItem key={f} value={f}>
-                            {FREQUENCIA_LABELS[f]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {ativFrequencia === "semanal" && (
-                    <div className="flex gap-1">
-                      {DIAS_SEMANA.map((d) => (
-                        <label
-                          key={d.valor}
-                          className="flex items-center gap-1 px-2 py-1 rounded border border-border text-xs cursor-pointer hover:bg-accent"
-                        >
-                          <Checkbox
-                            checked={ativDias.includes(d.valor)}
-                            onCheckedChange={() => toggleDia(d.valor)}
-                          />
-                          {d.label}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                  {ativFrequencia === "mensal" && (
-                    <Input
-                      placeholder='Período (ex: "até dia 3", "última semana")'
-                      className="w-64"
-                      value={ativPeriodo}
-                      onChange={(e) => setAtivPeriodo(e.target.value)}
-                    />
-                  )}
+                      <Checkbox
+                        checked={novaAtivDias.includes(d.valor)}
+                        onCheckedChange={() => toggleDiaAtiv(d.valor)}
+                      />
+                      {d.label}
+                    </label>
+                  ))}
                 </div>
-                <Textarea
-                  placeholder="Descrição da atividade"
-                  value={ativDesc}
-                  onChange={(e) => setAtivDesc(e.target.value)}
-                  rows={2}
-                />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={criarAtividade}>
                     Criar
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setNovaAtiv(false)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNovaAtiv(false);
+                      setNovaAtivNome("");
+                      setNovaAtivDias([]);
+                    }}
+                  >
                     Cancelar
                   </Button>
                 </div>
@@ -278,149 +422,116 @@ export function SetorPage() {
             </Card>
           )}
 
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : atividades.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma atividade de rotina cadastrada.</p>
-          ) : (
-            <div className="space-y-2">
-              {atividades.map((a) => (
-                <Link
-                  key={a.id}
-                  to="/rotina/atividade/$id"
-                  params={{ id: a.id }}
-                >
-                  <Card className="hover:border-primary/50 transition-all cursor-pointer">
-                    <CardContent className="p-4 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{a.nome}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-[10px]">
-                            {FREQUENCIA_LABELS[a.frequencia]}
-                          </Badge>
-                          {a.frequencia === "semanal" && a.dias_semana && a.dias_semana.length > 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              {formatDiasSemana(a.dias_semana)}
-                            </span>
-                          )}
-                          {a.frequencia === "mensal" && a.periodo_mensal && (
-                            <span className="text-xs text-muted-foreground">
-                              {a.periodo_mensal}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+          {atividades.length > 0 && !showNovaAtiv && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full"
+              onClick={() => setShowNovaAtiv(true)}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> Nova atividade
+            </Button>
           )}
         </TabsContent>
 
-        {/* TAB: Tarefas */}
+        {/* TAB: Atividades Pontuais (Kanban) */}
         <TabsContent value="tarefas" className="space-y-4 mt-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-medium">Tarefas Pontuais</h2>
-            <Button size="sm" onClick={() => setNovaTarefa(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> Nova tarefa
-            </Button>
-          </div>
-
-          {novaTarefa && (
-            <Card className="border-dashed">
-              <CardContent className="p-4 space-y-3">
-                <Input
-                  placeholder="Nome da tarefa"
-                  value={tarefaNome}
-                  onChange={(e) => setTarefaNome(e.target.value)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Coluna: A fazer */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <AlertCircle className="w-3.5 h-3.5" /> A fazer
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  {tarefasPorStatus.a_fazer.length}
+                </Badge>
+              </div>
+              {tarefasPorStatus.a_fazer.map((t) => (
+                <TarefaCard
+                  key={t.id}
+                  tarefa={t}
+                  onStatusChange={alterarStatusTarefa}
                 />
-                <div className="flex gap-3">
-                  <div className="w-48">
+              ))}
+              {showNovaTarefa ? (
+                <Card className="border-dashed">
+                  <CardContent className="p-3 space-y-2">
+                    <Input
+                      placeholder="Nome da tarefa"
+                      value={novaTarefaNome}
+                      onChange={(e) => setNovaTarefaNome(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && criarTarefa()}
+                      autoFocus
+                    />
                     <Input
                       type="date"
-                      placeholder="Prazo"
-                      value={tarefaPrazo}
-                      onChange={(e) => setTarefaPrazo(e.target.value)}
+                      value={novaTarefaPrazo}
+                      onChange={(e) => setNovaTarefaPrazo(e.target.value)}
+                      className="h-8 text-xs"
                     />
-                  </div>
-                </div>
-                <Textarea
-                  placeholder="Descrição (opcional)"
-                  value={tarefaDesc}
-                  onChange={(e) => setTarefaDesc(e.target.value)}
-                  rows={2}
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={criarTarefa}>
-                    Criar
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setNovaTarefa(false)}>
-                    Cancelar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : tarefas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma tarefa pontual cadastrada.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Coluna: A fazer */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <AlertCircle className="w-3.5 h-3.5" /> A fazer
-                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                    {tarefasPorStatus.a_fazer.length}
-                  </Badge>
-                </div>
-                {tarefasPorStatus.a_fazer.map((t) => (
-                  <TarefaCard
-                    key={t.id}
-                    tarefa={t}
-                    onStatusChange={alterarStatusTarefa}
-                  />
-                ))}
-              </div>
-
-              {/* Coluna: Fazendo */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Clock className="w-3.5 h-3.5" /> Fazendo
-                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                    {tarefasPorStatus.fazendo.length}
-                  </Badge>
-                </div>
-                {tarefasPorStatus.fazendo.map((t) => (
-                  <TarefaCard
-                    key={t.id}
-                    tarefa={t}
-                    onStatusChange={alterarStatusTarefa}
-                  />
-                ))}
-              </div>
-
-              {/* Coluna: Concluído */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Concluído
-                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                    {tarefasPorStatus.concluido.length}
-                  </Badge>
-                </div>
-                {tarefasPorStatus.concluido.map((t) => (
-                  <TarefaCard
-                    key={t.id}
-                    tarefa={t}
-                    onStatusChange={alterarStatusTarefa}
-                  />
-                ))}
-              </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={criarTarefa}>
+                        Criar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowNovaTarefa(false);
+                          setNovaTarefaNome("");
+                          setNovaTarefaPrazo("");
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setShowNovaTarefa(true)}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Nova tarefa
+                </Button>
+              )}
             </div>
-          )}
+
+            {/* Coluna: Fazendo */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Clock className="w-3.5 h-3.5" /> Fazendo
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  {tarefasPorStatus.fazendo.length}
+                </Badge>
+              </div>
+              {tarefasPorStatus.fazendo.map((t) => (
+                <TarefaCard
+                  key={t.id}
+                  tarefa={t}
+                  onStatusChange={alterarStatusTarefa}
+                />
+              ))}
+            </div>
+
+            {/* Coluna: Concluído */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Concluído
+                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                  {tarefasPorStatus.concluido.length}
+                </Badge>
+              </div>
+              {tarefasPorStatus.concluido.map((t) => (
+                <TarefaCard
+                  key={t.id}
+                  tarefa={t}
+                  onStatusChange={alterarStatusTarefa}
+                />
+              ))}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -441,8 +552,12 @@ function TarefaCard({
   };
   const prox = proximoStatus[tarefa.status];
 
+  const isAtrasado =
+    tarefa.prazo && tarefa.status !== "concluido" &&
+    new Date(tarefa.prazo + "T12:00:00") < new Date();
+
   return (
-    <Card className="hover:border-primary/30 transition-colors">
+    <Card className={`hover:border-primary/30 transition-colors ${isAtrasado ? "border-red-500/50" : ""}`}>
       <CardContent className="p-3 space-y-2">
         <Link
           to="/rotina/tarefa/$id"
@@ -456,7 +571,8 @@ function TarefaCard({
             {STATUS_TAREFA_LABELS[tarefa.status]}
           </Badge>
           {tarefa.prazo && (
-            <span className="text-[10px] text-muted-foreground">
+            <span className={`text-[10px] ${isAtrasado ? "text-red-400 font-medium" : "text-muted-foreground"}`}>
+              {isAtrasado && "⚠ "}
               Prazo: {new Date(tarefa.prazo + "T12:00:00").toLocaleDateString("pt-BR")}
             </span>
           )}
