@@ -18,6 +18,7 @@ import {
   ClipboardList,
   PlusCircle,
   ClipboardCheck,
+  CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -192,6 +193,21 @@ export const MODULES: ModuleDef[] = [
         icon: Settings,
         perfis: ["Administrador"],
       },
+    ],
+  },
+  {
+    id: "rotina",
+    label: "Gestão de Rotina",
+    description:
+      "Rotina de trabalho, tarefas pontuais, indicadores e mural de avisos do núcleo.",
+    icon: CalendarCheck,
+    href: "/rotina",
+    requiredModule: "rotina",
+    gradient: "from-indigo-500/15 to-violet-700/15",
+    iconBg: "from-indigo-500 to-violet-700",
+    navItems: [
+      { to: "/rotina", label: "HUB", icon: LayoutDashboard },
+      { to: "/rotina/configuracoes", label: "Configurações", icon: Settings },
     ],
   },
 ];

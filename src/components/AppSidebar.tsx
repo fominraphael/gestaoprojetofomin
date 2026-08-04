@@ -1,13 +1,15 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, LogOut, Layers, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Layers, Users, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   findModuleByPath,
   userCanAccess,
   navItemsForPerfil,
   perfilFromTipoUsuario,
+  type ModuleNavItem,
 } from "@/lib/modules";
 import { APP_VERSION } from "@/lib/version";
 
@@ -18,10 +20,38 @@ export function AppSidebar() {
   const userModules = user?.modulos || [];
   const perfil = perfilFromTipoUsuario(user?.tipo_usuario);
   const activeModule = findModuleByPath(pathname);
-  const visibleItems =
+  const baseItems =
     activeModule && userCanAccess(activeModule, isAdmin, userModules)
       ? navItemsForPerfil(activeModule, isAdmin, perfil)
       : [];
+
+  const [setorItems, setSetorItems] = useState<ModuleNavItem[]>([]);
+
+  useEffect(() => {
+    if (activeModule?.id !== "rotina") {
+      setSetorItems([]);
+      return;
+    }
+    let cancelled = false;
+    async function load() {
+      const { data } = await supabase
+        .from("rotina_setores")
+        .select("id, nome, cor")
+        .eq("ativo", true)
+        .order("ordem");
+      if (cancelled || !data) return;
+      const items: ModuleNavItem[] = data.map((s: any) => ({
+        to: `/rotina/${s.id}`,
+        label: s.nome,
+        icon: Circle,
+      }));
+      setSetorItems(items);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [activeModule?.id]);
+
+  const visibleItems = [...baseItems.slice(0, 1), ...setorItems, ...baseItems.slice(1)];
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
