@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import {
   LayoutDashboard,
   KanbanSquare,
