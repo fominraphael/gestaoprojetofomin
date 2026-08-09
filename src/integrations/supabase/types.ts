@@ -750,6 +750,375 @@ export type Database = {
         }
         Relationships: []
       }
+      rotina_anexos: {
+        Row: {
+          arquivo_path: string
+          created_at: string
+          entidade: string
+          entidade_id: string
+          id: string
+          nome_original: string
+          tamanho: number | null
+          tipo_mime: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          arquivo_path: string
+          created_at?: string
+          entidade: string
+          entidade_id: string
+          id?: string
+          nome_original: string
+          tamanho?: number | null
+          tipo_mime?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          arquivo_path?: string
+          created_at?: string
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          nome_original?: string
+          tamanho?: number | null
+          tipo_mime?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      rotina_atividades: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string
+          dias_semana: number[] | null
+          frequencia: string
+          id: string
+          nome: string
+          ordem: number
+          periodo_mensal: string | null
+          setor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          dias_semana?: number[] | null
+          frequencia: string
+          id?: string
+          nome: string
+          ordem?: number
+          periodo_mensal?: string | null
+          setor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          dias_semana?: number[] | null
+          frequencia?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          periodo_mensal?: string | null
+          setor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_atividades_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotina_avisos: {
+        Row: {
+          conteudo: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          conteudo?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rotina_checkpoints: {
+        Row: {
+          atividade_id: string
+          concluido_por: string | null
+          created_at: string
+          data: string
+          id: string
+        }
+        Insert: {
+          atividade_id: string
+          concluido_por?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+        }
+        Update: {
+          atividade_id?: string
+          concluido_por?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_checkpoints_atividade_id_fkey"
+            columns: ["atividade_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_atividades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotina_kpi_historico: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_id: string
+          mes: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_id: string
+          mes: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_id?: string
+          mes?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_kpi_historico_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotina_kpis: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          unidade: string
+          updated_at: string
+          valor_atual: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          unidade?: string
+          updated_at?: string
+          valor_atual?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          unidade?: string
+          updated_at?: string
+          valor_atual?: number
+        }
+        Relationships: []
+      }
+      rotina_missao: {
+        Row: {
+          conteudo: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          conteudo?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          conteudo?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rotina_setor_funcoes: {
+        Row: {
+          created_at: string
+          funcao_valor: string
+          id: string
+          setor_id: string
+        }
+        Insert: {
+          created_at?: string
+          funcao_valor: string
+          id?: string
+          setor_id: string
+        }
+        Update: {
+          created_at?: string
+          funcao_valor?: string
+          id?: string
+          setor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_setor_funcoes_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotina_setor_usuarios: {
+        Row: {
+          created_at: string
+          id: string
+          setor_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setor_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setor_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_setor_usuarios_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotina_setores: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          descricao: string
+          icone: string
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          descricao?: string
+          icone?: string
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          descricao?: string
+          icone?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rotina_tarefas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descricao: string
+          id: string
+          nome: string
+          prazo: string | null
+          setor_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          id?: string
+          nome: string
+          prazo?: string | null
+          setor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          id?: string
+          nome?: string
+          prazo?: string | null
+          setor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_tarefas_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1555,375 +1924,6 @@ export type Database = {
           },
         ]
       }
-      rotina_checkpoints: {
-        Row: {
-          id: string
-          atividade_id: string
-          data: string
-          concluido_por: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          atividade_id: string
-          data?: string
-          concluido_por?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          atividade_id?: string
-          data?: string
-          concluido_por?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_checkpoints_atividade_id_fkey"
-            columns: ["atividade_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_atividades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_setores: {
-        Row: {
-          ativo: boolean
-          cor: string
-          created_at: string
-          descricao: string
-          icone: string
-          id: string
-          nome: string
-          ordem: number
-          updated_at: string
-        }
-        Insert: {
-          ativo?: boolean
-          cor?: string
-          created_at?: string
-          descricao?: string
-          icone?: string
-          id?: string
-          nome: string
-          ordem?: number
-          updated_at?: string
-        }
-        Update: {
-          ativo?: boolean
-          cor?: string
-          created_at?: string
-          descricao?: string
-          icone?: string
-          id?: string
-          nome?: string
-          ordem?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      rotina_setor_funcoes: {
-        Row: {
-          created_at: string
-          funcao_valor: string
-          id: string
-          setor_id: string
-        }
-        Insert: {
-          created_at?: string
-          funcao_valor: string
-          id?: string
-          setor_id: string
-        }
-        Update: {
-          created_at?: string
-          funcao_valor?: string
-          id?: string
-          setor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_setor_funcoes_setor_id_fkey"
-            columns: ["setor_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_setores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_setor_usuarios: {
-        Row: {
-          created_at: string
-          id: string
-          setor_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          setor_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          setor_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_setor_usuarios_setor_id_fkey"
-            columns: ["setor_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_setores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_atividades: {
-        Row: {
-          ativo: boolean
-          created_at: string
-          created_by: string | null
-          descricao: string
-          dias_semana: number[] | null
-          frequencia: string
-          id: string
-          nome: string
-          ordem: number
-          periodo_mensal: string | null
-          setor_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          ativo?: boolean
-          created_at?: string
-          created_by?: string | null
-          descricao?: string
-          dias_semana?: number[] | null
-          frequencia: string
-          id?: string
-          nome: string
-          ordem?: number
-          periodo_mensal?: string | null
-          setor_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          ativo?: boolean
-          created_at?: string
-          created_by?: string | null
-          descricao?: string
-          dias_semana?: number[] | null
-          frequencia?: string
-          id?: string
-          nome?: string
-          ordem?: number
-          periodo_mensal?: string | null
-          setor_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_atividades_setor_id_fkey"
-            columns: ["setor_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_setores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_tarefas: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          descricao: string
-          id: string
-          nome: string
-          prazo: string | null
-          setor_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          descricao?: string
-          id?: string
-          nome: string
-          prazo?: string | null
-          setor_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          descricao?: string
-          id?: string
-          nome?: string
-          prazo?: string | null
-          setor_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_tarefas_setor_id_fkey"
-            columns: ["setor_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_setores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_anexos: {
-        Row: {
-          arquivo_path: string
-          created_at: string
-          entidade: string
-          entidade_id: string
-          id: string
-          nome_original: string
-          tipo_mime: string | null
-          tamanho: number | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          arquivo_path: string
-          created_at?: string
-          entidade: string
-          entidade_id: string
-          id?: string
-          nome_original: string
-          tipo_mime?: string | null
-          tamanho?: number | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          arquivo_path?: string
-          created_at?: string
-          entidade?: string
-          entidade_id?: string
-          id?: string
-          nome_original?: string
-          tipo_mime?: string | null
-          tamanho?: number | null
-          uploaded_by?: string | null
-        }
-        Relationships: []
-      }
-      rotina_kpis: {
-        Row: {
-          ativo: boolean
-          created_at: string
-          id: string
-          nome: string
-          ordem: number
-          unidade: string
-          updated_at: string
-          valor_atual: number
-        }
-        Insert: {
-          ativo?: boolean
-          created_at?: string
-          id?: string
-          nome: string
-          ordem?: number
-          unidade?: string
-          updated_at?: string
-          valor_atual?: number
-        }
-        Update: {
-          ativo?: boolean
-          created_at?: string
-          id?: string
-          nome?: string
-          ordem?: number
-          unidade?: string
-          updated_at?: string
-          valor_atual?: number
-        }
-        Relationships: []
-      }
-      rotina_kpi_historico: {
-        Row: {
-          created_at: string
-          id: string
-          kpi_id: string
-          mes: string
-          valor: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          kpi_id: string
-          mes: string
-          valor?: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          kpi_id?: string
-          mes?: string
-          valor?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rotina_kpi_historico_kpi_id_fkey"
-            columns: ["kpi_id"]
-            isOneToOne: false
-            referencedRelation: "rotina_kpis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotina_avisos: {
-        Row: {
-          conteudo: string
-          created_at: string
-          criado_por: string | null
-          id: string
-          titulo: string
-          updated_at: string
-        }
-        Insert: {
-          conteudo?: string
-          created_at?: string
-          criado_por?: string | null
-          id?: string
-          titulo: string
-          updated_at?: string
-        }
-        Update: {
-          conteudo?: string
-          created_at?: string
-          criado_por?: string | null
-          id?: string
-          titulo?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      rotina_missao: {
-        Row: {
-          conteudo: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          conteudo?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          conteudo?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Functions: {
       can_access_chamado: { Args: { _chamado_id: string }; Returns: boolean }
@@ -1975,7 +1975,11 @@ export type Database = {
       }
       user_setores: {
         Args: { p_user_id?: string }
-        Returns: { setor_cor: string; setor_id: string; setor_nome: string }[]
+        Returns: {
+          setor_cor: string
+          setor_id: string
+          setor_nome: string
+        }[]
       }
     }
     Enums: {
