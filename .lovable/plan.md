@@ -1,44 +1,47 @@
-Escopo grande com 3 frentes independentes. Executarei nesta ordem para reduzir risco de regressão.
+# Importar as rotinas do Notion para o módulo Gestão de Rotina
 
-## 1. Formatação e compressão do Dossiê
+Os 4 arquivos enviados são exportações do Notion, uma para cada setor que já existe cadastrado no módulo:
 
-Arquivos: `src/lib/pdf-veiculo.ts`, `src/lib/pdf-utils.ts`, e o ponto que gera o dossiê final (localizar em `painel.tsx` / `toyota-checklist.ts`).
+- Anúncios & Análise de Estoque
+- Desmobilização & TCUV (Godrive)
+- Movimentações de Estoque
+- Atividades CORE
 
-- Criar helper `formatarModeloCurto(modelo)` que retorna as 2 primeiras palavras significativas (remove versões: XRE, XEI, GLI, SR, tokens com números tipo `2.0`, `16V`, e palavras `FLEX`, `AUT`, `CVT`, `TB`, `HYBRID` fora do nome base). Regra prática: dividir por espaço, manter tokens até encontrar o primeiro que casa com regex `/^([0-9]|XRE|XEI|GLI|SR|GR|XLE|SE|LE|FLEX|AUT|CVT|TB|HYBRID|H\d|16V|20V|V6|V8)/i`. Fallback: primeiras 2 palavras.
-- `formatarModeloComAno(modelo, ano)` → `"${curto} / ${ano}"`.
-- `formatarKm(km)` → `Intl.NumberFormat("pt-BR").format(Number(km))`.
-- Aplicar ambos no preenchimento do AcroForm do checklist (campos `veiculo` e `km`) em `pdf-veiculo.ts` e no fluxo do dossiê.
-- Compressão em `mesclarPdfs`: usar `PDFDocument.save({ useObjectStreams: true, addDefaultPage: false, objectsPerTick: 200 })` + `merged.setTitle("")`, `setAuthor("")`, `setSubject("")`, `setKeywords([])`, `setProducer("")`, `setCreator("")` para remover metadados. Adicionar loop opcional que percorre imagens embutidas e re-encoda via canvas para JPEG 0.7 quando o PDF final excede 3MB — implementado como best-effort com try/catch.
-- Se ainda > 3MB, logar warning; não integrar API externa nesta iteração (evita adicionar secret novo sem aprovação). Deixar TODO comentado com hook para PDF.co.
+Hoje os 4 setores existem, mas estão sem nenhuma atividade e nenhuma tarefa. A proposta é carregar todo o conteúdo dos arquivos de uma vez.
 
-## 2. Tela "Envio Toyota"
+## O que será cadastrado
 
-Localizar seção "Enviados para a Toyota" em `painel.tsx` (linha ~627) e no expandido do veículo. Refatorar:
+**Atividades da rotina (42 no total, sem duplicidade)**
 
-- Bloco por documento (Check-list, Laudo, Health Check) com botões `Visualizar` (usa `abrirPath`/`abrirLaudo` já existentes) e `Substituir` (input file → upload storage `documentos` → update coluna correspondente em `toyota_estoque_veiculos`).
-- Botão `Gerar Dossiê` / `Regerar Dossiê` sempre habilitado quando os 3 docs existem.
-- Input `Código TCUV` + botão `Enviar/Concluir` renderizados condicionalmente somente após `dossie_pdf_path` estar populado.
+| Setor | Atividades |
+| --- | --- |
+| Anúncios & Análise de Estoque | 15 |
+| Movimentações de Estoque | 14 |
+| Desmobilização & TCUV | 8 |
+| Atividades CORE | 5 |
 
-## 3. Dashboard (renomear + limpar + filtro mês + cards)
+- Nos arquivos, a mesma atividade aparece repetida uma vez por dia da semana. Ela será cadastrada **uma única vez**, com todos os dias marcados (ex.: "Verificação de Valores de anúncio" → Segunda + Quarta), frequência **Semanal**.
+- As atividades de "Atividades CORE" não têm dia da semana definido; entram como **Sob demanda**, e a coluna "Frente" (Estoque / Anúncios) será registrada na descrição.
+- A **descrição** de cada atividade vem do texto detalhado da página correspondente do Notion (o passo a passo já escrito). Onde a página está sem conteúdo, a descrição fica vazia para ser preenchida depois pelo time.
+- Ordem de exibição: alfabética dentro de cada setor.
 
-Arquivo: `src/routes/_authenticated._toyota.toyota.painel.tsx` e `AppSidebar.tsx`.
+**Tarefas pontuais (23 no total)**
 
-- Sidebar: renomear label "Painel de Certificação" → "Dashboard".
-- Título da página → "Dashboard".
-- Remover TODO conteúdo abaixo dos cards (tabelas, listas, seções 1/2/3, filtros por aba). Manter só header + filtro Mês/Ano + grid de cards.
-- Adicionar `<Select>` de mês/ano (default = mês atual). Estado `mesFiltro: "YYYY-MM"`.
-- Refazer contagens baseando no `status_aprovacao` atual (snapshot) exceto "Solicitados" que usa `aprovado_em` dentro do mês:
-  1. **Solicitados**: `count(aprovado_em BETWEEN inicioMes AND fimMes)`.
-  2. **Preparador**: `status_aprovacao IN ('pendente_preparacao','devolvido_preparador')`.
-  3. **Pós-Vendas**: `status_aprovacao = 'em_posvendas'`.
-  4. **Análise Central**: `status_aprovacao IN ('analise','aguardando_analise_central')` + retornos Toyota ativos (`retorno_toyota_em NOT NULL AND status_aprovacao='analise'`).
-  5. **Enviados Toyota**: `enviado_toyota_em NOT NULL AND status_aprovacao NOT IN ('certificado_toyota','arquivado','reprovado_admin')` — os que estão aguardando retorno.
-  6. Remover card "Estoque importado".
-- Cards 2-5 são snapshot atual (não filtram por mês); card "Solicitados" usa o mês. Deixar isso claro na UI com legenda pequena.
+- Anúncios & Análise: 19 · Movimentações: 3 · Desmobilização: 1
+- Cada tarefa mantém o prazo e o status do Notion, convertidos para os status do módulo: A fazer, Fazendo, Concluído.
 
-## Fora de escopo
+## O que não será importado
 
-- Integração com API externa de compressão (deixarei TODO). Se o usuário confirmar credenciais de PDF.co/Cloudmersive, faço em turno seguinte.
-- Testes automatizados dessa refatoração.
+- Imagens e PDFs anexados às páginas do Notion (ex.: prints, cartão CNPJ). Se quiser, depois anexo os arquivos nas atividades correspondentes.
+- Links internos entre páginas do Notion (viram texto simples na descrição).
 
-Confirma para eu executar?
+## Detalhes técnicos
+
+- Carga feita via inserção de dados nas tabelas existentes `rotina_atividades` e `rotina_tarefas`, referenciando os `setor_id` já cadastrados. Nenhuma mudança de schema é necessária.
+- Deduplicação por (nome da atividade + setor); `dias_semana` agregado como array de inteiros (0=Dom … 6=Sáb) conforme o padrão já usado no módulo.
+- Descrições extraídas dos arquivos `.md` da exportação, removendo o cabeçalho e a linha "Dia da semana:", preservando listas e parágrafos como texto.
+- `created_by` fica nulo (carga administrativa); os registros aparecem normalmente para todos os usuários com acesso ao setor.
+
+## Confirmação
+
+Se preferir que as 14 tarefas já **Concluídas** não sejam importadas (para deixar o quadro limpo), é só avisar antes de eu executar.
