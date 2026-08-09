@@ -16,11 +16,12 @@ import {
   Save,
   Users,
   BarChart3,
-  GripVertical,
   Search,
   UserCheck,
   UserX,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import type { Setor, Kpi } from "@/lib/rotina";
 
@@ -105,6 +106,35 @@ export function ConfigPage() {
     );
   }
 
+  // Mover ordem da frente (para cima ou para baixo)
+  async function moverSetor(index: number, direcao: "up" | "down") {
+    const targetIndex = direcao === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= setores.length) return;
+
+    const novisetores = [...setores];
+    const temp = novisetores[index];
+    novisetores[index] = novisetores[targetIndex];
+    novisetores[targetIndex] = temp;
+
+    // Atualiza a propriedade ordem com base no índice no array
+    const atualizados = novisetores.map((s, idx) => ({ ...s, ordem: idx }));
+    setSetores(atualizados);
+
+    // Persiste a nova ordem no Supabase
+    const updates = atualizados.map((s) =>
+      supabase.from("rotina_setores").update({ ordem: s.ordem }).eq("id", s.id)
+    );
+
+    const results = await Promise.all(updates);
+    const erro = results.find((r) => r.error);
+    if (erro) {
+      toast.error("Erro ao salvar nova ordem das frentes.");
+      carregar();
+    } else {
+      toast.success("Ordem atualizada com sucesso.");
+    }
+  }
+
   // Frente CRUD
   async function criarSetor() {
     if (!setorNome.trim()) {
@@ -116,6 +146,7 @@ export function ConfigPage() {
       cor: setorCor,
       icone: setorIcone,
       descricao: setorDesc.trim(),
+      ordem: setores.length,
     });
     if (error) {
       toast.error(error.message);
@@ -382,11 +413,32 @@ export function ConfigPage() {
             <p className="text-sm text-muted-foreground">Nenhuma frente cadastrada.</p>
           ) : (
             <div className="space-y-3">
-              {setores.map((s) => (
+              {setores.map((s, index) => (
                 <Card key={s.id} className={!s.ativo ? "opacity-60" : ""}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-3">
-                      <GripVertical className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex flex-col gap-0.5 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                          disabled={index === 0}
+                          onClick={() => moverSetor(index, "up")}
+                          title="Mover para cima"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                          disabled={index === setores.length - 1}
+                          onClick={() => moverSetor(index, "down")}
+                          title="Mover para baixo"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                       <button
                         className="w-10 h-10 rounded-lg border-2 text-xl flex items-center justify-center transition-all hover:bg-accent"
                         style={{ borderColor: s.cor + "60" }}
