@@ -17,6 +17,9 @@ import {
   Users,
   BarChart3,
   GripVertical,
+  Search,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import type { Setor, Kpi } from "@/lib/rotina";
 
@@ -38,6 +41,9 @@ export function ConfigPage() {
   const [kpis, setKpis] = useState<Kpi[]>([]);
   const [funcoes, setFuncoes] = useState<{ valor: string; label: string }[]>([]);
   const [setorFuncoes, setSetorFuncoes] = useState<Record<string, string[]>>({});
+  const [usuarios, setUsuarios] = useState<{ id: string; username: string; nome_fantasia: string | null }[]>([]);
+  const [setorUsuarios, setSetorUsuarios] = useState<Record<string, string[]>>({});
+  const [buscaUsuario, setBuscaUsuario] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   // Nova frente
@@ -59,21 +65,30 @@ export function ConfigPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const [setoresRes, kpisRes, funcoesRes, sfRes] = await Promise.all([
+    const [setoresRes, kpisRes, funcoesRes, sfRes, profilesRes, suRes] = await Promise.all([
       supabase.from("rotina_setores").select("*").order("ordem"),
       supabase.from("rotina_kpis").select("*").order("ordem"),
       supabase.from("tipos_usuario_config").select("valor, label").order("label"),
       supabase.from("rotina_setor_funcoes").select("setor_id, funcao_valor"),
+      supabase.from("profiles").select("id, username, nome_fantasia").eq("ativo", true).order("username"),
+      supabase.from("rotina_setor_usuarios").select("setor_id, user_id"),
     ]);
     setSetores((setoresRes.data as any) ?? []);
     setKpis((kpisRes.data as any) ?? []);
     setFuncoes((funcoesRes.data as any) ?? []);
+    setUsuarios((profilesRes.data as any) ?? []);
     const sfMap: Record<string, string[]> = {};
     (sfRes.data as any ?? []).forEach((sf: any) => {
       if (!sfMap[sf.setor_id]) sfMap[sf.setor_id] = [];
       sfMap[sf.setor_id].push(sf.funcao_valor);
     });
     setSetorFuncoes(sfMap);
+    const suMap: Record<string, string[]> = {};
+    (suRes.data as any ?? []).forEach((su: any) => {
+      if (!suMap[su.setor_id]) suMap[su.setor_id] = [];
+      suMap[su.setor_id].push(su.user_id);
+    });
+    setSetorUsuarios(suMap);
     setLoading(false);
   }, []);
 
@@ -167,6 +182,33 @@ export function ConfigPage() {
       const { error } = await supabase.from("rotina_setor_funcoes").insert({
         setor_id: setorId,
         funcao_valor: funcaoValor,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    }
+    carregar();
+  }
+
+  // Usuários da frente
+  async function toggleUsuarioSetor(setorId: string, userId: string) {
+    const current = setorUsuarios[setorId] ?? [];
+    const has = current.includes(userId);
+    if (has) {
+      const { error } = await supabase
+        .from("rotina_setor_usuarios")
+        .delete()
+        .eq("setor_id", setorId)
+        .eq("user_id", userId);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase.from("rotina_setor_usuarios").insert({
+        setor_id: setorId,
+        user_id: userId,
       });
       if (error) {
         toast.error(error.message);
@@ -437,6 +479,82 @@ export function ConfigPage() {
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1">
                         Se nenhuma função for marcada, todos os usuários com acesso ao módulo enxergam a frente.
+                      </p>
+                    </div>
+
+                    {/* Usuários vinculados */}
+                    <div className="ml-14 mt-3 pt-3 border-t border-border/50">
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          Usuários vinculados (quais usuários enxergam esta frente):
+                        </Label>
+                        {(setorUsuarios[s.id] ?? []).length > 0 && (
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                            {(setorUsuarios[s.id] ?? []).length} vinculado{(setorUsuarios[s.id] ?? []).length !== 1 ? "s" : ""}
+                          </Badge>
+                        )}
+                      </div>
+                      {usuarios.length > 5 && (
+                        <div className="relative mb-2">
+                          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar usuário…"
+                            value={buscaUsuario[s.id] ?? ""}
+                            onChange={(e) => setBuscaUsuario((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                            className="h-7 text-xs pl-8"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                        {usuarios.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            Nenhum usuário ativo cadastrado.
+                          </span>
+                        ) : (
+                          usuarios
+                            .filter((u) => {
+                              const busca = (buscaUsuario[s.id] ?? "").toLowerCase();
+                              if (!busca) return true;
+                              return (
+                                u.username.toLowerCase().includes(busca) ||
+                                (u.nome_fantasia ?? "").toLowerCase().includes(busca)
+                              );
+                            })
+                            .map((u) => {
+                              const has = (setorUsuarios[s.id] ?? []).includes(u.id);
+                              return (
+                                <label
+                                  key={u.id}
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs cursor-pointer transition-colors ${
+                                    has
+                                      ? "border-primary/50 bg-primary/10 text-primary"
+                                      : "border-border hover:bg-accent"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="accent-primary"
+                                    checked={has}
+                                    onChange={() => toggleUsuarioSetor(s.id, u.id)}
+                                  />
+                                  {has ? (
+                                    <UserCheck className="w-3 h-3 shrink-0" />
+                                  ) : (
+                                    <UserX className="w-3 h-3 shrink-0 opacity-40" />
+                                  )}
+                                  <span className="truncate max-w-[140px]">
+                                    {u.nome_fantasia || u.username}
+                                  </span>
+                                </label>
+                              );
+                            })
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {(setorUsuarios[s.id] ?? []).length === 0
+                          ? "Nenhum usuário vinculado — todos com acesso ao módulo enxergam esta frente."
+                          : "Apenas os usuários marcados (e administradores) enxergam esta frente."}
                       </p>
                     </div>
                   </CardContent>
