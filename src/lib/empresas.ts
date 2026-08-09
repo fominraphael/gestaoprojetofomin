@@ -157,8 +157,10 @@ export async function uploadArquivo(
     await supabase
       .from("documentos_arquivo")
       .delete()
-      .in("id", existing.map((e: any) => e.id))
-      .catch(() => {});
+      .in(
+        "id",
+        existing.map((e: any) => e.id),
+      );
   }
 
   const { error: upErr } = await supabase.storage
