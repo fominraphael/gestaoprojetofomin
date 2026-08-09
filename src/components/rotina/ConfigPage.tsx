@@ -20,6 +20,7 @@ import {
   Search,
   UserCheck,
   UserX,
+  X,
 } from "lucide-react";
 import type { Setor, Kpi } from "@/lib/rotina";
 
@@ -483,10 +484,10 @@ export function ConfigPage() {
                     </div>
 
                     {/* Usuários vinculados */}
-                    <div className="ml-14 mt-3 pt-3 border-t border-border/50">
-                      <div className="flex items-center justify-between mb-1">
-                        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                          <UserCheck className="w-3.5 h-3.5" />
+                    <div className="ml-14 mt-3 pt-3 border-t border-border/50 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                          <UserCheck className="w-3.5 h-3.5 text-primary" />
                           Usuários vinculados (quais usuários enxergam esta frente):
                         </Label>
                         {(setorUsuarios[s.id] ?? []).length > 0 && (
@@ -495,66 +496,113 @@ export function ConfigPage() {
                           </Badge>
                         )}
                       </div>
-                      {usuarios.length > 5 && (
-                        <div className="relative mb-2">
-                          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                          <Input
-                            placeholder="Buscar usuário…"
-                            value={buscaUsuario[s.id] ?? ""}
-                            onChange={(e) => setBuscaUsuario((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                            className="h-7 text-xs pl-8"
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
-                        {usuarios.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">
-                            Nenhum usuário ativo cadastrado.
+
+                      {/* Usuários já vinculados como Badges/Chips */}
+                      <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+                        {(setorUsuarios[s.id] ?? []).length === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">
+                            Nenhum usuário vinculado (todos com acesso ao módulo enxergam a frente).
                           </span>
                         ) : (
                           usuarios
-                            .filter((u) => {
-                              const busca = (buscaUsuario[s.id] ?? "").toLowerCase();
-                              if (!busca) return true;
-                              return (
-                                u.username.toLowerCase().includes(busca) ||
-                                (u.nome_fantasia ?? "").toLowerCase().includes(busca)
-                              );
-                            })
-                            .map((u) => {
-                              const has = (setorUsuarios[s.id] ?? []).includes(u.id);
-                              return (
-                                <label
-                                  key={u.id}
-                                  className={`flex items-center gap-1.5 px-2 py-1 rounded border text-xs cursor-pointer transition-colors ${
-                                    has
-                                      ? "border-primary/50 bg-primary/10 text-primary"
-                                      : "border-border hover:bg-accent"
-                                  }`}
+                            .filter((u) => (setorUsuarios[s.id] ?? []).includes(u.id))
+                            .map((u) => (
+                              <Badge
+                                key={u.id}
+                                variant="outline"
+                                className="bg-primary/10 border-primary/30 text-primary text-xs gap-1.5 py-1 px-2.5 flex items-center font-normal"
+                              >
+                                <span>{u.nome_fantasia || u.username}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleUsuarioSetor(s.id, u.id)}
+                                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                  title="Remover vínculo"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    className="accent-primary"
-                                    checked={has}
-                                    onChange={() => toggleUsuarioSetor(s.id, u.id)}
-                                  />
-                                  {has ? (
-                                    <UserCheck className="w-3 h-3 shrink-0" />
-                                  ) : (
-                                    <UserX className="w-3 h-3 shrink-0 opacity-40" />
-                                  )}
-                                  <span className="truncate max-w-[140px]">
-                                    {u.nome_fantasia || u.username}
-                                  </span>
-                                </label>
-                              );
-                            })
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))
                         )}
                       </div>
+
+                      {/* Campo de busca (digite para buscar e adicionar) */}
+                      <div className="relative">
+                        <div className="relative max-w-sm">
+                          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="Digite para buscar e vincular usuário…"
+                            value={buscaUsuario[s.id] ?? ""}
+                            onChange={(e) => setBuscaUsuario((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                            className="h-8 text-xs pl-8"
+                          />
+                        </div>
+
+                        {/* Lista de resultados filtrados (só aparece se houver texto digitado) */}
+                        {(buscaUsuario[s.id] ?? "").trim().length > 0 && (
+                          <div className="mt-1 p-2 bg-popover border border-border rounded-md shadow-md max-w-sm max-h-48 overflow-y-auto space-y-1 z-10 relative">
+                            {(() => {
+                              const termo = (buscaUsuario[s.id] ?? "").toLowerCase().trim();
+                              const vinculadosIds = setorUsuarios[s.id] ?? [];
+                              const resultados = usuarios.filter((u) => {
+                                const nome = (u.nome_fantasia || u.username).toLowerCase();
+                                const username = u.username.toLowerCase();
+                                return nome.includes(termo) || username.includes(termo);
+                              });
+
+                              if (resultados.length === 0) {
+                                return (
+                                  <p className="text-xs text-muted-foreground p-1 text-center">
+                                    Nenhum usuário encontrado para "{buscaUsuario[s.id]}".
+                                  </p>
+                                );
+                              }
+
+                              return resultados.map((u) => {
+                                const isVinculado = vinculadosIds.includes(u.id);
+                                return (
+                                  <div
+                                    key={u.id}
+                                    onClick={() => {
+                                      toggleUsuarioSetor(s.id, u.id);
+                                    }}
+                                    className={`flex items-center justify-between p-1.5 rounded text-xs cursor-pointer transition-colors ${
+                                      isVinculado
+                                        ? "bg-primary/10 text-primary font-medium"
+                                        : "hover:bg-accent text-foreground"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 truncate">
+                                      {isVinculado ? (
+                                        <UserCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                                      ) : (
+                                        <Plus className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                      )}
+                                      <span className="truncate">{u.nome_fantasia || u.username}</span>
+                                      {u.nome_fantasia && (
+                                        <span className="text-[10px] text-muted-foreground font-normal">
+                                          ({u.username})
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Badge
+                                      variant={isVinculado ? "default" : "outline"}
+                                      className="text-[9px] h-4 px-1 shrink-0"
+                                    >
+                                      {isVinculado ? "Vinculado" : "Adicionar"}
+                                    </Badge>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
                       <p className="text-[10px] text-muted-foreground mt-1">
                         {(setorUsuarios[s.id] ?? []).length === 0
-                          ? "Nenhum usuário vinculado — todos com acesso ao módulo enxergam esta frente."
-                          : "Apenas os usuários marcados (e administradores) enxergam esta frente."}
+                          ? "Nenhum usuário vinculado especificamente — todos os usuários com acesso ao módulo enxergam esta frente."
+                          : "Apenas os usuários vinculados acima (e administradores) enxergam esta frente."}
                       </p>
                     </div>
                   </CardContent>
