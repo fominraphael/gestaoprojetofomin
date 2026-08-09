@@ -58,7 +58,7 @@ export function perfilFromTipoUsuario(tipo: string | null | undefined): PerfilTo
 export interface ModuleNavItem {
   to: string;
   label: string;
-  icon: LucideIcon | React.ComponentType<{ className?: string }>;
+  icon: LucideIcon | ComponentType<{ className?: string }>;
   /** Perfis Toyota que podem enxergar este item. Admin do sistema (isAdmin) ignora. */
   perfis?: PerfilToyota[];
 }
