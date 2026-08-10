@@ -148,7 +148,7 @@ export function HubPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {setores.map((s) => (
-              <Link key={s.id} to="/rotina/$setorId" params={{ setorId: s.id }}>
+              <Link key={s.id} to="/rotina/$setorId" params={{ setorId: s.id }} search={{ tab: "rotina" as const }}>
                 <Card
                   className="hover:border-primary/50 transition-all cursor-pointer group h-full"
                   style={{ borderColor: s.cor + "40" }}
