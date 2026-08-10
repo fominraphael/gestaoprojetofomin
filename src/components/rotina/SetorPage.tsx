@@ -242,6 +242,41 @@ export function SetorPage() {
     setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
   }
 
+  /**
+   * Exclui uma atividade de rotina. Os checkpoints são removidos em cascata
+   * pelo banco; os anexos polimórficos são limpos manualmente.
+   */
+  async function excluirAtividade(id: string) {
+    const { error } = await supabase.from("rotina_atividades").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await supabase
+      .from("rotina_anexos")
+      .delete()
+      .eq("entidade", "atividade")
+      .eq("entidade_id", id);
+    setAtividades((prev) => prev.filter((a) => a.id !== id));
+    toast.success("Rotina diária excluída.");
+  }
+
+  /** Exclui uma atividade pontual (tarefa) e seus anexos. */
+  async function excluirTarefa(id: string) {
+    const { error } = await supabase.from("rotina_tarefas").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await supabase
+      .from("rotina_anexos")
+      .delete()
+      .eq("entidade", "tarefa")
+      .eq("entidade_id", id);
+    setTarefas((prev) => prev.filter((t) => t.id !== id));
+    toast.success("Atividade pontual excluída.");
+  }
+
   function toggleDiaAtiv(d: number) {
     setNovaAtivDias((prev) =>
       prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
