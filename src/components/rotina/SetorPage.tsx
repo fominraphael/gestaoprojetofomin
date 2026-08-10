@@ -790,50 +790,6 @@ export function SetorPage() {
               {tarefasPorStatus.a_fazer.map((t) => (
                 <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
-              {showNovaTarefa ? (
-                <Card className="border-dashed">
-                  <CardContent className="p-3 space-y-2">
-                    <Input
-                      placeholder="Nome da tarefa"
-                      value={novaTarefaNome}
-                      onChange={(e) => setNovaTarefaNome(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && criarTarefa()}
-                      autoFocus
-                    />
-                    <Input
-                      type="date"
-                      value={novaTarefaPrazo}
-                      onChange={(e) => setNovaTarefaPrazo(e.target.value)}
-                      className="h-8 text-xs"
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={criarTarefa}>
-                        Criar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setShowNovaTarefa(false);
-                          setNovaTarefaNome("");
-                          setNovaTarefaPrazo("");
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => setShowNovaTarefa(true)}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Nova tarefa
-                </Button>
-              )}
             </div>
 
             {/* Coluna: Fazendo */}
