@@ -1043,3 +1043,41 @@ function TarefaCard({
     </Card>
   );
 }
+
+/** Item da Lixeira, com restauração e exclusão definitiva (somente admin). */
+function LixeiraItem({
+  nome,
+  excluidoEm,
+  onRestore,
+  onPurge,
+}: {
+  nome: string;
+  excluidoEm: string | null;
+  onRestore: () => void;
+  onPurge?: () => void;
+}) {
+  return (
+    <Card className="border-dashed">
+      <CardContent className="p-3 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{nome}</p>
+          {excluidoEm && (
+            <p className="text-[11px] text-muted-foreground">
+              Excluído em {new Date(excluidoEm).toLocaleString("pt-BR")}
+            </p>
+          )}
+        </div>
+        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onRestore}>
+          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Restaurar
+        </Button>
+        {onPurge && (
+          <ConfirmarExclusao
+            titulo="Excluir definitivamente"
+            descricao={`"${nome}" e seus anexos serão removidos permanentemente. Esta ação não pode ser desfeita.`}
+            onConfirm={onPurge}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
