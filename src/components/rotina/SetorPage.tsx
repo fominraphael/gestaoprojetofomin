@@ -367,11 +367,45 @@ export function SetorPage() {
     ? DIAS_SEMANA.filter((d) => d.valor === filtroDia)
     : DIAS_SEMANA.filter((d) => (atividadesPorDia[d.valor]?.length ?? 0) > 0);
 
+  /**
+   * Aplica o filtro de prazo às atividades pontuais.
+   * - "atrasados": prazo anterior a hoje e tarefa não concluída.
+   * - "semana": prazo entre hoje e os próximos 7 dias.
+   * Tarefas sem prazo só aparecem no filtro "todos".
+   */
+  const tarefasFiltradas = useMemo(() => {
+    if (filtroPrazo === "todos") return tarefas;
+    const limite = new Date(hoje + "T12:00:00");
+    limite.setDate(limite.getDate() + 7);
+    const hojeDate = new Date(hoje + "T12:00:00");
+    return tarefas.filter((t) => {
+      if (!t.prazo) return false;
+      const prazo = new Date(t.prazo + "T12:00:00");
+      if (filtroPrazo === "atrasados") {
+        return prazo < hojeDate && t.status !== "concluido";
+      }
+      return prazo >= hojeDate && prazo <= limite;
+    });
+  }, [tarefas, filtroPrazo, hoje]);
+
   const tarefasPorStatus = {
-    a_fazer: tarefas.filter((t) => t.status === "a_fazer"),
-    fazendo: tarefas.filter((t) => t.status === "fazendo"),
-    concluido: tarefas.filter((t) => t.status === "concluido"),
+    a_fazer: tarefasFiltradas.filter((t) => t.status === "a_fazer"),
+    fazendo: tarefasFiltradas.filter((t) => t.status === "fazendo"),
+    concluido: tarefasFiltradas.filter((t) => t.status === "concluido"),
   };
+
+  const totalAtrasados = useMemo(
+    () =>
+      tarefas.filter(
+        (t) =>
+          t.prazo &&
+          t.status !== "concluido" &&
+          new Date(t.prazo + "T12:00:00") < new Date(hoje + "T12:00:00"),
+      ).length,
+    [tarefas, hoje],
+  );
+
+  const totalLixeira = lixeiraAtividades.length + lixeiraTarefas.length;
 
   const totalConcluidoHoje = atividades.filter((a) => checkpoints.has(a.id)).length;
   const totalAtividades = atividades.length;
