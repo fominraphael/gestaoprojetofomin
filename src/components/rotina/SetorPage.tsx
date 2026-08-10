@@ -86,6 +86,12 @@ export function SetorPage() {
 
   const [expandedRotina, setExpandedRotina] = useState(true);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
+  const [filtroPrazo, setFiltroPrazo] = useState<FiltroPrazo>("todos");
+
+  // Lixeira (itens com deleted_at preenchido)
+  const [lixeiraAtividades, setLixeiraAtividades] = useState<Atividade[]>([]);
+  const [lixeiraTarefas, setLixeiraTarefas] = useState<Tarefa[]>([]);
+
 
   // Nova atividade inline
   const [novaAtivNome, setNovaAtivNome] = useState("");
