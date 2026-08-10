@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HistoricoAtividadeItem } from "@/components/rotina/HistoricoAtividadeItem";
+
 import {
   Accordion,
   AccordionContent,
