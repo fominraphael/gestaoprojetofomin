@@ -63,7 +63,10 @@ import {
   labelMes,
 } from "@/lib/rotina";
 
-type SetorTab = "rotina" | "tarefas" | "historico";
+type SetorTab = "rotina" | "tarefas" | "historico" | "lixeira";
+
+/** Filtros de prazo disponíveis na aba Atividades Pontuais. */
+type FiltroPrazo = "todos" | "atrasados" | "semana";
 
 export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
