@@ -43,6 +43,7 @@ import {
   Paperclip,
   Archive,
   Trash2,
+  RotateCcw,
 } from "lucide-react";
 import {
   type Atividade,
