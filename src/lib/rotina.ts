@@ -5,14 +5,13 @@ export type Frequencia = "semanal" | "mensal" | "sob_demanda";
 export type StatusTarefa = "a_fazer" | "fazendo" | "concluido";
 
 export const DIAS_SEMANA = [
-  { valor: 0, label: "Dom" },
   { valor: 1, label: "Seg" },
   { valor: 2, label: "Ter" },
   { valor: 3, label: "Qua" },
   { valor: 4, label: "Qui" },
   { valor: 5, label: "Sex" },
-  { valor: 6, label: "Sáb" },
 ] as const;
+
 
 export const DIAS_SEMANA_LABELS: Record<number, string> = {
   0: "Domingo",
