@@ -69,7 +69,7 @@ export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
   const { tab } = useSearch({ from: "/_authenticated/_rotina/rotina/$setorId" });
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [setor, setSetor] = useState<{
     id: string; nome: string; cor: string; icone: string; descricao: string;
