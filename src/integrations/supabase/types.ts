@@ -981,6 +981,53 @@ export type Database = {
         }
         Relationships: []
       }
+      rotina_semanas: {
+        Row: {
+          created_at: string
+          encerrado_por: string | null
+          fim: string
+          id: string
+          inicio: string
+          setor_id: string
+          snapshot: Json
+          total_atividades: number
+          total_concluidos: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          encerrado_por?: string | null
+          fim: string
+          id?: string
+          inicio: string
+          setor_id: string
+          snapshot?: Json
+          total_atividades?: number
+          total_concluidos?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          encerrado_por?: string | null
+          fim?: string
+          id?: string
+          inicio?: string
+          setor_id?: string
+          snapshot?: Json
+          total_atividades?: number
+          total_concluidos?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_semanas_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rotina_setor_funcoes: {
         Row: {
           created_at: string

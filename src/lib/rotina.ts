@@ -5,14 +5,13 @@ export type Frequencia = "semanal" | "mensal" | "sob_demanda";
 export type StatusTarefa = "a_fazer" | "fazendo" | "concluido";
 
 export const DIAS_SEMANA = [
-  { valor: 0, label: "Dom" },
   { valor: 1, label: "Seg" },
   { valor: 2, label: "Ter" },
   { valor: 3, label: "Qua" },
   { valor: 4, label: "Qui" },
   { valor: 5, label: "Sex" },
-  { valor: 6, label: "Sáb" },
 ] as const;
+
 
 export const DIAS_SEMANA_LABELS: Record<number, string> = {
   0: "Domingo",
@@ -242,4 +241,153 @@ export async function removerAnexo(anexo: Anexo): Promise<boolean> {
 export async function getAnexoUrl(path: string): Promise<string | null> {
   const { data } = await supabase.storage.from("rotina-anexos").createSignedUrl(path, 3600);
   return data?.signedUrl ?? null;
+}
+
+/* ============================ Semanas / Histórico ============================ */
+
+export interface SemanaSnapshotAtividade {
+  id: string;
+  nome: string;
+  dias_semana: number[] | null;
+  concluidos: string[];
+}
+
+export interface SemanaSnapshot {
+  atividades: SemanaSnapshotAtividade[];
+}
+
+export interface SemanaHistorico {
+  id: string;
+  setor_id: string;
+  inicio: string;
+  fim: string;
+  snapshot: SemanaSnapshot;
+  total_atividades: number;
+  total_concluidos: number;
+  encerrado_por: string | null;
+  created_at: string;
+}
+
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parseISODate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1);
+}
+
+/** Segunda-feira da semana da data informada (default: hoje). */
+export function inicioSemana(ref: Date = new Date()): string {
+  const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+  const diff = (d.getDay() + 6) % 7; // 0 = segunda
+  d.setDate(d.getDate() - diff);
+  return toISODate(d);
+}
+
+/** Sexta-feira da semana iniciada em `inicio` (ISO). */
+export function fimSemana(inicio: string): string {
+  const d = parseISODate(inicio);
+  d.setDate(d.getDate() + 4);
+  return toISODate(d);
+}
+
+/** Datas (ISO) de segunda a sexta da semana iniciada em `inicio`. */
+export function diasDaSemana(inicio: string): string[] {
+  const base = parseISODate(inicio);
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+    return toISODate(d);
+  });
+}
+
+/** "Agosto - 1ª Semana (03 a 07)" */
+export function labelSemana(inicio: string, fim: string): string {
+  const ini = parseISODate(inicio);
+  const f = parseISODate(fim);
+  const mes = MESES[ini.getMonth()];
+  const ordinal = Math.floor((ini.getDate() - 1) / 7) + 1;
+  const dd = (d: Date) => String(d.getDate()).padStart(2, "0");
+  return `${mes} - ${ordinal}ª Semana (${dd(ini)} a ${dd(f)})`;
+}
+
+/** "Agosto/2026" — chave de agrupamento do histórico. */
+export function labelMes(inicio: string): string {
+  const d = parseISODate(inicio);
+  return `${MESES[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+/** Checkpoints de um intervalo de datas: Map<atividade_id, string[] de datas>. */
+export async function getCheckpointsIntervalo(
+  atividadeIds: string[],
+  inicio: string,
+  fim: string,
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (atividadeIds.length === 0) return map;
+  const { data } = await supabase
+    .from("rotina_checkpoints")
+    .select("atividade_id, data")
+    .in("atividade_id", atividadeIds)
+    .gte("data", inicio)
+    .lte("data", fim);
+  for (const row of (data ?? []) as any[]) {
+    const arr = map.get(row.atividade_id) ?? [];
+    arr.push(row.data);
+    map.set(row.atividade_id, arr);
+  }
+  return map;
+}
+
+/**
+ * Encerra a semana atual do setor: grava um snapshot no histórico.
+ * As atividades permanecem cadastradas, então a nova semana já inicia
+ * com todas as atividades da semana anterior (concluídas e pendentes).
+ */
+export async function encerrarSemana(
+  setorId: string,
+  atividades: Atividade[],
+  userId: string,
+  ref: Date = new Date(),
+): Promise<{ ok: boolean; error?: string }> {
+  const inicio = inicioSemana(ref);
+  const fim = fimSemana(inicio);
+  const cps = await getCheckpointsIntervalo(
+    atividades.map((a) => a.id),
+    inicio,
+    fim,
+  );
+
+  const snapshot: SemanaSnapshot = {
+    atividades: atividades.map((a) => ({
+      id: a.id,
+      nome: a.nome,
+      dias_semana: a.dias_semana,
+      concluidos: (cps.get(a.id) ?? []).sort(),
+    })),
+  };
+  const totalConcluidos = snapshot.atividades.filter((a) => a.concluidos.length > 0).length;
+
+  const { error } = await supabase
+    .from("rotina_semanas")
+    .upsert(
+      {
+        setor_id: setorId,
+        inicio,
+        fim,
+        snapshot: snapshot as any,
+        total_atividades: atividades.length,
+        total_concluidos: totalConcluidos,
+        encerrado_por: userId,
+      } as any,
+      { onConflict: "setor_id,inicio" },
+    );
+
+  return error ? { ok: false, error: error.message } : { ok: true };
 }

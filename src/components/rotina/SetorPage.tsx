@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 import {
   Plus,
@@ -20,46 +26,54 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
+  History,
+  Paperclip,
+  Archive,
 } from "lucide-react";
 import {
   type Atividade,
   type Tarefa,
   type StatusTarefa,
+  type SemanaHistorico,
   STATUS_TAREFA_LABELS,
   STATUS_TAREFA_COLORS,
   DIAS_SEMANA,
   DIAS_SEMANA_LABELS,
-  formatDiasSemana,
   toggleCheckpoint,
   getCheckpoints,
   getDiaSemanaAtual,
+  encerrarSemana,
+  inicioSemana,
+  fimSemana,
+  labelSemana,
+  labelMes,
 } from "@/lib/rotina";
 
-const EMOJIS = [
-  "📋", "🎯", "📝", "💼", "📊", "📈", "🔧", "⚙️", "🗂️", "📁",
-  "🚀", "💡", "📌", "🔖", "🏷️", "📎", "✅", "⭐", "🔥", "💎",
-  "🎨", "🏗️", "🛠️", "📦", "🗄️", "🗓️", "⏰", "📍", "🔗", "📄",
-];
+type SetorTab = "rotina" | "tarefas" | "historico";
 
 export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
-  const { user, isAdmin } = useAuth();
+  const { tab } = useSearch({ from: "/_authenticated/_rotina/rotina/$setorId" });
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [setor, setSetor] = useState<{
     id: string; nome: string; cor: string; icone: string; descricao: string;
   } | null>(null);
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [semanas, setSemanas] = useState<SemanaHistorico[]>([]);
   const [checkpoints, setCheckpoints] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [encerrando, setEncerrando] = useState(false);
 
   const [expandedRotina, setExpandedRotina] = useState(true);
-  const [expandedPontual, setExpandedPontual] = useState(true);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
 
   // Nova atividade inline
   const [novaAtivNome, setNovaAtivNome] = useState("");
   const [novaAtivDias, setNovaAtivDias] = useState<number[]>([]);
+  const [novaAtivDescricao, setNovaAtivDescricao] = useState("");
   const [showNovaAtiv, setShowNovaAtiv] = useState(false);
 
   // Nova tarefa inline
@@ -67,12 +81,12 @@ export function SetorPage() {
   const [novaTarefaPrazo, setNovaTarefaPrazo] = useState("");
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
 
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = new Date().toISOString().split("T")[0]!;
   const diaAtual = getDiaSemanaAtual();
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const [setorRes, ativRes, tarefaRes] = await Promise.all([
+    const [setorRes, ativRes, tarefaRes, semanasRes] = await Promise.all([
       supabase
         .from("rotina_setores")
         .select("id, nome, cor, icone, descricao")
@@ -89,10 +103,16 @@ export function SetorPage() {
         .select("*")
         .eq("setor_id", setorId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("rotina_semanas")
+        .select("*")
+        .eq("setor_id", setorId)
+        .order("inicio", { ascending: false }),
     ]);
     if (setorRes.data) setSetor(setorRes.data as any);
     setAtividades((ativRes.data as any) ?? []);
     setTarefas((tarefaRes.data as any) ?? []);
+    setSemanas((semanasRes.data as any) ?? []);
 
     const ativIds = (ativRes.data ?? []).map((a: any) => a.id);
     const cps = await getCheckpoints(ativIds, hoje);
@@ -105,6 +125,15 @@ export function SetorPage() {
     carregar();
   }, [carregar]);
 
+  function trocarTab(value: string) {
+    navigate({
+      to: "/rotina/$setorId",
+      params: { setorId },
+      search: { tab: value as SetorTab },
+      replace: true,
+    });
+  }
+
   async function criarAtividade() {
     if (!novaAtivNome.trim()) {
       toast.error("Preencha o nome da atividade.");
@@ -115,15 +144,17 @@ export function SetorPage() {
       setor_id: setorId,
       frequencia: "semanal",
       dias_semana: novaAtivDias.length > 0 ? novaAtivDias : [diaAtual],
+      descricao: novaAtivDescricao.trim(),
       created_by: user?.id,
     });
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Atividade criada.");
+    toast.success("Atividade criada. Abra a atividade para anexar arquivos.");
     setNovaAtivNome("");
     setNovaAtivDias([]);
+    setNovaAtivDescricao("");
     setShowNovaAtiv(false);
     carregar();
   }
@@ -159,13 +190,30 @@ export function SetorPage() {
     }
     setCheckpoints((prev) => {
       const next = new Set(prev);
-      if (next.has(atividadeId)) {
-        next.delete(atividadeId);
-      } else {
-        next.add(atividadeId);
-      }
+      if (next.has(atividadeId)) next.delete(atividadeId);
+      else next.add(atividadeId);
       return next;
     });
+  }
+
+  async function handleEncerrarSemana() {
+    if (!user?.id) return;
+    const ini = inicioSemana();
+    if (
+      !confirm(
+        `Encerrar a semana ${labelSemana(ini, fimSemana(ini))}?\n\nOs dados serão salvos no histórico e a nova semana começa com todas as atividades atuais.`,
+      )
+    )
+      return;
+    setEncerrando(true);
+    const res = await encerrarSemana(setorId, atividades, user.id);
+    setEncerrando(false);
+    if (!res.ok) {
+      toast.error(res.error ?? "Falha ao encerrar a semana.");
+      return;
+    }
+    toast.success("Semana encerrada e salva no histórico.");
+    carregar();
   }
 
   async function alterarStatusTarefa(id: string, status: StatusTarefa) {
@@ -188,9 +236,7 @@ export function SetorPage() {
 
   const atividadesPorDia = DIAS_SEMANA.reduce(
     (acc, d) => {
-      acc[d.valor] = atividades.filter(
-        (a) => a.dias_semana?.includes(d.valor),
-      );
+      acc[d.valor] = atividades.filter((a) => a.dias_semana?.includes(d.valor));
       return acc;
     },
     {} as Record<number, Atividade[]>,
@@ -198,7 +244,7 @@ export function SetorPage() {
 
   const diasParaMostrar = filtroDia !== null
     ? DIAS_SEMANA.filter((d) => d.valor === filtroDia)
-    : DIAS_SEMANA.filter((d) => atividadesPorDia[d.valor]?.length > 0);
+    : DIAS_SEMANA.filter((d) => (atividadesPorDia[d.valor]?.length ?? 0) > 0);
 
   const tarefasPorStatus = {
     a_fazer: tarefas.filter((t) => t.status === "a_fazer"),
@@ -211,6 +257,18 @@ export function SetorPage() {
   const percentConcluido = totalAtividades > 0
     ? Math.round((totalConcluidoHoje / totalAtividades) * 100)
     : 0;
+
+  // Histórico agrupado por mês (accordion fechado por padrão)
+  const historicoPorMes = useMemo(() => {
+    const grupos = new Map<string, SemanaHistorico[]>();
+    for (const s of semanas) {
+      const chave = labelMes(s.inicio);
+      const arr = grupos.get(chave) ?? [];
+      arr.push(s);
+      grupos.set(chave, arr);
+    }
+    return Array.from(grupos.entries());
+  }, [semanas]);
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
@@ -255,7 +313,7 @@ export function SetorPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="rotina" className="w-full">
+      <Tabs value={tab} onValueChange={trocarTab} className="w-full">
         <TabsList>
           <TabsTrigger value="rotina" className="flex items-center gap-1.5">
             <CalendarCheck className="w-3.5 h-3.5" /> Rotina Diária
@@ -268,11 +326,19 @@ export function SetorPage() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="historico" className="flex items-center gap-1.5">
+            <History className="w-3.5 h-3.5" /> Histórico
+            {semanas.length > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
+                {semanas.length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB: Rotina Diária */}
         <TabsContent value="rotina" className="space-y-4 mt-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Button
               variant={filtroDia === null ? "default" : "outline"}
               size="sm"
@@ -292,6 +358,18 @@ export function SetorPage() {
                 {d.label}
               </Button>
             ))}
+            <div className="ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleEncerrarSemana}
+                disabled={encerrando || atividades.length === 0}
+              >
+                <Archive className="w-3.5 h-3.5 mr-1" />
+                {encerrando ? "Encerrando…" : "Encerrar semana"}
+              </Button>
+            </div>
           </div>
 
           {loading ? (
@@ -314,9 +392,7 @@ export function SetorPage() {
                   <div key={d.valor} className="space-y-2">
                     <button
                       className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors w-full text-left"
-                      onClick={() =>
-                        setExpandedRotina((prev) => !prev)
-                      }
+                      onClick={() => setExpandedRotina((prev) => !prev)}
                     >
                       {expandedRotina ? (
                         <ChevronDown className="w-4 h-4" />
@@ -341,9 +417,7 @@ export function SetorPage() {
                             <div
                               key={a.id}
                               className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                                concluido
-                                  ? "bg-primary/10 text-primary"
-                                  : "hover:bg-accent"
+                                concluido ? "bg-primary/10 text-primary" : "hover:bg-accent"
                               }`}
                             >
                               <Checkbox
@@ -351,13 +425,28 @@ export function SetorPage() {
                                 onCheckedChange={() => handleToggleCheckpoint(a.id)}
                                 className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
-                              <span
-                                className={`text-sm flex-1 ${
+                              <Link
+                                to="/rotina/atividade/$id"
+                                params={{ id: a.id }}
+                                className={`text-sm flex-1 min-w-0 truncate hover:underline ${
                                   concluido ? "line-through opacity-70" : ""
                                 }`}
                               >
                                 {a.nome}
-                              </span>
+                              </Link>
+                              {a.descricao?.trim() && (
+                                <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              )}
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] shrink-0 ${
+                                  concluido
+                                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                    : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                }`}
+                              >
+                                {concluido ? "Concluída" : "Pendente"}
+                              </Badge>
                             </div>
                           );
                         })}
@@ -381,7 +470,6 @@ export function SetorPage() {
                   placeholder="Nome da atividade"
                   value={novaAtivNome}
                   onChange={(e) => setNovaAtivNome(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && criarAtividade()}
                   autoFocus
                 />
                 <div className="flex gap-1 flex-wrap">
@@ -402,6 +490,15 @@ export function SetorPage() {
                     </label>
                   ))}
                 </div>
+                <Textarea
+                  placeholder="Descrição (passo a passo da atividade)…"
+                  value={novaAtivDescricao}
+                  onChange={(e) => setNovaAtivDescricao(e.target.value)}
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Anexos podem ser enviados na página da atividade, logo após criá-la.
+                </p>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={criarAtividade}>
                     Criar
@@ -413,6 +510,7 @@ export function SetorPage() {
                       setShowNovaAtiv(false);
                       setNovaAtivNome("");
                       setNovaAtivDias([]);
+                      setNovaAtivDescricao("");
                     }}
                   >
                     Cancelar
@@ -446,11 +544,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.a_fazer.map((t) => (
-                <TarefaCard
-                  key={t.id}
-                  tarefa={t}
-                  onStatusChange={alterarStatusTarefa}
-                />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
               ))}
               {showNovaTarefa ? (
                 <Card className="border-dashed">
@@ -507,11 +601,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.fazendo.map((t) => (
-                <TarefaCard
-                  key={t.id}
-                  tarefa={t}
-                  onStatusChange={alterarStatusTarefa}
-                />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
               ))}
             </div>
 
@@ -524,14 +614,79 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.concluido.map((t) => (
-                <TarefaCard
-                  key={t.id}
-                  tarefa={t}
-                  onStatusChange={alterarStatusTarefa}
-                />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
               ))}
             </div>
           </div>
+        </TabsContent>
+
+        {/* TAB: Histórico */}
+        <TabsContent value="historico" className="space-y-4 mt-4">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : semanas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhuma semana encerrada ainda. Use “Encerrar semana” na aba Rotina Diária.
+            </p>
+          ) : (
+            <Accordion type="multiple" className="w-full">
+              {historicoPorMes.map(([mes, lista]) => (
+                <AccordionItem key={mes} value={mes}>
+                  <AccordionTrigger className="text-sm font-semibold">
+                    {mes}
+                    <Badge variant="secondary" className="ml-2 text-[10px] h-5 px-1.5">
+                      {lista.length}
+                    </Badge>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Accordion type="multiple" className="w-full pl-2">
+                      {lista.map((s) => (
+                        <AccordionItem key={s.id} value={s.id}>
+                          <AccordionTrigger className="text-sm">
+                            <span className="flex items-center gap-2">
+                              {labelSemana(s.inicio, s.fim)}
+                              <Badge variant="outline" className="text-[10px]">
+                                {s.total_concluidos}/{s.total_atividades}
+                              </Badge>
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-1">
+                              {(s.snapshot?.atividades ?? []).map((a) => (
+                                <div
+                                  key={a.id}
+                                  className="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-accent"
+                                >
+                                  <span className="flex-1 min-w-0 truncate">{a.nome}</span>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-[10px] ${
+                                      a.concluidos.length > 0
+                                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                        : "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                    }`}
+                                  >
+                                    {a.concluidos.length > 0
+                                      ? `${a.concluidos.length} conclusão(ões)`
+                                      : "Pendente"}
+                                  </Badge>
+                                </div>
+                              ))}
+                              {(s.snapshot?.atividades ?? []).length === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Nenhuma atividade registrada nesta semana.
+                                </p>
+                              )}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </TabsContent>
       </Tabs>
     </div>
@@ -557,7 +712,7 @@ function TarefaCard({
     new Date(tarefa.prazo + "T12:00:00") < new Date();
 
   return (
-    <Card className={`hover:border-primary/30 transition-colors ${isAtrasado ? "border-red-500/50" : ""}`}>
+    <Card className={`hover:border-primary/30 transition-colors ${isAtrasado ? "border-destructive/50" : ""}`}>
       <CardContent className="p-3 space-y-2">
         <Link
           to="/rotina/tarefa/$id"
@@ -571,7 +726,7 @@ function TarefaCard({
             {STATUS_TAREFA_LABELS[tarefa.status]}
           </Badge>
           {tarefa.prazo && (
-            <span className={`text-[10px] ${isAtrasado ? "text-red-400 font-medium" : "text-muted-foreground"}`}>
+            <span className={`text-[10px] ${isAtrasado ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {isAtrasado && "⚠ "}
               Prazo: {new Date(tarefa.prazo + "T12:00:00").toLocaleDateString("pt-BR")}
             </span>
