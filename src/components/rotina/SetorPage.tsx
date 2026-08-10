@@ -700,8 +700,52 @@ export function SetorPage() {
 
         {/* TAB: Atividades Pontuais (Kanban) */}
         <TabsContent value="tarefas" className="space-y-4 mt-4">
+          {/* Criação no topo da página, para acesso rápido */}
+          <div className="flex items-center justify-end">
+            <Button size="sm" onClick={() => setShowNovaTarefa((v) => !v)}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Nova atividade
+            </Button>
+          </div>
+
+          {showNovaTarefa && (
+            <Card className="border-dashed">
+              <CardContent className="p-3 space-y-2">
+                <Input
+                  placeholder="Nome da tarefa"
+                  value={novaTarefaNome}
+                  onChange={(e) => setNovaTarefaNome(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && criarTarefa()}
+                  autoFocus
+                />
+                <Input
+                  type="date"
+                  value={novaTarefaPrazo}
+                  onChange={(e) => setNovaTarefaPrazo(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={criarTarefa}>
+                    Criar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNovaTarefa(false);
+                      setNovaTarefaNome("");
+                      setNovaTarefaPrazo("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filtro por prazo */}
           <div className="flex items-center gap-2 flex-wrap">
+
             <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
             <Button
               variant={filtroPrazo === "todos" ? "default" : "outline"}
