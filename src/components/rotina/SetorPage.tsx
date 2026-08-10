@@ -876,6 +876,63 @@ export function SetorPage() {
             </Accordion>
           )}
         </TabsContent>
+
+        {/* TAB: Lixeira */}
+        <TabsContent value="lixeira" className="space-y-6 mt-4">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : totalLixeira === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              A Lixeira está vazia. Itens excluídos aparecem aqui e podem ser restaurados.
+            </p>
+          ) : (
+            <>
+              {lixeiraAtividades.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <CalendarCheck className="w-3.5 h-3.5" /> Rotinas diárias
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                      {lixeiraAtividades.length}
+                    </Badge>
+                  </h2>
+                  {lixeiraAtividades.map((a) => (
+                    <LixeiraItem
+                      key={a.id}
+                      nome={a.nome}
+                      excluidoEm={a.deleted_at ?? null}
+                      onRestore={() => restaurar("atividade", a.id)}
+                      {...(isAdmin
+                        ? { onPurge: () => excluirDefinitivo("atividade", a.id) }
+                        : {})}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {lixeiraTarefas.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <ListTodo className="w-3.5 h-3.5" /> Atividades pontuais
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                      {lixeiraTarefas.length}
+                    </Badge>
+                  </h2>
+                  {lixeiraTarefas.map((t) => (
+                    <LixeiraItem
+                      key={t.id}
+                      nome={t.nome}
+                      excluidoEm={t.deleted_at ?? null}
+                      onRestore={() => restaurar("tarefa", t.id)}
+                      {...(isAdmin
+                        ? { onPurge: () => excluirDefinitivo("tarefa", t.id) }
+                        : {})}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
