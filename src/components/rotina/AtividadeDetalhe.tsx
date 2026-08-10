@@ -84,10 +84,12 @@ export function AtividadeDetalhe() {
         <Link
           to="/rotina/$setorId"
           params={{ setorId: atividade.setor_id ?? "" }}
+          search={{ tab: "rotina" as const }}
         >
-          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar ao setor
+          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à Rotina Diária
         </Link>
       </Button>
+
 
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

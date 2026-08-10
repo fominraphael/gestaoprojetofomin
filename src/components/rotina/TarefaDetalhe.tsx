@@ -101,10 +101,12 @@ export function TarefaDetalhe() {
         <Link
           to="/rotina/$setorId"
           params={{ setorId: tarefa.setor_id ?? "" }}
+          search={{ tab: "tarefas" as const }}
         >
-          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar ao setor
+          <ArrowLeft className="w-4 h-4 mr-1" /> Voltar às Atividades Pontuais
         </Link>
       </Button>
+
 
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
