@@ -74,6 +74,8 @@ export interface Atividade {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  /** Data de envio à lixeira; null quando o item está ativo. */
+  deleted_at?: string | null;
 }
 
 export interface Tarefa {
@@ -86,6 +88,8 @@ export interface Tarefa {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  /** Data de envio à lixeira; null quando o item está ativo. */
+  deleted_at?: string | null;
 }
 
 export interface Checkpoint {
