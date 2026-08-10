@@ -109,33 +109,50 @@ export function SetorPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const [setorRes, ativRes, tarefaRes, semanasRes] = await Promise.all([
-      supabase
-        .from("rotina_setores")
-        .select("id, nome, cor, icone, descricao")
-        .eq("id", setorId)
-        .single(),
-      supabase
-        .from("rotina_atividades")
-        .select("*")
-        .eq("setor_id", setorId)
-        .eq("ativo", true)
-        .order("ordem"),
-      supabase
-        .from("rotina_tarefas")
-        .select("*")
-        .eq("setor_id", setorId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("rotina_semanas")
-        .select("*")
-        .eq("setor_id", setorId)
-        .order("inicio", { ascending: false }),
-    ]);
+    const [setorRes, ativRes, tarefaRes, semanasRes, lixAtivRes, lixTarefaRes] =
+      await Promise.all([
+        supabase
+          .from("rotina_setores")
+          .select("id, nome, cor, icone, descricao")
+          .eq("id", setorId)
+          .single(),
+        supabase
+          .from("rotina_atividades")
+          .select("*")
+          .eq("setor_id", setorId)
+          .eq("ativo", true)
+          .is("deleted_at", null)
+          .order("ordem"),
+        supabase
+          .from("rotina_tarefas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("rotina_semanas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .order("inicio", { ascending: false }),
+        supabase
+          .from("rotina_atividades")
+          .select("*")
+          .eq("setor_id", setorId)
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+        supabase
+          .from("rotina_tarefas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+      ]);
     if (setorRes.data) setSetor(setorRes.data as any);
     setAtividades((ativRes.data as any) ?? []);
     setTarefas((tarefaRes.data as any) ?? []);
     setSemanas((semanasRes.data as any) ?? []);
+    setLixeiraAtividades((lixAtivRes.data as any) ?? []);
+    setLixeiraTarefas((lixTarefaRes.data as any) ?? []);
 
     const ativIds = (ativRes.data ?? []).map((a: any) => a.id);
     const cps = await getCheckpoints(ativIds, hoje);
