@@ -600,7 +600,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.a_fazer.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
               {showNovaTarefa ? (
                 <Card className="border-dashed">
@@ -657,7 +657,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.fazendo.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
             </div>
 
@@ -670,7 +670,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.concluido.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
             </div>
           </div>
