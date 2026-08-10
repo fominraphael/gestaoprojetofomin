@@ -704,6 +704,40 @@ export function SetorPage() {
 
         {/* TAB: Atividades Pontuais (Kanban) */}
         <TabsContent value="tarefas" className="space-y-4 mt-4">
+          {/* Filtro por prazo */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
+            <Button
+              variant={filtroPrazo === "todos" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("todos")}
+            >
+              Todos
+            </Button>
+            <Button
+              variant={filtroPrazo === "atrasados" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("atrasados")}
+            >
+              <AlertCircle className="w-3.5 h-3.5 mr-1" /> Atrasados
+              {totalAtrasados > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5">
+                  {totalAtrasados}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant={filtroPrazo === "semana" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("semana")}
+            >
+              <CalendarCheck className="w-3.5 h-3.5 mr-1" /> Próximos 7 dias
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Coluna: A fazer */}
             <div className="space-y-2">
