@@ -797,13 +797,22 @@ function TarefaCard({
   return (
     <Card className={`hover:border-primary/30 transition-colors ${isAtrasado ? "border-destructive/50" : ""}`}>
       <CardContent className="p-3 space-y-2">
-        <Link
-          to="/rotina/tarefa/$id"
-          params={{ id: tarefa.id }}
-          className="font-medium text-sm hover:text-primary transition-colors block"
-        >
-          {tarefa.nome}
-        </Link>
+        <div className="flex items-start gap-2">
+          <Link
+            to="/rotina/tarefa/$id"
+            params={{ id: tarefa.id }}
+            className="font-medium text-sm hover:text-primary transition-colors block flex-1 min-w-0"
+          >
+            {tarefa.nome}
+          </Link>
+          {onDelete && (
+            <ConfirmarExclusao
+              titulo="Excluir atividade pontual"
+              descricao={`A tarefa "${tarefa.nome}" será removida permanentemente.`}
+              onConfirm={() => onDelete(tarefa.id)}
+            />
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${STATUS_TAREFA_COLORS[tarefa.status]}`}>
             {STATUS_TAREFA_LABELS[tarefa.status]}
