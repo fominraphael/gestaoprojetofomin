@@ -522,7 +522,12 @@ export function SetorPage() {
                 {d.label}
               </Button>
             ))}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              {!showNovaAtiv && (
+                <Button size="sm" className="h-7 text-xs" onClick={() => setShowNovaAtiv(true)}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Nova atividade
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -535,6 +540,63 @@ export function SetorPage() {
               </Button>
             </div>
           </div>
+
+          {showNovaAtiv && (
+            <Card className="border-dashed">
+              <CardContent className="p-3 space-y-2">
+                <Input
+                  placeholder="Nome da atividade"
+                  value={novaAtivNome}
+                  onChange={(e) => setNovaAtivNome(e.target.value)}
+                  autoFocus
+                />
+                <div className="flex gap-1 flex-wrap">
+                  {DIAS_SEMANA.map((d) => (
+                    <label
+                      key={d.valor}
+                      className={`flex items-center gap-1 px-2 py-1 rounded border text-xs cursor-pointer transition-colors ${
+                        novaAtivDias.includes(d.valor)
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={novaAtivDias.includes(d.valor)}
+                        onCheckedChange={() => toggleDiaAtiv(d.valor)}
+                      />
+                      {d.label}
+                    </label>
+                  ))}
+                </div>
+                <Textarea
+                  placeholder="Descrição (passo a passo da atividade)…"
+                  value={novaAtivDescricao}
+                  onChange={(e) => setNovaAtivDescricao(e.target.value)}
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Anexos podem ser enviados na página da atividade, logo após criá-la.
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={criarAtividade}>
+                    Criar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNovaAtiv(false);
+                      setNovaAtivNome("");
+                      setNovaAtivDias([]);
+                      setNovaAtivDescricao("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
@@ -634,73 +696,6 @@ export function SetorPage() {
             </div>
           )}
 
-          {showNovaAtiv && (
-            <Card className="border-dashed">
-              <CardContent className="p-3 space-y-2">
-                <Input
-                  placeholder="Nome da atividade"
-                  value={novaAtivNome}
-                  onChange={(e) => setNovaAtivNome(e.target.value)}
-                  autoFocus
-                />
-                <div className="flex gap-1 flex-wrap">
-                  {DIAS_SEMANA.map((d) => (
-                    <label
-                      key={d.valor}
-                      className={`flex items-center gap-1 px-2 py-1 rounded border text-xs cursor-pointer transition-colors ${
-                        novaAtivDias.includes(d.valor)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:bg-accent"
-                      }`}
-                    >
-                      <Checkbox
-                        checked={novaAtivDias.includes(d.valor)}
-                        onCheckedChange={() => toggleDiaAtiv(d.valor)}
-                      />
-                      {d.label}
-                    </label>
-                  ))}
-                </div>
-                <Textarea
-                  placeholder="Descrição (passo a passo da atividade)…"
-                  value={novaAtivDescricao}
-                  onChange={(e) => setNovaAtivDescricao(e.target.value)}
-                  rows={4}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Anexos podem ser enviados na página da atividade, logo após criá-la.
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={criarAtividade}>
-                    Criar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowNovaAtiv(false);
-                      setNovaAtivNome("");
-                      setNovaAtivDias([]);
-                      setNovaAtivDescricao("");
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {atividades.length > 0 && !showNovaAtiv && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setShowNovaAtiv(true)}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Nova atividade
-            </Button>
-          )}
         </TabsContent>
 
         {/* TAB: Atividades Pontuais (Kanban) */}
