@@ -10,6 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HistoricoAtividadeItem } from "@/components/rotina/HistoricoAtividadeItem";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import {
   Accordion,
@@ -31,6 +42,7 @@ import {
   History,
   Paperclip,
   Archive,
+  Trash2,
 } from "lucide-react";
 import {
   type Atividade,
@@ -57,7 +69,7 @@ export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
   const { tab } = useSearch({ from: "/_authenticated/_rotina/rotina/$setorId" });
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [setor, setSetor] = useState<{
     id: string; nome: string; cor: string; icone: string; descricao: string;
@@ -228,6 +240,41 @@ export function SetorPage() {
       return;
     }
     setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  }
+
+  /**
+   * Exclui uma atividade de rotina. Os checkpoints são removidos em cascata
+   * pelo banco; os anexos polimórficos são limpos manualmente.
+   */
+  async function excluirAtividade(id: string) {
+    const { error } = await supabase.from("rotina_atividades").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await supabase
+      .from("rotina_anexos")
+      .delete()
+      .eq("entidade", "atividade")
+      .eq("entidade_id", id);
+    setAtividades((prev) => prev.filter((a) => a.id !== id));
+    toast.success("Rotina diária excluída.");
+  }
+
+  /** Exclui uma atividade pontual (tarefa) e seus anexos. */
+  async function excluirTarefa(id: string) {
+    const { error } = await supabase.from("rotina_tarefas").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await supabase
+      .from("rotina_anexos")
+      .delete()
+      .eq("entidade", "tarefa")
+      .eq("entidade_id", id);
+    setTarefas((prev) => prev.filter((t) => t.id !== id));
+    toast.success("Atividade pontual excluída.");
   }
 
   function toggleDiaAtiv(d: number) {
@@ -449,6 +496,13 @@ export function SetorPage() {
                               >
                                 {concluido ? "Concluída" : "Pendente"}
                               </Badge>
+                              {isAdmin && (
+                                <ConfirmarExclusao
+                                  titulo="Excluir rotina diária"
+                                  descricao={`A atividade "${a.nome}" e seus registros de conclusão serão removidos permanentemente.`}
+                                  onConfirm={() => excluirAtividade(a.id)}
+                                />
+                              )}
                             </div>
                           );
                         })}
@@ -546,7 +600,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.a_fazer.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
               {showNovaTarefa ? (
                 <Card className="border-dashed">
@@ -603,7 +657,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.fazendo.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
             </div>
 
@@ -616,7 +670,7 @@ export function SetorPage() {
                 </Badge>
               </div>
               {tarefasPorStatus.concluido.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} />
+                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
               ))}
             </div>
           </div>
@@ -679,12 +733,55 @@ export function SetorPage() {
   );
 }
 
+/** Diálogo de confirmação reutilizável para exclusões destrutivas. */
+function ConfirmarExclusao({
+  titulo,
+  descricao,
+  onConfirm,
+}: {
+  titulo: string;
+  descricao: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+          aria-label="Excluir"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{titulo}</AlertDialogTitle>
+          <AlertDialogDescription>{descricao}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onConfirm}
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function TarefaCard({
   tarefa,
   onStatusChange,
+  onDelete,
 }: {
   tarefa: Tarefa;
   onStatusChange: (id: string, status: StatusTarefa) => void;
+  onDelete?: ((id: string) => void) | undefined;
 }) {
   const proximoStatus: Record<StatusTarefa, StatusTarefa | null> = {
     a_fazer: "fazendo",
@@ -700,13 +797,22 @@ function TarefaCard({
   return (
     <Card className={`hover:border-primary/30 transition-colors ${isAtrasado ? "border-destructive/50" : ""}`}>
       <CardContent className="p-3 space-y-2">
-        <Link
-          to="/rotina/tarefa/$id"
-          params={{ id: tarefa.id }}
-          className="font-medium text-sm hover:text-primary transition-colors block"
-        >
-          {tarefa.nome}
-        </Link>
+        <div className="flex items-start gap-2">
+          <Link
+            to="/rotina/tarefa/$id"
+            params={{ id: tarefa.id }}
+            className="font-medium text-sm hover:text-primary transition-colors block flex-1 min-w-0"
+          >
+            {tarefa.nome}
+          </Link>
+          {onDelete && (
+            <ConfirmarExclusao
+              titulo="Excluir atividade pontual"
+              descricao={`A tarefa "${tarefa.nome}" será removida permanentemente.`}
+              onConfirm={() => onDelete(tarefa.id)}
+            />
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${STATUS_TAREFA_COLORS[tarefa.status]}`}>
             {STATUS_TAREFA_LABELS[tarefa.status]}
