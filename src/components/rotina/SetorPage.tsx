@@ -475,9 +475,9 @@ export function SetorPage() {
           </TabsTrigger>
           <TabsTrigger value="tarefas" className="flex items-center gap-1.5">
             <ListTodo className="w-3.5 h-3.5" /> Atividades Pontuais
-            {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length > 0 && (
+            {tarefas.filter((t) => t.status !== "concluido").length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
-                {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length}
+                {tarefas.filter((t) => t.status !== "concluido").length}
               </Badge>
             )}
           </TabsTrigger>
@@ -486,6 +486,14 @@ export function SetorPage() {
             {semanas.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
                 {semanas.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="lixeira" className="flex items-center gap-1.5">
+            <Trash2 className="w-3.5 h-3.5" /> Lixeira
+            {totalLixeira > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
+                {totalLixeira}
               </Badge>
             )}
           </TabsTrigger>
