@@ -791,6 +791,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           descricao: string
           dias_semana: number[] | null
           frequencia: string
@@ -805,6 +806,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dias_semana?: number[] | null
           frequencia: string
@@ -819,6 +821,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dias_semana?: number[] | null
           frequencia?: string
@@ -1126,6 +1129,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           descricao: string
           id: string
           nome: string
@@ -1137,6 +1141,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           id?: string
           nome: string
@@ -1148,6 +1153,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           id?: string
           nome?: string
