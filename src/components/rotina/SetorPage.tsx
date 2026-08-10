@@ -496,6 +496,13 @@ export function SetorPage() {
                               >
                                 {concluido ? "Concluída" : "Pendente"}
                               </Badge>
+                              {isAdmin && (
+                                <ConfirmarExclusao
+                                  titulo="Excluir rotina diária"
+                                  descricao={`A atividade "${a.nome}" e seus registros de conclusão serão removidos permanentemente.`}
+                                  onConfirm={() => excluirAtividade(a.id)}
+                                />
+                              )}
                             </div>
                           );
                         })}
