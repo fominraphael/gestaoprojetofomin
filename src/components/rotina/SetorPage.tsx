@@ -269,27 +269,69 @@ export function SetorPage() {
   }
 
   /**
-   * Exclui uma atividade de rotina. Os checkpoints são removidos em cascata
-   * pelo banco; os anexos polimórficos são limpos manualmente.
+   * Move uma rotina diária para a lixeira (soft delete). Nada é apagado:
+   * checkpoints e anexos permanecem intactos para permitir a restauração.
    */
   async function excluirAtividade(id: string) {
-    const { error } = await supabase.from("rotina_atividades").delete().eq("id", id);
+    const agora = new Date().toISOString();
+    const { error } = await supabase
+      .from("rotina_atividades")
+      .update({ deleted_at: agora } as any)
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    await supabase
-      .from("rotina_anexos")
-      .delete()
-      .eq("entidade", "atividade")
-      .eq("entidade_id", id);
+    const alvo = atividades.find((a) => a.id === id);
     setAtividades((prev) => prev.filter((a) => a.id !== id));
-    toast.success("Rotina diária excluída.");
+    if (alvo) setLixeiraAtividades((prev) => [{ ...alvo, deleted_at: agora }, ...prev]);
+    toast.success("Rotina diária movida para a Lixeira.");
   }
 
-  /** Exclui uma atividade pontual (tarefa) e seus anexos. */
+  /** Move uma atividade pontual para a lixeira (soft delete). */
   async function excluirTarefa(id: string) {
-    const { error } = await supabase.from("rotina_tarefas").delete().eq("id", id);
+    const agora = new Date().toISOString();
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .update({ deleted_at: agora } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const alvo = tarefas.find((t) => t.id === id);
+    setTarefas((prev) => prev.filter((t) => t.id !== id));
+    if (alvo) setLixeiraTarefas((prev) => [{ ...alvo, deleted_at: agora }, ...prev]);
+    toast.success("Atividade pontual movida para a Lixeira.");
+  }
+
+  /** Restaura um item da lixeira, limpando a data de exclusão. */
+  async function restaurar(tipo: "atividade" | "tarefa", id: string) {
+    const tabela = tipo === "atividade" ? "rotina_atividades" : "rotina_tarefas";
+    const { error } = await supabase
+      .from(tabela)
+      .update({ deleted_at: null } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (tipo === "atividade") {
+      const alvo = lixeiraAtividades.find((a) => a.id === id);
+      setLixeiraAtividades((prev) => prev.filter((a) => a.id !== id));
+      if (alvo) setAtividades((prev) => [...prev, { ...alvo, deleted_at: null }]);
+    } else {
+      const alvo = lixeiraTarefas.find((t) => t.id === id);
+      setLixeiraTarefas((prev) => prev.filter((t) => t.id !== id));
+      if (alvo) setTarefas((prev) => [{ ...alvo, deleted_at: null }, ...prev]);
+    }
+    toast.success("Item restaurado.");
+  }
+
+  /** Exclui definitivamente um item da lixeira, incluindo os anexos. */
+  async function excluirDefinitivo(tipo: "atividade" | "tarefa", id: string) {
+    const tabela = tipo === "atividade" ? "rotina_atividades" : "rotina_tarefas";
+    const { error } = await supabase.from(tabela).delete().eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
@@ -297,10 +339,14 @@ export function SetorPage() {
     await supabase
       .from("rotina_anexos")
       .delete()
-      .eq("entidade", "tarefa")
+      .eq("entidade", tipo)
       .eq("entidade_id", id);
-    setTarefas((prev) => prev.filter((t) => t.id !== id));
-    toast.success("Atividade pontual excluída.");
+    if (tipo === "atividade") {
+      setLixeiraAtividades((prev) => prev.filter((a) => a.id !== id));
+    } else {
+      setLixeiraTarefas((prev) => prev.filter((t) => t.id !== id));
+    }
+    toast.success("Item excluído definitivamente.");
   }
 
   function toggleDiaAtiv(d: number) {
