@@ -43,6 +43,7 @@ import {
   Paperclip,
   Archive,
   Trash2,
+  RotateCcw,
 } from "lucide-react";
 import {
   type Atividade,
@@ -63,7 +64,10 @@ import {
   labelMes,
 } from "@/lib/rotina";
 
-type SetorTab = "rotina" | "tarefas" | "historico";
+type SetorTab = "rotina" | "tarefas" | "historico" | "lixeira";
+
+/** Filtros de prazo disponíveis na aba Atividades Pontuais. */
+type FiltroPrazo = "todos" | "atrasados" | "semana";
 
 export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
@@ -83,6 +87,12 @@ export function SetorPage() {
 
   const [expandedRotina, setExpandedRotina] = useState(true);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
+  const [filtroPrazo, setFiltroPrazo] = useState<FiltroPrazo>("todos");
+
+  // Lixeira (itens com deleted_at preenchido)
+  const [lixeiraAtividades, setLixeiraAtividades] = useState<Atividade[]>([]);
+  const [lixeiraTarefas, setLixeiraTarefas] = useState<Tarefa[]>([]);
+
 
   // Nova atividade inline
   const [novaAtivNome, setNovaAtivNome] = useState("");
@@ -100,33 +110,50 @@ export function SetorPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const [setorRes, ativRes, tarefaRes, semanasRes] = await Promise.all([
-      supabase
-        .from("rotina_setores")
-        .select("id, nome, cor, icone, descricao")
-        .eq("id", setorId)
-        .single(),
-      supabase
-        .from("rotina_atividades")
-        .select("*")
-        .eq("setor_id", setorId)
-        .eq("ativo", true)
-        .order("ordem"),
-      supabase
-        .from("rotina_tarefas")
-        .select("*")
-        .eq("setor_id", setorId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("rotina_semanas")
-        .select("*")
-        .eq("setor_id", setorId)
-        .order("inicio", { ascending: false }),
-    ]);
+    const [setorRes, ativRes, tarefaRes, semanasRes, lixAtivRes, lixTarefaRes] =
+      await Promise.all([
+        supabase
+          .from("rotina_setores")
+          .select("id, nome, cor, icone, descricao")
+          .eq("id", setorId)
+          .single(),
+        supabase
+          .from("rotina_atividades")
+          .select("*")
+          .eq("setor_id", setorId)
+          .eq("ativo", true)
+          .is("deleted_at", null)
+          .order("ordem"),
+        supabase
+          .from("rotina_tarefas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("rotina_semanas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .order("inicio", { ascending: false }),
+        supabase
+          .from("rotina_atividades")
+          .select("*")
+          .eq("setor_id", setorId)
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+        supabase
+          .from("rotina_tarefas")
+          .select("*")
+          .eq("setor_id", setorId)
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+      ]);
     if (setorRes.data) setSetor(setorRes.data as any);
     setAtividades((ativRes.data as any) ?? []);
     setTarefas((tarefaRes.data as any) ?? []);
     setSemanas((semanasRes.data as any) ?? []);
+    setLixeiraAtividades((lixAtivRes.data as any) ?? []);
+    setLixeiraTarefas((lixTarefaRes.data as any) ?? []);
 
     const ativIds = (ativRes.data ?? []).map((a: any) => a.id);
     const cps = await getCheckpoints(ativIds, hoje);
@@ -243,27 +270,69 @@ export function SetorPage() {
   }
 
   /**
-   * Exclui uma atividade de rotina. Os checkpoints são removidos em cascata
-   * pelo banco; os anexos polimórficos são limpos manualmente.
+   * Move uma rotina diária para a lixeira (soft delete). Nada é apagado:
+   * checkpoints e anexos permanecem intactos para permitir a restauração.
    */
   async function excluirAtividade(id: string) {
-    const { error } = await supabase.from("rotina_atividades").delete().eq("id", id);
+    const agora = new Date().toISOString();
+    const { error } = await supabase
+      .from("rotina_atividades")
+      .update({ deleted_at: agora } as any)
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    await supabase
-      .from("rotina_anexos")
-      .delete()
-      .eq("entidade", "atividade")
-      .eq("entidade_id", id);
+    const alvo = atividades.find((a) => a.id === id);
     setAtividades((prev) => prev.filter((a) => a.id !== id));
-    toast.success("Rotina diária excluída.");
+    if (alvo) setLixeiraAtividades((prev) => [{ ...alvo, deleted_at: agora }, ...prev]);
+    toast.success("Rotina diária movida para a Lixeira.");
   }
 
-  /** Exclui uma atividade pontual (tarefa) e seus anexos. */
+  /** Move uma atividade pontual para a lixeira (soft delete). */
   async function excluirTarefa(id: string) {
-    const { error } = await supabase.from("rotina_tarefas").delete().eq("id", id);
+    const agora = new Date().toISOString();
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .update({ deleted_at: agora } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const alvo = tarefas.find((t) => t.id === id);
+    setTarefas((prev) => prev.filter((t) => t.id !== id));
+    if (alvo) setLixeiraTarefas((prev) => [{ ...alvo, deleted_at: agora }, ...prev]);
+    toast.success("Atividade pontual movida para a Lixeira.");
+  }
+
+  /** Restaura um item da lixeira, limpando a data de exclusão. */
+  async function restaurar(tipo: "atividade" | "tarefa", id: string) {
+    const tabela = tipo === "atividade" ? "rotina_atividades" : "rotina_tarefas";
+    const { error } = await supabase
+      .from(tabela)
+      .update({ deleted_at: null } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (tipo === "atividade") {
+      const alvo = lixeiraAtividades.find((a) => a.id === id);
+      setLixeiraAtividades((prev) => prev.filter((a) => a.id !== id));
+      if (alvo) setAtividades((prev) => [...prev, { ...alvo, deleted_at: null }]);
+    } else {
+      const alvo = lixeiraTarefas.find((t) => t.id === id);
+      setLixeiraTarefas((prev) => prev.filter((t) => t.id !== id));
+      if (alvo) setTarefas((prev) => [{ ...alvo, deleted_at: null }, ...prev]);
+    }
+    toast.success("Item restaurado.");
+  }
+
+  /** Exclui definitivamente um item da lixeira, incluindo os anexos. */
+  async function excluirDefinitivo(tipo: "atividade" | "tarefa", id: string) {
+    const tabela = tipo === "atividade" ? "rotina_atividades" : "rotina_tarefas";
+    const { error } = await supabase.from(tabela).delete().eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
@@ -271,10 +340,14 @@ export function SetorPage() {
     await supabase
       .from("rotina_anexos")
       .delete()
-      .eq("entidade", "tarefa")
+      .eq("entidade", tipo)
       .eq("entidade_id", id);
-    setTarefas((prev) => prev.filter((t) => t.id !== id));
-    toast.success("Atividade pontual excluída.");
+    if (tipo === "atividade") {
+      setLixeiraAtividades((prev) => prev.filter((a) => a.id !== id));
+    } else {
+      setLixeiraTarefas((prev) => prev.filter((t) => t.id !== id));
+    }
+    toast.success("Item excluído definitivamente.");
   }
 
   function toggleDiaAtiv(d: number) {
@@ -295,11 +368,45 @@ export function SetorPage() {
     ? DIAS_SEMANA.filter((d) => d.valor === filtroDia)
     : DIAS_SEMANA.filter((d) => (atividadesPorDia[d.valor]?.length ?? 0) > 0);
 
+  /**
+   * Aplica o filtro de prazo às atividades pontuais.
+   * - "atrasados": prazo anterior a hoje e tarefa não concluída.
+   * - "semana": prazo entre hoje e os próximos 7 dias.
+   * Tarefas sem prazo só aparecem no filtro "todos".
+   */
+  const tarefasFiltradas = useMemo(() => {
+    if (filtroPrazo === "todos") return tarefas;
+    const limite = new Date(hoje + "T12:00:00");
+    limite.setDate(limite.getDate() + 7);
+    const hojeDate = new Date(hoje + "T12:00:00");
+    return tarefas.filter((t) => {
+      if (!t.prazo) return false;
+      const prazo = new Date(t.prazo + "T12:00:00");
+      if (filtroPrazo === "atrasados") {
+        return prazo < hojeDate && t.status !== "concluido";
+      }
+      return prazo >= hojeDate && prazo <= limite;
+    });
+  }, [tarefas, filtroPrazo, hoje]);
+
   const tarefasPorStatus = {
-    a_fazer: tarefas.filter((t) => t.status === "a_fazer"),
-    fazendo: tarefas.filter((t) => t.status === "fazendo"),
-    concluido: tarefas.filter((t) => t.status === "concluido"),
+    a_fazer: tarefasFiltradas.filter((t) => t.status === "a_fazer"),
+    fazendo: tarefasFiltradas.filter((t) => t.status === "fazendo"),
+    concluido: tarefasFiltradas.filter((t) => t.status === "concluido"),
   };
+
+  const totalAtrasados = useMemo(
+    () =>
+      tarefas.filter(
+        (t) =>
+          t.prazo &&
+          t.status !== "concluido" &&
+          new Date(t.prazo + "T12:00:00") < new Date(hoje + "T12:00:00"),
+      ).length,
+    [tarefas, hoje],
+  );
+
+  const totalLixeira = lixeiraAtividades.length + lixeiraTarefas.length;
 
   const totalConcluidoHoje = atividades.filter((a) => checkpoints.has(a.id)).length;
   const totalAtividades = atividades.length;
@@ -369,9 +476,9 @@ export function SetorPage() {
           </TabsTrigger>
           <TabsTrigger value="tarefas" className="flex items-center gap-1.5">
             <ListTodo className="w-3.5 h-3.5" /> Atividades Pontuais
-            {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length > 0 && (
+            {tarefas.filter((t) => t.status !== "concluido").length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
-                {tarefasPorStatus.a_fazer.length + tarefasPorStatus.fazendo.length}
+                {tarefas.filter((t) => t.status !== "concluido").length}
               </Badge>
             )}
           </TabsTrigger>
@@ -380,6 +487,14 @@ export function SetorPage() {
             {semanas.length > 0 && (
               <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
                 {semanas.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="lixeira" className="flex items-center gap-1.5">
+            <Trash2 className="w-3.5 h-3.5" /> Lixeira
+            {totalLixeira > 0 && (
+              <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">
+                {totalLixeira}
               </Badge>
             )}
           </TabsTrigger>
@@ -590,6 +705,40 @@ export function SetorPage() {
 
         {/* TAB: Atividades Pontuais (Kanban) */}
         <TabsContent value="tarefas" className="space-y-4 mt-4">
+          {/* Filtro por prazo */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
+            <Button
+              variant={filtroPrazo === "todos" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("todos")}
+            >
+              Todos
+            </Button>
+            <Button
+              variant={filtroPrazo === "atrasados" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("atrasados")}
+            >
+              <AlertCircle className="w-3.5 h-3.5 mr-1" /> Atrasados
+              {totalAtrasados > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5">
+                  {totalAtrasados}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant={filtroPrazo === "semana" ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setFiltroPrazo("semana")}
+            >
+              <CalendarCheck className="w-3.5 h-3.5 mr-1" /> Próximos 7 dias
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Coluna: A fazer */}
             <div className="space-y-2">
@@ -728,6 +877,63 @@ export function SetorPage() {
             </Accordion>
           )}
         </TabsContent>
+
+        {/* TAB: Lixeira */}
+        <TabsContent value="lixeira" className="space-y-6 mt-4">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : totalLixeira === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              A Lixeira está vazia. Itens excluídos aparecem aqui e podem ser restaurados.
+            </p>
+          ) : (
+            <>
+              {lixeiraAtividades.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <CalendarCheck className="w-3.5 h-3.5" /> Rotinas diárias
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                      {lixeiraAtividades.length}
+                    </Badge>
+                  </h2>
+                  {lixeiraAtividades.map((a) => (
+                    <LixeiraItem
+                      key={a.id}
+                      nome={a.nome}
+                      excluidoEm={a.deleted_at ?? null}
+                      onRestore={() => restaurar("atividade", a.id)}
+                      {...(isAdmin
+                        ? { onPurge: () => excluirDefinitivo("atividade", a.id) }
+                        : {})}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {lixeiraTarefas.length > 0 && (
+                <div className="space-y-2">
+                  <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <ListTodo className="w-3.5 h-3.5" /> Atividades pontuais
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                      {lixeiraTarefas.length}
+                    </Badge>
+                  </h2>
+                  {lixeiraTarefas.map((t) => (
+                    <LixeiraItem
+                      key={t.id}
+                      nome={t.nome}
+                      excluidoEm={t.deleted_at ?? null}
+                      onRestore={() => restaurar("tarefa", t.id)}
+                      {...(isAdmin
+                        ? { onPurge: () => excluirDefinitivo("tarefa", t.id) }
+                        : {})}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -833,6 +1039,44 @@ function TarefaCard({
           >
             Mover para {STATUS_TAREFA_LABELS[prox]}
           </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Item da Lixeira, com restauração e exclusão definitiva (somente admin). */
+function LixeiraItem({
+  nome,
+  excluidoEm,
+  onRestore,
+  onPurge,
+}: {
+  nome: string;
+  excluidoEm: string | null;
+  onRestore: () => void;
+  onPurge?: () => void;
+}) {
+  return (
+    <Card className="border-dashed">
+      <CardContent className="p-3 flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{nome}</p>
+          {excluidoEm && (
+            <p className="text-[11px] text-muted-foreground">
+              Excluído em {new Date(excluidoEm).toLocaleString("pt-BR")}
+            </p>
+          )}
+        </div>
+        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onRestore}>
+          <RotateCcw className="w-3.5 h-3.5 mr-1" /> Restaurar
+        </Button>
+        {onPurge && (
+          <ConfirmarExclusao
+            titulo="Excluir definitivamente"
+            descricao={`"${nome}" e seus anexos serão removidos permanentemente. Esta ação não pode ser desfeita.`}
+            onConfirm={onPurge}
+          />
         )}
       </CardContent>
     </Card>
