@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HistoricoAtividadeItem } from "@/components/rotina/HistoricoAtividadeItem";
+
 import {
   Accordion,
   AccordionContent,
@@ -651,34 +653,18 @@ export function SetorPage() {
                             </span>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="space-y-1">
+                            <Accordion type="multiple" className="w-full pl-2">
                               {(s.snapshot?.atividades ?? []).map((a) => (
-                                <div
-                                  key={a.id}
-                                  className="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-accent"
-                                >
-                                  <span className="flex-1 min-w-0 truncate">{a.nome}</span>
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-[10px] ${
-                                      a.concluidos.length > 0
-                                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                                        : "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                                    }`}
-                                  >
-                                    {a.concluidos.length > 0
-                                      ? `${a.concluidos.length} conclusão(ões)`
-                                      : "Pendente"}
-                                  </Badge>
-                                </div>
+                                <HistoricoAtividadeItem key={a.id} atividade={a} />
                               ))}
-                              {(s.snapshot?.atividades ?? []).length === 0 && (
-                                <p className="text-xs text-muted-foreground">
-                                  Nenhuma atividade registrada nesta semana.
-                                </p>
-                              )}
-                            </div>
+                            </Accordion>
+                            {(s.snapshot?.atividades ?? []).length === 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                Nenhuma atividade registrada nesta semana.
+                              </p>
+                            )}
                           </AccordionContent>
+
                         </AccordionItem>
                       ))}
                     </Accordion>
