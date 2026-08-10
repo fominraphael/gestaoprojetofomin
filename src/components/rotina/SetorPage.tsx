@@ -733,12 +733,55 @@ export function SetorPage() {
   );
 }
 
+/** Diálogo de confirmação reutilizável para exclusões destrutivas. */
+function ConfirmarExclusao({
+  titulo,
+  descricao,
+  onConfirm,
+}: {
+  titulo: string;
+  descricao: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+          aria-label="Excluir"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{titulo}</AlertDialogTitle>
+          <AlertDialogDescription>{descricao}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onConfirm}
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function TarefaCard({
   tarefa,
   onStatusChange,
+  onDelete,
 }: {
   tarefa: Tarefa;
   onStatusChange: (id: string, status: StatusTarefa) => void;
+  onDelete?: ((id: string) => void) | undefined;
 }) {
   const proximoStatus: Record<StatusTarefa, StatusTarefa | null> = {
     a_fazer: "fazendo",
