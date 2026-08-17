@@ -240,19 +240,19 @@ export function SetorPage() {
     carregar();
   }
 
-  async function handleToggleCheckpoint(atividadeId: string) {
+  async function handleToggleCheckpoint(atividadeId: string, data: string) {
     if (!user?.id) return;
-    const ok = await toggleCheckpoint(atividadeId, hoje, user.id);
+    const ok = await toggleCheckpoint(atividadeId, data, user.id);
     if (!ok) {
       toast.error("Erro ao registrar checkpoint.");
       return;
     }
     setCheckpoints((prev) => {
       const next = new Map(prev);
-      const diaSet = new Set(next.get(hoje) ?? []);
+      const diaSet = new Set(next.get(data) ?? []);
       if (diaSet.has(atividadeId)) diaSet.delete(atividadeId);
       else diaSet.add(atividadeId);
-      next.set(hoje, diaSet);
+      next.set(data, diaSet);
       return next;
     });
   }
@@ -693,7 +693,7 @@ export function SetorPage() {
                             >
                               <Checkbox
                                 checked={concluido}
-                                onCheckedChange={() => handleToggleCheckpoint(a.id)}
+                                onCheckedChange={() => handleToggleCheckpoint(a.id, dataStr)}
                                 className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               />
                               <Link
