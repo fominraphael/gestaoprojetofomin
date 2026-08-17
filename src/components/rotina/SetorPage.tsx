@@ -388,6 +388,15 @@ export function SetorPage() {
     ? DIAS_SEMANA.filter((d) => d.valor === filtroDia)
     : DIAS_SEMANA.filter((d) => (atividadesPorDia[d.valor]?.length ?? 0) > 0);
 
+  // Mapeia valor do dia (1=Seg..5=Sex) para string de data "YYYY-MM-DD" da semana atual
+  const inicioSemanaAtual = inicioSemana();
+  const dataDiaMap: Record<number, string> = {};
+  for (const ds of DIAS_SEMANA) {
+    const dt = new Date(inicioSemanaAtual);
+    dt.setDate(dt.getDate() + (ds.valor - 1));
+    dataDiaMap[ds.valor] = dt.toISOString().split("T")[0]!;
+  }
+
   /**
    * Aplica o filtro de prazo às atividades pontuais.
    * - "atrasados": prazo anterior a hoje e tarefa não concluída.
@@ -673,7 +682,8 @@ export function SetorPage() {
                     {expandedRotina && (
                       <div className="space-y-1 pl-6">
                         {itens.map((a) => {
-                          const concluido = checkpoints.get(d.toString())?.has(a.id) ?? false;
+                          const dataStr = dataDiaMap[d.valor];
+                          const concluido = checkpoints.get(dataStr)?.has(a.id) ?? false;
                           return (
                             <div
                               key={a.id}
