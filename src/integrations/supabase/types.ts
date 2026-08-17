@@ -791,6 +791,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           descricao: string
           dias_semana: number[] | null
           frequencia: string
@@ -805,6 +806,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dias_semana?: number[] | null
           frequencia: string
@@ -819,6 +821,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dias_semana?: number[] | null
           frequencia?: string
@@ -981,6 +984,53 @@ export type Database = {
         }
         Relationships: []
       }
+      rotina_semanas: {
+        Row: {
+          created_at: string
+          encerrado_por: string | null
+          fim: string
+          id: string
+          inicio: string
+          setor_id: string
+          snapshot: Json
+          total_atividades: number
+          total_concluidos: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          encerrado_por?: string | null
+          fim: string
+          id?: string
+          inicio: string
+          setor_id: string
+          snapshot?: Json
+          total_atividades?: number
+          total_concluidos?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          encerrado_por?: string | null
+          fim?: string
+          id?: string
+          inicio?: string
+          setor_id?: string
+          snapshot?: Json
+          total_atividades?: number
+          total_concluidos?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rotina_semanas_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "rotina_setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rotina_setor_funcoes: {
         Row: {
           created_at: string
@@ -1079,6 +1129,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           descricao: string
           id: string
           nome: string
@@ -1090,6 +1141,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           id?: string
           nome: string
@@ -1101,6 +1153,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           id?: string
           nome?: string
