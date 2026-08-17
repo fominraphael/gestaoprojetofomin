@@ -78,9 +78,6 @@ import {
   Info,
   Settings,
   Shield,
-  Eye,
-  EyeOff,
-  Lock,
   Mail,
 } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -135,11 +132,9 @@ export function AdminUsuariosPage() {
     campos_customizados: {} as Record<string, any>,
   });
 
-  const [editPassword, setEditPassword] = useState("");
-  const [showEditPasswordField, setShowEditPasswordField] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState<UsuarioSistema | null>(null);
+  const [resetPasswordMode, setResetPasswordMode] = useState<"direct" | "email">("direct");
   const [newPasswordForUser, setNewPasswordForUser] = useState("");
-  const [sendingResetEmail, setSendingResetEmail] = useState<string | null>(null);
 
   const [showCreateCompany, setShowCreateCompany] = useState(false);
   const [newCompany, setNewCompany] = useState({ cnpj: "", nome: "", email_notificacao: "" });
@@ -355,13 +350,9 @@ export function AdminUsuariosPage() {
         email_recuperacao: userObj.email_recuperacao ?? null,
         nome_fantasia: userObj.nome_fantasia?.trim() ?? null,
       };
-      if (editPassword) {
-        updates.password = editPassword;
-      }
       await atualizarUsuario(userObj.id, updates);
       showToast("success", `Usuário "${userObj.username}" atualizado.`);
       setShowEditUser(null);
-      setEditPassword("");
       await loadAllData();
     } catch (err: any) {
       showToast("error", err.message || "Erro ao atualizar usuário.");
@@ -393,15 +384,16 @@ export function AdminUsuariosPage() {
     if (!user.email_recuperacao) {
       return showToast("error", "Este usuário não possui e-mail de recuperação configurado.");
     }
-    setSendingResetEmail(user.id);
+    setActionLoading(`reset-email-${user.id}`);
     try {
       const { requestPasswordReset } = await import("@/lib/password-reset.functions");
       await requestPasswordReset({ data: { username: user.username } });
       showToast("success", `E-mail de redefinição enviado para ${user.email_recuperacao}.`);
+      setShowChangePasswordModal(null);
     } catch (err: any) {
       showToast("error", err.message || "Erro ao enviar e-mail de redefinição.");
     } finally {
-      setSendingResetEmail(null);
+      setActionLoading(null);
     }
   };
 
@@ -1499,41 +1491,6 @@ export function AdminUsuariosPage() {
                         className="w-full px-4 py-2 rounded-lg bg-muted/50 border border-border text-muted-foreground cursor-not-allowed text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                        Senha
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showEditPasswordField ? "text" : "password"}
-                          placeholder={isAdmin && showEditUser.id !== currentUser?.id ? "Senha oculta — use o cadeado para alterar" : "Preencha apenas para alterar"}
-                          value={editPassword}
-                          onChange={(e) => setEditPassword(e.target.value)}
-                          disabled={!isAdmin || showEditUser.id === currentUser?.id}
-                          className="w-full px-4 py-2 pr-20 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setShowEditPasswordField((v) => !v)}
-                            className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                            title={showEditPasswordField ? "Ocultar senha" : "Mostrar senha"}
-                          >
-                            {showEditPasswordField ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                          {isAdmin && showEditUser.id !== currentUser?.id && (
-                            <button
-                              type="button"
-                              onClick={() => setShowChangePasswordModal(showEditUser)}
-                              className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                              title="Alterar senha do usuário"
-                            >
-                              <Lock className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
                         E-mail de Recuperação{" "}
@@ -1798,12 +1755,15 @@ export function AdminUsuariosPage() {
                     {showEditUser && (
                       <button
                         type="button"
-                        onClick={() => handleSendPasswordResetEmail(showEditUser)}
-                        disabled={sendingResetEmail === showEditUser.id}
+                        onClick={() => {
+                          setResetPasswordMode("direct");
+                          setNewPasswordForUser("");
+                          setShowChangePasswordModal(showEditUser);
+                        }}
                         className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all flex items-center gap-2"
                       >
-                        <Mail className="w-4 h-4" />
-                        {sendingResetEmail === showEditUser.id ? "Enviando..." : "Enviar e-mail de redefinição de senha"}
+                        <Key className="w-4 h-4" />
+                        Redefinir senha
                       </button>
                     )}
                   </div>
@@ -1812,8 +1772,6 @@ export function AdminUsuariosPage() {
                       type="button"
                       onClick={() => {
                         setShowEditUser(null);
-                        setEditPassword("");
-                        setShowEditPasswordField(false);
                       }}
                       className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                     >
@@ -1834,44 +1792,88 @@ export function AdminUsuariosPage() {
               </DialogContent>
             </Dialog>
 
-            {/* Change Password Modal */}
+            {/* Reset Password Modal */}
             <Dialog
               open={!!showChangePasswordModal}
               onOpenChange={(open) => {
                 if (!open) {
                   setShowChangePasswordModal(null);
                   setNewPasswordForUser("");
+                  setResetPasswordMode("direct");
                 }
               }}
             >
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>
-                    Alterar Senha — {showChangePasswordModal?.username}
+                    Redefinir Senha — {showChangePasswordModal?.username}
                   </DialogTitle>
                   <DialogDescription>
-                    Defina uma nova senha para este usuário. Mínimo de 6 caracteres.
+                    Escolha como deseja redefinir a senha deste usuário.
                   </DialogDescription>
                 </DialogHeader>
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
-                    Nova Senha
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={newPasswordForUser}
-                    onChange={(e) => setNewPasswordForUser(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    autoFocus
-                  />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setResetPasswordMode("direct")}
+                    className={`flex-1 px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left ${
+                      resetPasswordMode === "direct"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Key className="w-4 h-4" />
+                      <span>Definir nova senha</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">O admin define a senha diretamente</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetPasswordMode("email")}
+                    className={`flex-1 px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left ${
+                      resetPasswordMode === "email"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail className="w-4 h-4" />
+                      <span>Enviar e-mail</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">O usuário define a própria senha</p>
+                  </button>
                 </div>
+                {resetPasswordMode === "direct" ? (
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 font-semibold">
+                      Nova Senha
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Mínimo 6 caracteres"
+                      value={newPasswordForUser}
+                      onChange={(e) => setNewPasswordForUser(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-muted/50 rounded-lg px-4 py-3 text-sm text-muted-foreground">
+                    {showChangePasswordModal?.email_recuperacao ? (
+                      <p>E-mail será enviado para <strong>{showChangePasswordModal.email_recuperacao}</strong></p>
+                    ) : (
+                      <p className="text-red-400">Este usuário não possui e-mail de recuperação configurado.</p>
+                    )}
+                  </div>
+                )}
                 <DialogFooter>
                   <button
                     type="button"
                     onClick={() => {
                       setShowChangePasswordModal(null);
                       setNewPasswordForUser("");
+                      setResetPasswordMode("direct");
                     }}
                     className="px-4 py-2 rounded-lg bg-muted hover:bg-muted text-foreground text-sm font-semibold transition-all"
                   >
@@ -1879,11 +1881,28 @@ export function AdminUsuariosPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => showChangePasswordModal && handleChangePasswordDirect(showChangePasswordModal)}
-                    disabled={actionLoading === `change-pw-${showChangePasswordModal?.id}`}
+                    onClick={() => {
+                      if (!showChangePasswordModal) return;
+                      if (resetPasswordMode === "direct") {
+                        handleChangePasswordDirect(showChangePasswordModal);
+                      } else {
+                        handleSendPasswordResetEmail(showChangePasswordModal);
+                      }
+                    }}
+                    disabled={
+                      actionLoading === `change-pw-${showChangePasswordModal?.id}` ||
+                      actionLoading === `reset-email-${showChangePasswordModal?.id}` ||
+                      (resetPasswordMode === "email" && !showChangePasswordModal?.email_recuperacao)
+                    }
                     className="px-5 py-2 rounded-lg bg-primary hover:bg-primary text-primary-foreground text-sm font-semibold transition-all shadow-md shadow-primary/10"
                   >
-                    {actionLoading === `change-pw-${showChangePasswordModal?.id}` ? "Alterando..." : "Alterar Senha"}
+                    {actionLoading === `change-pw-${showChangePasswordModal?.id}`
+                      ? "Alterando..."
+                      : actionLoading === `reset-email-${showChangePasswordModal?.id}`
+                      ? "Enviando..."
+                      : resetPasswordMode === "direct"
+                      ? "Alterar Senha"
+                      : "Enviar E-mail"}
                   </button>
                 </DialogFooter>
               </DialogContent>
