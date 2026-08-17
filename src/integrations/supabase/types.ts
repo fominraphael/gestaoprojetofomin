@@ -1127,6 +1127,7 @@ export type Database = {
       }
       rotina_tarefas: {
         Row: {
+          concluido_em: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -1139,6 +1140,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          concluido_em?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -1151,6 +1153,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          concluido_em?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null

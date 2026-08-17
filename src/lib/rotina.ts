@@ -90,6 +90,8 @@ export interface Tarefa {
   updated_at: string;
   /** Data de envio à lixeira; null quando o item está ativo. */
   deleted_at?: string | null;
+  /** Data em que a tarefa foi marcada como concluída. */
+  concluido_em?: string | null;
 }
 
 export interface Checkpoint {

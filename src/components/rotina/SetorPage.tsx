@@ -46,7 +46,6 @@ import {
   RotateCcw,
   LayoutGrid,
   List,
-  ArrowUpDown,
 } from "lucide-react";
 import {
   type Atividade,
@@ -71,6 +70,7 @@ type SetorTab = "rotina" | "tarefas" | "historico" | "lixeira";
 
 /** Filtros de prazo disponíveis na aba Atividades Pontuais. */
 type FiltroPrazo = "todos" | "atrasados" | "semana";
+type FiltroStatus = "todos" | StatusTarefa;
 
 export function SetorPage() {
   const { setorId } = useParams({ from: "/_authenticated/_rotina/rotina/$setorId" });
@@ -91,8 +91,8 @@ export function SetorPage() {
   const [expandedRotina, setExpandedRotina] = useState(true);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
   const [filtroPrazo, setFiltroPrazo] = useState<FiltroPrazo>("todos");
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("todos");
   const [tarefaViewMode, setTarefaViewMode] = useState<"kanban" | "lista">("kanban");
-  const [tarefaSortOrder, setTarefaSortOrder] = useState<"recente" | "antigo" | "proximo">("proximo");
 
   // Lixeira (itens com deleted_at preenchido)
   const [lixeiraAtividades, setLixeiraAtividades] = useState<Atividade[]>([]);
@@ -278,15 +278,20 @@ export function SetorPage() {
   }
 
   async function alterarStatusTarefa(id: string, status: StatusTarefa) {
+    const agora = status === "concluido" ? new Date().toISOString() : null;
     const { error } = await supabase
       .from("rotina_tarefas")
-      .update({ status })
+      .update({ status, ...(status === "concluido" ? { concluido_em: agora } : {}) } as any)
       .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+    setTarefas((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, status, ...(status === "concluido" ? { concluido_em: agora } : {}) } : t
+      )
+    );
   }
 
   /**
@@ -405,11 +410,14 @@ export function SetorPage() {
    */
   const tarefasFiltradas = useMemo(() => {
     let result = tarefas;
+    if (filtroStatus !== "todos") {
+      result = result.filter((t) => t.status === filtroStatus);
+    }
     if (filtroPrazo !== "todos") {
       const limite = new Date(hoje + "T12:00:00");
       limite.setDate(limite.getDate() + 7);
       const hojeDate = new Date(hoje + "T12:00:00");
-      result = tarefas.filter((t) => {
+      result = result.filter((t) => {
         if (!t.prazo) return false;
         const prazo = new Date(t.prazo + "T12:00:00");
         if (filtroPrazo === "atrasados") {
@@ -418,20 +426,8 @@ export function SetorPage() {
         return prazo >= hojeDate && prazo <= limite;
       });
     }
-    return [...result].sort((a, b) => {
-      if (tarefaSortOrder === "recente") {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      if (tarefaSortOrder === "antigo") {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      // proximo: sem prazo vai pro final, depois ordena por prazo crescente
-      if (!a.prazo && !b.prazo) return 0;
-      if (!a.prazo) return 1;
-      if (!b.prazo) return -1;
-      return new Date(a.prazo).getTime() - new Date(b.prazo).getTime();
-    });
-  }, [tarefas, filtroPrazo, tarefaSortOrder, hoje]);
+    return [...result].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }, [tarefas, filtroPrazo, filtroStatus, hoje]);
 
   const tarefasPorStatus = {
     a_fazer: tarefasFiltradas.filter((t) => t.status === "a_fazer"),
@@ -799,6 +795,41 @@ export function SetorPage() {
           {/* Filtros + Visualização */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Status:</span>
+              <Button
+                variant={filtroStatus === "todos" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroStatus("todos")}
+              >
+                Todos
+              </Button>
+              <Button
+                variant={filtroStatus === "a_fazer" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroStatus("a_fazer")}
+              >
+                <AlertCircle className="w-3.5 h-3.5 mr-1" /> A Fazer
+              </Button>
+              <Button
+                variant={filtroStatus === "fazendo" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroStatus("fazendo")}
+              >
+                <Clock className="w-3.5 h-3.5 mr-1" /> Fazendo
+              </Button>
+              <Button
+                variant={filtroStatus === "concluido" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroStatus("concluido")}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Concluído
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
               <Button
                 variant={filtroPrazo === "todos" ? "default" : "outline"}
@@ -831,17 +862,6 @@ export function SetorPage() {
               </Button>
             </div>
             <div className="flex items-center gap-2">
-              {/* Ordenação */}
-              <select
-                value={tarefaSortOrder}
-                onChange={(e) => setTarefaSortOrder(e.target.value as any)}
-                className="h-7 text-xs px-2 rounded-md border border-border bg-background text-foreground"
-              >
-                <option value="proximo">Prazo mais próximo</option>
-                <option value="recente">Mais recente</option>
-                <option value="antigo">Mais antigo</option>
-              </select>
-              {/* Toggle Visualização */}
               <div className="flex items-center border border-border rounded-md overflow-hidden">
                 <button
                   onClick={() => setTarefaViewMode("kanban")}
@@ -939,6 +959,11 @@ export function SetorPage() {
                         <span className={`text-[10px] shrink-0 ${isAtrasado ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                           {isAtrasado && "⚠ "}
                           {new Date(t.prazo + "T12:00:00").toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
+                      {t.status === "concluido" && t.concluido_em && (
+                        <span className="text-[10px] text-emerald-600 shrink-0">
+                          Concluído em: {new Date(t.concluido_em).toLocaleString("pt-BR")}
                         </span>
                       )}
                       {t.status !== "concluido" && (
@@ -1171,6 +1196,11 @@ function TarefaCard({
             <span className={`text-[10px] ${isAtrasado ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {isAtrasado && "⚠ "}
               Prazo: {new Date(tarefa.prazo + "T12:00:00").toLocaleDateString("pt-BR")}
+            </span>
+          )}
+          {tarefa.status === "concluido" && tarefa.concluido_em && (
+            <span className="text-[10px] text-emerald-600">
+              Concluído em: {new Date(tarefa.concluido_em).toLocaleString("pt-BR")}
             </span>
           )}
         </div>
