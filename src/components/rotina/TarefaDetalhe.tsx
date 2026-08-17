@@ -128,7 +128,7 @@ export function TarefaDetalhe() {
             )}
           </div>
         </div>
-        {(isAdmin || tarefa.created_by === user?.id) && !editando && (
+        {!editando && (
           <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
             Editar
           </Button>

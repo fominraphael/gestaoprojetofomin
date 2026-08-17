@@ -120,7 +120,7 @@ export function AtividadeDetalhe() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Descrição</CardTitle>
-            {(isAdmin || atividade.created_by === user?.id) && !editando && (
+            {!editando && (
               <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
                 Editar
               </Button>

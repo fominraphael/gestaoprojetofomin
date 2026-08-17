@@ -44,6 +44,9 @@ import {
   Archive,
   Trash2,
   RotateCcw,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   type Atividade,
@@ -81,13 +84,15 @@ export function SetorPage() {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [semanas, setSemanas] = useState<SemanaHistorico[]>([]);
-  const [checkpoints, setCheckpoints] = useState<Set<string>>(new Set());
+  const [checkpoints, setCheckpoints] = useState<Map<string, Set<string>>>(new Map());
   const [loading, setLoading] = useState(true);
   const [encerrando, setEncerrando] = useState(false);
 
   const [expandedRotina, setExpandedRotina] = useState(true);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
   const [filtroPrazo, setFiltroPrazo] = useState<FiltroPrazo>("todos");
+  const [tarefaViewMode, setTarefaViewMode] = useState<"kanban" | "lista">("kanban");
+  const [tarefaSortOrder, setTarefaSortOrder] = useState<"recente" | "antigo" | "proximo">("proximo");
 
   // Lixeira (itens com deleted_at preenchido)
   const [lixeiraAtividades, setLixeiraAtividades] = useState<Atividade[]>([]);
@@ -103,6 +108,7 @@ export function SetorPage() {
   // Nova tarefa inline
   const [novaTarefaNome, setNovaTarefaNome] = useState("");
   const [novaTarefaPrazo, setNovaTarefaPrazo] = useState("");
+  const [novaTarefaDescricao, setNovaTarefaDescricao] = useState("");
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
 
   const hoje = new Date().toISOString().split("T")[0]!;
@@ -156,8 +162,18 @@ export function SetorPage() {
     setLixeiraTarefas((lixTarefaRes.data as any) ?? []);
 
     const ativIds = (ativRes.data ?? []).map((a: any) => a.id);
-    const cps = await getCheckpoints(ativIds, hoje);
-    setCheckpoints(cps);
+    // Carrega checkpoints da semana inteira (seg a sex)
+    const inicio = inicioSemana();
+    const fim = fimSemana(inicio);
+    const cpsMap = new Map<string, Set<string>>();
+    let diaIter = new Date(inicio);
+    while (diaIter <= fim) {
+      const dataStr = diaIter.toISOString().split("T")[0]!;
+      const cps = await getCheckpoints(ativIds, dataStr);
+      cpsMap.set(dataStr, cps);
+      diaIter.setDate(diaIter.getDate() + 1);
+    }
+    setCheckpoints(cpsMap);
 
     setLoading(false);
   }, [setorId, hoje]);
@@ -209,6 +225,7 @@ export function SetorPage() {
       nome: novaTarefaNome.trim(),
       setor_id: setorId,
       prazo: novaTarefaPrazo || null,
+      descricao: novaTarefaDescricao.trim(),
       created_by: user?.id,
     });
     if (error) {
@@ -218,6 +235,7 @@ export function SetorPage() {
     toast.success("Tarefa criada.");
     setNovaTarefaNome("");
     setNovaTarefaPrazo("");
+    setNovaTarefaDescricao("");
     setShowNovaTarefa(false);
     carregar();
   }
@@ -230,9 +248,11 @@ export function SetorPage() {
       return;
     }
     setCheckpoints((prev) => {
-      const next = new Set(prev);
-      if (next.has(atividadeId)) next.delete(atividadeId);
-      else next.add(atividadeId);
+      const next = new Map(prev);
+      const diaSet = new Set(next.get(hoje) ?? []);
+      if (diaSet.has(atividadeId)) diaSet.delete(atividadeId);
+      else diaSet.add(atividadeId);
+      next.set(hoje, diaSet);
       return next;
     });
   }
@@ -375,19 +395,34 @@ export function SetorPage() {
    * Tarefas sem prazo só aparecem no filtro "todos".
    */
   const tarefasFiltradas = useMemo(() => {
-    if (filtroPrazo === "todos") return tarefas;
-    const limite = new Date(hoje + "T12:00:00");
-    limite.setDate(limite.getDate() + 7);
-    const hojeDate = new Date(hoje + "T12:00:00");
-    return tarefas.filter((t) => {
-      if (!t.prazo) return false;
-      const prazo = new Date(t.prazo + "T12:00:00");
-      if (filtroPrazo === "atrasados") {
-        return prazo < hojeDate && t.status !== "concluido";
+    let result = tarefas;
+    if (filtroPrazo !== "todos") {
+      const limite = new Date(hoje + "T12:00:00");
+      limite.setDate(limite.getDate() + 7);
+      const hojeDate = new Date(hoje + "T12:00:00");
+      result = tarefas.filter((t) => {
+        if (!t.prazo) return false;
+        const prazo = new Date(t.prazo + "T12:00:00");
+        if (filtroPrazo === "atrasados") {
+          return prazo < hojeDate && t.status !== "concluido";
+        }
+        return prazo >= hojeDate && prazo <= limite;
+      });
+    }
+    return [...result].sort((a, b) => {
+      if (tarefaSortOrder === "recente") {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
-      return prazo >= hojeDate && prazo <= limite;
+      if (tarefaSortOrder === "antigo") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      // proximo: sem prazo vai pro final, depois ordena por prazo crescente
+      if (!a.prazo && !b.prazo) return 0;
+      if (!a.prazo) return 1;
+      if (!b.prazo) return -1;
+      return new Date(a.prazo).getTime() - new Date(b.prazo).getTime();
     });
-  }, [tarefas, filtroPrazo, hoje]);
+  }, [tarefas, filtroPrazo, tarefaSortOrder, hoje]);
 
   const tarefasPorStatus = {
     a_fazer: tarefasFiltradas.filter((t) => t.status === "a_fazer"),
@@ -408,7 +443,7 @@ export function SetorPage() {
 
   const totalLixeira = lixeiraAtividades.length + lixeiraTarefas.length;
 
-  const totalConcluidoHoje = atividades.filter((a) => checkpoints.has(a.id)).length;
+  const totalConcluidoHoje = atividades.filter((a) => checkpoints.get(hoje)?.has(a.id) ?? false).length;
   const totalAtividades = atividades.length;
   const percentConcluido = totalAtividades > 0
     ? Math.round((totalConcluidoHoje / totalAtividades) * 100)
@@ -638,7 +673,7 @@ export function SetorPage() {
                     {expandedRotina && (
                       <div className="space-y-1 pl-6">
                         {itens.map((a) => {
-                          const concluido = checkpoints.has(a.id);
+                          const concluido = checkpoints.get(d.toString())?.has(a.id) ?? false;
                           return (
                             <div
                               key={a.id}
@@ -698,7 +733,7 @@ export function SetorPage() {
 
         </TabsContent>
 
-        {/* TAB: Atividades Pontuais (Kanban) */}
+        {/* TAB: Atividades Pontuais */}
         <TabsContent value="tarefas" className="space-y-4 mt-4">
           {/* Criação no topo da página, para acesso rápido */}
           <div className="flex items-center justify-end">
@@ -723,6 +758,13 @@ export function SetorPage() {
                   onChange={(e) => setNovaTarefaPrazo(e.target.value)}
                   className="h-8 text-xs"
                 />
+                <Textarea
+                  placeholder="Descrição (opcional)"
+                  value={novaTarefaDescricao}
+                  onChange={(e) => setNovaTarefaDescricao(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={criarTarefa}>
                     Criar
@@ -734,6 +776,7 @@ export function SetorPage() {
                       setShowNovaTarefa(false);
                       setNovaTarefaNome("");
                       setNovaTarefaPrazo("");
+                      setNovaTarefaDescricao("");
                     }}
                   >
                     Cancelar
@@ -743,81 +786,177 @@ export function SetorPage() {
             </Card>
           )}
 
-          {/* Filtro por prazo */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Filtros + Visualização */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
+              <Button
+                variant={filtroPrazo === "todos" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroPrazo("todos")}
+              >
+                Todos
+              </Button>
+              <Button
+                variant={filtroPrazo === "atrasados" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroPrazo("atrasados")}
+              >
+                <AlertCircle className="w-3.5 h-3.5 mr-1" /> Atrasados
+                {totalAtrasados > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5">
+                    {totalAtrasados}
+                  </Badge>
+                )}
+              </Button>
+              <Button
+                variant={filtroPrazo === "semana" ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setFiltroPrazo("semana")}
+              >
+                <CalendarCheck className="w-3.5 h-3.5 mr-1" /> Próximos 7 dias
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Ordenação */}
+              <select
+                value={tarefaSortOrder}
+                onChange={(e) => setTarefaSortOrder(e.target.value as any)}
+                className="h-7 text-xs px-2 rounded-md border border-border bg-background text-foreground"
+              >
+                <option value="proximo">Prazo mais próximo</option>
+                <option value="recente">Mais recente</option>
+                <option value="antigo">Mais antigo</option>
+              </select>
+              {/* Toggle Visualização */}
+              <div className="flex items-center border border-border rounded-md overflow-hidden">
+                <button
+                  onClick={() => setTarefaViewMode("kanban")}
+                  className={`h-7 px-2 flex items-center justify-center transition-colors ${
+                    tarefaViewMode === "kanban" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                  title="Kanban"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setTarefaViewMode("lista")}
+                  className={`h-7 px-2 flex items-center justify-center transition-colors ${
+                    tarefaViewMode === "lista" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                  title="Lista"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-            <span className="text-xs text-muted-foreground mr-1">Prazo:</span>
-            <Button
-              variant={filtroPrazo === "todos" ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setFiltroPrazo("todos")}
-            >
-              Todos
-            </Button>
-            <Button
-              variant={filtroPrazo === "atrasados" ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setFiltroPrazo("atrasados")}
-            >
-              <AlertCircle className="w-3.5 h-3.5 mr-1" /> Atrasados
-              {totalAtrasados > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1.5">
-                  {totalAtrasados}
-                </Badge>
+          {tarefaViewMode === "kanban" ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Coluna: A fazer */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <AlertCircle className="w-3.5 h-3.5" /> A fazer
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                    {tarefasPorStatus.a_fazer.length}
+                  </Badge>
+                </div>
+                {tarefasPorStatus.a_fazer.map((t) => (
+                  <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
+                ))}
+              </div>
+
+              {/* Coluna: Fazendo */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Clock className="w-3.5 h-3.5" /> Fazendo
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                    {tarefasPorStatus.fazendo.length}
+                  </Badge>
+                </div>
+                {tarefasPorStatus.fazendo.map((t) => (
+                  <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
+                ))}
+              </div>
+
+              {/* Coluna: Concluído */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Concluído
+                  <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                    {tarefasPorStatus.concluido.length}
+                  </Badge>
+                </div>
+                {tarefasPorStatus.concluido.map((t) => (
+                  <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {tarefasFiltradas.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma atividade pontual encontrada.</p>
+              ) : (
+                tarefasFiltradas.map((t) => {
+                  const isAtrasado = t.prazo && t.status !== "concluido" && new Date(t.prazo + "T12:00:00") < new Date(hoje + "T12:00:00");
+                  return (
+                    <div
+                      key={t.id}
+                      className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                        t.status === "concluido" ? "bg-emerald-500/5 opacity-60" : isAtrasado ? "bg-destructive/5" : "hover:bg-accent"
+                      }`}
+                    >
+                      <Badge variant="outline" className={`text-[10px] shrink-0 w-16 justify-center ${STATUS_TAREFA_COLORS[t.status]}`}>
+                        {STATUS_TAREFA_LABELS[t.status]}
+                      </Badge>
+                      <Link
+                        to="/rotina/tarefa/$id"
+                        params={{ id: t.id }}
+                        className={`text-sm flex-1 min-w-0 truncate hover:underline ${
+                          t.status === "concluido" ? "line-through" : ""
+                        }`}
+                      >
+                        {t.nome}
+                      </Link>
+                      {t.descricao?.trim() && (
+                        <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      )}
+                      {t.prazo && (
+                        <span className={`text-[10px] shrink-0 ${isAtrasado ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                          {isAtrasado && "⚠ "}
+                          {new Date(t.prazo + "T12:00:00").toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
+                      {t.status !== "concluido" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 text-[10px] shrink-0"
+                          onClick={() => {
+                            const prox = t.status === "a_fazer" ? "fazendo" : "concluido";
+                            alterarStatusTarefa(t.id, prox as StatusTarefa);
+                          }}
+                        >
+                          Mover para {STATUS_TAREFA_LABELS[t.status === "a_fazer" ? "fazendo" : "concluido"]}
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <ConfirmarExclusao
+                          titulo="Excluir atividade pontual"
+                          descricao={`A tarefa "${t.nome}" será removida permanentemente.`}
+                          onConfirm={() => excluirTarefa(t.id)}
+                        />
+                      )}
+                    </div>
+                  );
+                })
               )}
-            </Button>
-            <Button
-              variant={filtroPrazo === "semana" ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setFiltroPrazo("semana")}
-            >
-              <CalendarCheck className="w-3.5 h-3.5 mr-1" /> Próximos 7 dias
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Coluna: A fazer */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <AlertCircle className="w-3.5 h-3.5" /> A fazer
-                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                  {tarefasPorStatus.a_fazer.length}
-                </Badge>
-              </div>
-              {tarefasPorStatus.a_fazer.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
-              ))}
             </div>
-
-            {/* Coluna: Fazendo */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Clock className="w-3.5 h-3.5" /> Fazendo
-                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                  {tarefasPorStatus.fazendo.length}
-                </Badge>
-              </div>
-              {tarefasPorStatus.fazendo.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
-              ))}
-            </div>
-
-            {/* Coluna: Concluído */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Concluído
-                <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                  {tarefasPorStatus.concluido.length}
-                </Badge>
-              </div>
-              {tarefasPorStatus.concluido.map((t) => (
-                <TarefaCard key={t.id} tarefa={t} onStatusChange={alterarStatusTarefa} onDelete={isAdmin ? excluirTarefa : undefined} />
-              ))}
-            </div>
-          </div>
+          )}
         </TabsContent>
 
         {/* TAB: Histórico */}
