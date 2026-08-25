@@ -50,6 +50,10 @@ import { Route as AuthenticatedToyotaToyotaRevisoesNovaRouteImport } from './rou
 import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
 import { Route as AuthenticatedRotinaRotinaTarefaIdRouteImport } from './routes/_authenticated._rotina.rotina.tarefa.$id'
 import { Route as AuthenticatedRotinaRotinaAtividadeIdRouteImport } from './routes/_authenticated._rotina.rotina.atividade.$id'
+import { Route as AuthenticatedEstoqueMatrizRouteImport } from './routes/_authenticated._estoque-matriz'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.importar'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
 
 const RegistrarRoute = RegistrarRouteImport.update({
   id: '/registrar',
@@ -281,6 +285,28 @@ const AuthenticatedRotinaRotinaAtividadeIdRoute =
     path: '/rotina/atividade/$id',
     getParentRoute: () => AuthenticatedRotinaRoute,
   } as any)
+const AuthenticatedEstoqueMatrizRoute = AuthenticatedEstoqueMatrizRouteImport.update({
+  id: '/_estoque-matriz',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport.update({
+    id: '/estoque-matriz/',
+    path: '/estoque-matriz/',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport.update({
+    id: '/estoque-matriz/importar',
+    path: '/estoque-matriz/importar',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport.update({
+    id: '/estoque-matriz/regras',
+    path: '/estoque-matriz/regras',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -318,6 +344,9 @@ export interface FileRoutesByFullPath {
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
   '/toyota/revisoes/nova': typeof AuthenticatedToyotaToyotaRevisoesNovaRoute
+  '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -355,6 +384,9 @@ export interface FileRoutesByTo {
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
   '/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
   '/toyota/revisoes/nova': typeof AuthenticatedToyotaToyotaRevisoesNovaRoute
+  '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -399,6 +431,10 @@ export interface FileRoutesById {
   '/_authenticated/_rotina/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
   '/_authenticated/_toyota/toyota/estoque/importar': typeof AuthenticatedToyotaToyotaEstoqueImportarRoute
   '/_authenticated/_toyota/toyota/revisoes/nova': typeof AuthenticatedToyotaToyotaRevisoesNovaRoute
+  '/_authenticated/_estoque-matriz': typeof AuthenticatedEstoqueMatrizRouteWithChildren
+  '/_authenticated/_estoque-matriz/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -438,6 +474,9 @@ export interface FileRouteTypes {
     | '/rotina/tarefa/$id'
     | '/toyota/estoque/importar'
     | '/toyota/revisoes/nova'
+    | '/estoque-matriz'
+    | '/estoque-matriz/importar'
+    | '/estoque-matriz/regras'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -475,6 +514,9 @@ export interface FileRouteTypes {
     | '/rotina/tarefa/$id'
     | '/toyota/estoque/importar'
     | '/toyota/revisoes/nova'
+    | '/estoque-matriz'
+    | '/estoque-matriz/importar'
+    | '/estoque-matriz/regras'
   id:
     | '__root__'
     | '/_authenticated'
@@ -518,6 +560,10 @@ export interface FileRouteTypes {
     | '/_authenticated/_rotina/rotina/tarefa/$id'
     | '/_authenticated/_toyota/toyota/estoque/importar'
     | '/_authenticated/_toyota/toyota/revisoes/nova'
+    | '/_authenticated/_estoque-matriz'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/importar'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/regras'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -820,6 +866,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRotinaRotinaAtividadeIdRouteImport
       parentRoute: typeof AuthenticatedRotinaRoute
     }
+    '/_authenticated/_estoque-matriz': {
+      id: '/_authenticated/_estoque-matriz'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/'
+      path: '/estoque-matriz'
+      fullPath: '/estoque-matriz/'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/importar': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/importar'
+      path: '/estoque-matriz/importar'
+      fullPath: '/estoque-matriz/importar'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/regras': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/regras'
+      path: '/estoque-matriz/regras'
+      fullPath: '/estoque-matriz/regras'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
   }
 }
 
@@ -948,12 +1022,31 @@ const AuthenticatedToyotaRouteChildren: AuthenticatedToyotaRouteChildren = {
 const AuthenticatedToyotaRouteWithChildren =
   AuthenticatedToyotaRoute._addFileChildren(AuthenticatedToyotaRouteChildren)
 
+interface AuthenticatedEstoqueMatrizRouteChildren {
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
+}
+
+const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteChildren = {
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute:
+    AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute,
+  AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute:
+    AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute,
+  AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute:
+    AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute,
+}
+
+const AuthenticatedEstoqueMatrizRouteWithChildren =
+  AuthenticatedEstoqueMatrizRoute._addFileChildren(AuthenticatedEstoqueMatrizRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedComprasRoute: typeof AuthenticatedComprasRouteWithChildren
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
   AuthenticatedRotinaRoute: typeof AuthenticatedRotinaRouteWithChildren
   AuthenticatedToyotaRoute: typeof AuthenticatedToyotaRouteWithChildren
+  AuthenticatedEstoqueMatrizRoute: typeof AuthenticatedEstoqueMatrizRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
 }
@@ -964,6 +1057,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
   AuthenticatedRotinaRoute: AuthenticatedRotinaRouteWithChildren,
   AuthenticatedToyotaRoute: AuthenticatedToyotaRouteWithChildren,
+  AuthenticatedEstoqueMatrizRoute: AuthenticatedEstoqueMatrizRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
 }

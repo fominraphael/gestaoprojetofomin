@@ -20,6 +20,8 @@ import {
   PlusCircle,
   ClipboardCheck,
   CalendarCheck,
+  Package,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -209,6 +211,22 @@ export const MODULES: ModuleDef[] = [
     navItems: [
       { to: "/rotina", label: "HUB", icon: LayoutDashboard },
       { to: "/rotina/configuracoes", label: "Configurações", icon: Settings },
+    ],
+  },
+  {
+    id: "estoque-matriz",
+    label: "Análise de Estoque - Matriz",
+    description:
+      "Análise de estoque por filiais, importação de dados e regras de controle.",
+    icon: BarChart3,
+    href: "/estoque-matriz",
+    requiredModule: "estoque-matriz",
+    gradient: "from-amber-500/15 to-orange-700/15",
+    iconBg: "from-amber-500 to-orange-700",
+    navItems: [
+      { to: "/estoque-matriz", label: "Estoque", icon: Package },
+      { to: "/estoque-matriz/importar", label: "Importação", icon: Upload },
+      { to: "/estoque-matriz/regras", label: "Regras", icon: ListChecks },
     ],
   },
 ];

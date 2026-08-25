@@ -822,7 +822,7 @@ export function AdminUsuariosPage() {
       existingUsers.map((u) => [u.username.toLowerCase().trim(), u]),
     );
 
-    const MODULE_IDS = ["gestao", "documentos", "toyota", "compras", "rotina"];
+    const MODULE_IDS = ["gestao", "documentos", "toyota", "compras", "rotina", "estoque-matriz"];
 
     const results = { created: 0, updated: 0, failed: 0, errors: [] as string[] };
 
@@ -857,6 +857,7 @@ export function AdminUsuariosPage() {
         toyota: ["toyota", "certificação toyota", "certificacao toyota"],
         compras: ["compras", "purchases", "seminovos"],
         rotina: ["rotina", "routine", "tarefas", "gestão de rotina"],
+        "estoque-matriz": ["estoque matriz", "analise de estoque", "análise de estoque", "estoque-matriz", "estoque_matriz"],
       };
       for (const [modId, aliases] of Object.entries(moduleAliases)) {
         const col = findCol(row, aliases);
@@ -1422,6 +1423,7 @@ export function AdminUsuariosPage() {
                         { key: "toyota", label: "Certificação Toyota" },
                         { key: "compras", label: "Compras Seminovos" },
                         { key: "rotina", label: "Gestão de Rotina" },
+                        { key: "estoque-matriz", label: "Análise de Estoque - Matriz" },
                       ].map(({ key, label }) => (
                         <label
                           key={key}
@@ -1732,6 +1734,7 @@ export function AdminUsuariosPage() {
                           { key: "toyota", label: "Certificação Toyota" },
                           { key: "compras", label: "Compras Seminovos" },
                           { key: "rotina", label: "Gestão de Rotina" },
+                          { key: "estoque-matriz", label: "Análise de Estoque - Matriz" },
                         ].map(({ key, label }) => (
                           <label
                             key={key}
@@ -2209,6 +2212,7 @@ export function AdminUsuariosPage() {
                     { id: "toyota", label: "Certificação Toyota" },
                     { id: "compras", label: "Compras Seminovos" },
                     { id: "rotina", label: "Gestão de Rotina" },
+                    { id: "estoque-matriz", label: "Análise de Estoque - Matriz" },
                   ].map((mod) => (
                     <label
                       key={mod.id}
