@@ -1466,8 +1466,6 @@ export function AdminUsuariosPage() {
               onOpenChange={(open) => {
                 if (!open) {
                   setShowEditUser(null);
-                  setEditPassword("");
-                  setShowEditPasswordField(false);
                 }
               }}
             >
