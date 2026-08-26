@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Package } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/")({
+export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz")({
   errorComponent: ModuleErrorBoundary,
   head: () => ({ meta: [{ title: "Estoque — Análise de Estoque Matriz" }] }),
   component: EstoqueMatrizIndex,
