@@ -166,12 +166,14 @@ export function SetorPage() {
     const inicio = inicioSemana();
     const fim = fimSemana(inicio);
     const cpsMap = new Map<string, Set<string>>();
-    let diaIter = new Date(inicio);
-    while (diaIter <= fim) {
-      const dataStr = diaIter.toISOString().split("T")[0]!;
+    // `inicio` e `fim` são strings ISO (YYYY-MM-DD); itera dia a dia até o fim.
+    let dataStr = inicio;
+    while (dataStr <= fim) {
       const cps = await getCheckpoints(ativIds, dataStr);
       cpsMap.set(dataStr, cps);
-      diaIter.setDate(diaIter.getDate() + 1);
+      const proximo = new Date(`${dataStr}T00:00:00`);
+      proximo.setDate(proximo.getDate() + 1);
+      dataStr = proximo.toISOString().split("T")[0]!;
     }
     setCheckpoints(cpsMap);
 
