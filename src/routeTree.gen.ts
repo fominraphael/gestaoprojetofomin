@@ -49,6 +49,7 @@ import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } fr
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.lixeira'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.importar'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.acoes-leads'
 import { Route as AuthenticatedComprasComprasNovoRouteImport } from './routes/_authenticated._compras.compras.novo'
 import { Route as AuthenticatedComprasComprasConfiguracoesRouteImport } from './routes/_authenticated._compras.compras.configuracoes'
 import { Route as AuthenticatedComprasComprasIdRouteImport } from './routes/_authenticated._compras.compras.$id'
@@ -280,6 +281,12 @@ const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
     path: '/estoque-matriz/importar',
     getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport.update({
+    id: '/estoque-matriz/acoes-leads',
+    path: '/estoque-matriz/acoes-leads',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
 const AuthenticatedComprasComprasNovoRoute =
   AuthenticatedComprasComprasNovoRouteImport.update({
     id: '/compras/novo',
@@ -339,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/compras/configuracoes': typeof AuthenticatedComprasComprasConfiguracoesRoute
   '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
+  '/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
@@ -381,6 +389,7 @@ export interface FileRoutesByTo {
   '/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/compras/configuracoes': typeof AuthenticatedComprasComprasConfiguracoesRoute
   '/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
+  '/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
@@ -431,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/_compras/compras/$id': typeof AuthenticatedComprasComprasIdRoute
   '/_authenticated/_compras/compras/configuracoes': typeof AuthenticatedComprasComprasConfiguracoesRoute
   '/_authenticated/_compras/compras/novo': typeof AuthenticatedComprasComprasNovoRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
@@ -475,6 +485,7 @@ export interface FileRouteTypes {
     | '/compras/$id'
     | '/compras/configuracoes'
     | '/compras/novo'
+    | '/estoque-matriz/acoes-leads'
     | '/estoque-matriz/importar'
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
@@ -517,6 +528,7 @@ export interface FileRouteTypes {
     | '/compras/$id'
     | '/compras/configuracoes'
     | '/compras/novo'
+    | '/estoque-matriz/acoes-leads'
     | '/estoque-matriz/importar'
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_compras/compras/$id'
     | '/_authenticated/_compras/compras/configuracoes'
     | '/_authenticated/_compras/compras/novo'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads'
     | '/_authenticated/_estoque-matriz/estoque-matriz/importar'
     | '/_authenticated/_estoque-matriz/estoque-matriz/lixeira'
     | '/_authenticated/_estoque-matriz/estoque-matriz/regras'
@@ -886,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport
       parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
+    '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads'
+      path: '/estoque-matriz/acoes-leads'
+      fullPath: '/estoque-matriz/acoes-leads'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
     '/_authenticated/_compras/compras/novo': {
       id: '/_authenticated/_compras/compras/novo'
       path: '/compras/novo'
@@ -972,6 +992,7 @@ const AuthenticatedDocumentosRouteWithChildren =
   )
 
 interface AuthenticatedEstoqueMatrizRouteChildren {
+  AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
@@ -981,6 +1002,8 @@ interface AuthenticatedEstoqueMatrizRouteChildren {
 
 const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteChildren =
   {
+    AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute:
+      AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute:
