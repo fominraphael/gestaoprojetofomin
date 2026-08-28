@@ -27,9 +27,9 @@ import { Route as AuthenticatedGestaoProjetosRouteImport } from './routes/_authe
 import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_authenticated._gestao.historico'
 import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
 import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 import { Route as AuthenticatedRotinaRotinaIndexRouteImport } from './routes/_authenticated._rotina.rotina.index'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.index'
 import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
@@ -146,12 +146,6 @@ const AuthenticatedGestaoBacklogRoute =
     path: '/backlog',
     getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizRouteImport.update({
-    id: '/estoque-matriz',
-    path: '/estoque-matriz',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
 const AuthenticatedDocumentosDocumentosRoute =
   AuthenticatedDocumentosDocumentosRouteImport.update({
     id: '/documentos',
@@ -163,6 +157,12 @@ const AuthenticatedRotinaRotinaIndexRoute =
     id: '/rotina/',
     path: '/rotina/',
     getParentRoute: () => AuthenticatedRotinaRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport.update({
+    id: '/estoque-matriz/',
+    path: '/estoque-matriz/',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
 const AuthenticatedComprasComprasIndexRoute =
   AuthenticatedComprasComprasIndexRouteImport.update({
@@ -256,15 +256,15 @@ const AuthenticatedRotinaRotinaSetorIdRoute =
   } as any)
 const AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute =
   AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport.update({
-    id: '/regras',
-    path: '/regras',
-    getParentRoute: () => AuthenticatedEstoqueMatrizEstoqueMatrizRoute,
+    id: '/estoque-matriz/regras',
+    path: '/estoque-matriz/regras',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
 const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
   AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport.update({
-    id: '/importar',
-    path: '/importar',
-    getParentRoute: () => AuthenticatedEstoqueMatrizEstoqueMatrizRoute,
+    id: '/estoque-matriz/importar',
+    path: '/estoque-matriz/importar',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
 const AuthenticatedComprasComprasNovoRoute =
   AuthenticatedComprasComprasNovoRouteImport.update({
@@ -315,7 +315,6 @@ export interface FileRoutesByFullPath {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/registrar': typeof RegistrarRoute
   '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
-  '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/historico': typeof AuthenticatedGestaoHistoricoRoute
@@ -343,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/compras/': typeof AuthenticatedComprasComprasIndexRoute
+  '/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
   '/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -355,7 +355,6 @@ export interface FileRoutesByTo {
   '/registrar': typeof RegistrarRoute
   '/': typeof AuthenticatedIndexRoute
   '/documentos': typeof AuthenticatedDocumentosDocumentosRoute
-  '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren
   '/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/historico': typeof AuthenticatedGestaoHistoricoRoute
@@ -383,6 +382,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/compras': typeof AuthenticatedComprasComprasIndexRoute
+  '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/rotina': typeof AuthenticatedRotinaRotinaIndexRoute
   '/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -403,7 +403,6 @@ export interface FileRoutesById {
   '/_authenticated/_toyota': typeof AuthenticatedToyotaRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/_documentos/documentos': typeof AuthenticatedDocumentosDocumentosRoute
-  '/_authenticated/_estoque-matriz/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren
   '/_authenticated/_gestao/backlog': typeof AuthenticatedGestaoBacklogRoute
   '/_authenticated/_gestao/dashboard': typeof AuthenticatedGestaoDashboardRoute
   '/_authenticated/_gestao/historico': typeof AuthenticatedGestaoHistoricoRoute
@@ -431,6 +430,7 @@ export interface FileRoutesById {
   '/api/public/hooks/notificar-vencimentos-test': typeof ApiPublicHooksNotificarVencimentosTestRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/_compras/compras/': typeof AuthenticatedComprasComprasIndexRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/_authenticated/_rotina/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
   '/_authenticated/_rotina/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/_authenticated/_rotina/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -445,7 +445,6 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/registrar'
     | '/documentos'
-    | '/estoque-matriz'
     | '/backlog'
     | '/dashboard'
     | '/historico'
@@ -473,6 +472,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
     | '/compras/'
+    | '/estoque-matriz/'
     | '/rotina/'
     | '/rotina/atividade/$id'
     | '/rotina/tarefa/$id'
@@ -485,7 +485,6 @@ export interface FileRouteTypes {
     | '/registrar'
     | '/'
     | '/documentos'
-    | '/estoque-matriz'
     | '/backlog'
     | '/dashboard'
     | '/historico'
@@ -513,6 +512,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
     | '/compras'
+    | '/estoque-matriz'
     | '/rotina'
     | '/rotina/atividade/$id'
     | '/rotina/tarefa/$id'
@@ -532,7 +532,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_toyota'
     | '/_authenticated/'
     | '/_authenticated/_documentos/documentos'
-    | '/_authenticated/_estoque-matriz/estoque-matriz'
     | '/_authenticated/_gestao/backlog'
     | '/_authenticated/_gestao/dashboard'
     | '/_authenticated/_gestao/historico'
@@ -560,6 +559,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notificar-vencimentos-test'
     | '/lovable/email/queue/process'
     | '/_authenticated/_compras/compras/'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/'
     | '/_authenticated/_rotina/rotina/'
     | '/_authenticated/_rotina/rotina/atividade/$id'
     | '/_authenticated/_rotina/rotina/tarefa/$id'
@@ -706,13 +706,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGestaoBacklogRouteImport
       parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/_estoque-matriz/estoque-matriz': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz'
-      path: '/estoque-matriz'
-      fullPath: '/estoque-matriz'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
     '/_authenticated/_documentos/documentos': {
       id: '/_authenticated/_documentos/documentos'
       path: '/documentos'
@@ -726,6 +719,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/rotina/'
       preLoaderRoute: typeof AuthenticatedRotinaRotinaIndexRouteImport
       parentRoute: typeof AuthenticatedRotinaRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/'
+      path: '/estoque-matriz'
+      fullPath: '/estoque-matriz/'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
     '/_authenticated/_compras/compras/': {
       id: '/_authenticated/_compras/compras/'
@@ -834,17 +834,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/_estoque-matriz/estoque-matriz/regras': {
       id: '/_authenticated/_estoque-matriz/estoque-matriz/regras'
-      path: '/regras'
+      path: '/estoque-matriz/regras'
       fullPath: '/estoque-matriz/regras'
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRoute
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
     '/_authenticated/_estoque-matriz/estoque-matriz/importar': {
       id: '/_authenticated/_estoque-matriz/estoque-matriz/importar'
-      path: '/importar'
+      path: '/estoque-matriz/importar'
       fullPath: '/estoque-matriz/importar'
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRoute
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
     '/_authenticated/_compras/compras/novo': {
       id: '/_authenticated/_compras/compras/novo'
@@ -931,32 +931,20 @@ const AuthenticatedDocumentosRouteWithChildren =
     AuthenticatedDocumentosRouteChildren,
   )
 
-interface AuthenticatedEstoqueMatrizEstoqueMatrizRouteChildren {
+interface AuthenticatedEstoqueMatrizRouteChildren {
   AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
 }
 
-const AuthenticatedEstoqueMatrizEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizEstoqueMatrizRouteChildren =
+const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteChildren =
   {
     AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute,
-  }
-
-const AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren =
-  AuthenticatedEstoqueMatrizEstoqueMatrizRoute._addFileChildren(
-    AuthenticatedEstoqueMatrizEstoqueMatrizRouteChildren,
-  )
-
-interface AuthenticatedEstoqueMatrizRouteChildren {
-  AuthenticatedEstoqueMatrizEstoqueMatrizRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren
-}
-
-const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteChildren =
-  {
-    AuthenticatedEstoqueMatrizEstoqueMatrizRoute:
-      AuthenticatedEstoqueMatrizEstoqueMatrizRouteWithChildren,
+    AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute:
+      AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute,
   }
 
 const AuthenticatedEstoqueMatrizRouteWithChildren =
