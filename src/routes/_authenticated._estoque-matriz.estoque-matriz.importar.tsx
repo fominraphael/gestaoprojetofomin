@@ -1,27 +1,199 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Upload } from "lucide-react";
+import { toast } from "sonner";
+import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  importarAnuncios,
+  importarEstoque,
+  importarVendas,
+  registrarImportacao,
+  recalcularTodos,
+  type RelatorioImportacao,
+} from "@/lib/estoque";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/importar")({
   errorComponent: ModuleErrorBoundary,
-  head: () => ({ meta: [{ title: "Importação — Análise de Estoque Matriz" }] }),
-  component: EstoqueMatrizImportar,
+  head: () => ({
+    meta: [
+      { title: "Importação — Análise de Estoque Matriz" },
+      {
+        name: "description",
+        content: "Importe planilhas de estoque, vendas históricas e anúncios para alimentar a matriz.",
+      },
+      { property: "og:title", content: "Importação — Análise de Estoque Matriz" },
+      { property: "og:description", content: "Importação de planilhas XLSX e CSV do estoque." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: EstoqueImportar,
 });
 
-function EstoqueMatrizImportar() {
+type Tipo = "estoque" | "vendas" | "anuncios";
+
+const CARDS: { tipo: Tipo; titulo: string; descricao: string }[] = [
+  {
+    tipo: "estoque",
+    titulo: "Estoque atual",
+    descricao:
+      "Unificado por Chassi + Origem + Chassi Resumido. Origens, Empresas NBS e Finalidades desconhecidas bloqueiam a linha.",
+  },
+  {
+    tipo: "vendas",
+    titulo: "Vendas históricas",
+    descricao: "Base para o cálculo por média de vendas (30 e 60 dias) por código FIPE, ano e faixa de KM.",
+  },
+  {
+    tipo: "anuncios",
+    titulo: "Anúncios",
+    descricao: "Canais Autoforce (Site Próprio), Olx e WebMotors por chassi.",
+  },
+];
+
+async function lerPlanilha(file: File): Promise<Record<string, unknown>[]> {
+  const XLSX = await import("xlsx");
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+  const nomeAba = wb.SheetNames[0];
+  if (!nomeAba) throw new Error("Planilha vazia.");
+  const sheet = wb.Sheets[nomeAba]!;
+  return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+}
+
+function EstoqueImportar() {
+  const qc = useQueryClient();
+  const [processando, setProcessando] = useState<Tipo | null>(null);
+  const [relatorios, setRelatorios] = useState<Partial<Record<Tipo, RelatorioImportacao>>>({});
+
+  const { data: historicoImport = [] } = useQuery({
+    queryKey: ["estoque", "importacoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estoque_importacoes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      if (error) throw error;
+      return (data ?? []) as Record<string, any>[];
+    },
+  });
+
+  const processar = async (tipo: Tipo, file: File) => {
+    setProcessando(tipo);
+    try {
+      const linhas = await lerPlanilha(file);
+      const rel =
+        tipo === "estoque"
+          ? await importarEstoque(linhas)
+          : tipo === "vendas"
+            ? await importarVendas(linhas)
+            : await importarAnuncios(linhas);
+      await registrarImportacao(tipo, file.name, rel);
+      setRelatorios((r) => ({ ...r, [tipo]: rel }));
+      toast.success(
+        `${rel.importados} novos, ${rel.atualizados} atualizados, ${rel.ignorados.length} ignorados.`,
+      );
+      if (tipo !== "anuncios") {
+        const res = await recalcularTodos();
+        toast.success(`Recálculo automático: ${res.alterados} valores atualizados.`);
+      }
+      await qc.invalidateQueries({ queryKey: ["estoque"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha na importação");
+    } finally {
+      setProcessando(null);
+    }
+  };
+
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
           <Upload className="w-5 h-5 text-primary" /> Importação
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Importação de dados de estoque para análise.
+          Envie planilhas XLSX ou CSV. Ao final é exibido o relatório de linhas ignoradas.
         </p>
       </div>
-      <div className="bg-card border border-border rounded-2xl p-12 text-center">
-        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Em desenvolvimento</p>
+
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        {CARDS.map((c) => {
+          const rel = relatorios[c.tipo];
+          return (
+            <Card key={c.tipo} className="p-5 space-y-3">
+              <div>
+                <h2 className="font-semibold">{c.titulo}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{c.descricao}</p>
+              </div>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                disabled={processando !== null}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void processar(c.tipo, f);
+                }}
+                className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground file:text-xs"
+              />
+              {processando === c.tipo && (
+                <p className="text-xs text-muted-foreground">Processando planilha…</p>
+              )}
+              {rel && (
+                <div className="space-y-2 text-xs">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{rel.totalLinhas} linhas</Badge>
+                    <Badge variant="secondary">{rel.importados} novos</Badge>
+                    <Badge variant="secondary">{rel.atualizados} atualizados</Badge>
+                    <Badge variant={rel.ignorados.length ? "destructive" : "secondary"}>
+                      {rel.ignorados.length} ignorados
+                    </Badge>
+                  </div>
+                  {rel.ignorados.length > 0 && (
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-border p-2 space-y-1">
+                      {rel.ignorados.map((l, i) => (
+                        <div key={i} className="text-muted-foreground">
+                          Linha {l.linha}
+                          {l.chassi ? ` · ${l.chassi}` : ""}: {l.motivo}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Últimas importações</h2>
+        <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+          {historicoImport.length === 0 && (
+            <p className="p-6 text-center text-sm text-muted-foreground">
+              Nenhuma importação registrada.
+            </p>
+          )}
+          {historicoImport.map((h) => (
+            <div key={h.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
+              <Badge variant="secondary">{h.tipo}</Badge>
+              <span className="font-medium">{h.arquivo_nome}</span>
+              <span className="text-muted-foreground">
+                {h.total_linhas} linhas · {h.total_importados} novos · {h.total_atualizados}{" "}
+                atualizados · {h.total_ignorados} ignorados
+              </span>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {new Date(h.created_at).toLocaleString("pt-BR")}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
