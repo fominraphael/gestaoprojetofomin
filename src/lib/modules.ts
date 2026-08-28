@@ -224,10 +224,14 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-amber-500/15 to-orange-700/15",
     iconBg: "from-amber-500 to-orange-700",
     navItems: [
-      { to: "/estoque-matriz", label: "Estoque", icon: Package },
+      { to: "/estoque-matriz", label: "Veículos", icon: Package },
+      { to: "/estoque-matriz/repasse", label: "Repasse", icon: Truck },
+      { to: "/estoque-matriz/acoes-leads", label: "Ações de Leads", icon: ClipboardCheck },
       { to: "/estoque-matriz/importar", label: "Importação", icon: Upload },
-      { to: "/estoque-matriz/regras", label: "Regras", icon: ListChecks },
+      { to: "/estoque-matriz/lixeira", label: "Lixeira", icon: Archive },
+      { to: "/estoque-matriz/regras", label: "Configurações", icon: ListChecks },
     ],
+
   },
 ];
 
