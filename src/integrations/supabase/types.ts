@@ -615,6 +615,648 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_anuncios: {
+        Row: {
+          ano_fabricacao: string | null
+          ano_modelo: string | null
+          canal_olx: boolean
+          canal_site_proprio: boolean
+          canal_webmotors: boolean
+          chassi: string
+          codigo: string | null
+          conta: string | null
+          cor: string | null
+          created_at: string
+          dados: Json
+          id: string
+          importado_em: string
+          km: number | null
+          marca: string | null
+          modelo: string | null
+          placa: string | null
+          plataformas: Json
+          preco_venda: number | null
+          qtd_fotos: number | null
+          status: string | null
+          updated_at: string
+          versao: string | null
+        }
+        Insert: {
+          ano_fabricacao?: string | null
+          ano_modelo?: string | null
+          canal_olx?: boolean
+          canal_site_proprio?: boolean
+          canal_webmotors?: boolean
+          chassi: string
+          codigo?: string | null
+          conta?: string | null
+          cor?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          importado_em?: string
+          km?: number | null
+          marca?: string | null
+          modelo?: string | null
+          placa?: string | null
+          plataformas?: Json
+          preco_venda?: number | null
+          qtd_fotos?: number | null
+          status?: string | null
+          updated_at?: string
+          versao?: string | null
+        }
+        Update: {
+          ano_fabricacao?: string | null
+          ano_modelo?: string | null
+          canal_olx?: boolean
+          canal_site_proprio?: boolean
+          canal_webmotors?: boolean
+          chassi?: string
+          codigo?: string | null
+          conta?: string | null
+          cor?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          importado_em?: string
+          km?: number | null
+          marca?: string | null
+          modelo?: string | null
+          placa?: string | null
+          plataformas?: Json
+          preco_venda?: number | null
+          qtd_fotos?: number | null
+          status?: string | null
+          updated_at?: string
+          versao?: string | null
+        }
+        Relationships: []
+      }
+      estoque_empresas_nbs: {
+        Row: {
+          ativo: boolean
+          codigo_chassi_resumido: string
+          created_at: string
+          id: string
+          nome_exibicao: string
+          origem_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo_chassi_resumido: string
+          created_at?: string
+          id?: string
+          nome_exibicao: string
+          origem_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo_chassi_resumido?: string
+          created_at?: string
+          id?: string
+          nome_exibicao?: string
+          origem_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_empresas_nbs_origem_id_fkey"
+            columns: ["origem_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_origens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_faixas_dias: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          dia_fim: number
+          dia_inicio: number
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          dia_fim: number
+          dia_inicio: number
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          dia_fim?: number
+          dia_inicio?: number
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      estoque_finalidades: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      estoque_importacoes: {
+        Row: {
+          arquivo_nome: string | null
+          created_at: string
+          id: string
+          relatorio: Json
+          tipo: string
+          total_atualizados: number
+          total_ignorados: number
+          total_importados: number
+          total_linhas: number
+          user_id: string | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          created_at?: string
+          id?: string
+          relatorio?: Json
+          tipo: string
+          total_atualizados?: number
+          total_ignorados?: number
+          total_importados?: number
+          total_linhas?: number
+          user_id?: string | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          created_at?: string
+          id?: string
+          relatorio?: Json
+          tipo?: string
+          total_atualizados?: number
+          total_ignorados?: number
+          total_importados?: number
+          total_linhas?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      estoque_origens: {
+        Row: {
+          ativo: boolean
+          codigo: number
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: number
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      estoque_regra_leads: {
+        Row: {
+          created_at: string
+          id: string
+          leads_max: number | null
+          leads_min: number | null
+          ordem: number
+          percentual: number
+          regra_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leads_max?: number | null
+          leads_min?: number | null
+          ordem?: number
+          percentual?: number
+          regra_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leads_max?: number | null
+          leads_min?: number | null
+          ordem?: number
+          percentual?: number
+          regra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_regra_leads_regra_id_fkey"
+            columns: ["regra_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_regras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_regras: {
+        Row: {
+          arredonda_990: boolean
+          ativo: boolean
+          canais_exigidos: string[]
+          classificacao: string
+          created_at: string
+          faixa_id: string
+          gera_tarefa: boolean
+          id: string
+          nome_tarefa: string | null
+          nova_finalidade: string | null
+          percentual: number
+          piso_fipe_ativo: boolean
+          piso_fipe_percentual: number | null
+          teto_fipe_ativo: boolean
+          teto_fipe_percentual: number | null
+          tipo_regra: string
+          updated_at: string
+        }
+        Insert: {
+          arredonda_990?: boolean
+          ativo?: boolean
+          canais_exigidos?: string[]
+          classificacao: string
+          created_at?: string
+          faixa_id: string
+          gera_tarefa?: boolean
+          id?: string
+          nome_tarefa?: string | null
+          nova_finalidade?: string | null
+          percentual?: number
+          piso_fipe_ativo?: boolean
+          piso_fipe_percentual?: number | null
+          teto_fipe_ativo?: boolean
+          teto_fipe_percentual?: number | null
+          tipo_regra?: string
+          updated_at?: string
+        }
+        Update: {
+          arredonda_990?: boolean
+          ativo?: boolean
+          canais_exigidos?: string[]
+          classificacao?: string
+          created_at?: string
+          faixa_id?: string
+          gera_tarefa?: boolean
+          id?: string
+          nome_tarefa?: string | null
+          nova_finalidade?: string | null
+          percentual?: number
+          piso_fipe_ativo?: boolean
+          piso_fipe_percentual?: number | null
+          teto_fipe_ativo?: boolean
+          teto_fipe_percentual?: number | null
+          tipo_regra?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_regras_faixa_id_fkey"
+            columns: ["faixa_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_faixas_dias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_tarefas_lead: {
+        Row: {
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          faixa_nome: string | null
+          id: string
+          nome: string
+          regra_id: string | null
+          updated_at: string
+          veiculo_id: string
+        }
+        Insert: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          faixa_nome?: string | null
+          id?: string
+          nome: string
+          regra_id?: string | null
+          updated_at?: string
+          veiculo_id: string
+        }
+        Update: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          faixa_nome?: string | null
+          id?: string
+          nome?: string
+          regra_id?: string | null
+          updated_at?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_tarefas_lead_regra_id_fkey"
+            columns: ["regra_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_regras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_tarefas_lead_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_valor_historico: {
+        Row: {
+          classificacao: string | null
+          created_at: string
+          faixa_nome: string | null
+          id: string
+          memoria_calculo: Json
+          percentual: number | null
+          regra_tipo: string | null
+          valor_anterior: number | null
+          valor_novo: number | null
+          veiculo_id: string
+        }
+        Insert: {
+          classificacao?: string | null
+          created_at?: string
+          faixa_nome?: string | null
+          id?: string
+          memoria_calculo?: Json
+          percentual?: number | null
+          regra_tipo?: string | null
+          valor_anterior?: number | null
+          valor_novo?: number | null
+          veiculo_id: string
+        }
+        Update: {
+          classificacao?: string | null
+          created_at?: string
+          faixa_nome?: string | null
+          id?: string
+          memoria_calculo?: Json
+          percentual?: number | null
+          regra_tipo?: string | null
+          valor_anterior?: number | null
+          valor_novo?: number | null
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_valor_historico_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_veiculos: {
+        Row: {
+          acao_planilha: string | null
+          ano_mod: string | null
+          chassi: string
+          chassi_resumido: string
+          classificacao: string | null
+          codigo_fipe: string | null
+          cor: string | null
+          created_at: string
+          custo_total: number | null
+          deleted_at: string | null
+          dias_em_estoque: number
+          em_repasse: boolean
+          empresa_nbs_id: string | null
+          faixa_id_atual: string | null
+          finalidade: string | null
+          finalidade_atual: string | null
+          fipe: number | null
+          fotos_qtd: number | null
+          id: string
+          importado_em: string
+          km: number | null
+          leads_60_dias: number
+          loja: string | null
+          modelo: string | null
+          origem_id: string
+          percentual_fipe_planilha: number | null
+          placa: string | null
+          regional: string | null
+          ultimo_calculo_em: string | null
+          updated_at: string
+          valor_anunciado_planilha: number | null
+          valor_anuncio_calculado: number | null
+        }
+        Insert: {
+          acao_planilha?: string | null
+          ano_mod?: string | null
+          chassi: string
+          chassi_resumido: string
+          classificacao?: string | null
+          codigo_fipe?: string | null
+          cor?: string | null
+          created_at?: string
+          custo_total?: number | null
+          deleted_at?: string | null
+          dias_em_estoque?: number
+          em_repasse?: boolean
+          empresa_nbs_id?: string | null
+          faixa_id_atual?: string | null
+          finalidade?: string | null
+          finalidade_atual?: string | null
+          fipe?: number | null
+          fotos_qtd?: number | null
+          id?: string
+          importado_em?: string
+          km?: number | null
+          leads_60_dias?: number
+          loja?: string | null
+          modelo?: string | null
+          origem_id: string
+          percentual_fipe_planilha?: number | null
+          placa?: string | null
+          regional?: string | null
+          ultimo_calculo_em?: string | null
+          updated_at?: string
+          valor_anunciado_planilha?: number | null
+          valor_anuncio_calculado?: number | null
+        }
+        Update: {
+          acao_planilha?: string | null
+          ano_mod?: string | null
+          chassi?: string
+          chassi_resumido?: string
+          classificacao?: string | null
+          codigo_fipe?: string | null
+          cor?: string | null
+          created_at?: string
+          custo_total?: number | null
+          deleted_at?: string | null
+          dias_em_estoque?: number
+          em_repasse?: boolean
+          empresa_nbs_id?: string | null
+          faixa_id_atual?: string | null
+          finalidade?: string | null
+          finalidade_atual?: string | null
+          fipe?: number | null
+          fotos_qtd?: number | null
+          id?: string
+          importado_em?: string
+          km?: number | null
+          leads_60_dias?: number
+          loja?: string | null
+          modelo?: string | null
+          origem_id?: string
+          percentual_fipe_planilha?: number | null
+          placa?: string | null
+          regional?: string | null
+          ultimo_calculo_em?: string | null
+          updated_at?: string
+          valor_anunciado_planilha?: number | null
+          valor_anuncio_calculado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_veiculos_empresa_nbs_id_fkey"
+            columns: ["empresa_nbs_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_empresas_nbs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_veiculos_faixa_id_atual_fkey"
+            columns: ["faixa_id_atual"]
+            isOneToOne: false
+            referencedRelation: "estoque_faixas_dias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_veiculos_origem_id_fkey"
+            columns: ["origem_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_origens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_vendas_historico: {
+        Row: {
+          ano_modelo: string | null
+          chassi: string | null
+          codigo_fipe: string | null
+          created_at: string
+          data_venda: string | null
+          dias_em_estoque: number | null
+          finalidade: string | null
+          id: string
+          km: number | null
+          loja: string | null
+          lucro_bruto: number | null
+          modelo: string | null
+          nome_cliente: string | null
+          placa: string | null
+          regional: string | null
+          valor_custo: number | null
+          valor_imposto: number | null
+          valor_venda: number | null
+          vendedor: string | null
+          versao: string | null
+        }
+        Insert: {
+          ano_modelo?: string | null
+          chassi?: string | null
+          codigo_fipe?: string | null
+          created_at?: string
+          data_venda?: string | null
+          dias_em_estoque?: number | null
+          finalidade?: string | null
+          id?: string
+          km?: number | null
+          loja?: string | null
+          lucro_bruto?: number | null
+          modelo?: string | null
+          nome_cliente?: string | null
+          placa?: string | null
+          regional?: string | null
+          valor_custo?: number | null
+          valor_imposto?: number | null
+          valor_venda?: number | null
+          vendedor?: string | null
+          versao?: string | null
+        }
+        Update: {
+          ano_modelo?: string | null
+          chassi?: string | null
+          codigo_fipe?: string | null
+          created_at?: string
+          data_venda?: string | null
+          dias_em_estoque?: number | null
+          finalidade?: string | null
+          id?: string
+          km?: number | null
+          loja?: string | null
+          lucro_bruto?: number | null
+          modelo?: string | null
+          nome_cliente?: string | null
+          placa?: string | null
+          regional?: string | null
+          valor_custo?: number | null
+          valor_imposto?: number | null
+          valor_venda?: number | null
+          vendedor?: string | null
+          versao?: string | null
+        }
+        Relationships: []
+      }
       password_reset_codes: {
         Row: {
           attempts: number
