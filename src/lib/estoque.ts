@@ -542,7 +542,7 @@ export async function importarEstoque(
       chassi,
       origem_id: origem.id,
       chassi_resumido: chassiResumido,
-      empresa_nbs_id: empresa.id,
+      empresa_nbs_id: empresa?.id ?? null,
       regional: toText(coluna(l, "Regional")),
       loja: toText(coluna(l, "Loja")),
       modelo: toText(coluna(l, "Modelo")),
