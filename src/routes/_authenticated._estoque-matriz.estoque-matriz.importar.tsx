@@ -176,7 +176,7 @@ function EstoqueImportar() {
           if (!o && encerrado) setProgresso(null);
         }}
       >
-        <DialogContent className="sm:max-w-md" showCloseButton={encerrado}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {progresso?.fase === "erro"
