@@ -637,22 +637,20 @@ function EmpresasNbsEditor({
   origens: Origem[];
 }) {
   const qc = useQueryClient();
-  const [nova, setNova] = useState({ origem_id: "", codigo: "", nome: "" });
+  const [nova, setNova] = useState({ origem_id: "", nome: "" });
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ["estoque", "nbs"] });
 
   const criar = async () => {
     if (!nova.origem_id) return toast.error("Selecione a origem.");
-    if (!nova.codigo.trim() || !nova.nome.trim())
-      return toast.error("Informe o código do chassi resumido e o nome de exibição.");
+    if (!nova.nome.trim()) return toast.error("Informe o nome de exibição.");
     const { error } = await supabase.from("estoque_empresas_nbs").insert({
       origem_id: nova.origem_id,
-      codigo_chassi_resumido: nova.codigo.trim(),
       nome_exibicao: nova.nome.trim(),
       ativo: true,
     } as never);
     if (error) return toast.error(error.message);
-    setNova({ origem_id: "", codigo: "", nome: "" });
+    setNova({ origem_id: "", nome: "" });
     toast.success("Empresa NBS cadastrada.");
     await invalidar();
   };
