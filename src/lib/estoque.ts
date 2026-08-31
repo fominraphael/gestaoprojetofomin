@@ -486,6 +486,47 @@ export async function marcarTarefa(id: string, concluido: boolean): Promise<void
   if (error) throw error;
 }
 
+/* ------------------------------ Ações da matriz ------------------------------ */
+
+export interface AcaoMatrizRegistro {
+  id: string;
+  veiculo_id: string;
+  tipo_acao: TipoAcaoMatriz;
+  concluido: boolean;
+  concluido_em: string | null;
+}
+
+export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
+  const { data, error } = await supabase
+    .from("estoque_acoes_matriz")
+    .select("id,veiculo_id,tipo_acao,concluido,concluido_em");
+  if (error) throw error;
+  return (data ?? []) as unknown as AcaoMatrizRegistro[];
+}
+
+/** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
+export async function marcarAcaoMatriz(
+  veiculoId: string,
+  tipo: TipoAcaoMatriz,
+  concluido: boolean,
+): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser();
+  const { error } = await supabase.from("estoque_acoes_matriz").upsert(
+    {
+      veiculo_id: veiculoId,
+      tipo_acao: tipo,
+      concluido,
+      concluido_em: concluido ? new Date().toISOString() : null,
+      concluido_por: concluido ? (auth.user?.id ?? null) : null,
+    } as never,
+    { onConflict: "veiculo_id,tipo_acao" },
+  );
+  if (error) throw error;
+}
+
+export { ACOES_MATRIZ };
+
+
 /* -------------------------------- Recálculo --------------------------------- */
 
 export interface ResumoRecalculo {
