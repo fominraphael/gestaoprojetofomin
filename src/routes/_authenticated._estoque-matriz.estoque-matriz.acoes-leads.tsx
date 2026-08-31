@@ -1,47 +1,154 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ClipboardCheck, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { getTarefasLead, getVeiculos, marcarTarefa } from "@/lib/estoque";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  getAcoesMatriz,
+  getFaixas,
+  getRegras,
+  getVeiculos,
+  marcarAcaoMatriz,
+} from "@/lib/estoque";
+import { ACOES_MATRIZ, veiculoFotografado, type TipoAcaoMatriz } from "@/lib/estoque-motor";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads")({
   errorComponent: ModuleErrorBoundary,
   head: () => ({
     meta: [
-      { title: "Ações de Leads — Análise de Estoque Matriz" },
+      { title: "Ações da Matriz — Análise de Estoque Matriz" },
       {
         name: "description",
-        content: "Tarefas de acompanhamento de leads geradas pelas regras de precificação.",
+        content:
+          "Veículos com ações operacionais ativas na matriz de regras: aceleradores, fotos da avaliação, repescagem de leads e auditoria de anúncio.",
       },
-      { property: "og:title", content: "Ações de Leads — Análise de Estoque Matriz" },
-      { property: "og:description", content: "Checklist de ações de leads por veículo." },
+      { property: "og:title", content: "Ações da Matriz — Análise de Estoque Matriz" },
+      {
+        property: "og:description",
+        content: "Acompanhamento operacional das ações configuradas na matriz de regras.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: AcoesLeads,
+  component: AcoesMatriz,
 });
 
-function AcoesLeads() {
+const TODOS = "__todos__";
+
+interface LinhaAcao {
+  veiculoId: string;
+  modelo: string;
+  chassi: string;
+  loja: string;
+  classificacao: string;
+  faixa: string;
+  tipo: TipoAcaoMatriz;
+  acao: string;
+  concluido: boolean;
+  observacao: string;
+}
+
+function AcoesMatriz() {
   const qc = useQueryClient();
-  const { data: tarefas = [] } = useQuery({ queryKey: ["estoque", "tarefas"], queryFn: getTarefasLead });
+  const [filtro, setFiltro] = useState<string>(TODOS);
+
   const { data: veiculos = [] } = useQuery({
     queryKey: ["estoque", "veiculos", "ativos"],
     queryFn: () => getVeiculos({ repasse: false }),
   });
+  const { data: regras = [] } = useQuery({ queryKey: ["estoque", "regras"], queryFn: getRegras });
+  const { data: faixas = [] } = useQuery({ queryKey: ["estoque", "faixas"], queryFn: getFaixas });
+  const { data: acoes = [] } = useQuery({
+    queryKey: ["estoque", "acoes-matriz"],
+    queryFn: getAcoesMatriz,
+  });
 
-  const veiculoPorId = useMemo(() => new Map(veiculos.map((v) => [v.id, v])), [veiculos]);
+  const concluidoPor = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const a of acoes) m.set(`${a.veiculo_id}:${a.tipo_acao}`, a.concluido);
+    return m;
+  }, [acoes]);
 
-  const alternar = async (id: string, concluido: boolean) => {
+  /** Um veículo entra na lista para cada ação ativa na célula da matriz dele. */
+  const linhas = useMemo<LinhaAcao[]>(() => {
+    const out: LinhaAcao[] = [];
+    for (const v of veiculos) {
+      const regra = regras.find(
+        (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
+      );
+      if (!regra) continue;
+      const faixa = faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
+      for (const a of ACOES_MATRIZ) {
+        if (!regra[a.campo]) continue;
+        if (a.tipo === "fotos_ia" && veiculoFotografado(v.fotos_qtd, regra)) continue;
+        out.push({
+          veiculoId: v.id,
+          modelo: v.modelo ?? "—",
+          chassi: v.chassi,
+          loja: v.loja ?? "—",
+          classificacao: v.classificacao ?? "—",
+          faixa,
+          tipo: a.tipo,
+          acao: a.label,
+          concluido: concluidoPor.get(`${v.id}:${a.tipo}`) ?? false,
+          observacao:
+            a.tipo === "fotos_ia"
+              ? `${v.fotos_qtd ?? 0} foto(s) — mínimo ${regra.min_fotos ?? 2}`
+              : "",
+        });
+      }
+    }
+    return out;
+  }, [veiculos, regras, faixas, concluidoPor]);
+
+  const filtradas = useMemo(
+    () => (filtro === TODOS ? linhas : linhas.filter((l) => l.tipo === filtro)),
+    [linhas, filtro],
+  );
+
+  const alternar = async (l: LinhaAcao, concluido: boolean) => {
     try {
-      await marcarTarefa(id, concluido);
-      await qc.invalidateQueries({ queryKey: ["estoque", "tarefas"] });
+      await marcarAcaoMatriz(l.veiculoId, l.tipo, concluido);
+      await qc.invalidateQueries({ queryKey: ["estoque", "acoes-matriz"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao atualizar tarefa");
+      toast.error(e instanceof Error ? e.message : "Falha ao atualizar a ação");
+    }
+  };
+
+  const exportar = async () => {
+    if (filtradas.length === 0) return toast.error("Nenhuma ação para exportar.");
+    try {
+      const XLSX = await import("xlsx");
+      const ws = XLSX.utils.json_to_sheet(
+        filtradas.map((l) => ({
+          Ação: l.acao,
+          Modelo: l.modelo,
+          Chassi: l.chassi,
+          Loja: l.loja,
+          Classificação: l.classificacao,
+          Faixa: l.faixa,
+          Observação: l.observacao,
+          Realizada: l.concluido ? "Sim" : "Não",
+        })),
+      );
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Ações da Matriz");
+      XLSX.writeFile(wb, `acoes-matriz-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success(`${filtradas.length} ações exportadas.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao exportar.");
     }
   };
 
@@ -49,38 +156,82 @@ function AcoesLeads() {
     <div className="p-6 space-y-4 w-full">
       <div>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <ClipboardCheck className="w-5 h-5 text-primary" /> Ações de Leads
+          <ClipboardCheck className="w-5 h-5 text-primary" /> Ações da Matriz
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Tarefas geradas pelas regras da matriz. Marcar como concluída é informativo e não bloqueia a
-          evolução do veículo.
+          Veículos listados automaticamente conforme as ações operacionais ativas na célula
+          (classificação × faixa) da matriz de regras.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-        {tarefas.length === 0 && (
-          <p className="p-10 text-center text-muted-foreground">Nenhuma tarefa gerada até o momento.</p>
-        )}
-        {tarefas.map((t) => {
-          const v = veiculoPorId.get(t.veiculo_id);
-          return (
-            <label key={t.id} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/30">
-              <Checkbox
-                checked={t.concluido}
-                onCheckedChange={(c) => alternar(t.id, c === true)}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">{t.nome}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {v ? `${v.modelo ?? "—"} · ${v.chassi}` : "Veículo não disponível"}
-                </div>
-              </div>
-              {t.faixa_nome && <Badge variant="secondary">{t.faixa_nome}</Badge>}
-              {t.concluido && <Badge>Concluído</Badge>}
-            </label>
-          );
-        })}
+      <div className="flex flex-wrap gap-2">
+        <Select value={filtro} onValueChange={setFiltro}>
+          <SelectTrigger className="w-[260px]">
+            <SelectValue placeholder="Tipo de ação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS}>Todas as ações</SelectItem>
+            {ACOES_MATRIZ.map((a) => (
+              <SelectItem key={a.tipo} value={a.tipo}>
+                {a.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" className="ml-auto" onClick={() => void exportar()}>
+          <Download className="w-4 h-4" />
+          Exportar ({filtradas.length})
+        </Button>
       </div>
+
+      <div className="rounded-2xl border border-border bg-card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-muted-foreground">
+            <tr className="text-left">
+              <th className="px-3 py-2 font-medium w-10">Feito</th>
+              <th className="px-3 py-2 font-medium">Ação</th>
+              <th className="px-3 py-2 font-medium">Veículo</th>
+              <th className="px-3 py-2 font-medium">Chassi</th>
+              <th className="px-3 py-2 font-medium">Class.</th>
+              <th className="px-3 py-2 font-medium">Faixa</th>
+              <th className="px-3 py-2 font-medium">Observação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtradas.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
+                  Nenhuma ação ativa para os veículos atuais.
+                </td>
+              </tr>
+            )}
+            {filtradas.map((l) => (
+              <tr key={`${l.veiculoId}:${l.tipo}`} className="border-t border-border hover:bg-muted/30">
+                <td className="px-3 py-2">
+                  <Checkbox
+                    checked={l.concluido}
+                    onCheckedChange={(c) => void alternar(l, c === true)}
+                  />
+                </td>
+                <td className="px-3 py-2">{l.acao}</td>
+                <td className="px-3 py-2">
+                  <div className="font-medium text-foreground">{l.modelo}</div>
+                  <div className="text-xs text-muted-foreground">{l.loja}</div>
+                </td>
+                <td className="px-3 py-2 font-mono text-xs">{l.chassi}</td>
+                <td className="px-3 py-2">
+                  <Badge variant="secondary">{l.classificacao}</Badge>
+                </td>
+                <td className="px-3 py-2">{l.faixa}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">{l.observacao}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {filtradas.length} de {linhas.length} ações
+      </p>
     </div>
   );
 }
