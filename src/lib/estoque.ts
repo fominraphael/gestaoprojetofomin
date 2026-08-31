@@ -1024,6 +1024,9 @@ export async function importarEstoque(
     porChassiOrigem.set(chave, lista);
   }
 
+  const atualizacoes: AtualizacaoEstoque[] = [];
+  const insercoes: InsercaoEstoque[] = [];
+
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
     const numeroLinha = i + 2;
