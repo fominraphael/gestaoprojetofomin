@@ -742,16 +742,36 @@ export async function importarEstoque(
     const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
 
     if (mesmoRegistro) {
-      // Mesma compra já registrada nessa origem → apenas atualiza.
+      // Mesma compra já registrada nessa origem → atualiza e movimenta a categoria.
+      // Uma venda só casa com esta compra se aconteceu depois da entrada no estoque.
+      const dataVenda = vendaMaxPorChassi.get(chassi);
+      const entradaDia = (mesmoRegistro.importado_em ?? "").slice(0, 10);
+      const vendeu = !!dataVenda && !!entradaDia && dataVenda >= entradaDia;
+
+      const patch: Record<string, unknown> = { ...registro };
+      if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
+      else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
+
       const { error } = await supabase
         .from("estoque_veiculos")
-        .update(registro as never)
+        .update(patch as never)
         .eq("id", mesmoRegistro.id);
       if (error) {
         rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
         continue;
       }
-      rel.atualizados += 1;
+      if (vendeu && !mesmoRegistro.em_vendido) {
+        // Venda localizada na planilha de vendas → categoria Vendidos.
+        mesmoRegistro.em_vendido = true;
+        rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
+      } else if (!vendeu && mesmoRegistro.em_vendido) {
+        // Reapareceu no estoque sem venda correspondente → venda cancelada.
+        mesmoRegistro.em_vendido = false;
+        rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + 1;
+        rel.atualizados += 1;
+      } else {
+        rel.atualizados += 1;
+      }
       continue;
     }
 
@@ -776,7 +796,12 @@ export async function importarEstoque(
       rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
       continue;
     }
-    ativosDoChassi.push({ id: (inserido as { id: string }).id, chassi_resumido: chassiResumido });
+    ativosDoChassi.push({
+      id: (inserido as { id: string }).id,
+      chassi_resumido: chassiResumido,
+      em_vendido: false,
+      importado_em: registro.importado_em,
+    });
     porChassiOrigem.set(chave, ativosDoChassi);
     rel.importados += 1;
     if (ativosDoChassi.length > 1) rel.novasCompras = (rel.novasCompras ?? 0) + 1;
