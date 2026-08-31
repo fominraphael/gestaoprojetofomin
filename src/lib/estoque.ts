@@ -608,18 +608,19 @@ export interface ResumoRecalculo {
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
 export async function recalcularTodos(): Promise<ResumoRecalculo> {
-  const [veiculos, faixas, regras, vendas, anunciosMercado] = await Promise.all([
+  const [veiculos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
     getVeiculos({}),
     getFaixas(),
     getRegras(),
     getVendas(),
     getAnunciosMercado(),
+    getFaixasKm(),
   ]);
 
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
   for (const v of veiculos) {
-    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado });
+    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado, faixasKm });
     if (!r.alterou) continue;
 
 
