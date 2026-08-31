@@ -30,6 +30,47 @@ export interface GatilhoLeads {
   ordem: number;
 }
 
+/** Tipos de nível de fallback usados para montar o valor base do anúncio. */
+export type TipoNivelBase = "hist_curto" | "hist_longo" | "fipe_fixo";
+
+export interface NivelBase {
+  tipo: TipoNivelBase;
+  ativo: boolean;
+  /** Janela em dias — usada apenas nos níveis de histórico. */
+  dias: number | null;
+  /** Percentual da FIPE — usado apenas no nível `fipe_fixo`. */
+  percentual: number | null;
+  ordem: number;
+}
+
+export const ROTULO_NIVEL: Record<TipoNivelBase, string> = {
+  hist_curto: "Histórico de vendas (janela curta)",
+  hist_longo: "Histórico de vendas (janela longa)",
+  fipe_fixo: "Percentual fixo da FIPE",
+};
+
+/** Configuração padrão (equivale ao comportamento anterior: 30d → 60d → 100% FIPE). */
+export const NIVEIS_BASE_PADRAO: NivelBase[] = [
+  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ordem: 0 },
+  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ordem: 1 },
+  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ordem: 2 },
+];
+
+export function normalizaNiveis(niveis: unknown): NivelBase[] {
+  const arr = Array.isArray(niveis) ? (niveis as Partial<NivelBase>[]) : [];
+  const validos = arr.filter((n) => n && typeof n.tipo === "string" && n.tipo in ROTULO_NIVEL);
+  if (validos.length === 0) return NIVEIS_BASE_PADRAO.map((n) => ({ ...n }));
+  return validos
+    .map((n, i) => ({
+      tipo: n.tipo as TipoNivelBase,
+      ativo: n.ativo !== false,
+      dias: n.dias ?? null,
+      percentual: n.percentual ?? null,
+      ordem: typeof n.ordem === "number" ? n.ordem : i,
+    }))
+    .sort((a, b) => a.ordem - b.ordem);
+}
+
 export interface RegraEstoque {
   id: string;
   classificacao: ClassificacaoEstoque;
@@ -46,8 +87,39 @@ export interface RegraEstoque {
   nome_tarefa: string | null;
   nova_finalidade: string | null;
   ativo: boolean;
+  /** Níveis de fallback do valor base (ativáveis e reordenáveis por célula). */
+  fallback_niveis?: NivelBase[] | null;
+  checagem_mercado_ativa?: boolean;
+  canal_referencia?: string | null;
+  min_fotos?: number | null;
+  acao_aceleradores?: boolean;
+  acao_fotos_ia?: boolean;
+  acao_repescagem?: boolean;
+  acao_auditoria?: boolean;
   leads?: GatilhoLeads[];
 }
+
+/** Ações operacionais configuráveis por célula da matriz. */
+export type TipoAcaoMatriz = "aceleradores" | "fotos_ia" | "repescagem" | "auditoria";
+
+export const ACOES_MATRIZ: { tipo: TipoAcaoMatriz; label: string; campo: keyof RegraEstoque }[] = [
+  { tipo: "aceleradores", label: "Aceleradores", campo: "acao_aceleradores" },
+  { tipo: "fotos_ia", label: "Usar fotos da avaliação (IA)", campo: "acao_fotos_ia" },
+  { tipo: "repescagem", label: "Repescagem de leads", campo: "acao_repescagem" },
+  { tipo: "auditoria", label: "Auditoria de anúncio", campo: "acao_auditoria" },
+];
+
+/** Anúncio importado usado na checagem de mercado. */
+export interface AnuncioMercado {
+  chassi: string;
+  modelo: string | null;
+  ano_modelo: string | null;
+  preco_venda: number | null;
+  canal_site_proprio: boolean;
+  canal_olx: boolean;
+  canal_webmotors: boolean;
+}
+
 
 export interface VendaHistorica {
   id: string;
