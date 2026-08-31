@@ -534,7 +534,25 @@ export function calcularValorAnuncio(
     tipo = "ajuste";
   }
 
+  // Checagem de mercado: nunca anunciar abaixo da média do canal de referência.
+  if (regra.checagem_mercado_ativa) {
+    const canalRef = regra.canal_referencia || "WebMotors";
+    const { media, quantidade } = mediaCanalReferencia(veiculo, anunciosMercado, canalRef);
+    if (media != null && valor < media) {
+      memoria["checagem_mercado"] = {
+        canal: canalRef,
+        media,
+        anuncios_considerados: quantidade,
+        valor_antes: valor,
+      };
+      valor = media;
+      if (regra.arredonda_990) valor = arredonda990(valor);
+      valor = aplicaPisoTeto(valor, regra, veiculo.fipe, memoria);
+    }
+  }
+
   const valorNovo = Math.round(valor * 100) / 100;
+
 
   return {
     alterou: valorNovo !== valorAtual || mudouDeFaixa,
