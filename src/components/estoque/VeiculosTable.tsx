@@ -54,6 +54,26 @@ export interface VeiculosTableProps {
 
 const TODOS = "__todos__";
 
+/** Colunas configuráveis da tabela (a coluna de ações é sempre exibida). */
+const COLUNAS = [
+  { key: "modelo", label: "Modelo", align: "left" },
+  { key: "chassi", label: "Chassi", align: "left" },
+  { key: "empresa", label: "Empresa NBS", align: "left" },
+  { key: "classificacao", label: "Class.", align: "left" },
+  { key: "dias", label: "Dias", align: "right" },
+  { key: "faixa", label: "Faixa", align: "left" },
+  { key: "leads", label: "Leads", align: "right" },
+  { key: "fipe", label: "FIPE", align: "right" },
+  { key: "perc_fipe", label: "% FIPE", align: "right" },
+  { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
+  { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
+  { key: "canais", label: "Canais", align: "left" },
+] as const;
+
+type ColunaKey = (typeof COLUNAS)[number]["key"];
+const TODAS_COLUNAS: ColunaKey[] = COLUNAS.map((c) => c.key);
+
+
 /** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
 const normCanal = (s: string) =>
   s
