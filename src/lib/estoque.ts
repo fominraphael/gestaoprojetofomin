@@ -950,14 +950,7 @@ export async function importarEstoque(
     string,
     { id: string; chassi_resumido: string; em_vendido: boolean; importado_em: string | null }[]
   >();
-  for (const v of (ativosRes.data ?? []) as {
-    id: string;
-    chassi: string;
-    origem_id: string;
-    chassi_resumido: string;
-    em_vendido: boolean;
-    importado_em: string | null;
-  }[]) {
+  for (const v of ativos) {
     const chave = `${v.chassi}|${v.origem_id}`;
     const lista = porChassiOrigem.get(chave) ?? [];
     lista.push({
