@@ -497,10 +497,15 @@ export function calcularValorAnuncio(
       regrasAtivas.find((r) => r.tipo_regra === "base") ??
       regra;
 
-    const hist = valorVendaHistorico(veiculo, vendas, hoje);
-    const base = hist.valor ?? veiculo.fipe ?? 0;
-    memoria["origem_valor_base"] = hist.valor ? "histórico de vendas" : "100% da FIPE";
-    memoria["historico"] = { motivo: hist.motivo, janela: hist.janelaDias, vendas: hist.vendasUsadas };
+    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje);
+    const base = resBase.valor ?? 0;
+    memoria["origem_valor_base"] = resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : "indefinida";
+    memoria["base_motivo"] = resBase.motivo;
+    memoria["historico"] = { motivo: resBase.motivo, vendas: resBase.vendasUsadas };
+    if (resBase.valor == null) {
+      memoria["excecao_base"] = "Nenhum nível de fallback ativo retornou valor válido";
+    }
+
 
     percentualUsado = Number(regraBase.percentual);
     valor = base * (1 + percentualUsado / 100);
