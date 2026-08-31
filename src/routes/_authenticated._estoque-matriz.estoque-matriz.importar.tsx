@@ -308,6 +308,17 @@ function EstoqueImportar() {
               <span className="ml-auto text-xs text-muted-foreground">
                 {new Date(h.created_at).toLocaleString("pt-BR")}
               </span>
+              {h.arquivo_path ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void baixarPlanilha(String(h.arquivo_path))}
+                >
+                  <Download className="w-4 h-4 mr-1" /> Baixar
+                </Button>
+              ) : (
+                <Badge variant="outline">Arquivo indisponível</Badge>
+              )}
             </div>
           ))}
         </div>
