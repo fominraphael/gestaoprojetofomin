@@ -305,29 +305,35 @@ export async function getVeiculos(opts: {
   repasse?: boolean;
   vendidos?: boolean;
 }): Promise<Veiculo[]> {
-  let q = supabase.from("estoque_veiculos").select("*").order("dias_em_estoque", { ascending: false });
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  if (!opts.lixeira) {
-    if (opts.vendidos) {
-      q = q.eq("em_vendido", true);
-    } else {
-      q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+  // Ordenação estável (campo + id) para não repetir/pular linhas entre blocos.
+  return buscarTodos<Veiculo>(() => {
+    let q = supabase
+      .from("estoque_veiculos")
+      .select("*")
+      .order("dias_em_estoque", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    if (!opts.lixeira) {
+      if (opts.vendidos) {
+        q = q.eq("em_vendido", true);
+      } else {
+        q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+      }
     }
-  }
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as Veiculo[];
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function getVendas(): Promise<VendaHistorica[]> {
-  const { data, error } = await supabase
-    .from("estoque_vendas_historico")
-    .select("id,chassi,codigo_fipe,ano_modelo,km,data_venda,valor_venda")
-    .is("deleted_at", null)
-    .order("data_venda", { ascending: false })
-    .limit(20000);
-  if (error) throw error;
-  return (data ?? []) as unknown as VendaHistorica[];
+  return buscarTodos<VendaHistorica>(
+    () =>
+      supabase
+        .from("estoque_vendas_historico")
+        .select("id,chassi,codigo_fipe,ano_modelo,km,data_venda,valor_venda")
+        .is("deleted_at", null)
+        .order("data_venda", { ascending: false })
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Registro completo de venda histórica (aba "Vendas Históricas"). */
