@@ -6,12 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   calcularValorAnuncio,
   faixaDoVeiculo,
+  normalizaNiveis,
+  ACOES_MATRIZ,
+  type AnuncioMercado,
   type ClassificacaoEstoque,
   type FaixaDias,
   type GatilhoLeads,
   type RegraEstoque,
+  type TipoAcaoMatriz,
   type VendaHistorica,
 } from "./estoque-motor";
+
 
 export interface Origem {
   id: string;
