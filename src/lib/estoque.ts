@@ -20,10 +20,13 @@ export interface Origem {
   ativo: boolean;
 }
 
+/**
+ * Empresa NBS = base/origem operacional. O "chassi resumido" NÃO faz parte deste
+ * cadastro: ele é um dado transacional de cada compra do veículo.
+ */
 export interface EmpresaNbs {
   id: string;
   origem_id: string;
-  codigo_chassi_resumido: string;
   nome_exibicao: string;
   ativo: boolean;
 }
