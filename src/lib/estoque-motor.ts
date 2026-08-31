@@ -457,11 +457,22 @@ export function calcularValorAnuncio(
   faixas: FaixaDias[],
   regras: RegraEstoque[],
   vendas: VendaHistorica[],
-  opts: { hoje?: Date; anuncios?: AnuncioMercado[]; faixasKm?: FaixaKm[] } = {},
+  opts: {
+    hoje?: Date;
+    anuncios?: AnuncioMercado[];
+    faixasKm?: FaixaKm[];
+    /**
+     * Recálculo forçado: ignora a trava de "mesma faixa" e refaz a
+     * precificação base com os dados atuais (vendas, regras, FIPE).
+     */
+    forcar?: boolean;
+  } = {},
 ): ResultadoCalculo {
   const hoje = opts.hoje ?? new Date();
   const anunciosMercado = opts.anuncios ?? [];
   const faixasKm = opts.faixasKm ?? [];
+  const forcar = opts.forcar === true;
+
 
   const vazio: ResultadoCalculo = {
     alterou: false,
