@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
-import { Trash2, RotateCcw, XCircle, Download } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Trash2, RotateCcw, XCircle, Download, Columns3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -27,7 +29,9 @@ import {
   type VendaHistorica,
 } from "@/lib/estoque-motor";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
+import { getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
+
 
 export interface VeiculosTableProps {
   veiculos: Veiculo[];
