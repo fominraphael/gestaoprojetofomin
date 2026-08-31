@@ -721,10 +721,6 @@ function EmpresasNbsEditor({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1 w-28">
-          <Label className="text-xs">Chassi resum.</Label>
-          <Input value={nova.codigo} onChange={(e) => setNova({ ...nova, codigo: e.target.value })} />
-        </div>
         <div className="space-y-1 flex-1 min-w-32">
           <Label className="text-xs">Nome de exibição</Label>
           <Input value={nova.nome} onChange={(e) => setNova({ ...nova, nome: e.target.value })} />
