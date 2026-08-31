@@ -108,6 +108,8 @@ function EstoqueVeiculos() {
         historico={historico}
         modo="ativo"
         onExcluir={(v) => excluir(v.id)}
+        onAtualizado={() => qc.invalidateQueries({ queryKey: ["estoque", "veiculos"] })}
+
       />
     </div>
   );

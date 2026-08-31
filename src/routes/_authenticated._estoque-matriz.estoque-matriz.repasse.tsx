@@ -77,6 +77,8 @@ function EstoqueRepasse() {
         historico={historico}
         modo="repasse"
         onExcluir={(v) => excluir(v.id)}
+        onAtualizado={() => qc.invalidateQueries({ queryKey: ["estoque", "veiculos"] })}
+
       />
     </div>
   );
