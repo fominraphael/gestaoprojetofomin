@@ -530,13 +530,17 @@ export function calcularValorAnuncio(
     };
   }
 
-  const valorAtual = veiculo.valor_anuncio_calculado ?? null;
+  const valorRegistrado = veiculo.valor_anuncio_calculado ?? null;
+  // No modo forçado o valor anterior é descartado: a base é reconstruída do zero.
+  const valorAtual = forcar ? null : valorRegistrado;
   const mudouDeFaixa = veiculo.faixa_id_atual !== faixa.id;
 
   // Nada muda enquanto o veículo continua na mesma faixa já precificada.
-  if (valorAtual != null && !mudouDeFaixa) {
+  if (!forcar && valorAtual != null && !mudouDeFaixa) {
     return { ...vazio, faixa, regra, memoria, motivo: "Veículo permanece na mesma faixa" };
   }
+  if (forcar) memoria["recalculo_forcado"] = true;
+
 
   let valor: number;
   let percentualUsado: number;
