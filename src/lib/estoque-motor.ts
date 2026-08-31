@@ -40,6 +40,11 @@ export interface NivelBase {
   dias: number | null;
   /** Percentual da FIPE — usado apenas no nível `fipe_fixo`. */
   percentual: number | null;
+  /**
+   * Ajuste percentual (positivo ou negativo) aplicado sobre a média encontrada
+   * nos níveis de histórico. Ignorado no nível `fipe_fixo`.
+   */
+  ajuste_percentual?: number | null;
   ordem: number;
 }
 
@@ -51,9 +56,9 @@ export const ROTULO_NIVEL: Record<TipoNivelBase, string> = {
 
 /** Configuração padrão (equivale ao comportamento anterior: 30d → 60d → 100% FIPE). */
 export const NIVEIS_BASE_PADRAO: NivelBase[] = [
-  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ordem: 0 },
-  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ordem: 1 },
-  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ordem: 2 },
+  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ajuste_percentual: 0, ordem: 0 },
+  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ajuste_percentual: 0, ordem: 1 },
+  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ajuste_percentual: null, ordem: 2 },
 ];
 
 export function normalizaNiveis(niveis: unknown): NivelBase[] {
@@ -66,10 +71,22 @@ export function normalizaNiveis(niveis: unknown): NivelBase[] {
       ativo: n.ativo !== false,
       dias: n.dias ?? null,
       percentual: n.percentual ?? null,
+      ajuste_percentual: n.ajuste_percentual ?? 0,
       ordem: typeof n.ordem === "number" ? n.ordem : i,
     }))
     .sort((a, b) => a.ordem - b.ordem);
 }
+
+/** Faixa de quilometragem configurável (aba Cadastros da Matriz de Regras). */
+export interface FaixaKm {
+  id: string;
+  nome: string;
+  km_inicio: number;
+  km_fim: number;
+  ordem: number;
+  ativo: boolean;
+}
+
 
 export interface RegraEstoque {
   id: string;
