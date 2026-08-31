@@ -363,15 +363,15 @@ export interface VendaHistoricoRow {
 export async function getVendasHistorico(opts: { lixeira?: boolean } = {}): Promise<
   VendaHistoricoRow[]
 > {
-  let q = supabase
-    .from("estoque_vendas_historico")
-    .select("*")
-    .order("data_venda", { ascending: false })
-    .limit(20000);
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as VendaHistoricoRow[];
+  return buscarTodos<VendaHistoricoRow>(() => {
+    let q = supabase
+      .from("estoque_vendas_historico")
+      .select("*")
+      .order("data_venda", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function atualizarVenda(
