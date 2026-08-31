@@ -11,6 +11,8 @@ import {
   type AnuncioMercado,
   type ClassificacaoEstoque,
   type FaixaDias,
+  type FaixaKm,
+
   type GatilhoLeads,
   type RegraEstoque,
   type TipoAcaoMatriz,
