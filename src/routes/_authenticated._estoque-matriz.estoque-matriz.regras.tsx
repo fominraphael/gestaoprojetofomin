@@ -370,16 +370,33 @@ function EstoqueRegras() {
                         />
                       </div>
                     ) : (
-                      <div className="space-y-1 w-28">
-                        <Label className="text-xs">Dias</Label>
-                        <Input
-                          type="number"
-                          disabled={!n.ativo}
-                          value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
-                          onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
-                        />
-                      </div>
+                      <>
+                        <div className="space-y-1 w-24">
+                          <Label className="text-xs">Dias</Label>
+                          <Input
+                            type="number"
+                            disabled={!n.ativo}
+                            value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
+                            onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div className="space-y-1 w-28">
+                          <Label className="text-xs" title="Ajuste aplicado sobre a média do histórico">
+                            Ajuste (%)
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            disabled={!n.ativo}
+                            value={n.ajuste_percentual ?? 0}
+                            onChange={(e) =>
+                              setNivel(i, { ajuste_percentual: Number(e.target.value) })
+                            }
+                          />
+                        </div>
+                      </>
                     )}
+
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => moverNivel(i, -1)}>
                         <ArrowUp className="w-4 h-4" />
