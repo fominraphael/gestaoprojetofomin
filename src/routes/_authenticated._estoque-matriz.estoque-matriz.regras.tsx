@@ -29,14 +29,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleAccessDenied } from "@/components/ModuleAccessDenied";
 import {
+  ACOES_MATRIZ,
   CANAIS,
   CLASSIFICACOES,
+  NIVEIS_BASE_PADRAO,
+  ROTULO_NIVEL,
+  normalizaNiveis,
   type ClassificacaoEstoque,
   type FaixaDias,
   type GatilhoLeads,
+  type NivelBase,
   type RegraEstoque,
   type TipoRegra,
 } from "@/lib/estoque-motor";
+
 import {
   getEmpresasNbs,
   getFaixas,
