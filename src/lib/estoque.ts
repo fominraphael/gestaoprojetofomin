@@ -884,31 +884,43 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, vendasRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativos, vendas] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
     // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
     // de duplicidade. A lixeira nunca é consultada — o índice único do banco é
     // parcial (`where deleted_at is null`), então reimportar é sempre permitido.
-    supabase
-      .from("estoque_veiculos")
-      .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
-      .is("deleted_at", null),
+    buscarTodos<{
+      id: string;
+      chassi: string;
+      origem_id: string;
+      chassi_resumido: string;
+      em_vendido: boolean;
+      importado_em: string | null;
+    }>(
+      () =>
+        supabase
+          .from("estoque_veiculos")
+          .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
+          .is("deleted_at", null)
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    ),
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
-    supabase
-      .from("estoque_vendas_historico")
-      .select("chassi,data_venda")
-      .is("deleted_at", null)
-      .limit(20000),
+    buscarTodos<{ chassi: string | null; data_venda: string | null }>(
+      () =>
+        supabase
+          .from("estoque_vendas_historico")
+          .select("id,chassi,data_venda")
+          .is("deleted_at", null)
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    ),
   ]);
-  if (ativosRes.error) throw ativosRes.error;
-  if (vendasRes.error) throw vendasRes.error;
 
   /** Maior data de venda por chassi — uma venda só casa com a compra se for
    *  posterior à entrada dela no estoque (importado_em do registro). */
   const vendaMaxPorChassi = new Map<string, string>();
-  for (const v of (vendasRes.data ?? []) as { chassi: string | null; data_venda: string | null }[]) {
+  for (const v of vendas) {
     if (!v.chassi || !v.data_venda) continue;
     const atual = vendaMaxPorChassi.get(v.chassi);
     if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
