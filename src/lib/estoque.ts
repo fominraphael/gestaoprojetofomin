@@ -113,6 +113,8 @@ export interface RelatorioImportacao {
   totalLinhas: number;
   importados: number;
   atualizados: number;
+  /** Novas compras do mesmo veículo (chassi já existia na origem com outro chassi resumido). */
+  novasCompras?: number;
   ignorados: LinhaRelatorio[];
 }
 
