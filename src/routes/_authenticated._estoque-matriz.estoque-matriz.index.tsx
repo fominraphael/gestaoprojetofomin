@@ -98,10 +98,21 @@ function EstoqueVeiculos() {
             Estoque unificado com precificação automática pela matriz de regras.
           </p>
         </div>
-        <Button onClick={recalcular} disabled={recalculando}>
-          <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
-          Recalcular preços
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => recalcular(false)} disabled={recalculando}>
+            <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
+            Recalcular preços
+          </Button>
+          <Button
+            onClick={() => recalcular(true)}
+            disabled={recalculando}
+            title="Refaz a precificação base do zero, mesmo para veículos que continuam na mesma faixa de dias."
+          >
+            <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
+            Recalcular (forçado)
+          </Button>
+        </div>
+
       </div>
 
       <VeiculosTable
