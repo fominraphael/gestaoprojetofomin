@@ -139,7 +139,9 @@ function EstoqueImportar() {
                 );
               })
             : await importarAnuncios(linhas);
-      await registrarImportacao(tipo, file.name, rel);
+      const arquivoPath = await uploadPlanilhaImportacao(tipo, file);
+      await registrarImportacao(tipo, file.name, rel, arquivoPath);
+      await qc.invalidateQueries({ queryKey: ["estoque", "importacoes"] });
       setRelatorios((r) => ({ ...r, [tipo]: rel }));
       toast.success(
         `${rel.importados} novos, ${rel.atualizados} atualizados, ${rel.ignorados.length} ignorados.`,
