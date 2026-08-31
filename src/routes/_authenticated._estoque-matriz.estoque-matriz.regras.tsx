@@ -637,22 +637,20 @@ function EmpresasNbsEditor({
   origens: Origem[];
 }) {
   const qc = useQueryClient();
-  const [nova, setNova] = useState({ origem_id: "", codigo: "", nome: "" });
+  const [nova, setNova] = useState({ origem_id: "", nome: "" });
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ["estoque", "nbs"] });
 
   const criar = async () => {
     if (!nova.origem_id) return toast.error("Selecione a origem.");
-    if (!nova.codigo.trim() || !nova.nome.trim())
-      return toast.error("Informe o código do chassi resumido e o nome de exibição.");
+    if (!nova.nome.trim()) return toast.error("Informe o nome de exibição.");
     const { error } = await supabase.from("estoque_empresas_nbs").insert({
       origem_id: nova.origem_id,
-      codigo_chassi_resumido: nova.codigo.trim(),
       nome_exibicao: nova.nome.trim(),
       ativo: true,
     } as never);
     if (error) return toast.error(error.message);
-    setNova({ origem_id: "", codigo: "", nome: "" });
+    setNova({ origem_id: "", nome: "" });
     toast.success("Empresa NBS cadastrada.");
     await invalidar();
   };
@@ -679,12 +677,14 @@ function EmpresasNbsEditor({
   return (
     <Card className="p-5 space-y-3">
       <h2 className="font-semibold">Empresas NBS</h2>
+      <p className="text-xs text-muted-foreground">
+        O chassi resumido não é cadastrado aqui: ele é um dado transacional de cada compra do
+        veículo e é lido da planilha, sempre validado dentro da mesma origem/base.
+      </p>
       <ul className="space-y-1 text-sm">
         {empresas.map((e) => (
           <li key={e.id} className="flex items-center gap-2 border-b border-border pb-1">
-            <span className="font-medium">
-              {e.codigo_chassi_resumido} — {e.nome_exibicao}
-            </span>
+            <span className="font-medium">{e.nome_exibicao}</span>
             <span className="text-xs text-muted-foreground">({nomeOrigem(e.origem_id)})</span>
             {!e.ativo && <Badge variant="secondary">Inativa</Badge>}
             <Button
@@ -724,10 +724,6 @@ function EmpresasNbsEditor({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-1 w-28">
-          <Label className="text-xs">Chassi resum.</Label>
-          <Input value={nova.codigo} onChange={(e) => setNova({ ...nova, codigo: e.target.value })} />
         </div>
         <div className="space-y-1 flex-1 min-w-32">
           <Label className="text-xs">Nome de exibição</Label>

@@ -20,10 +20,13 @@ export interface Origem {
   ativo: boolean;
 }
 
+/**
+ * Empresa NBS = base/origem operacional. O "chassi resumido" NÃO faz parte deste
+ * cadastro: ele é um dado transacional de cada compra do veículo.
+ */
 export interface EmpresaNbs {
   id: string;
   origem_id: string;
-  codigo_chassi_resumido: string;
   nome_exibicao: string;
   ativo: boolean;
 }
@@ -110,6 +113,8 @@ export interface RelatorioImportacao {
   totalLinhas: number;
   importados: number;
   atualizados: number;
+  /** Novas compras do mesmo veículo (chassi já existia na origem com outro chassi resumido). */
+  novasCompras?: number;
   ignorados: LinhaRelatorio[];
 }
 
@@ -125,7 +130,7 @@ export async function getEmpresasNbs(): Promise<EmpresaNbs[]> {
   const { data, error } = await supabase
     .from("estoque_empresas_nbs")
     .select("*")
-    .order("codigo_chassi_resumido");
+    .order("nome_exibicao");
   if (error) throw error;
   return (data ?? []) as EmpresaNbs[];
 }
@@ -448,26 +453,48 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, existentes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
-    getVeiculos({}),
+    // Somente registros ATIVOS entram na checagem de duplicidade:
+    // veículos na lixeira (deleted_at) ou já excluídos definitivamente são ignorados.
+    supabase
+      .from("estoque_veiculos")
+      .select("id,chassi,origem_id,chassi_resumido")
+      .is("deleted_at", null),
   ]);
+  if (ativosRes.error) throw ativosRes.error;
 
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
     importados: 0,
     atualizados: 0,
+    novasCompras: 0,
     ignorados: [],
   };
 
   const finalidadesOk = finalidades
     .filter((f) => f.ativo)
     .map((f) => f.nome.trim().toLowerCase());
-  const chaveExistente = new Set(
-    existentes.map((v) => `${v.chassi}|${v.origem_id}|${v.chassi_resumido}`),
-  );
+
+  /**
+   * Índice de duplicidade escopado por ORIGEM (base NBS).
+   * Chave: `${chassi}|${origem_id}` → lista de chassis resumidos ativos.
+   * Nunca comparamos chassi resumido entre origens diferentes.
+   */
+  const porChassiOrigem = new Map<string, { id: string; chassi_resumido: string }[]>();
+  for (const v of (ativosRes.data ?? []) as {
+    id: string;
+    chassi: string;
+    origem_id: string;
+    chassi_resumido: string;
+  }[]) {
+    const chave = `${v.chassi}|${v.origem_id}`;
+    const lista = porChassiOrigem.get(chave) ?? [];
+    lista.push({ id: v.id, chassi_resumido: v.chassi_resumido });
+    porChassiOrigem.set(chave, lista);
+  }
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
@@ -506,23 +533,16 @@ export async function importarEstoque(
       });
       continue;
     }
-    const empresa = empresas.find(
-      (e) => e.origem_id === origem.id && e.codigo_chassi_resumido === chassiResumido,
-    );
-    if (!empresa) {
-      rel.ignorados.push({
-        linha: numeroLinha,
-        chassi,
-        motivo: `Empresa NBS não cadastrada para código ${chassiResumido} na origem ${origem.nome}`,
-      });
-      continue;
-    }
+    // A empresa NBS é derivada da origem (base), nunca do chassi resumido.
+    const empresasDaOrigem = empresas.filter((e) => e.origem_id === origem.id && e.ativo);
+    const empresa = empresasDaOrigem.length === 1 ? empresasDaOrigem[0]! : null;
+
 
     const registro = {
       chassi,
       origem_id: origem.id,
       chassi_resumido: chassiResumido,
-      empresa_nbs_id: empresa.id,
+      empresa_nbs_id: empresa?.id ?? null,
       regional: toText(coluna(l, "Regional")),
       loja: toText(coluna(l, "Loja")),
       modelo: toText(coluna(l, "Modelo")),
@@ -545,15 +565,38 @@ export async function importarEstoque(
       deleted_at: null,
     };
 
-    const { error } = await supabase
+    const chave = `${chassi}|${origem.id}`;
+    const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
+    const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
+
+    if (mesmoRegistro) {
+      // Mesma compra já registrada nessa origem → apenas atualiza.
+      const { error } = await supabase
+        .from("estoque_veiculos")
+        .update(registro as never)
+        .eq("id", mesmoRegistro.id);
+      if (error) {
+        rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
+        continue;
+      }
+      rel.atualizados += 1;
+      continue;
+    }
+
+    // Chassi resumido diferente (ou inexistente) na origem → nova compra = novo registro.
+    const { data: inserido, error } = await supabase
       .from("estoque_veiculos")
-      .upsert(registro as never, { onConflict: "chassi,origem_id,chassi_resumido" });
+      .insert(registro as never)
+      .select("id")
+      .single();
     if (error) {
       rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
       continue;
     }
-    if (chaveExistente.has(`${chassi}|${origem.id}|${chassiResumido}`)) rel.atualizados += 1;
-    else rel.importados += 1;
+    ativosDoChassi.push({ id: (inserido as { id: string }).id, chassi_resumido: chassiResumido });
+    porChassiOrigem.set(chave, ativosDoChassi);
+    rel.importados += 1;
+    if (ativosDoChassi.length > 1) rel.novasCompras = (rel.novasCompras ?? 0) + 1;
   }
 
   return rel;
