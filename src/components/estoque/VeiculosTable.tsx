@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Trash2, RotateCcw, XCircle, Download, Columns3 } from "lucide-react";
+import { Trash2, RotateCcw, XCircle, Download, Columns3, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
