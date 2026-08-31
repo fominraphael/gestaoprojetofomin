@@ -202,7 +202,12 @@ export function VeiculosTable({
             ))}
           </SelectContent>
         </Select>
+        <Button variant="outline" className="ml-auto" onClick={() => void exportar()}>
+          <Download className="w-4 h-4" />
+          Exportar ({filtrados.length})
+        </Button>
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
