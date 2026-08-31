@@ -394,6 +394,18 @@ export function VeiculosTable({
       <p className="text-xs text-muted-foreground">
         {filtrados.length} de {veiculos.length} veículos
       </p>
+
+      <Dialog open={!!detalhe} onOpenChange={(o) => !o && setDetalhe(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Composição do valor sugerido</DialogTitle>
+            <DialogDescription>
+              {detalhe?.modelo ?? "—"} · {detalhe?.chassi}
+            </DialogDescription>
+          </DialogHeader>
+          {detalhe && <DetalheCalculo veiculo={detalhe} vendas={vendas} hist={historico.get(detalhe.id)} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
