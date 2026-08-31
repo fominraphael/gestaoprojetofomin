@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import {
   importarVendas,
   registrarImportacao,
   recalcularTodos,
+  uploadPlanilhaImportacao,
+  getUrlPlanilhaImportacao,
   type RelatorioImportacao,
 } from "@/lib/estoque";
 
@@ -104,6 +106,15 @@ function EstoqueImportar() {
     },
   });
 
+  const baixarPlanilha = async (path: string) => {
+    try {
+      const url = await getUrlPlanilhaImportacao(path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Não foi possível baixar a planilha.");
+    }
+  };
+
   const processar = async (tipo: Tipo, file: File) => {
     setProcessando(tipo);
     const inicio = Date.now();
@@ -139,7 +150,9 @@ function EstoqueImportar() {
                 );
               })
             : await importarAnuncios(linhas);
-      await registrarImportacao(tipo, file.name, rel);
+      const arquivoPath = await uploadPlanilhaImportacao(tipo, file);
+      await registrarImportacao(tipo, file.name, rel, arquivoPath);
+      await qc.invalidateQueries({ queryKey: ["estoque", "importacoes"] });
       setRelatorios((r) => ({ ...r, [tipo]: rel }));
       toast.success(
         `${rel.importados} novos, ${rel.atualizados} atualizados, ${rel.ignorados.length} ignorados.`,
@@ -304,6 +317,17 @@ function EstoqueImportar() {
               <span className="ml-auto text-xs text-muted-foreground">
                 {new Date(h.created_at).toLocaleString("pt-BR")}
               </span>
+              {h.arquivo_path ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void baixarPlanilha(String(h.arquivo_path))}
+                >
+                  <Download className="w-4 h-4 mr-1" /> Baixar
+                </Button>
+              ) : (
+                <Badge variant="outline">Arquivo indisponível</Badge>
+              )}
             </div>
           ))}
         </div>

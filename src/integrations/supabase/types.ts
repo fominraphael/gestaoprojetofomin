@@ -788,6 +788,7 @@ export type Database = {
       estoque_importacoes: {
         Row: {
           arquivo_nome: string | null
+          arquivo_path: string | null
           created_at: string
           id: string
           relatorio: Json
@@ -800,6 +801,7 @@ export type Database = {
         }
         Insert: {
           arquivo_nome?: string | null
+          arquivo_path?: string | null
           created_at?: string
           id?: string
           relatorio?: Json
@@ -812,6 +814,7 @@ export type Database = {
         }
         Update: {
           arquivo_nome?: string | null
+          arquivo_path?: string | null
           created_at?: string
           id?: string
           relatorio?: Json
