@@ -67,6 +67,10 @@ export interface Veiculo {
   em_repasse: boolean;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
+  /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
+  campos_manuais?: string[] | null;
+  editado_em?: string | null;
+
 }
 
 export interface HistoricoValor {
