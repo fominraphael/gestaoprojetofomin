@@ -451,16 +451,38 @@ export function toText(valor: unknown): string | null {
   return s === "" ? null : s;
 }
 
+/** Converte serial de data do Excel (base 1899-12-30) em ISO yyyy-mm-dd. */
+function serialExcelParaIso(serial: number): string | null {
+  // Faixa plausível: 1900-01-01 (2) até 2100-01-01 (~73051).
+  if (!Number.isFinite(serial) || serial < 2 || serial > 80000) return null;
+  const ms = Math.round(serial * 86400000);
+  const d = new Date(Date.UTC(1899, 11, 30) + ms);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+/** Garante que a data resultante é plausível — evita anos absurdos no Postgres. */
+function isoPlausivel(iso: string | null): string | null {
+  if (!iso) return null;
+  const ano = Number(iso.slice(0, 4));
+  return ano >= 1900 && ano <= 2100 ? iso : null;
+}
+
 export function toDate(valor: unknown): string | null {
   if (valor == null || valor === "") return null;
-  if (valor instanceof Date) return valor.toISOString().slice(0, 10);
+  if (valor instanceof Date)
+    return Number.isNaN(valor.getTime()) ? null : isoPlausivel(valor.toISOString().slice(0, 10));
+  // Números (e strings puramente numéricas) são seriais do Excel, não anos.
+  if (typeof valor === "number") return isoPlausivel(serialExcelParaIso(valor));
   const s = String(valor).trim();
+  if (/^\d+([.,]\d+)?$/.test(s)) {
+    return isoPlausivel(serialExcelParaIso(Number(s.replace(",", "."))));
+  }
   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  if (br) return isoPlausivel(`${br[3]}-${br[2]}-${br[1]}`);
   const iso = s.match(/^\d{4}-\d{2}-\d{2}/);
-  if (iso) return iso[0];
+  if (iso) return isoPlausivel(iso[0]);
   const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  return Number.isNaN(d.getTime()) ? null : isoPlausivel(d.toISOString().slice(0, 10));
 }
 
 /**
