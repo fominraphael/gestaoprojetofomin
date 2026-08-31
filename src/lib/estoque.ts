@@ -764,6 +764,28 @@ export function toText(valor: unknown): string | null {
   return s === "" ? null : s;
 }
 
+/**
+ * Lê a coluna "Ano Modelo" da planilha de vendas.
+ *
+ * Armadilha: quando a célula contém apenas o ano (ex.: 2021) com formato de
+ * data, o Excel a armazena como serial N e a leitura com cellDates devolve um
+ * Date em ~1905 (serial 2021 = 16/07/1905). Aqui revertemos o serial de volta
+ * ao ano original; textos como "2021/2022" passam intactos.
+ */
+export function toAnoModelo(valor: unknown): string | null {
+  if (valor == null || valor === "") return null;
+  if (valor instanceof Date) {
+    if (Number.isNaN(valor.getTime())) return null;
+    const serial = Math.round((valor.getTime() - Date.UTC(1899, 11, 30)) / 86400000);
+    return serial >= 1900 && serial <= 2100 ? String(serial) : null;
+  }
+  if (typeof valor === "number" && Number.isFinite(valor)) {
+    const n = Math.round(valor);
+    return n >= 1900 && n <= 2100 ? String(n) : null;
+  }
+  return toText(valor);
+}
+
 /** Converte serial de data do Excel (base 1899-12-30) em ISO yyyy-mm-dd. */
 function serialExcelParaIso(serial: number): string | null {
   // Faixa plausível: 1900-01-01 (2) até 2100-01-01 (~73051).
@@ -1145,7 +1167,7 @@ export async function importarVendas(
         modelo: toText(coluna(l, "Modelo")),
         versao: toText(coluna(l, "Versao", "Versão")),
         km: toInt(coluna(l, "Km")),
-        ano_modelo: toText(coluna(l, "Ano Modelo")),
+        ano_modelo: toAnoModelo(coluna(l, "Ano Modelo", "Ano/Mod", "Ano Mod", "AnoModelo")),
         finalidade: toText(coluna(l, "Finalidade")),
         data_venda: dataVenda,
         valor_venda: valorVenda,
