@@ -1167,7 +1167,7 @@ export async function importarVendas(
         modelo: toText(coluna(l, "Modelo")),
         versao: toText(coluna(l, "Versao", "Versão")),
         km: toInt(coluna(l, "Km")),
-        ano_modelo: toText(coluna(l, "Ano Modelo")),
+        ano_modelo: toAnoModelo(coluna(l, "Ano Modelo", "Ano/Mod", "Ano Mod", "AnoModelo")),
         finalidade: toText(coluna(l, "Finalidade")),
         data_venda: dataVenda,
         valor_venda: valorVenda,
