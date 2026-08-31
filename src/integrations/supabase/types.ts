@@ -696,7 +696,6 @@ export type Database = {
       estoque_empresas_nbs: {
         Row: {
           ativo: boolean
-          codigo_chassi_resumido: string
           created_at: string
           id: string
           nome_exibicao: string
@@ -705,7 +704,6 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
-          codigo_chassi_resumido: string
           created_at?: string
           id?: string
           nome_exibicao: string
@@ -714,7 +712,6 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
-          codigo_chassi_resumido?: string
           created_at?: string
           id?: string
           nome_exibicao?: string
