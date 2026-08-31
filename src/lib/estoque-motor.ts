@@ -198,17 +198,21 @@ export interface ResultadoHistorico {
   motivo: string;
 }
 
-/** Vendas comparáveis: mesmo código FIPE + ano modelo + faixa de KM. */
-function vendasComparaveis(veiculo: VeiculoCalculo, vendas: VendaHistorica[]): VendaHistorica[] {
+/** Vendas comparáveis: mesmo código FIPE + ano modelo + faixa de KM cadastrada. */
+function vendasComparaveis(
+  veiculo: VeiculoCalculo,
+  vendas: VendaHistorica[],
+  faixasKm: FaixaKm[] = [],
+): VendaHistorica[] {
   const fipe = normaliza(veiculo.codigo_fipe);
   const ano = normaliza(veiculo.ano_mod);
-  const faixa = faixaKm(veiculo.km);
+  const faixa = faixaKm(veiculo.km, faixasKm);
   if (!fipe) return [];
   return vendas.filter(
     (v) =>
       normaliza(v.codigo_fipe) === fipe &&
       (ano ? normaliza(v.ano_modelo).includes(ano) || ano.includes(normaliza(v.ano_modelo)) : true) &&
-      faixaKm(v.km) === faixa &&
+      faixaKm(v.km, faixasKm) === faixa &&
       typeof v.valor_venda === "number" &&
       v.valor_venda > 0 &&
       !!v.data_venda,
@@ -224,12 +228,13 @@ export function valorHistoricoJanela(
   vendas: VendaHistorica[],
   janelaDias: number,
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoHistorico {
   if (!normaliza(veiculo.codigo_fipe)) {
     return { valor: null, janelaDias: null, vendasUsadas: [], motivo: "Veículo sem código FIPE" };
   }
   const limite = new Date(hoje.getTime() - janelaDias * 24 * 60 * 60 * 1000);
-  const noPeriodo = vendasComparaveis(veiculo, vendas).filter(
+  const noPeriodo = vendasComparaveis(veiculo, vendas, faixasKm).filter(
     (v) => new Date(v.data_venda!) >= limite,
   );
   if (noPeriodo.length < 2) {
@@ -259,9 +264,10 @@ export function valorVendaHistorico(
   veiculo: VeiculoCalculo,
   vendas: VendaHistorica[],
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoHistorico {
   for (const janela of [30, 60]) {
-    const r = valorHistoricoJanela(veiculo, vendas, janela, hoje);
+    const r = valorHistoricoJanela(veiculo, vendas, janela, hoje, faixasKm);
     if (r.valor != null) return r;
   }
   return {
@@ -288,6 +294,7 @@ export function valorBaseConfiguravel(
   regra: RegraEstoque,
   vendas: VendaHistorica[],
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoBase {
   const niveis = normalizaNiveis(regra.fallback_niveis).filter((n) => n.ativo);
   if (niveis.length === 0) {
@@ -312,12 +319,21 @@ export function valorBaseConfiguravel(
       continue;
     }
     const dias = nivel.dias ?? (nivel.tipo === "hist_curto" ? 30 : 60);
-    const r = valorHistoricoJanela(veiculo, vendas, dias, hoje);
+    const r = valorHistoricoJanela(veiculo, vendas, dias, hoje, faixasKm);
     if (r.valor != null) {
-      return { valor: r.valor, nivel: nivel.tipo, motivo: r.motivo, vendasUsadas: r.vendasUsadas };
+      // Ajuste percentual configurável (positivo ou negativo) sobre a média.
+      const ajuste = Number(nivel.ajuste_percentual ?? 0);
+      const valor = r.valor * (1 + ajuste / 100);
+      return {
+        valor,
+        nivel: nivel.tipo,
+        motivo: ajuste ? `${r.motivo} · ajuste de ${ajuste > 0 ? "+" : ""}${ajuste}%` : r.motivo,
+        vendasUsadas: r.vendasUsadas,
+      };
     }
   }
   return {
+
     valor: null,
     nivel: null,
     motivo: "Nenhum nível de fallback ativo retornou valor válido",
