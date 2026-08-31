@@ -89,6 +89,58 @@ export function VeiculosTable({
   const percFipe = (v: Veiculo) =>
     v.fipe && v.valor_anuncio_calculado ? `${((v.valor_anuncio_calculado / v.fipe) * 100).toFixed(1)}%` : "—";
 
+  /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
+  const exportar = async () => {
+    try {
+      if (filtrados.length === 0) {
+        toast.error("Nenhum veículo para exportar.");
+        return;
+      }
+      const XLSX = await import("xlsx");
+      const linhas = filtrados.map((v) => {
+        const a = anunciosPorChassi.get(v.chassi.toUpperCase());
+        return {
+          Chassi: v.chassi,
+          "Chassi resumido": v.chassi_resumido,
+          Origem: origens.find((o) => o.id === v.origem_id)?.nome ?? "",
+          "Empresa NBS": nomeEmpresa(v),
+          Regional: v.regional ?? "",
+          Loja: v.loja ?? "",
+          Modelo: v.modelo ?? "",
+          Placa: v.placa ?? "",
+          "Ano/Mod": v.ano_mod ?? "",
+          Cor: v.cor ?? "",
+          KM: v.km ?? "",
+          "Custo total": v.custo_total ?? "",
+          FIPE: v.fipe ?? "",
+          "Código FIPE": v.codigo_fipe ?? "",
+          "% FIPE": percFipe(v),
+          "Valor anúncio importado": v.valor_anunciado_planilha ?? "",
+          "Valor anunciado sugerido": v.valor_anuncio_calculado ?? "",
+          Classificação: v.classificacao ?? "",
+          "Dias em estoque": v.dias_em_estoque,
+          Faixa: nomeFaixa(v),
+          "Leads 60 dias": v.leads_60_dias,
+          Fotos: v.fotos_qtd ?? "",
+          Finalidade: v.finalidade_atual ?? v.finalidade ?? "",
+          "Canal Site próprio": a?.canal_site_proprio ? "Publicado" : "Pendente",
+          "Canal OLX": a?.canal_olx ? "Publicado" : "Pendente",
+          "Canal WebMotors": a?.canal_webmotors ? "Publicado" : "Pendente",
+          "Campos editados manualmente": (v.campos_manuais ?? []).join(", "),
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(linhas);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Estoque");
+      XLSX.writeFile(wb, `estoque-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success(`${linhas.length} veículos exportados.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao exportar.");
+    }
+  };
+
+
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
