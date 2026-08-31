@@ -1077,6 +1077,7 @@ export type Database = {
           dias_em_estoque: number
           editado_em: string | null
           em_repasse: boolean
+          em_vendido: boolean
           empresa_nbs_id: string | null
           faixa_id_atual: string | null
           finalidade: string | null
@@ -1113,6 +1114,7 @@ export type Database = {
           dias_em_estoque?: number
           editado_em?: string | null
           em_repasse?: boolean
+          em_vendido?: boolean
           empresa_nbs_id?: string | null
           faixa_id_atual?: string | null
           finalidade?: string | null
@@ -1149,6 +1151,7 @@ export type Database = {
           dias_em_estoque?: number
           editado_em?: string | null
           em_repasse?: boolean
+          em_vendido?: boolean
           empresa_nbs_id?: string | null
           faixa_id_atual?: string | null
           finalidade?: string | null
