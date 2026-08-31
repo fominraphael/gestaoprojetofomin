@@ -30,6 +30,47 @@ export interface GatilhoLeads {
   ordem: number;
 }
 
+/** Tipos de nível de fallback usados para montar o valor base do anúncio. */
+export type TipoNivelBase = "hist_curto" | "hist_longo" | "fipe_fixo";
+
+export interface NivelBase {
+  tipo: TipoNivelBase;
+  ativo: boolean;
+  /** Janela em dias — usada apenas nos níveis de histórico. */
+  dias: number | null;
+  /** Percentual da FIPE — usado apenas no nível `fipe_fixo`. */
+  percentual: number | null;
+  ordem: number;
+}
+
+export const ROTULO_NIVEL: Record<TipoNivelBase, string> = {
+  hist_curto: "Histórico de vendas (janela curta)",
+  hist_longo: "Histórico de vendas (janela longa)",
+  fipe_fixo: "Percentual fixo da FIPE",
+};
+
+/** Configuração padrão (equivale ao comportamento anterior: 30d → 60d → 100% FIPE). */
+export const NIVEIS_BASE_PADRAO: NivelBase[] = [
+  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ordem: 0 },
+  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ordem: 1 },
+  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ordem: 2 },
+];
+
+export function normalizaNiveis(niveis: unknown): NivelBase[] {
+  const arr = Array.isArray(niveis) ? (niveis as Partial<NivelBase>[]) : [];
+  const validos = arr.filter((n) => n && typeof n.tipo === "string" && n.tipo in ROTULO_NIVEL);
+  if (validos.length === 0) return NIVEIS_BASE_PADRAO.map((n) => ({ ...n }));
+  return validos
+    .map((n, i) => ({
+      tipo: n.tipo as TipoNivelBase,
+      ativo: n.ativo !== false,
+      dias: n.dias ?? null,
+      percentual: n.percentual ?? null,
+      ordem: typeof n.ordem === "number" ? n.ordem : i,
+    }))
+    .sort((a, b) => a.ordem - b.ordem);
+}
+
 export interface RegraEstoque {
   id: string;
   classificacao: ClassificacaoEstoque;
@@ -46,8 +87,39 @@ export interface RegraEstoque {
   nome_tarefa: string | null;
   nova_finalidade: string | null;
   ativo: boolean;
+  /** Níveis de fallback do valor base (ativáveis e reordenáveis por célula). */
+  fallback_niveis?: NivelBase[] | null;
+  checagem_mercado_ativa?: boolean;
+  canal_referencia?: string | null;
+  min_fotos?: number | null;
+  acao_aceleradores?: boolean;
+  acao_fotos_ia?: boolean;
+  acao_repescagem?: boolean;
+  acao_auditoria?: boolean;
   leads?: GatilhoLeads[];
 }
+
+/** Ações operacionais configuráveis por célula da matriz. */
+export type TipoAcaoMatriz = "aceleradores" | "fotos_ia" | "repescagem" | "auditoria";
+
+export const ACOES_MATRIZ: { tipo: TipoAcaoMatriz; label: string; campo: keyof RegraEstoque }[] = [
+  { tipo: "aceleradores", label: "Aceleradores", campo: "acao_aceleradores" },
+  { tipo: "fotos_ia", label: "Usar fotos da avaliação (IA)", campo: "acao_fotos_ia" },
+  { tipo: "repescagem", label: "Repescagem de leads", campo: "acao_repescagem" },
+  { tipo: "auditoria", label: "Auditoria de anúncio", campo: "acao_auditoria" },
+];
+
+/** Anúncio importado usado na checagem de mercado. */
+export interface AnuncioMercado {
+  chassi: string;
+  modelo: string | null;
+  ano_modelo: string | null;
+  preco_venda: number | null;
+  canal_site_proprio: boolean;
+  canal_olx: boolean;
+  canal_webmotors: boolean;
+}
+
 
 export interface VendaHistorica {
   id: string;
@@ -95,30 +167,18 @@ function normaliza(valor: string | null | undefined): string {
 
 export interface ResultadoHistorico {
   valor: number | null;
-  janelaDias: 30 | 60 | null;
+  janelaDias: number | null;
   vendasUsadas: { id: string; chassi: string | null; data_venda: string | null; valor: number }[];
   motivo: string;
 }
 
-/**
- * Valor de venda histórico: mesmo código FIPE + ano modelo + faixa de KM.
- * Busca em 30 dias (média se >= 2 registros), depois 60 dias. Sem histórico
- * válido, devolve `null` (o chamador usa 100% da FIPE).
- */
-export function valorVendaHistorico(
-  veiculo: VeiculoCalculo,
-  vendas: VendaHistorica[],
-  hoje: Date = new Date(),
-): ResultadoHistorico {
+/** Vendas comparáveis: mesmo código FIPE + ano modelo + faixa de KM. */
+function vendasComparaveis(veiculo: VeiculoCalculo, vendas: VendaHistorica[]): VendaHistorica[] {
   const fipe = normaliza(veiculo.codigo_fipe);
   const ano = normaliza(veiculo.ano_mod);
   const faixa = faixaKm(veiculo.km);
-
-  if (!fipe) {
-    return { valor: null, janelaDias: null, vendasUsadas: [], motivo: "Veículo sem código FIPE" };
-  }
-
-  const comparaveis = vendas.filter(
+  if (!fipe) return [];
+  return vendas.filter(
     (v) =>
       normaliza(v.codigo_fipe) === fipe &&
       (ano ? normaliza(v.ano_modelo).includes(ano) || ano.includes(normaliza(v.ano_modelo)) : true) &&
@@ -127,33 +187,155 @@ export function valorVendaHistorico(
       v.valor_venda > 0 &&
       !!v.data_venda,
   );
+}
 
-  for (const janela of [30, 60] as const) {
-    const limite = new Date(hoje.getTime() - janela * 24 * 60 * 60 * 1000);
-    const noPeriodo = comparaveis.filter((v) => new Date(v.data_venda!) >= limite);
-    if (noPeriodo.length >= 2) {
-      const soma = noPeriodo.reduce((acc, v) => acc + (v.valor_venda ?? 0), 0);
-      return {
-        valor: soma / noPeriodo.length,
-        janelaDias: janela,
-        vendasUsadas: noPeriodo.map((v) => ({
-          id: v.id,
-          chassi: v.chassi,
-          data_venda: v.data_venda,
-          valor: v.valor_venda ?? 0,
-        })),
-        motivo: `Média de ${noPeriodo.length} vendas nos últimos ${janela} dias`,
-      };
-    }
+/**
+ * Média de vendas comparáveis dentro de uma janela de dias configurável.
+ * Exige pelo menos 2 vendas no período para ser considerada válida.
+ */
+export function valorHistoricoJanela(
+  veiculo: VeiculoCalculo,
+  vendas: VendaHistorica[],
+  janelaDias: number,
+  hoje: Date = new Date(),
+): ResultadoHistorico {
+  if (!normaliza(veiculo.codigo_fipe)) {
+    return { valor: null, janelaDias: null, vendasUsadas: [], motivo: "Veículo sem código FIPE" };
   }
+  const limite = new Date(hoje.getTime() - janelaDias * 24 * 60 * 60 * 1000);
+  const noPeriodo = vendasComparaveis(veiculo, vendas).filter(
+    (v) => new Date(v.data_venda!) >= limite,
+  );
+  if (noPeriodo.length < 2) {
+    return {
+      valor: null,
+      janelaDias: null,
+      vendasUsadas: [],
+      motivo: `Sem 2 ou mais vendas comparáveis em ${janelaDias} dias`,
+    };
+  }
+  const soma = noPeriodo.reduce((acc, v) => acc + (v.valor_venda ?? 0), 0);
+  return {
+    valor: soma / noPeriodo.length,
+    janelaDias,
+    vendasUsadas: noPeriodo.map((v) => ({
+      id: v.id,
+      chassi: v.chassi,
+      data_venda: v.data_venda,
+      valor: v.valor_venda ?? 0,
+    })),
+    motivo: `Média de ${noPeriodo.length} vendas nos últimos ${janelaDias} dias`,
+  };
+}
 
+/** Compatibilidade: histórico em 30 dias e, se insuficiente, em 60 dias. */
+export function valorVendaHistorico(
+  veiculo: VeiculoCalculo,
+  vendas: VendaHistorica[],
+  hoje: Date = new Date(),
+): ResultadoHistorico {
+  for (const janela of [30, 60]) {
+    const r = valorHistoricoJanela(veiculo, vendas, janela, hoje);
+    if (r.valor != null) return r;
+  }
   return {
     valor: null,
     janelaDias: null,
     vendasUsadas: [],
-    motivo: "Sem 2 ou mais vendas comparáveis em 60 dias — usando 100% da FIPE",
+    motivo: "Sem 2 ou mais vendas comparáveis em 60 dias",
   };
 }
+
+export interface ResultadoBase {
+  valor: number | null;
+  nivel: TipoNivelBase | null;
+  motivo: string;
+  vendasUsadas: ResultadoHistorico["vendasUsadas"];
+}
+
+/**
+ * Percorre os níveis de fallback ATIVOS na ordem configurada na célula da matriz
+ * e devolve o primeiro que produzir um valor válido.
+ */
+export function valorBaseConfiguravel(
+  veiculo: VeiculoCalculo,
+  regra: RegraEstoque,
+  vendas: VendaHistorica[],
+  hoje: Date = new Date(),
+): ResultadoBase {
+  const niveis = normalizaNiveis(regra.fallback_niveis).filter((n) => n.ativo);
+  if (niveis.length === 0) {
+    return {
+      valor: null,
+      nivel: null,
+      motivo: "Nenhum nível de base ativo configurado para esta célula da matriz",
+      vendasUsadas: [],
+    };
+  }
+  for (const nivel of niveis) {
+    if (nivel.tipo === "fipe_fixo") {
+      const pct = nivel.percentual ?? 100;
+      if (veiculo.fipe && veiculo.fipe > 0) {
+        return {
+          valor: (veiculo.fipe * pct) / 100,
+          nivel: "fipe_fixo",
+          motivo: `${pct}% da FIPE`,
+          vendasUsadas: [],
+        };
+      }
+      continue;
+    }
+    const dias = nivel.dias ?? (nivel.tipo === "hist_curto" ? 30 : 60);
+    const r = valorHistoricoJanela(veiculo, vendas, dias, hoje);
+    if (r.valor != null) {
+      return { valor: r.valor, nivel: nivel.tipo, motivo: r.motivo, vendasUsadas: r.vendasUsadas };
+    }
+  }
+  return {
+    valor: null,
+    nivel: null,
+    motivo: "Nenhum nível de fallback ativo retornou valor válido",
+    vendasUsadas: [],
+  };
+}
+
+/** O veículo é considerado fotografado quando atinge o mínimo de fotos da regra. */
+export function veiculoFotografado(
+  fotosQtd: number | null | undefined,
+  regra: RegraEstoque | null | undefined,
+): boolean {
+  const minimo = regra?.min_fotos ?? 2;
+  return (fotosQtd ?? 0) >= minimo;
+}
+
+function precoNoCanal(a: AnuncioMercado, canal: string): boolean {
+  const c = canal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (c.includes("olx")) return a.canal_olx;
+  if (c.includes("site")) return a.canal_site_proprio;
+  return a.canal_webmotors;
+}
+
+/** Média de preço dos anúncios do canal de referência para veículos equivalentes. */
+export function mediaCanalReferencia(
+  veiculo: VeiculoCalculo & { modelo?: string | null },
+  anuncios: AnuncioMercado[],
+  canal: string,
+): { media: number | null; quantidade: number } {
+  const modelo = normaliza(veiculo.modelo ?? null);
+  const ano = normaliza(veiculo.ano_mod);
+  const comparaveis = anuncios.filter(
+    (a) =>
+      precoNoCanal(a, canal) &&
+      typeof a.preco_venda === "number" &&
+      (a.preco_venda ?? 0) > 0 &&
+      (modelo ? normaliza(a.modelo).includes(modelo) || modelo.includes(normaliza(a.modelo)) : true) &&
+      (ano ? normaliza(a.ano_modelo).includes(ano) || ano.includes(normaliza(a.ano_modelo)) : true),
+  );
+  if (comparaveis.length === 0) return { media: null, quantidade: 0 };
+  const soma = comparaveis.reduce((acc, a) => acc + (a.preco_venda ?? 0), 0);
+  return { media: soma / comparaveis.length, quantidade: comparaveis.length };
+}
+
 
 /** Faixa de dias em que o veículo se encontra (última faixa se ultrapassar o teto). */
 export function faixaDoVeiculo(dias: number, faixas: FaixaDias[]): FaixaDias | null {
@@ -233,8 +415,11 @@ export function calcularValorAnuncio(
   faixas: FaixaDias[],
   regras: RegraEstoque[],
   vendas: VendaHistorica[],
-  hoje: Date = new Date(),
+  opts: { hoje?: Date; anuncios?: AnuncioMercado[] } = {},
 ): ResultadoCalculo {
+  const hoje = opts.hoje ?? new Date();
+  const anunciosMercado = opts.anuncios ?? [];
+
   const vazio: ResultadoCalculo = {
     alterou: false,
     valorAnterior: veiculo.valor_anuncio_calculado ?? null,
@@ -312,10 +497,15 @@ export function calcularValorAnuncio(
       regrasAtivas.find((r) => r.tipo_regra === "base") ??
       regra;
 
-    const hist = valorVendaHistorico(veiculo, vendas, hoje);
-    const base = hist.valor ?? veiculo.fipe ?? 0;
-    memoria["origem_valor_base"] = hist.valor ? "histórico de vendas" : "100% da FIPE";
-    memoria["historico"] = { motivo: hist.motivo, janela: hist.janelaDias, vendas: hist.vendasUsadas };
+    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje);
+    const base = resBase.valor ?? 0;
+    memoria["origem_valor_base"] = resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : "indefinida";
+    memoria["base_motivo"] = resBase.motivo;
+    memoria["historico"] = { motivo: resBase.motivo, vendas: resBase.vendasUsadas };
+    if (resBase.valor == null) {
+      memoria["excecao_base"] = "Nenhum nível de fallback ativo retornou valor válido";
+    }
+
 
     percentualUsado = Number(regraBase.percentual);
     valor = base * (1 + percentualUsado / 100);
@@ -344,7 +534,25 @@ export function calcularValorAnuncio(
     tipo = "ajuste";
   }
 
+  // Checagem de mercado: nunca anunciar abaixo da média do canal de referência.
+  if (regra.checagem_mercado_ativa) {
+    const canalRef = regra.canal_referencia || "WebMotors";
+    const { media, quantidade } = mediaCanalReferencia(veiculo, anunciosMercado, canalRef);
+    if (media != null && valor < media) {
+      memoria["checagem_mercado"] = {
+        canal: canalRef,
+        media,
+        anuncios_considerados: quantidade,
+        valor_antes: valor,
+      };
+      valor = media;
+      if (regra.arredonda_990) valor = arredonda990(valor);
+      valor = aplicaPisoTeto(valor, regra, veiculo.fipe, memoria);
+    }
+  }
+
   const valorNovo = Math.round(valor * 100) / 100;
+
 
   return {
     alterou: valorNovo !== valorAtual || mudouDeFaixa,

@@ -6,12 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   calcularValorAnuncio,
   faixaDoVeiculo,
+  normalizaNiveis,
+  ACOES_MATRIZ,
+  type AnuncioMercado,
   type ClassificacaoEstoque,
   type FaixaDias,
   type GatilhoLeads,
   type RegraEstoque,
+  type TipoAcaoMatriz,
   type VendaHistorica,
 } from "./estoque-motor";
+
 
 export interface Origem {
   id: string;
@@ -166,11 +171,13 @@ export async function getRegras(): Promise<RegraEstoque[]> {
   if (e2) throw e2;
   return ((regras ?? []) as unknown as RegraEstoque[]).map((r) => ({
     ...r,
+    fallback_niveis: normalizaNiveis(r.fallback_niveis),
     leads: ((leads ?? []) as unknown as (GatilhoLeads & { regra_id: string })[]).filter(
       (l) => l.regra_id === r.id,
     ),
   }));
 }
+
 
 export async function upsertRegra(
   regra: Partial<RegraEstoque> & { classificacao: ClassificacaoEstoque; faixa_id: string },
@@ -310,6 +317,17 @@ export async function getAnuncios(): Promise<Anuncio[]> {
   if (error) throw error;
   return (data ?? []) as unknown as Anuncio[];
 }
+
+/** Anúncios usados pela checagem de mercado (média por canal de referência). */
+export async function getAnunciosMercado(): Promise<AnuncioMercado[]> {
+  const { data, error } = await supabase
+    .from("estoque_anuncios")
+    .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
+    .is("deleted_at", null);
+  if (error) throw error;
+  return (data ?? []) as unknown as AnuncioMercado[];
+}
+
 
 /** Registro completo de veículo anunciado (aba "Veículos Anunciados"). */
 export interface AnuncioRow {
@@ -479,6 +497,47 @@ export async function marcarTarefa(id: string, concluido: boolean): Promise<void
   if (error) throw error;
 }
 
+/* ------------------------------ Ações da matriz ------------------------------ */
+
+export interface AcaoMatrizRegistro {
+  id: string;
+  veiculo_id: string;
+  tipo_acao: TipoAcaoMatriz;
+  concluido: boolean;
+  concluido_em: string | null;
+}
+
+export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
+  const { data, error } = await supabase
+    .from("estoque_acoes_matriz")
+    .select("id,veiculo_id,tipo_acao,concluido,concluido_em");
+  if (error) throw error;
+  return (data ?? []) as unknown as AcaoMatrizRegistro[];
+}
+
+/** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
+export async function marcarAcaoMatriz(
+  veiculoId: string,
+  tipo: TipoAcaoMatriz,
+  concluido: boolean,
+): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser();
+  const { error } = await supabase.from("estoque_acoes_matriz").upsert(
+    {
+      veiculo_id: veiculoId,
+      tipo_acao: tipo,
+      concluido,
+      concluido_em: concluido ? new Date().toISOString() : null,
+      concluido_por: concluido ? (auth.user?.id ?? null) : null,
+    } as never,
+    { onConflict: "veiculo_id,tipo_acao" },
+  );
+  if (error) throw error;
+}
+
+export { ACOES_MATRIZ };
+
+
 /* -------------------------------- Recálculo --------------------------------- */
 
 export interface ResumoRecalculo {
@@ -490,18 +549,20 @@ export interface ResumoRecalculo {
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
 export async function recalcularTodos(): Promise<ResumoRecalculo> {
-  const [veiculos, faixas, regras, vendas] = await Promise.all([
+  const [veiculos, faixas, regras, vendas, anunciosMercado] = await Promise.all([
     getVeiculos({}),
     getFaixas(),
     getRegras(),
     getVendas(),
+    getAnunciosMercado(),
   ]);
 
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
   for (const v of veiculos) {
-    const r = calcularValorAnuncio(v, faixas, regras, vendas);
+    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado });
     if (!r.alterou) continue;
+
 
     if (r.moverParaRepasse) {
       const { error } = await supabase
@@ -1061,6 +1122,15 @@ export async function importarAnuncios(
     atualizados: 0,
     ignorados: [],
   };
+
+  // Substituição total: a base de anúncios reflete SEMPRE a última importação.
+  const { error: delErro } = await supabase
+    .from("estoque_anuncios")
+    .delete()
+    .not("id", "is", null);
+  if (delErro) throw delErro;
+
+
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;

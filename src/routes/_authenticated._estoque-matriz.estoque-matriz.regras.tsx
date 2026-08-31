@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ListChecks, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ListChecks, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -29,14 +29,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleAccessDenied } from "@/components/ModuleAccessDenied";
 import {
+  ACOES_MATRIZ,
   CANAIS,
   CLASSIFICACOES,
+  NIVEIS_BASE_PADRAO,
+  ROTULO_NIVEL,
+  normalizaNiveis,
   type ClassificacaoEstoque,
   type FaixaDias,
   type GatilhoLeads,
+  type NivelBase,
   type RegraEstoque,
   type TipoRegra,
 } from "@/lib/estoque-motor";
+
 import {
   getEmpresasNbs,
   getFaixas,
@@ -87,6 +93,7 @@ function EstoqueRegras() {
   const qc = useQueryClient();
   const [editando, setEditando] = useState<FormRegra | null>(null);
   const [gatilhos, setGatilhos] = useState<GatilhoLeads[]>([]);
+  const [niveis, setNiveis] = useState<NivelBase[]>(NIVEIS_BASE_PADRAO);
 
   const { data: origens = [] } = useQuery({ queryKey: ["estoque", "origens"], queryFn: getOrigens });
   const { data: empresas = [] } = useQuery({ queryKey: ["estoque", "nbs"], queryFn: getEmpresasNbs });
@@ -116,15 +123,41 @@ function EstoqueRegras() {
         canais_exigidos: [],
         gera_tarefa: false,
         ativo: true,
+        checagem_mercado_ativa: false,
+        canal_referencia: "WebMotors",
+        min_fotos: 2,
+        acao_aceleradores: false,
+        acao_fotos_ia: false,
+        acao_repescagem: false,
+        acao_auditoria: false,
       },
     );
     setGatilhos(existente?.leads ?? []);
+    setNiveis(normalizaNiveis(existente?.fallback_niveis));
   };
+
+  /** Move um nível para cima/baixo, mantendo a ordem sequencial persistida. */
+  const moverNivel = (i: number, delta: number) =>
+    setNiveis((arr) => {
+      const destino = i + delta;
+      if (destino < 0 || destino >= arr.length) return arr;
+      const copia = [...arr];
+      const [item] = copia.splice(i, 1);
+      copia.splice(destino, 0, item!);
+      return copia.map((n, idx) => ({ ...n, ordem: idx }));
+    });
+
+  const setNivel = (i: number, patch: Partial<NivelBase>) =>
+    setNiveis((arr) => arr.map((n, j) => (j === i ? { ...n, ...patch } : n)));
 
   const salvar = async () => {
     if (!editando) return;
     try {
-      await upsertRegra(editando as RegraEstoque, gatilhos);
+      const ordenados = niveis.map((n, i) => ({ ...n, ordem: i }));
+      await upsertRegra(
+        { ...editando, fallback_niveis: ordenados } as RegraEstoque,
+        gatilhos,
+      );
       toast.success("Regra salva.");
       setEditando(null);
       await qc.invalidateQueries({ queryKey: ["estoque", "regras"] });
@@ -135,6 +168,7 @@ function EstoqueRegras() {
 
   const set = <K extends keyof RegraEstoque>(campo: K, valor: RegraEstoque[K]) =>
     setEditando((r) => (r ? { ...r, [campo]: valor } : r));
+
 
   return (
     <div className="p-6 space-y-4 w-full">
@@ -306,6 +340,118 @@ function EstoqueRegras() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-2 rounded-xl border border-border p-3">
+                <div>
+                  <Label>Base do valor — níveis de fallback</Label>
+                  <p className="text-xs text-muted-foreground">
+                    O sistema percorre os níveis ativos, na ordem abaixo, e usa o primeiro que
+                    retornar um valor válido.
+                  </p>
+                </div>
+                {niveis.map((n, i) => (
+                  <div key={n.tipo} className="flex flex-wrap items-end gap-2 border-t border-border pt-2">
+                    <label className="flex items-center gap-2 text-sm flex-1 min-w-[220px]">
+                      <Checkbox
+                        checked={n.ativo}
+                        onCheckedChange={(c) => setNivel(i, { ativo: c === true })}
+                      />
+                      {ROTULO_NIVEL[n.tipo]}
+                    </label>
+                    {n.tipo === "fipe_fixo" ? (
+                      <div className="space-y-1 w-28">
+                        <Label className="text-xs">% da FIPE</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          disabled={!n.ativo}
+                          value={n.percentual ?? 100}
+                          onChange={(e) => setNivel(i, { percentual: Number(e.target.value) })}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1 w-28">
+                        <Label className="text-xs">Dias</Label>
+                        <Input
+                          type="number"
+                          disabled={!n.ativo}
+                          value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
+                          onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => moverNivel(i, -1)}>
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => moverNivel(i, 1)}>
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 rounded-xl border border-border p-3">
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={!!editando.checagem_mercado_ativa}
+                      onCheckedChange={(c) => set("checagem_mercado_ativa", c === true)}
+                    />
+                    Ativar checagem de mercado
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Se o valor calculado ficar abaixo da média do canal de referência, o valor de
+                    anúncio passa a ser essa média.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label>Canal de referência</Label>
+                  <Select
+                    value={editando.canal_referencia ?? "WebMotors"}
+                    onValueChange={(v) => set("canal_referencia", v)}
+                  >
+                    <SelectTrigger disabled={!editando.checagem_mercado_ativa}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CANAIS.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Mínimo de fotos para considerar fotografado</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editando.min_fotos ?? 2}
+                    onChange={(e) => set("min_fotos", Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-border p-3">
+                <Label>Operacional (gera itens na aba “Ações da Matriz”)</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ACOES_MATRIZ.map((a) => (
+                    <label key={a.tipo} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={!!editando[a.campo]}
+                        onCheckedChange={(c) =>
+                          set(a.campo as "acao_aceleradores", c === true)
+                        }
+                      />
+                      {a.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
 
               <div className="space-y-2">
                 <Label>Canais exigidos para o anúncio</Label>

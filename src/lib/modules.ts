@@ -232,7 +232,7 @@ export const MODULES: ModuleDef[] = [
       { to: "/estoque-matriz/vendidos", label: "Vendidos", icon: CircleDollarSign },
       { to: "/estoque-matriz/vendas-historico", label: "Vendas Históricas", icon: History },
       { to: "/estoque-matriz/anunciados", label: "Veículos Anunciados", icon: Megaphone },
-      { to: "/estoque-matriz/acoes-leads", label: "Ações de Leads", icon: ClipboardCheck },
+      { to: "/estoque-matriz/acoes-leads", label: "Ações da Matriz", icon: ClipboardCheck },
       { to: "/estoque-matriz/importar", label: "Importação", icon: Upload },
       { to: "/estoque-matriz/lixeira", label: "Lixeira", icon: Archive },
       { to: "/estoque-matriz/regras", label: "Configurações", icon: ListChecks },
