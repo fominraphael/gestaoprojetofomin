@@ -1065,6 +1065,7 @@ export type Database = {
         Row: {
           acao_planilha: string | null
           ano_mod: string | null
+          campos_manuais: string[]
           chassi: string
           chassi_resumido: string
           classificacao: string | null
@@ -1074,6 +1075,7 @@ export type Database = {
           custo_total: number | null
           deleted_at: string | null
           dias_em_estoque: number
+          editado_em: string | null
           em_repasse: boolean
           empresa_nbs_id: string | null
           faixa_id_atual: string | null
@@ -1099,6 +1101,7 @@ export type Database = {
         Insert: {
           acao_planilha?: string | null
           ano_mod?: string | null
+          campos_manuais?: string[]
           chassi: string
           chassi_resumido: string
           classificacao?: string | null
@@ -1108,6 +1111,7 @@ export type Database = {
           custo_total?: number | null
           deleted_at?: string | null
           dias_em_estoque?: number
+          editado_em?: string | null
           em_repasse?: boolean
           empresa_nbs_id?: string | null
           faixa_id_atual?: string | null
@@ -1133,6 +1137,7 @@ export type Database = {
         Update: {
           acao_planilha?: string | null
           ano_mod?: string | null
+          campos_manuais?: string[]
           chassi?: string
           chassi_resumido?: string
           classificacao?: string | null
@@ -1142,6 +1147,7 @@ export type Database = {
           custo_total?: number | null
           deleted_at?: string | null
           dias_em_estoque?: number
+          editado_em?: string | null
           em_repasse?: boolean
           empresa_nbs_id?: string | null
           faixa_id_atual?: string | null
