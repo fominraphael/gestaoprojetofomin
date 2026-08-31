@@ -48,6 +48,7 @@ import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './ro
 import { Route as AuthenticatedRotinaRotinaConfiguracoesRouteImport } from './routes/_authenticated._rotina.rotina.configuracoes'
 import { Route as AuthenticatedRotinaRotinaSetorIdRouteImport } from './routes/_authenticated._rotina.rotina.$setorId'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendidos'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendas-historico'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.repasse'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.lixeira'
@@ -276,6 +277,12 @@ const AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute =
     path: '/estoque-matriz/vendidos',
     getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport.update({
+    id: '/estoque-matriz/vendas-historico',
+    path: '/estoque-matriz/vendas-historico',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
 const AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute =
   AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport.update({
     id: '/estoque-matriz/repasse',
@@ -370,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
+  '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -416,6 +424,7 @@ export interface FileRoutesByTo {
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
+  '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/_authenticated/_estoque-matriz/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
   '/_authenticated/_rotina/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/_authenticated/_rotina/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
     | '/estoque-matriz/repasse'
+    | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
@@ -564,6 +575,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
     | '/estoque-matriz/repasse'
+    | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
@@ -617,6 +629,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_estoque-matriz/estoque-matriz/lixeira'
     | '/_authenticated/_estoque-matriz/estoque-matriz/regras'
     | '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
     | '/_authenticated/_estoque-matriz/estoque-matriz/vendidos'
     | '/_authenticated/_rotina/rotina/$setorId'
     | '/_authenticated/_rotina/rotina/configuracoes'
@@ -931,6 +944,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport
       parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
+    '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
+      path: '/estoque-matriz/vendas-historico'
+      fullPath: '/estoque-matriz/vendas-historico'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
     '/_authenticated/_estoque-matriz/estoque-matriz/repasse': {
       id: '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
       path: '/estoque-matriz/repasse'
@@ -1057,6 +1077,7 @@ interface AuthenticatedEstoqueMatrizRouteChildren {
   AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
+  AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
 }
@@ -1073,6 +1094,8 @@ const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteCh
       AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute,
+    AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute:
+      AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute:
