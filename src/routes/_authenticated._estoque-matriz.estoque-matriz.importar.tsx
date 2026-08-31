@@ -106,6 +106,15 @@ function EstoqueImportar() {
     },
   });
 
+  const baixarPlanilha = async (path: string) => {
+    try {
+      const url = await getUrlPlanilhaImportacao(path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      toast.error("Não foi possível baixar a planilha.");
+    }
+  };
+
   const processar = async (tipo: Tipo, file: File) => {
     setProcessando(tipo);
     const inicio = Date.now();
