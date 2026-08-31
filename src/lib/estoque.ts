@@ -565,15 +565,38 @@ export async function importarEstoque(
       deleted_at: null,
     };
 
-    const { error } = await supabase
+    const chave = `${chassi}|${origem.id}`;
+    const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
+    const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
+
+    if (mesmoRegistro) {
+      // Mesma compra já registrada nessa origem → apenas atualiza.
+      const { error } = await supabase
+        .from("estoque_veiculos")
+        .update(registro as never)
+        .eq("id", mesmoRegistro.id);
+      if (error) {
+        rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
+        continue;
+      }
+      rel.atualizados += 1;
+      continue;
+    }
+
+    // Chassi resumido diferente (ou inexistente) na origem → nova compra = novo registro.
+    const { data: inserido, error } = await supabase
       .from("estoque_veiculos")
-      .upsert(registro as never, { onConflict: "chassi,origem_id,chassi_resumido" });
+      .insert(registro as never)
+      .select("id")
+      .single();
     if (error) {
       rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
       continue;
     }
-    if (chaveExistente.has(`${chassi}|${origem.id}|${chassiResumido}`)) rel.atualizados += 1;
-    else rel.importados += 1;
+    ativosDoChassi.push({ id: (inserido as { id: string }).id, chassi_resumido: chassiResumido });
+    porChassiOrigem.set(chave, ativosDoChassi);
+    rel.importados += 1;
+    if (ativosDoChassi.length > 1) rel.novasCompras = (rel.novasCompras ?? 0) + 1;
   }
 
   return rel;
