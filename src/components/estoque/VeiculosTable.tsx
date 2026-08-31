@@ -293,32 +293,47 @@ export function VeiculosTable({
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      {[
-                        ["Site", anuncio?.canal_site_proprio],
-                        ["OLX", anuncio?.canal_olx],
-                        ["WM", anuncio?.canal_webmotors],
-                      ].map(([label, ativo]) => (
-                        <span
-                          key={String(label)}
-                          className={cn(
-                            "rounded px-1.5 py-0.5 text-[10px] font-medium border",
-                            ativo
-                              ? "bg-primary/10 text-primary border-primary/30"
-                              : "bg-muted text-muted-foreground border-border",
-                          )}
-                        >
-                          {label}
-                        </span>
-                      ))}
+                      {(
+                        [
+                          ["Site", anuncio?.canal_site_proprio],
+                          ["OLX", anuncio?.canal_olx],
+                          ["WM", anuncio?.canal_webmotors],
+                        ] as [string, boolean | undefined][]
+                      ).map(([label, publicado]) => {
+                        // Pendente = canal ainda sem anúncio publicado → exige ação.
+                        const pendente = !publicado;
+                        return (
+                          <span
+                            key={label}
+                            title={
+                              pendente
+                                ? `${label}: ação pendente (anúncio não publicado)`
+                                : `${label}: publicado`
+                            }
+                            className={cn(
+                              "rounded px-1.5 py-0.5 text-[10px] font-medium border",
+                              pendente
+                                ? "bg-status-done-bg text-status-done border-status-done/40"
+                                : "bg-muted text-muted-foreground border-border",
+                            )}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1">
+                      {modo !== "lixeira" && onAtualizado && (
+                        <EditarVeiculoDialog veiculo={v} onSalvo={onAtualizado} />
+                      )}
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
+
                       {modo === "lixeira" && (
                         <>
                           <Button size="icon" variant="ghost" onClick={() => onRestaurar?.(v)}>
