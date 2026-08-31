@@ -19,6 +19,33 @@ import {
   type VendaHistorica,
 } from "./estoque-motor";
 
+/**
+ * O backend limita QUALQUER consulta a 1.000 linhas por requisição (teto do
+ * PostgREST), independentemente do `.limit()` enviado. Todas as listagens do
+ * módulo passam por este helper, que pagina em blocos até esgotar o resultado.
+ */
+const TAMANHO_PAGINA = 1000;
+
+interface QueryPaginavel {
+  range: (
+    de: number,
+    ate: number,
+  ) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>;
+}
+
+/** Executa a consulta em blocos de 1.000 e devolve todas as linhas. */
+async function buscarTodos<T>(criarQuery: () => QueryPaginavel): Promise<T[]> {
+  const todos: T[] = [];
+  for (let inicio = 0; ; inicio += TAMANHO_PAGINA) {
+    const { data, error } = await criarQuery().range(inicio, inicio + TAMANHO_PAGINA - 1);
+    if (error) throw error;
+    const lote = (data ?? []) as T[];
+    todos.push(...lote);
+    if (lote.length < TAMANHO_PAGINA) break;
+  }
+  return todos;
+}
+
 
 export interface Origem {
   id: string;
