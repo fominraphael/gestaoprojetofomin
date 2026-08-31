@@ -116,6 +116,44 @@ export function VeiculosTable({
   const percFipe = (v: Veiculo) =>
     v.fipe && v.valor_anuncio_calculado ? `${((v.valor_anuncio_calculado / v.fipe) * 100).toFixed(1)}%` : "—";
 
+  /**
+   * Estado do canal para o veículo:
+   * - "cumpriu"  (verde)    → canal obrigatório para a categoria e publicado ("Sim").
+   * - "pendente" (vermelho) → canal obrigatório e NÃO publicado.
+   * - "opcional" (cinza)    → canal não obrigatório para a categoria.
+   */
+  const canaisDoVeiculo = (
+    v: Veiculo,
+    anuncio: Anuncio | undefined,
+  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] => {
+    const regra = regras.find(
+      (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
+    );
+    const exigidos = new Set((regra?.canais_exigidos ?? []).map(normCanal));
+    const itens: [string, string, boolean | undefined][] = [
+      ["Site", "Site Próprio", anuncio?.canal_site_proprio],
+      ["OLX", "OLX", anuncio?.canal_olx],
+      ["WM", "WebMotors", anuncio?.canal_webmotors],
+    ];
+    return itens.map(([label, nomeCanal, publicado]) => {
+      const obrigatorio = exigidos.has(normCanal(nomeCanal));
+      if (!obrigatorio) {
+        return {
+          label,
+          estado: "opcional" as const,
+          titulo: `${nomeCanal}: não obrigatório para esta categoria`,
+        };
+      }
+      return publicado
+        ? { label, estado: "cumpriu" as const, titulo: `${nomeCanal}: obrigatório e publicado` }
+        : {
+            label,
+            estado: "pendente" as const,
+            titulo: `${nomeCanal}: obrigatório e ainda não publicado`,
+          };
+    });
+  };
+
   /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
   const exportar = async () => {
     try {
