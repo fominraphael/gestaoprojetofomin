@@ -409,3 +409,90 @@ export function VeiculosTable({
     </div>
   );
 }
+
+interface DetalheCalculoProps {
+  veiculo: Veiculo;
+  vendas: VendaHistorica[];
+  hist: HistoricoValor | undefined;
+}
+
+/**
+ * Rastreabilidade do valor sugerido: mostra as vendas do histórico que serviram
+ * de base (mesmo código FIPE + ano modelo + faixa de KM) e se o valor final foi
+ * ajustado por piso/teto de FIPE.
+ */
+function DetalheCalculo({ veiculo, vendas, hist }: DetalheCalculoProps) {
+  const base = useMemo(() => valorVendaHistorico(veiculo, vendas), [veiculo, vendas]);
+  const memoria = (hist?.memoria_calculo ?? {}) as Record<string, unknown>;
+  const piso = memoria["piso_aplicado"] as { percentual: number; valor: number } | undefined;
+  const teto = memoria["teto_aplicado"] as { percentual: number; valor: number } | undefined;
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="rounded-xl border border-border p-3 space-y-1">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor bruto (histórico de vendas)</span>
+          <span className="font-medium">{formatBRL(base.valor)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">FIPE do veículo</span>
+          <span className="font-medium">{formatBRL(veiculo.fipe)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor sugerido final</span>
+          <span className="font-semibold">{formatBRL(veiculo.valor_anuncio_calculado)}</span>
+        </div>
+        <p className="text-xs text-muted-foreground pt-1">{base.motivo}</p>
+        {piso && (
+          <p className="text-xs text-status-done">
+            Balizador de piso aplicado: {piso.percentual}% da FIPE ({formatBRL(piso.valor)}).
+          </p>
+        )}
+        {teto && (
+          <p className="text-xs text-destructive">
+            Balizador de teto aplicado: {teto.percentual}% da FIPE ({formatBRL(teto.valor)}).
+          </p>
+        )}
+        {!piso && !teto && (
+          <p className="text-xs text-muted-foreground">
+            Nenhum balizador de mínimo/máximo da FIPE foi aplicado.
+          </p>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-medium mb-2">
+          Veículos do histórico usados como referência ({base.vendasUsadas.length})
+        </h3>
+        {base.vendasUsadas.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma venda comparável encontrada — o cálculo usou 100% da FIPE como base.
+          </p>
+        ) : (
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr className="text-left">
+                  <th className="px-2 py-1 font-medium">Chassi</th>
+                  <th className="px-2 py-1 font-medium">Data da venda</th>
+                  <th className="px-2 py-1 font-medium text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {base.vendasUsadas.map((v) => (
+                  <tr key={v.id} className="border-t border-border">
+                    <td className="px-2 py-1 font-mono">{v.chassi ?? "—"}</td>
+                    <td className="px-2 py-1">
+                      {v.data_venda ? new Date(v.data_venda).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-right tabular-nums">{formatBRL(v.valor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
