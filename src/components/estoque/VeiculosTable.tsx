@@ -11,9 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { formatBRL, type FaixaDias } from "@/lib/estoque-motor";
+import {
+  formatBRL,
+  valorVendaHistorico,
+  type FaixaDias,
+  type RegraEstoque,
+  type VendaHistorica,
+} from "@/lib/estoque-motor";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
 
@@ -25,6 +37,10 @@ export interface VeiculosTableProps {
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
   modo: "ativo" | "repasse" | "vendidos" | "lixeira";
+  /** Matriz de regras — define quais canais são obrigatórios por categoria. */
+  regras?: RegraEstoque[];
+  /** Vendas históricas — base da rastreabilidade do valor sugerido. */
+  vendas?: VendaHistorica[];
   onExcluir?: (v: Veiculo) => void;
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
@@ -34,6 +50,14 @@ export interface VeiculosTableProps {
 
 const TODOS = "__todos__";
 
+/** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
+const normCanal = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
 export function VeiculosTable({
   veiculos,
   origens,
@@ -42,6 +66,8 @@ export function VeiculosTable({
   anuncios,
   historico,
   modo,
+  regras = [],
+  vendas = [],
   onExcluir,
   onRestaurar,
   onExcluirDefinitivo,
@@ -53,6 +79,7 @@ export function VeiculosTable({
   const [classFiltro, setClassFiltro] = useState(TODOS);
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
+  const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
 
   const anunciosPorChassi = useMemo(() => {
     const m = new Map<string, Anuncio>();
