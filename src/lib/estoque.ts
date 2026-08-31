@@ -402,22 +402,26 @@ export async function restaurarVenda(id: string): Promise<void> {
 }
 
 export async function getAnuncios(): Promise<Anuncio[]> {
-  const { data, error } = await supabase
-    .from("estoque_anuncios")
-    .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
-    .is("deleted_at", null);
-  if (error) throw error;
-  return (data ?? []) as unknown as Anuncio[];
+  return buscarTodos<Anuncio>(
+    () =>
+      supabase
+        .from("estoque_anuncios")
+        .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Anúncios usados pela checagem de mercado (média por canal de referência). */
 export async function getAnunciosMercado(): Promise<AnuncioMercado[]> {
-  const { data, error } = await supabase
-    .from("estoque_anuncios")
-    .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
-    .is("deleted_at", null);
-  if (error) throw error;
-  return (data ?? []) as unknown as AnuncioMercado[];
+  return buscarTodos<AnuncioMercado>(
+    () =>
+      supabase
+        .from("estoque_anuncios")
+        .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 
