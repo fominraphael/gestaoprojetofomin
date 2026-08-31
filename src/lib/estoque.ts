@@ -505,7 +505,7 @@ export async function getUltimoHistorico(veiculoIds: string[]): Promise<Map<stri
     data.push(...linhas);
   }
   const map = new Map<string, HistoricoValor>();
-  for (const h of (data ?? []) as unknown as HistoricoValor[]) {
+  for (const h of data) {
     if (!map.has(h.veiculo_id)) map.set(h.veiculo_id, h);
   }
   return map;
