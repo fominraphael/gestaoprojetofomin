@@ -432,15 +432,43 @@ function canalPublicado(valor: unknown): boolean {
   return /(sim|ativo|public|online|true|1)/.test(s);
 }
 
+export async function uploadPlanilhaImportacao(
+  tipo: "estoque" | "vendas" | "anuncios",
+  file: File,
+): Promise<string | null> {
+  try {
+    const safe = file.name.replace(/[^\w.\-]+/g, "_");
+    const path = `${tipo}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage
+      .from("estoque-importacoes")
+      .upload(path, file, { upsert: false, contentType: file.type || undefined });
+    if (error) throw error;
+    return path;
+  } catch {
+    // O arquivo é um artefato de auditoria: falha no upload não deve abortar a importação.
+    return null;
+  }
+}
+
+export async function getUrlPlanilhaImportacao(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from("estoque-importacoes")
+    .createSignedUrl(path, 60 * 5, { download: true });
+  if (error || !data?.signedUrl) throw error ?? new Error("Não foi possível gerar o link.");
+  return data.signedUrl;
+}
+
 export async function registrarImportacao(
   tipo: "estoque" | "vendas" | "anuncios",
   arquivoNome: string,
   rel: RelatorioImportacao,
+  arquivoPath?: string | null,
 ): Promise<void> {
   const { data: auth } = await supabase.auth.getUser();
   await supabase.from("estoque_importacoes").insert({
     tipo,
     arquivo_nome: arquivoNome,
+    arquivo_path: arquivoPath ?? null,
     total_linhas: rel.totalLinhas,
     total_importados: rel.importados,
     total_atualizados: rel.atualizados,
@@ -449,6 +477,7 @@ export async function registrarImportacao(
     user_id: auth.user?.id ?? null,
   } as never);
 }
+
 
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
