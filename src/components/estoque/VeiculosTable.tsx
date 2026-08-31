@@ -304,7 +304,7 @@ export function VeiculosTable({
             )}
             {filtrados.map((v) => {
               const anuncio = anunciosPorChassi.get(v.chassi.toUpperCase());
-              const hist = historico.get(v.id);
+              
               return (
                 <tr key={v.id} className="border-t border-border hover:bg-muted/30">
                   <td className="px-3 py-2">
