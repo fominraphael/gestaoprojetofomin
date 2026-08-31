@@ -44,6 +44,9 @@ import {
   getOrigens,
   getRegras,
   upsertRegra,
+  type EmpresaNbs,
+  type Finalidade,
+  type Origem,
 } from "@/lib/estoque";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/regras")({
@@ -201,21 +204,9 @@ function EstoqueRegras() {
         </TabsContent>
 
         <TabsContent value="cadastros" className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
-          <ListaSimples
-            titulo="Origens"
-            itens={origens.map((o) => `${o.codigo} — ${o.nome}`)}
-            tabela="estoque_origens"
-          />
-          <ListaSimples
-            titulo="Empresas NBS"
-            itens={empresas.map((e) => `${e.codigo_chassi_resumido} — ${e.nome_exibicao}`)}
-            tabela="estoque_empresas_nbs"
-          />
-          <ListaSimples
-            titulo="Finalidades"
-            itens={finalidades.map((f) => f.nome)}
-            tabela="estoque_finalidades"
-          />
+          <OrigensEditor origens={origens} />
+          <EmpresasNbsEditor empresas={empresas} origens={origens} />
+          <FinalidadesEditor finalidades={finalidades} />
         </TabsContent>
       </Tabs>
 
@@ -543,31 +534,287 @@ function FaixasEditor({ faixas }: { faixas: FaixaDias[] }) {
   );
 }
 
-function ListaSimples({
-  titulo,
-  itens,
-  tabela,
-}: {
-  titulo: string;
-  itens: string[];
-  tabela: string;
-}) {
+/* ------------------------------ Cadastros base ------------------------------ */
+
+function OrigensEditor({ origens }: { origens: Origem[] }) {
+  const qc = useQueryClient();
+  const [nova, setNova] = useState({ codigo: "", nome: "" });
+
+  const invalidar = () => qc.invalidateQueries({ queryKey: ["estoque", "origens"] });
+
+  const criar = async () => {
+    const codigo = Number(nova.codigo);
+    if (!Number.isInteger(codigo)) return toast.error("Informe um código numérico válido.");
+    if (!nova.nome.trim()) return toast.error("Informe o nome da origem.");
+    const { error } = await supabase.from("estoque_origens").insert({
+      codigo,
+      nome: nova.nome.trim(),
+      ativo: true,
+    } as never);
+    if (error) return toast.error(error.message);
+    setNova({ codigo: "", nome: "" });
+    toast.success("Origem cadastrada.");
+    await invalidar();
+  };
+
+  const alternarAtivo = async (o: Origem) => {
+    const { error } = await supabase
+      .from("estoque_origens")
+      .update({ ativo: !o.ativo } as never)
+      .eq("id", o.id);
+    if (error) return toast.error(error.message);
+    await invalidar();
+  };
+
+  const remover = async (id: string) => {
+    if (!window.confirm("Excluir esta origem? Empresas NBS vinculadas também serão removidas."))
+      return;
+    const { error } = await supabase.from("estoque_origens").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Origem removida.");
+    await invalidar();
+    await qc.invalidateQueries({ queryKey: ["estoque", "nbs"] });
+  };
+
   return (
-    <Card className="p-5 space-y-2">
-      <h2 className="font-semibold">{titulo}</h2>
-      {itens.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Nenhum registro cadastrado em <code>{tabela}</code>.
-        </p>
-      ) : (
-        <ul className="space-y-1 text-sm">
-          {itens.map((i) => (
-            <li key={i} className="border-b border-border pb-1">
-              {i}
-            </li>
-          ))}
-        </ul>
-      )}
+    <Card className="p-5 space-y-3">
+      <h2 className="font-semibold">Origens</h2>
+      <ul className="space-y-1 text-sm">
+        {origens.map((o) => (
+          <li key={o.id} className="flex items-center gap-2 border-b border-border pb-1">
+            <span className="font-medium">
+              {o.codigo} — {o.nome}
+            </span>
+            {!o.ativo && <Badge variant="secondary">Inativa</Badge>}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-7 text-xs"
+              onClick={() => alternarAtivo(o)}
+            >
+              {o.ativo ? "Desativar" : "Ativar"}
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive"
+              onClick={() => remover(o.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </li>
+        ))}
+        {origens.length === 0 && (
+          <li className="text-xs text-muted-foreground">Nenhuma origem cadastrada.</li>
+        )}
+      </ul>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="space-y-1 w-24">
+          <Label className="text-xs">Código</Label>
+          <Input
+            type="number"
+            value={nova.codigo}
+            onChange={(e) => setNova({ ...nova, codigo: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1 flex-1 min-w-32">
+          <Label className="text-xs">Nome</Label>
+          <Input value={nova.nome} onChange={(e) => setNova({ ...nova, nome: e.target.value })} />
+        </div>
+        <Button size="sm" onClick={criar}>
+          <Plus className="w-4 h-4" /> Adicionar
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function EmpresasNbsEditor({
+  empresas,
+  origens,
+}: {
+  empresas: EmpresaNbs[];
+  origens: Origem[];
+}) {
+  const qc = useQueryClient();
+  const [nova, setNova] = useState({ origem_id: "", codigo: "", nome: "" });
+
+  const invalidar = () => qc.invalidateQueries({ queryKey: ["estoque", "nbs"] });
+
+  const criar = async () => {
+    if (!nova.origem_id) return toast.error("Selecione a origem.");
+    if (!nova.codigo.trim() || !nova.nome.trim())
+      return toast.error("Informe o código do chassi resumido e o nome de exibição.");
+    const { error } = await supabase.from("estoque_empresas_nbs").insert({
+      origem_id: nova.origem_id,
+      codigo_chassi_resumido: nova.codigo.trim(),
+      nome_exibicao: nova.nome.trim(),
+      ativo: true,
+    } as never);
+    if (error) return toast.error(error.message);
+    setNova({ origem_id: "", codigo: "", nome: "" });
+    toast.success("Empresa NBS cadastrada.");
+    await invalidar();
+  };
+
+  const alternarAtivo = async (e: EmpresaNbs) => {
+    const { error } = await supabase
+      .from("estoque_empresas_nbs")
+      .update({ ativo: !e.ativo } as never)
+      .eq("id", e.id);
+    if (error) return toast.error(error.message);
+    await invalidar();
+  };
+
+  const remover = async (id: string) => {
+    if (!window.confirm("Excluir esta empresa NBS?")) return;
+    const { error } = await supabase.from("estoque_empresas_nbs").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Empresa NBS removida.");
+    await invalidar();
+  };
+
+  const nomeOrigem = (id: string) => origens.find((o) => o.id === id)?.nome ?? "—";
+
+  return (
+    <Card className="p-5 space-y-3">
+      <h2 className="font-semibold">Empresas NBS</h2>
+      <ul className="space-y-1 text-sm">
+        {empresas.map((e) => (
+          <li key={e.id} className="flex items-center gap-2 border-b border-border pb-1">
+            <span className="font-medium">
+              {e.codigo_chassi_resumido} — {e.nome_exibicao}
+            </span>
+            <span className="text-xs text-muted-foreground">({nomeOrigem(e.origem_id)})</span>
+            {!e.ativo && <Badge variant="secondary">Inativa</Badge>}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-7 text-xs"
+              onClick={() => alternarAtivo(e)}
+            >
+              {e.ativo ? "Desativar" : "Ativar"}
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive"
+              onClick={() => remover(e.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </li>
+        ))}
+        {empresas.length === 0 && (
+          <li className="text-xs text-muted-foreground">Nenhuma empresa NBS cadastrada.</li>
+        )}
+      </ul>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="space-y-1 min-w-32">
+          <Label className="text-xs">Origem</Label>
+          <Select value={nova.origem_id} onValueChange={(v) => setNova({ ...nova, origem_id: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {origens.map((o) => (
+                <SelectItem key={o.id} value={o.id}>
+                  {o.codigo} — {o.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1 w-28">
+          <Label className="text-xs">Chassi resum.</Label>
+          <Input value={nova.codigo} onChange={(e) => setNova({ ...nova, codigo: e.target.value })} />
+        </div>
+        <div className="space-y-1 flex-1 min-w-32">
+          <Label className="text-xs">Nome de exibição</Label>
+          <Input value={nova.nome} onChange={(e) => setNova({ ...nova, nome: e.target.value })} />
+        </div>
+        <Button size="sm" onClick={criar}>
+          <Plus className="w-4 h-4" /> Adicionar
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function FinalidadesEditor({ finalidades }: { finalidades: Finalidade[] }) {
+  const qc = useQueryClient();
+  const [nova, setNova] = useState("");
+
+  const invalidar = () => qc.invalidateQueries({ queryKey: ["estoque", "finalidades"] });
+
+  const criar = async () => {
+    if (!nova.trim()) return toast.error("Informe o nome da finalidade.");
+    const { error } = await supabase.from("estoque_finalidades").insert({
+      nome: nova.trim(),
+      ativo: true,
+    } as never);
+    if (error) return toast.error(error.message);
+    setNova("");
+    toast.success("Finalidade cadastrada.");
+    await invalidar();
+  };
+
+  const alternarAtivo = async (f: Finalidade) => {
+    const { error } = await supabase
+      .from("estoque_finalidades")
+      .update({ ativo: !f.ativo } as never)
+      .eq("id", f.id);
+    if (error) return toast.error(error.message);
+    await invalidar();
+  };
+
+  const remover = async (id: string) => {
+    if (!window.confirm("Excluir esta finalidade?")) return;
+    const { error } = await supabase.from("estoque_finalidades").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Finalidade removida.");
+    await invalidar();
+  };
+
+  return (
+    <Card className="p-5 space-y-3">
+      <h2 className="font-semibold">Finalidades</h2>
+      <ul className="space-y-1 text-sm">
+        {finalidades.map((f) => (
+          <li key={f.id} className="flex items-center gap-2 border-b border-border pb-1">
+            <span className="font-medium">{f.nome}</span>
+            {!f.ativo && <Badge variant="secondary">Inativa</Badge>}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-7 text-xs"
+              onClick={() => alternarAtivo(f)}
+            >
+              {f.ativo ? "Desativar" : "Ativar"}
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive"
+              onClick={() => remover(f.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </li>
+        ))}
+        {finalidades.length === 0 && (
+          <li className="text-xs text-muted-foreground">Nenhuma finalidade cadastrada.</li>
+        )}
+      </ul>
+      <div className="flex items-end gap-2">
+        <div className="space-y-1 flex-1">
+          <Label className="text-xs">Nome</Label>
+          <Input value={nova} onChange={(e) => setNova(e.target.value)} />
+        </div>
+        <Button size="sm" onClick={criar}>
+          <Plus className="w-4 h-4" /> Adicionar
+        </Button>
+      </div>
     </Card>
   );
 }
