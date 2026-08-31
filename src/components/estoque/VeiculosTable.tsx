@@ -24,7 +24,7 @@ export interface VeiculosTableProps {
   faixas: FaixaDias[];
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
-  modo: "ativo" | "repasse" | "lixeira";
+  modo: "ativo" | "repasse" | "vendidos" | "lixeira";
   onExcluir?: (v: Veiculo) => void;
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;

@@ -65,6 +65,8 @@ export interface Veiculo {
   valor_anuncio_calculado: number | null;
   faixa_id_atual: string | null;
   em_repasse: boolean;
+  em_vendido: boolean;
+  importado_em?: string;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
   /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
@@ -119,6 +121,10 @@ export interface RelatorioImportacao {
   atualizados: number;
   /** Novas compras do mesmo veículo (chassi já existia na origem com outro chassi resumido). */
   novasCompras?: number;
+  /** Veículos ativos movidos para a categoria Vendidos (venda localizada na planilha de vendas). */
+  movidosVendidos?: number;
+  /** Veículos que estavam em Vendidos e retornaram ao Estoque (venda cancelada). */
+  vendasCanceladas?: number;
   ignorados: LinhaRelatorio[];
 }
 
@@ -204,10 +210,17 @@ export async function upsertRegra(
 export async function getVeiculos(opts: {
   lixeira?: boolean;
   repasse?: boolean;
+  vendidos?: boolean;
 }): Promise<Veiculo[]> {
   let q = supabase.from("estoque_veiculos").select("*").order("dias_em_estoque", { ascending: false });
   q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  if (!opts.lixeira) q = q.eq("em_repasse", !!opts.repasse);
+  if (!opts.lixeira) {
+    if (opts.vendidos) {
+      q = q.eq("em_vendido", true);
+    } else {
+      q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+    }
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as unknown as Veiculo[];
