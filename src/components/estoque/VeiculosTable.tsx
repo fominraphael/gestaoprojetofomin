@@ -45,7 +45,10 @@ export interface VeiculosTableProps {
   regras?: RegraEstoque[];
   /** Vendas históricas — base da rastreabilidade do valor sugerido. */
   vendas?: VendaHistorica[];
+  /** Recálculo forçado deste veículo (refaz a base do zero). */
+  onRecalcular?: (v: Veiculo) => void | Promise<void>;
   onExcluir?: (v: Veiculo) => void;
+
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
   onAtualizado?: () => void | Promise<void>;
