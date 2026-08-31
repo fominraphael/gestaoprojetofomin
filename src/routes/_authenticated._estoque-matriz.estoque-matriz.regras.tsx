@@ -341,6 +341,118 @@ function EstoqueRegras() {
                 </div>
               </div>
 
+              <div className="space-y-2 rounded-xl border border-border p-3">
+                <div>
+                  <Label>Base do valor — níveis de fallback</Label>
+                  <p className="text-xs text-muted-foreground">
+                    O sistema percorre os níveis ativos, na ordem abaixo, e usa o primeiro que
+                    retornar um valor válido.
+                  </p>
+                </div>
+                {niveis.map((n, i) => (
+                  <div key={n.tipo} className="flex flex-wrap items-end gap-2 border-t border-border pt-2">
+                    <label className="flex items-center gap-2 text-sm flex-1 min-w-[220px]">
+                      <Checkbox
+                        checked={n.ativo}
+                        onCheckedChange={(c) => setNivel(i, { ativo: c === true })}
+                      />
+                      {ROTULO_NIVEL[n.tipo]}
+                    </label>
+                    {n.tipo === "fipe_fixo" ? (
+                      <div className="space-y-1 w-28">
+                        <Label className="text-xs">% da FIPE</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          disabled={!n.ativo}
+                          value={n.percentual ?? 100}
+                          onChange={(e) => setNivel(i, { percentual: Number(e.target.value) })}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1 w-28">
+                        <Label className="text-xs">Dias</Label>
+                        <Input
+                          type="number"
+                          disabled={!n.ativo}
+                          value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
+                          onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => moverNivel(i, -1)}>
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => moverNivel(i, 1)}>
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 rounded-xl border border-border p-3">
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={!!editando.checagem_mercado_ativa}
+                      onCheckedChange={(c) => set("checagem_mercado_ativa", c === true)}
+                    />
+                    Ativar checagem de mercado
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Se o valor calculado ficar abaixo da média do canal de referência, o valor de
+                    anúncio passa a ser essa média.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label>Canal de referência</Label>
+                  <Select
+                    value={editando.canal_referencia ?? "WebMotors"}
+                    onValueChange={(v) => set("canal_referencia", v)}
+                  >
+                    <SelectTrigger disabled={!editando.checagem_mercado_ativa}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CANAIS.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Mínimo de fotos para considerar fotografado</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editando.min_fotos ?? 2}
+                    onChange={(e) => set("min_fotos", Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-border p-3">
+                <Label>Operacional (gera itens na aba “Ações da Matriz”)</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ACOES_MATRIZ.map((a) => (
+                    <label key={a.tipo} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={!!editando[a.campo]}
+                        onCheckedChange={(c) =>
+                          set(a.campo as "acao_aceleradores", c === true)
+                        }
+                      />
+                      {a.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+
               <div className="space-y-2">
                 <Label>Canais exigidos para o anúncio</Label>
                 <div className="flex flex-wrap gap-3">
