@@ -104,6 +104,39 @@ export function VeiculosTable({
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
+  const [colunas, setColunas] = useState<ColunaKey[]>(TODAS_COLUNAS);
+
+  // Preferência de colunas por usuário — carregada uma vez ao montar.
+  useEffect(() => {
+    let ativo = true;
+    void getPrefColunas()
+      .then((pref) => {
+        if (!ativo || !pref) return;
+        const validas = pref.filter((c): c is ColunaKey =>
+          (TODAS_COLUNAS as string[]).includes(c),
+        );
+        if (validas.length > 0) setColunas(validas);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const alternarColuna = (key: ColunaKey) => {
+    const proximas = colunas.includes(key)
+      ? colunas.filter((c) => c !== key)
+      : TODAS_COLUNAS.filter((c) => c === key || colunas.includes(c));
+    if (proximas.length === 0) {
+      toast.error("Mantenha ao menos uma coluna visível.");
+      return;
+    }
+    setColunas(proximas);
+    void salvarPrefColunas(proximas).catch(() => undefined);
+  };
+
+  const visiveis = COLUNAS.filter((c) => colunas.includes(c.key));
+
 
   const anunciosPorChassi = useMemo(() => {
     const m = new Map<string, Anuncio>();
