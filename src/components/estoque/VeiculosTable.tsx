@@ -95,7 +95,9 @@ export function VeiculosTable({
   modo,
   regras = [],
   vendas = [],
+  onRecalcular,
   onExcluir,
+
   onRestaurar,
   onExcluirDefinitivo,
   onAtualizado,
