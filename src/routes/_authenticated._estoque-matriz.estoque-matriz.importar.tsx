@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import {
   importarVendas,
   registrarImportacao,
   recalcularTodos,
+  uploadPlanilhaImportacao,
+  getUrlPlanilhaImportacao,
   type RelatorioImportacao,
 } from "@/lib/estoque";
 
