@@ -166,11 +166,13 @@ export async function getRegras(): Promise<RegraEstoque[]> {
   if (e2) throw e2;
   return ((regras ?? []) as unknown as RegraEstoque[]).map((r) => ({
     ...r,
+    fallback_niveis: normalizaNiveis(r.fallback_niveis),
     leads: ((leads ?? []) as unknown as (GatilhoLeads & { regra_id: string })[]).filter(
       (l) => l.regra_id === r.id,
     ),
   }));
 }
+
 
 export async function upsertRegra(
   regra: Partial<RegraEstoque> & { classificacao: ClassificacaoEstoque; faixa_id: string },
