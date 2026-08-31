@@ -37,6 +37,7 @@ import {
   normalizaNiveis,
   type ClassificacaoEstoque,
   type FaixaDias,
+  type FaixaKm,
   type GatilhoLeads,
   type NivelBase,
   type RegraEstoque,
@@ -46,6 +47,9 @@ import {
 import {
   getEmpresasNbs,
   getFaixas,
+  getFaixasKm,
+  salvarFaixaKm,
+  excluirFaixaKm,
   getFinalidades,
   getOrigens,
   getRegras,
@@ -185,6 +189,8 @@ function EstoqueRegras() {
         <TabsList>
           <TabsTrigger value="matriz">Matriz de regras</TabsTrigger>
           <TabsTrigger value="faixas">Faixas de dias</TabsTrigger>
+          <TabsTrigger value="faixas-km">Faixas de KM</TabsTrigger>
+
           <TabsTrigger value="cadastros">Cadastros</TabsTrigger>
         </TabsList>
 
@@ -236,6 +242,11 @@ function EstoqueRegras() {
         <TabsContent value="faixas" className="mt-4">
           <FaixasEditor faixas={faixas} />
         </TabsContent>
+
+        <TabsContent value="faixas-km" className="mt-4">
+          <FaixasKmEditor />
+        </TabsContent>
+
 
         <TabsContent value="cadastros" className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
           <OrigensEditor origens={origens} />
@@ -370,16 +381,33 @@ function EstoqueRegras() {
                         />
                       </div>
                     ) : (
-                      <div className="space-y-1 w-28">
-                        <Label className="text-xs">Dias</Label>
-                        <Input
-                          type="number"
-                          disabled={!n.ativo}
-                          value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
-                          onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
-                        />
-                      </div>
+                      <>
+                        <div className="space-y-1 w-24">
+                          <Label className="text-xs">Dias</Label>
+                          <Input
+                            type="number"
+                            disabled={!n.ativo}
+                            value={n.dias ?? (n.tipo === "hist_curto" ? 30 : 60)}
+                            onChange={(e) => setNivel(i, { dias: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div className="space-y-1 w-28">
+                          <Label className="text-xs" title="Ajuste aplicado sobre a média do histórico">
+                            Ajuste (%)
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            disabled={!n.ativo}
+                            value={n.ajuste_percentual ?? 0}
+                            onChange={(e) =>
+                              setNivel(i, { ajuste_percentual: Number(e.target.value) })
+                            }
+                          />
+                        </div>
+                      </>
                     )}
+
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => moverNivel(i, -1)}>
                         <ArrowUp className="w-4 h-4" />
@@ -679,6 +707,110 @@ function FaixasEditor({ faixas }: { faixas: FaixaDias[] }) {
     </Card>
   );
 }
+
+/**
+ * Faixas de quilometragem usadas no match de vendas comparáveis do histórico.
+ * Sem nenhuma faixa cadastrada, o motor mantém o padrão interno de 15 em 15 mil km.
+ */
+function FaixasKmEditor() {
+  const qc = useQueryClient();
+  const { data: faixasKm = [] } = useQuery({
+    queryKey: ["estoque", "faixas-km"],
+    queryFn: getFaixasKm,
+  });
+  const [nova, setNova] = useState({ nome: "", km_inicio: 0, km_fim: 0 });
+
+  const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "faixas-km"] });
+
+  const criar = async () => {
+    if (!nova.nome.trim()) return toast.error("Informe o nome da faixa.");
+    if (nova.km_fim <= nova.km_inicio) return toast.error("O KM final deve ser maior que o inicial.");
+    try {
+      await salvarFaixaKm({ ...nova, nome: nova.nome.trim(), ordem: faixasKm.length, ativo: true });
+      setNova({ nome: "", km_inicio: 0, km_fim: 0 });
+      toast.success("Faixa de KM criada.");
+      await recarregar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao criar faixa.");
+    }
+  };
+
+  const alternar = async (f: FaixaKm) => {
+    try {
+      await salvarFaixaKm({ ...f, ativo: !f.ativo });
+      await recarregar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao atualizar.");
+    }
+  };
+
+  const remover = async (id: string) => {
+    try {
+      await excluirFaixaKm(id);
+      toast.success("Faixa removida.");
+      await recarregar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao remover.");
+    }
+  };
+
+  return (
+    <Card className="p-5 space-y-4">
+      <p className="text-xs text-muted-foreground">
+        O histórico de vendas só considera veículos na mesma faixa de KM. Sem faixas cadastradas, o
+        sistema usa o padrão de 15 mil em 15 mil km.
+      </p>
+      <div className="space-y-2">
+        {faixasKm.length === 0 && (
+          <p className="text-sm text-muted-foreground">Nenhuma faixa cadastrada.</p>
+        )}
+        {faixasKm.map((f) => (
+          <div key={f.id} className="flex items-center gap-3 text-sm border-b border-border pb-2">
+            <Checkbox checked={f.ativo} onCheckedChange={() => void alternar(f)} />
+            <span className="font-medium">{f.nome}</span>
+            <span className="text-muted-foreground">
+              {f.km_inicio.toLocaleString("pt-BR")} a {f.km_fim.toLocaleString("pt-BR")} km
+            </span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="ml-auto text-destructive"
+              onClick={() => void remover(f.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs">Nome</Label>
+          <Input value={nova.nome} onChange={(e) => setNova({ ...nova, nome: e.target.value })} />
+        </div>
+        <div className="space-y-1 w-32">
+          <Label className="text-xs">KM inicial</Label>
+          <Input
+            type="number"
+            value={nova.km_inicio}
+            onChange={(e) => setNova({ ...nova, km_inicio: Number(e.target.value) })}
+          />
+        </div>
+        <div className="space-y-1 w-32">
+          <Label className="text-xs">KM final</Label>
+          <Input
+            type="number"
+            value={nova.km_fim}
+            onChange={(e) => setNova({ ...nova, km_fim: Number(e.target.value) })}
+          />
+        </div>
+        <Button onClick={() => void criar()}>
+          <Plus className="w-4 h-4" /> Adicionar faixa
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 
 /* ------------------------------ Cadastros base ------------------------------ */
 

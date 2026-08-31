@@ -11,6 +11,8 @@ import {
   type AnuncioMercado,
   type ClassificacaoEstoque,
   type FaixaDias,
+  type FaixaKm,
+
   type GatilhoLeads,
   type RegraEstoque,
   type TipoAcaoMatriz,
@@ -161,6 +163,63 @@ export async function getFaixas(): Promise<FaixaDias[]> {
   if (error) throw error;
   return (data ?? []) as FaixaDias[];
 }
+
+/** Faixas de KM configuráveis usadas no match do histórico de vendas. */
+export async function getFaixasKm(): Promise<FaixaKm[]> {
+  const { data, error } = await supabase
+    .from("estoque_faixas_km" as never)
+    .select("*")
+    .order("ordem");
+  if (error) throw error;
+  return (data ?? []) as unknown as FaixaKm[];
+}
+
+export async function salvarFaixaKm(
+  faixa: Partial<FaixaKm> & { nome: string; km_inicio: number; km_fim: number },
+): Promise<void> {
+  const payload = {
+    ...(faixa.id ? { id: faixa.id } : {}),
+    nome: faixa.nome,
+    km_inicio: faixa.km_inicio,
+    km_fim: faixa.km_fim,
+    ordem: faixa.ordem ?? 0,
+    ativo: faixa.ativo ?? true,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("estoque_faixas_km" as never).upsert(payload as never);
+  if (error) throw error;
+}
+
+export async function excluirFaixaKm(id: string): Promise<void> {
+  const { error } = await supabase.from("estoque_faixas_km" as never).delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Preferência de colunas da tela de veículos — persistida por usuário. */
+export async function getPrefColunas(): Promise<string[] | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from("estoque_pref_colunas" as never)
+    .select("colunas")
+    .eq("user_id", uid)
+    .maybeSingle();
+  if (error) throw error;
+  const colunas = (data as { colunas?: unknown } | null)?.colunas;
+  return Array.isArray(colunas) ? (colunas as string[]) : null;
+}
+
+export async function salvarPrefColunas(colunas: string[]): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) return;
+  const { error } = await supabase
+    .from("estoque_pref_colunas" as never)
+    .upsert({ user_id: uid, colunas, updated_at: new Date().toISOString() } as never);
+  if (error) throw error;
+}
+
 
 export async function getRegras(): Promise<RegraEstoque[]> {
   const [{ data: regras, error }, { data: leads, error: e2 }] = await Promise.all([
@@ -549,18 +608,19 @@ export interface ResumoRecalculo {
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
 export async function recalcularTodos(): Promise<ResumoRecalculo> {
-  const [veiculos, faixas, regras, vendas, anunciosMercado] = await Promise.all([
+  const [veiculos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
     getVeiculos({}),
     getFaixas(),
     getRegras(),
     getVendas(),
     getAnunciosMercado(),
+    getFaixasKm(),
   ]);
 
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
   for (const v of veiculos) {
-    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado });
+    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado, faixasKm });
     if (!r.alterou) continue;
 
 

@@ -40,6 +40,11 @@ export interface NivelBase {
   dias: number | null;
   /** Percentual da FIPE — usado apenas no nível `fipe_fixo`. */
   percentual: number | null;
+  /**
+   * Ajuste percentual (positivo ou negativo) aplicado sobre a média encontrada
+   * nos níveis de histórico. Ignorado no nível `fipe_fixo`.
+   */
+  ajuste_percentual?: number | null;
   ordem: number;
 }
 
@@ -51,9 +56,9 @@ export const ROTULO_NIVEL: Record<TipoNivelBase, string> = {
 
 /** Configuração padrão (equivale ao comportamento anterior: 30d → 60d → 100% FIPE). */
 export const NIVEIS_BASE_PADRAO: NivelBase[] = [
-  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ordem: 0 },
-  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ordem: 1 },
-  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ordem: 2 },
+  { tipo: "hist_curto", ativo: true, dias: 30, percentual: null, ajuste_percentual: 0, ordem: 0 },
+  { tipo: "hist_longo", ativo: true, dias: 60, percentual: null, ajuste_percentual: 0, ordem: 1 },
+  { tipo: "fipe_fixo", ativo: true, dias: null, percentual: 100, ajuste_percentual: null, ordem: 2 },
 ];
 
 export function normalizaNiveis(niveis: unknown): NivelBase[] {
@@ -66,10 +71,22 @@ export function normalizaNiveis(niveis: unknown): NivelBase[] {
       ativo: n.ativo !== false,
       dias: n.dias ?? null,
       percentual: n.percentual ?? null,
+      ajuste_percentual: n.ajuste_percentual ?? 0,
       ordem: typeof n.ordem === "number" ? n.ordem : i,
     }))
     .sort((a, b) => a.ordem - b.ordem);
 }
+
+/** Faixa de quilometragem configurável (aba Cadastros da Matriz de Regras). */
+export interface FaixaKm {
+  id: string;
+  nome: string;
+  km_inicio: number;
+  km_fim: number;
+  ordem: number;
+  ativo: boolean;
+}
+
 
 export interface RegraEstoque {
   id: string;
@@ -151,15 +168,24 @@ export function arredonda990(valor: number): number {
   return base >= valor ? base : base + 1000;
 }
 
-/** Faixa de milhar de KM usada na busca de vendas comparáveis. */
-export function faixaKm(km: number | null | undefined): string {
+/**
+ * Faixa de KM usada na busca de vendas comparáveis.
+ * Usa as faixas cadastradas (aba Cadastros); sem cadastro, cai no padrão de 15k.
+ */
+export function faixaKm(km: number | null | undefined, faixas: FaixaKm[] = []): string {
   const v = km ?? 0;
+  const ativas = faixas.filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem);
+  if (ativas.length > 0) {
+    const encontrada = ativas.find((f) => v >= f.km_inicio && v <= f.km_fim);
+    return encontrada ? encontrada.id : "fora-de-faixa";
+  }
   if (v < 15000) return "0-15k";
   if (v < 30000) return "15-30k";
   if (v < 45000) return "30-45k";
   if (v < 60000) return "45-60k";
   return "+60k";
 }
+
 
 function normaliza(valor: string | null | undefined): string {
   return (valor ?? "").toString().trim().toUpperCase();
@@ -172,17 +198,21 @@ export interface ResultadoHistorico {
   motivo: string;
 }
 
-/** Vendas comparáveis: mesmo código FIPE + ano modelo + faixa de KM. */
-function vendasComparaveis(veiculo: VeiculoCalculo, vendas: VendaHistorica[]): VendaHistorica[] {
+/** Vendas comparáveis: mesmo código FIPE + ano modelo + faixa de KM cadastrada. */
+function vendasComparaveis(
+  veiculo: VeiculoCalculo,
+  vendas: VendaHistorica[],
+  faixasKm: FaixaKm[] = [],
+): VendaHistorica[] {
   const fipe = normaliza(veiculo.codigo_fipe);
   const ano = normaliza(veiculo.ano_mod);
-  const faixa = faixaKm(veiculo.km);
+  const faixa = faixaKm(veiculo.km, faixasKm);
   if (!fipe) return [];
   return vendas.filter(
     (v) =>
       normaliza(v.codigo_fipe) === fipe &&
       (ano ? normaliza(v.ano_modelo).includes(ano) || ano.includes(normaliza(v.ano_modelo)) : true) &&
-      faixaKm(v.km) === faixa &&
+      faixaKm(v.km, faixasKm) === faixa &&
       typeof v.valor_venda === "number" &&
       v.valor_venda > 0 &&
       !!v.data_venda,
@@ -198,12 +228,13 @@ export function valorHistoricoJanela(
   vendas: VendaHistorica[],
   janelaDias: number,
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoHistorico {
   if (!normaliza(veiculo.codigo_fipe)) {
     return { valor: null, janelaDias: null, vendasUsadas: [], motivo: "Veículo sem código FIPE" };
   }
   const limite = new Date(hoje.getTime() - janelaDias * 24 * 60 * 60 * 1000);
-  const noPeriodo = vendasComparaveis(veiculo, vendas).filter(
+  const noPeriodo = vendasComparaveis(veiculo, vendas, faixasKm).filter(
     (v) => new Date(v.data_venda!) >= limite,
   );
   if (noPeriodo.length < 2) {
@@ -233,9 +264,10 @@ export function valorVendaHistorico(
   veiculo: VeiculoCalculo,
   vendas: VendaHistorica[],
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoHistorico {
   for (const janela of [30, 60]) {
-    const r = valorHistoricoJanela(veiculo, vendas, janela, hoje);
+    const r = valorHistoricoJanela(veiculo, vendas, janela, hoje, faixasKm);
     if (r.valor != null) return r;
   }
   return {
@@ -262,6 +294,7 @@ export function valorBaseConfiguravel(
   regra: RegraEstoque,
   vendas: VendaHistorica[],
   hoje: Date = new Date(),
+  faixasKm: FaixaKm[] = [],
 ): ResultadoBase {
   const niveis = normalizaNiveis(regra.fallback_niveis).filter((n) => n.ativo);
   if (niveis.length === 0) {
@@ -286,12 +319,21 @@ export function valorBaseConfiguravel(
       continue;
     }
     const dias = nivel.dias ?? (nivel.tipo === "hist_curto" ? 30 : 60);
-    const r = valorHistoricoJanela(veiculo, vendas, dias, hoje);
+    const r = valorHistoricoJanela(veiculo, vendas, dias, hoje, faixasKm);
     if (r.valor != null) {
-      return { valor: r.valor, nivel: nivel.tipo, motivo: r.motivo, vendasUsadas: r.vendasUsadas };
+      // Ajuste percentual configurável (positivo ou negativo) sobre a média.
+      const ajuste = Number(nivel.ajuste_percentual ?? 0);
+      const valor = r.valor * (1 + ajuste / 100);
+      return {
+        valor,
+        nivel: nivel.tipo,
+        motivo: ajuste ? `${r.motivo} · ajuste de ${ajuste > 0 ? "+" : ""}${ajuste}%` : r.motivo,
+        vendasUsadas: r.vendasUsadas,
+      };
     }
   }
   return {
+
     valor: null,
     nivel: null,
     motivo: "Nenhum nível de fallback ativo retornou valor válido",
@@ -415,10 +457,11 @@ export function calcularValorAnuncio(
   faixas: FaixaDias[],
   regras: RegraEstoque[],
   vendas: VendaHistorica[],
-  opts: { hoje?: Date; anuncios?: AnuncioMercado[] } = {},
+  opts: { hoje?: Date; anuncios?: AnuncioMercado[]; faixasKm?: FaixaKm[] } = {},
 ): ResultadoCalculo {
   const hoje = opts.hoje ?? new Date();
   const anunciosMercado = opts.anuncios ?? [];
+  const faixasKm = opts.faixasKm ?? [];
 
   const vazio: ResultadoCalculo = {
     alterou: false,
@@ -497,7 +540,7 @@ export function calcularValorAnuncio(
       regrasAtivas.find((r) => r.tipo_regra === "base") ??
       regra;
 
-    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje);
+    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje, faixasKm);
     const base = resBase.valor ?? 0;
     memoria["origem_valor_base"] = resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : "indefinida";
     memoria["base_motivo"] = resBase.motivo;

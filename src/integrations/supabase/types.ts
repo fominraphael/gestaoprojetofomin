@@ -805,6 +805,39 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_faixas_km: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          km_fim: number
+          km_inicio: number
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          km_fim?: number
+          km_inicio?: number
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          km_fim?: number
+          km_inicio?: number
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       estoque_finalidades: {
         Row: {
           ativo: boolean
@@ -895,6 +928,24 @@ export type Database = {
           id?: string
           nome?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      estoque_pref_colunas: {
+        Row: {
+          colunas: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colunas?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colunas?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
