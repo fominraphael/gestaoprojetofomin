@@ -571,18 +571,33 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes, excluidosRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
-    // Somente registros ATIVOS entram na checagem de duplicidade:
-    // veículos na lixeira (deleted_at) ou já excluídos definitivamente são ignorados.
+    // Somente registros ATIVOS entram na checagem de atualização.
     supabase
       .from("estoque_veiculos")
       .select("id,chassi,origem_id,chassi_resumido")
       .is("deleted_at", null),
+    // Registros na lixeira: não voltam para a análise; a linha é ignorada
+    // (a constraint única não distingue excluídos, então inserir daria erro).
+    supabase
+      .from("estoque_veiculos")
+      .select("chassi,origem_id,chassi_resumido")
+      .not("deleted_at", "is", null),
   ]);
   if (ativosRes.error) throw ativosRes.error;
+  if (excluidosRes.error) throw excluidosRes.error;
+
+  const excluidos = new Set(
+    ((excluidosRes.data ?? []) as {
+      chassi: string;
+      origem_id: string;
+      chassi_resumido: string;
+    }[]).map((v) => `${v.chassi}|${v.origem_id}|${v.chassi_resumido}`),
+  );
+
 
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
