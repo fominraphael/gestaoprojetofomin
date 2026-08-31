@@ -93,6 +93,7 @@ function EstoqueRegras() {
   const qc = useQueryClient();
   const [editando, setEditando] = useState<FormRegra | null>(null);
   const [gatilhos, setGatilhos] = useState<GatilhoLeads[]>([]);
+  const [niveis, setNiveis] = useState<NivelBase[]>(NIVEIS_BASE_PADRAO);
 
   const { data: origens = [] } = useQuery({ queryKey: ["estoque", "origens"], queryFn: getOrigens });
   const { data: empresas = [] } = useQuery({ queryKey: ["estoque", "nbs"], queryFn: getEmpresasNbs });
@@ -122,15 +123,41 @@ function EstoqueRegras() {
         canais_exigidos: [],
         gera_tarefa: false,
         ativo: true,
+        checagem_mercado_ativa: false,
+        canal_referencia: "WebMotors",
+        min_fotos: 2,
+        acao_aceleradores: false,
+        acao_fotos_ia: false,
+        acao_repescagem: false,
+        acao_auditoria: false,
       },
     );
     setGatilhos(existente?.leads ?? []);
+    setNiveis(normalizaNiveis(existente?.fallback_niveis));
   };
+
+  /** Move um nível para cima/baixo, mantendo a ordem sequencial persistida. */
+  const moverNivel = (i: number, delta: number) =>
+    setNiveis((arr) => {
+      const destino = i + delta;
+      if (destino < 0 || destino >= arr.length) return arr;
+      const copia = [...arr];
+      const [item] = copia.splice(i, 1);
+      copia.splice(destino, 0, item!);
+      return copia.map((n, idx) => ({ ...n, ordem: idx }));
+    });
+
+  const setNivel = (i: number, patch: Partial<NivelBase>) =>
+    setNiveis((arr) => arr.map((n, j) => (j === i ? { ...n, ...patch } : n)));
 
   const salvar = async () => {
     if (!editando) return;
     try {
-      await upsertRegra(editando as RegraEstoque, gatilhos);
+      const ordenados = niveis.map((n, i) => ({ ...n, ordem: i }));
+      await upsertRegra(
+        { ...editando, fallback_niveis: ordenados } as RegraEstoque,
+        gatilhos,
+      );
       toast.success("Regra salva.");
       setEditando(null);
       await qc.invalidateQueries({ queryKey: ["estoque", "regras"] });
@@ -141,6 +168,7 @@ function EstoqueRegras() {
 
   const set = <K extends keyof RegraEstoque>(campo: K, valor: RegraEstoque[K]) =>
     setEditando((r) => (r ? { ...r, [campo]: valor } : r));
+
 
   return (
     <div className="p-6 space-y-4 w-full">
