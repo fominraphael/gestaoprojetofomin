@@ -615,6 +615,47 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_acoes_matriz: {
+        Row: {
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          tipo_acao: string
+          updated_at: string
+          veiculo_id: string
+        }
+        Insert: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          tipo_acao: string
+          updated_at?: string
+          veiculo_id: string
+        }
+        Update: {
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          tipo_acao?: string
+          updated_at?: string
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_acoes_matriz_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_anuncios: {
         Row: {
           ano_fabricacao: string | null
@@ -897,14 +938,22 @@ export type Database = {
       }
       estoque_regras: {
         Row: {
+          acao_aceleradores: boolean
+          acao_auditoria: boolean
+          acao_fotos_ia: boolean
+          acao_repescagem: boolean
           arredonda_990: boolean
           ativo: boolean
           canais_exigidos: string[]
+          canal_referencia: string
+          checagem_mercado_ativa: boolean
           classificacao: string
           created_at: string
           faixa_id: string
+          fallback_niveis: Json
           gera_tarefa: boolean
           id: string
+          min_fotos: number
           nome_tarefa: string | null
           nova_finalidade: string | null
           percentual: number
@@ -916,14 +965,22 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acao_aceleradores?: boolean
+          acao_auditoria?: boolean
+          acao_fotos_ia?: boolean
+          acao_repescagem?: boolean
           arredonda_990?: boolean
           ativo?: boolean
           canais_exigidos?: string[]
+          canal_referencia?: string
+          checagem_mercado_ativa?: boolean
           classificacao: string
           created_at?: string
           faixa_id: string
+          fallback_niveis?: Json
           gera_tarefa?: boolean
           id?: string
+          min_fotos?: number
           nome_tarefa?: string | null
           nova_finalidade?: string | null
           percentual?: number
@@ -935,14 +992,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acao_aceleradores?: boolean
+          acao_auditoria?: boolean
+          acao_fotos_ia?: boolean
+          acao_repescagem?: boolean
           arredonda_990?: boolean
           ativo?: boolean
           canais_exigidos?: string[]
+          canal_referencia?: string
+          checagem_mercado_ativa?: boolean
           classificacao?: string
           created_at?: string
           faixa_id?: string
+          fallback_niveis?: Json
           gera_tarefa?: boolean
           id?: string
+          min_fotos?: number
           nome_tarefa?: string | null
           nova_finalidade?: string | null
           percentual?: number
