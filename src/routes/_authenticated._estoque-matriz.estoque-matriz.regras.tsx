@@ -185,6 +185,8 @@ function EstoqueRegras() {
         <TabsList>
           <TabsTrigger value="matriz">Matriz de regras</TabsTrigger>
           <TabsTrigger value="faixas">Faixas de dias</TabsTrigger>
+          <TabsTrigger value="faixas-km">Faixas de KM</TabsTrigger>
+
           <TabsTrigger value="cadastros">Cadastros</TabsTrigger>
         </TabsList>
 
