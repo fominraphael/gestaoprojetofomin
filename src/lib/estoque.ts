@@ -449,11 +449,15 @@ export interface AnuncioRow {
 }
 
 export async function getAnunciosCompletos(opts: { lixeira?: boolean } = {}): Promise<AnuncioRow[]> {
-  let q = supabase.from("estoque_anuncios").select("*").order("importado_em", { ascending: false });
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as AnuncioRow[];
+  return buscarTodos<AnuncioRow>(() => {
+    let q = supabase
+      .from("estoque_anuncios")
+      .select("*")
+      .order("importado_em", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function atualizarAnuncio(
