@@ -131,24 +131,25 @@ function EstoqueImportar() {
       setProgresso((p) =>
         p ? { ...p, fase: "enviando", total: linhas.length, processadas: 0 } : p,
       );
+      const reportar = ({
+        processadas,
+        total,
+        fase,
+      }: {
+        processadas: number;
+        total: number;
+        fase: "lendo" | "enviando";
+      }) => {
+        const seg = Math.max((Date.now() - inicio) / 1000, 0.001);
+        setProgresso((p) =>
+          p ? { ...p, fase, processadas, total, velocidade: Math.round(processadas / seg) } : p,
+        );
+      };
       const rel =
         tipo === "estoque"
-          ? await importarEstoque(linhas)
+          ? await importarEstoque(linhas, reportar)
           : tipo === "vendas"
-            ? await importarVendas(linhas, ({ processadas, total, fase }) => {
-                const seg = Math.max((Date.now() - inicio) / 1000, 0.001);
-                setProgresso((p) =>
-                  p
-                    ? {
-                        ...p,
-                        fase,
-                        processadas,
-                        total,
-                        velocidade: Math.round(processadas / seg),
-                      }
-                    : p,
-                );
-              })
+            ? await importarVendas(linhas, reportar)
             : await importarAnuncios(linhas);
       const arquivoPath = await uploadPlanilhaImportacao(tipo, file);
       await registrarImportacao(tipo, file.name, rel, arquivoPath);

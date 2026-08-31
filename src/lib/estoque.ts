@@ -924,8 +924,27 @@ export async function registrarImportacao(
 }
 
 
+/** Lote de inserção da base de estoque. */
+const LOTE_ESTOQUE = 200;
+
+interface AtualizacaoEstoque {
+  numeroLinha: number;
+  chassi: string;
+  id: string;
+  patch: Record<string, unknown>;
+  virouVendido: boolean;
+  vendaCancelada: boolean;
+}
+
+interface InsercaoEstoque {
+  numeroLinha: number;
+  chassi: string;
+  registro: Record<string, unknown>;
+}
+
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
+  onProgress?: ProgressoImportacao,
 ): Promise<RelatorioImportacao> {
   const [origens, empresas, finalidades, ativos, vendas] = await Promise.all([
     getOrigens(),
@@ -1004,6 +1023,9 @@ export async function importarEstoque(
     });
     porChassiOrigem.set(chave, lista);
   }
+
+  const atualizacoes: AtualizacaoEstoque[] = [];
+  const insercoes: InsercaoEstoque[] = [];
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
@@ -1089,56 +1111,85 @@ export async function importarEstoque(
       if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
       else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
 
-      const { error } = await supabase
-        .from("estoque_veiculos")
-        .update(patch as never)
-        .eq("id", mesmoRegistro.id);
-      if (error) {
-        rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
-        continue;
-      }
-      if (vendeu && !mesmoRegistro.em_vendido) {
-        // Venda localizada na planilha de vendas → categoria Vendidos.
-        mesmoRegistro.em_vendido = true;
-        rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
-      } else if (!vendeu && mesmoRegistro.em_vendido) {
-        // Reapareceu no estoque sem venda correspondente → venda cancelada.
-        mesmoRegistro.em_vendido = false;
-        rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + 1;
-        rel.atualizados += 1;
-      } else {
-        rel.atualizados += 1;
-      }
+      atualizacoes.push({
+        numeroLinha,
+        chassi,
+        id: mesmoRegistro.id,
+        patch,
+        virouVendido: vendeu && !mesmoRegistro.em_vendido,
+        vendaCancelada: !vendeu && mesmoRegistro.em_vendido,
+      });
+      mesmoRegistro.em_vendido = vendeu;
       continue;
     }
 
     // A lixeira não participa da checagem: registro excluído não bloqueia o novo.
-
-
     // Chassi resumido diferente (ou inexistente) na origem → nova compra = novo registro.
-
-    const { data: inserido, error } = await supabase
-      .from("estoque_veiculos")
-      .insert(registro as never)
-      .select("id")
-      .single();
-    if (error) {
-      rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
-      continue;
-    }
+    insercoes.push({ numeroLinha, chassi, registro });
     ativosDoChassi.push({
-      id: (inserido as { id: string }).id,
+      id: "",
       chassi_resumido: chassiResumido,
       em_vendido: false,
       importado_em: registro.importado_em,
     });
     porChassiOrigem.set(chave, ativosDoChassi);
-    rel.importados += 1;
     if (ativosDoChassi.length > 1) rel.novasCompras = (rel.novasCompras ?? 0) + 1;
+  }
+
+  // ---- Envio em lotes (evita milhares de requisições sequenciais) ----
+  const total = atualizacoes.length + insercoes.length;
+  let enviadas = 0;
+  const avisar = () => onProgress?.({ processadas: enviadas, total, fase: "enviando" });
+  avisar();
+
+  const CONCORRENCIA = 25;
+  for (let i = 0; i < atualizacoes.length; i += CONCORRENCIA) {
+    const grupo = atualizacoes.slice(i, i + CONCORRENCIA);
+    await Promise.all(
+      grupo.map(async (u) => {
+        const { error } = await supabase
+          .from("estoque_veiculos")
+          .update(u.patch as never)
+          .eq("id", u.id);
+        if (error) {
+          rel.ignorados.push({ linha: u.numeroLinha, chassi: u.chassi, motivo: error.message });
+          return;
+        }
+        if (u.virouVendido) rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
+        else {
+          if (u.vendaCancelada) rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + 1;
+          rel.atualizados += 1;
+        }
+      }),
+    );
+    enviadas += grupo.length;
+    avisar();
+  }
+
+  for (let i = 0; i < insercoes.length; i += LOTE_ESTOQUE) {
+    const grupo = insercoes.slice(i, i + LOTE_ESTOQUE);
+    const { error } = await supabase
+      .from("estoque_veiculos")
+      .insert(grupo.map((g) => g.registro) as never);
+    if (error) {
+      // Fallback linha a linha para apontar exatamente o registro problemático.
+      for (const g of grupo) {
+        const { error: e2 } = await supabase
+          .from("estoque_veiculos")
+          .insert(g.registro as never);
+        if (e2) rel.ignorados.push({ linha: g.numeroLinha, chassi: g.chassi, motivo: e2.message });
+        else rel.importados += 1;
+      }
+    } else {
+      rel.importados += grupo.length;
+    }
+    enviadas += grupo.length;
+    avisar();
   }
 
   return rel;
 }
+
 
 export type ProgressoImportacao = (info: {
   processadas: number;
