@@ -457,10 +457,11 @@ export function calcularValorAnuncio(
   faixas: FaixaDias[],
   regras: RegraEstoque[],
   vendas: VendaHistorica[],
-  opts: { hoje?: Date; anuncios?: AnuncioMercado[] } = {},
+  opts: { hoje?: Date; anuncios?: AnuncioMercado[]; faixasKm?: FaixaKm[] } = {},
 ): ResultadoCalculo {
   const hoje = opts.hoje ?? new Date();
   const anunciosMercado = opts.anuncios ?? [];
+  const faixasKm = opts.faixasKm ?? [];
 
   const vazio: ResultadoCalculo = {
     alterou: false,
@@ -539,7 +540,7 @@ export function calcularValorAnuncio(
       regrasAtivas.find((r) => r.tipo_regra === "base") ??
       regra;
 
-    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje);
+    const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje, faixasKm);
     const base = resBase.valor ?? 0;
     memoria["origem_valor_base"] = resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : "indefinida";
     memoria["base_motivo"] = resBase.motivo;
