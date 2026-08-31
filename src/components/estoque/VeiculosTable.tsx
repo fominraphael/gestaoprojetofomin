@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Trash2, RotateCcw, XCircle } from "lucide-react";
+import { Trash2, RotateCcw, XCircle, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatBRL, type FaixaDias } from "@/lib/estoque-motor";
+import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
 
 export interface VeiculosTableProps {
@@ -26,7 +28,9 @@ export interface VeiculosTableProps {
   onExcluir?: (v: Veiculo) => void;
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
+  onAtualizado?: () => void | Promise<void>;
 }
+
 
 const TODOS = "__todos__";
 
