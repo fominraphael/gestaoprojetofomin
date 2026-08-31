@@ -716,7 +716,18 @@ export async function importarEstoque(
       continue;
     }
 
+    // Registro existe, porém excluído (lixeira): não retorna para a análise.
+    if (excluidos.has(`${chassi}|${origem.id}|${chassiResumido}`)) {
+      rel.ignorados.push({
+        linha: numeroLinha,
+        chassi,
+        motivo: "Veículo está na lixeira e foi desconsiderado da análise",
+      });
+      continue;
+    }
+
     // Chassi resumido diferente (ou inexistente) na origem → nova compra = novo registro.
+
     const { data: inserido, error } = await supabase
       .from("estoque_veiculos")
       .insert(registro as never)
