@@ -602,8 +602,18 @@ export async function importarEstoque(
   return rel;
 }
 
+export type ProgressoImportacao = (info: {
+  processadas: number;
+  total: number;
+  fase: "lendo" | "enviando";
+}) => void;
+
+/** Tamanho do lote de upsert. Evita milhares de requisições sequenciais. */
+const LOTE = 300;
+
 export async function importarVendas(
   linhas: Record<string, unknown>[],
+  onProgress?: ProgressoImportacao,
 ): Promise<RelatorioImportacao> {
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
@@ -612,6 +622,8 @@ export async function importarVendas(
     ignorados: [],
   };
 
+  // 1) Normalização + validação (sem I/O)
+  const registros: { numeroLinha: number; chassi: string; registro: Record<string, unknown> }[] = [];
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
     const numeroLinha = i + 2;
@@ -626,38 +638,69 @@ export async function importarVendas(
       });
       continue;
     }
-    const registro = {
-      regional: toText(coluna(l, "Regional")),
-      loja: toText(coluna(l, "Loja")),
-      vendedor: toText(coluna(l, "Vendedor")),
-      nome_cliente: toText(coluna(l, "Nome Cliente")),
-      placa: toText(coluna(l, "Placa")),
-      modelo: toText(coluna(l, "Modelo")),
-      versao: toText(coluna(l, "Versao", "Versão")),
-      km: toInt(coluna(l, "Km")),
-      ano_modelo: toText(coluna(l, "Ano Modelo")),
-      finalidade: toText(coluna(l, "Finalidade")),
-      data_venda: dataVenda,
-      valor_venda: valorVenda,
-      valor_custo: toNumber(coluna(l, "Valor de Custo")),
-      valor_imposto: toNumber(coluna(l, "Valor de Imposto")),
-      lucro_bruto: toNumber(coluna(l, "Lucro Bruto")),
-      dias_em_estoque: toInt(coluna(l, "Dias Em Estoque")),
+    registros.push({
+      numeroLinha,
       chassi,
-      codigo_fipe: toText(coluna(l, "Código Fipe", "Codigo Fipe")),
-    };
+      registro: {
+        regional: toText(coluna(l, "Regional")),
+        loja: toText(coluna(l, "Loja")),
+        vendedor: toText(coluna(l, "Vendedor")),
+        nome_cliente: toText(coluna(l, "Nome Cliente")),
+        placa: toText(coluna(l, "Placa")),
+        modelo: toText(coluna(l, "Modelo")),
+        versao: toText(coluna(l, "Versao", "Versão")),
+        km: toInt(coluna(l, "Km")),
+        ano_modelo: toText(coluna(l, "Ano Modelo")),
+        finalidade: toText(coluna(l, "Finalidade")),
+        data_venda: dataVenda,
+        valor_venda: valorVenda,
+        valor_custo: toNumber(coluna(l, "Valor de Custo")),
+        valor_imposto: toNumber(coluna(l, "Valor de Imposto")),
+        lucro_bruto: toNumber(coluna(l, "Lucro Bruto")),
+        dias_em_estoque: toInt(coluna(l, "Dias Em Estoque")),
+        chassi,
+        codigo_fipe: toText(coluna(l, "Código Fipe", "Codigo Fipe")),
+      },
+    });
+    if (i % 500 === 0) onProgress?.({ processadas: i, total: linhas.length, fase: "lendo" });
+  }
+
+  // 2) Deduplicação pela chave de conflito (upsert em lote falha com duplicatas internas)
+  const unicos = new Map<string, (typeof registros)[number]>();
+  for (const r of registros) {
+    const chave = `${r.registro['chassi']}|${r.registro['data_venda']}|${r.registro['valor_venda']}`;
+    unicos.set(chave, r);
+  }
+  const finais = [...unicos.values()];
+
+  // 3) Envio em lotes
+  let enviadas = 0;
+  for (let i = 0; i < finais.length; i += LOTE) {
+    const lote = finais.slice(i, i + LOTE);
     const { error } = await supabase
       .from("estoque_vendas_historico")
-      .upsert(registro as never, { onConflict: "chassi,data_venda,valor_venda" });
+      .upsert(lote.map((r) => r.registro) as never, {
+        onConflict: "chassi,data_venda,valor_venda",
+      });
     if (error) {
-      rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
-      continue;
+      // Fallback linha a linha para identificar exatamente o que falhou no lote
+      for (const r of lote) {
+        const { error: e2 } = await supabase
+          .from("estoque_vendas_historico")
+          .upsert(r.registro as never, { onConflict: "chassi,data_venda,valor_venda" });
+        if (e2) rel.ignorados.push({ linha: r.numeroLinha, chassi: r.chassi, motivo: e2.message });
+        else rel.importados += 1;
+      }
+    } else {
+      rel.importados += lote.length;
     }
-    rel.importados += 1;
+    enviadas += lote.length;
+    onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
   }
 
   return rel;
 }
+
 
 export async function importarAnuncios(
   linhas: Record<string, unknown>[],
