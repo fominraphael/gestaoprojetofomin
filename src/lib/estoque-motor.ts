@@ -613,8 +613,9 @@ export function calcularValorAnuncio(
 
 
   return {
-    alterou: valorNovo !== valorAtual || mudouDeFaixa,
-    valorAnterior: valorAtual,
+    alterou: valorNovo !== valorRegistrado || mudouDeFaixa,
+    valorAnterior: valorRegistrado,
+
     valorNovo,
     faixa,
     regra,
