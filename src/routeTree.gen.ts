@@ -31,6 +31,7 @@ import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/
 import { Route as AuthenticatedRotinaRotinaIndexRouteImport } from './routes/_authenticated._rotina.rotina.index'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.index'
 import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -174,6 +175,12 @@ const AuthenticatedComprasComprasIndexRoute =
     id: '/compras/',
     path: '/compras/',
     getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -379,6 +386,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
@@ -424,6 +432,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/compras': typeof AuthenticatedComprasComprasIndexRoute
   '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/rotina': typeof AuthenticatedRotinaRotinaIndexRoute
@@ -477,6 +486,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/_compras/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
   '/_authenticated/_rotina/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
     | '/compras/'
     | '/estoque-matriz/'
     | '/rotina/'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
     | '/compras'
     | '/estoque-matriz'
     | '/rotina'
@@ -621,6 +633,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
     | '/_authenticated/_compras/compras/'
     | '/_authenticated/_estoque-matriz/estoque-matriz/'
     | '/_authenticated/_rotina/rotina/'
@@ -641,6 +654,7 @@ export interface RootRouteChildren {
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -798,6 +812,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/compras/'
       preLoaderRoute: typeof AuthenticatedComprasComprasIndexRouteImport
       parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -1193,6 +1214,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
