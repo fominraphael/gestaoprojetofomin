@@ -489,12 +489,21 @@ export async function restaurarAnuncio(id: string): Promise<void> {
 
 export async function getUltimoHistorico(veiculoIds: string[]): Promise<Map<string, HistoricoValor>> {
   if (veiculoIds.length === 0) return new Map();
-  const { data, error } = await supabase
-    .from("estoque_valor_historico")
-    .select("*")
-    .in("veiculo_id", veiculoIds)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
+  const data: HistoricoValor[] = [];
+  // Filtro `in` em blocos, e cada bloco paginado (o histórico tem várias linhas por veículo).
+  for (let i = 0; i < veiculoIds.length; i += 300) {
+    const chunk = veiculoIds.slice(i, i + 300);
+    const linhas = await buscarTodos<HistoricoValor>(
+      () =>
+        supabase
+          .from("estoque_valor_historico")
+          .select("*")
+          .in("veiculo_id", chunk)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    );
+    data.push(...linhas);
+  }
   const map = new Map<string, HistoricoValor>();
   for (const h of (data ?? []) as unknown as HistoricoValor[]) {
     if (!map.has(h.veiculo_id)) map.set(h.veiculo_id, h);
