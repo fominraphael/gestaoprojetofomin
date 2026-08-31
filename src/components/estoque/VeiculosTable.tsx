@@ -11,9 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { formatBRL, type FaixaDias } from "@/lib/estoque-motor";
+import {
+  formatBRL,
+  valorVendaHistorico,
+  type FaixaDias,
+  type RegraEstoque,
+  type VendaHistorica,
+} from "@/lib/estoque-motor";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
 
@@ -25,6 +37,10 @@ export interface VeiculosTableProps {
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
   modo: "ativo" | "repasse" | "vendidos" | "lixeira";
+  /** Matriz de regras — define quais canais são obrigatórios por categoria. */
+  regras?: RegraEstoque[];
+  /** Vendas históricas — base da rastreabilidade do valor sugerido. */
+  vendas?: VendaHistorica[];
   onExcluir?: (v: Veiculo) => void;
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
@@ -34,6 +50,14 @@ export interface VeiculosTableProps {
 
 const TODOS = "__todos__";
 
+/** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
+const normCanal = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
 export function VeiculosTable({
   veiculos,
   origens,
@@ -42,6 +66,8 @@ export function VeiculosTable({
   anuncios,
   historico,
   modo,
+  regras = [],
+  vendas = [],
   onExcluir,
   onRestaurar,
   onExcluirDefinitivo,
@@ -53,6 +79,7 @@ export function VeiculosTable({
   const [classFiltro, setClassFiltro] = useState(TODOS);
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
+  const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
 
   const anunciosPorChassi = useMemo(() => {
     const m = new Map<string, Anuncio>();
@@ -88,6 +115,44 @@ export function VeiculosTable({
   const nomeFaixa = (v: Veiculo) => faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
   const percFipe = (v: Veiculo) =>
     v.fipe && v.valor_anuncio_calculado ? `${((v.valor_anuncio_calculado / v.fipe) * 100).toFixed(1)}%` : "—";
+
+  /**
+   * Estado do canal para o veículo:
+   * - "cumpriu"  (verde)    → canal obrigatório para a categoria e publicado ("Sim").
+   * - "pendente" (vermelho) → canal obrigatório e NÃO publicado.
+   * - "opcional" (cinza)    → canal não obrigatório para a categoria.
+   */
+  const canaisDoVeiculo = (
+    v: Veiculo,
+    anuncio: Anuncio | undefined,
+  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] => {
+    const regra = regras.find(
+      (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
+    );
+    const exigidos = new Set((regra?.canais_exigidos ?? []).map(normCanal));
+    const itens: [string, string, boolean | undefined][] = [
+      ["Site", "Site Próprio", anuncio?.canal_site_proprio],
+      ["OLX", "OLX", anuncio?.canal_olx],
+      ["WM", "WebMotors", anuncio?.canal_webmotors],
+    ];
+    return itens.map(([label, nomeCanal, publicado]) => {
+      const obrigatorio = exigidos.has(normCanal(nomeCanal));
+      if (!obrigatorio) {
+        return {
+          label,
+          estado: "opcional" as const,
+          titulo: `${nomeCanal}: não obrigatório para esta categoria`,
+        };
+      }
+      return publicado
+        ? { label, estado: "cumpriu" as const, titulo: `${nomeCanal}: obrigatório e publicado` }
+        : {
+            label,
+            estado: "pendente" as const,
+            titulo: `${nomeCanal}: obrigatório e ainda não publicado`,
+          };
+    });
+  };
 
   /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
   const exportar = async () => {
@@ -239,7 +304,7 @@ export function VeiculosTable({
             )}
             {filtrados.map((v) => {
               const anuncio = anunciosPorChassi.get(v.chassi.toUpperCase());
-              const hist = historico.get(v.id);
+              
               return (
                 <tr key={v.id} className="border-t border-border hover:bg-muted/30">
                   <td className="px-3 py-2">
@@ -262,67 +327,36 @@ export function VeiculosTable({
                     {formatBRL(v.valor_anunciado_planilha)}
                   </td>
                   <td className="px-3 py-2 text-right">
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="font-semibold cursor-help underline decoration-dotted underline-offset-4">
-                            {formatBRL(v.valor_anuncio_calculado)}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm text-left">
-                          {hist ? (
-                            <div className="space-y-1 text-xs">
-                              <div>
-                                {formatBRL(hist.valor_anterior)} → {formatBRL(hist.valor_novo)}
-                              </div>
-                              <div>
-                                Regra: {hist.classificacao} / {hist.faixa_nome} ({hist.regra_tipo})
-                              </div>
-                              <div>Percentual: {hist.percentual ?? 0}%</div>
-                              <pre className="whitespace-pre-wrap break-all opacity-80">
-                                {JSON.stringify(hist.memoria_calculo, null, 1)}
-                              </pre>
-                            </div>
-                          ) : (
-                            <span className="text-xs">Sem histórico de alteração.</span>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <button
+                      type="button"
+                      onClick={() => setDetalhe(v)}
+                      title="Ver os veículos do histórico usados no cálculo"
+                      className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
+                    >
+                      {formatBRL(v.valor_anuncio_calculado)}
+                    </button>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      {(
-                        [
-                          ["Site", anuncio?.canal_site_proprio],
-                          ["OLX", anuncio?.canal_olx],
-                          ["WM", anuncio?.canal_webmotors],
-                        ] as [string, boolean | undefined][]
-                      ).map(([label, publicado]) => {
-                        // Pendente = canal ainda sem anúncio publicado → exige ação.
-                        const pendente = !publicado;
-                        return (
-                          <span
-                            key={label}
-                            title={
-                              pendente
-                                ? `${label}: ação pendente (anúncio não publicado)`
-                                : `${label}: publicado`
-                            }
-                            className={cn(
-                              "rounded px-1.5 py-0.5 text-[10px] font-medium border",
-                              pendente
-                                ? "bg-status-done-bg text-status-done border-status-done/40"
-                                : "bg-muted text-muted-foreground border-border",
-                            )}
-                          >
-                            {label}
-                          </span>
-                        );
-                      })}
+                      {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
+                        <span
+                          key={label}
+                          title={titulo}
+                          className={cn(
+                            "rounded px-1.5 py-0.5 text-[10px] font-medium border",
+                            estado === "cumpriu" &&
+                              "bg-status-done-bg text-status-done border-status-done/40",
+                            estado === "pendente" &&
+                              "bg-destructive/10 text-destructive border-destructive/40",
+                            estado === "opcional" && "bg-muted text-muted-foreground border-border",
+                          )}
+                        >
+                          {label}
+                        </span>
+                      ))}
                     </div>
                   </td>
+
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1">
                       {modo !== "lixeira" && onAtualizado && (
@@ -360,6 +394,105 @@ export function VeiculosTable({
       <p className="text-xs text-muted-foreground">
         {filtrados.length} de {veiculos.length} veículos
       </p>
+
+      <Dialog open={!!detalhe} onOpenChange={(o) => !o && setDetalhe(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Composição do valor sugerido</DialogTitle>
+            <DialogDescription>
+              {detalhe?.modelo ?? "—"} · {detalhe?.chassi}
+            </DialogDescription>
+          </DialogHeader>
+          {detalhe && <DetalheCalculo veiculo={detalhe} vendas={vendas} hist={historico.get(detalhe.id)} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+interface DetalheCalculoProps {
+  veiculo: Veiculo;
+  vendas: VendaHistorica[];
+  hist: HistoricoValor | undefined;
+}
+
+/**
+ * Rastreabilidade do valor sugerido: mostra as vendas do histórico que serviram
+ * de base (mesmo código FIPE + ano modelo + faixa de KM) e se o valor final foi
+ * ajustado por piso/teto de FIPE.
+ */
+function DetalheCalculo({ veiculo, vendas, hist }: DetalheCalculoProps) {
+  const base = useMemo(() => valorVendaHistorico(veiculo, vendas), [veiculo, vendas]);
+  const memoria = (hist?.memoria_calculo ?? {}) as Record<string, unknown>;
+  const piso = memoria["piso_aplicado"] as { percentual: number; valor: number } | undefined;
+  const teto = memoria["teto_aplicado"] as { percentual: number; valor: number } | undefined;
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="rounded-xl border border-border p-3 space-y-1">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor bruto (histórico de vendas)</span>
+          <span className="font-medium">{formatBRL(base.valor)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">FIPE do veículo</span>
+          <span className="font-medium">{formatBRL(veiculo.fipe)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Valor sugerido final</span>
+          <span className="font-semibold">{formatBRL(veiculo.valor_anuncio_calculado)}</span>
+        </div>
+        <p className="text-xs text-muted-foreground pt-1">{base.motivo}</p>
+        {piso && (
+          <p className="text-xs text-status-done">
+            Balizador de piso aplicado: {piso.percentual}% da FIPE ({formatBRL(piso.valor)}).
+          </p>
+        )}
+        {teto && (
+          <p className="text-xs text-destructive">
+            Balizador de teto aplicado: {teto.percentual}% da FIPE ({formatBRL(teto.valor)}).
+          </p>
+        )}
+        {!piso && !teto && (
+          <p className="text-xs text-muted-foreground">
+            Nenhum balizador de mínimo/máximo da FIPE foi aplicado.
+          </p>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-medium mb-2">
+          Veículos do histórico usados como referência ({base.vendasUsadas.length})
+        </h3>
+        {base.vendasUsadas.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma venda comparável encontrada — o cálculo usou 100% da FIPE como base.
+          </p>
+        ) : (
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr className="text-left">
+                  <th className="px-2 py-1 font-medium">Chassi</th>
+                  <th className="px-2 py-1 font-medium">Data da venda</th>
+                  <th className="px-2 py-1 font-medium text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {base.vendasUsadas.map((v) => (
+                  <tr key={v.id} className="border-t border-border">
+                    <td className="px-2 py-1 font-mono">{v.chassi ?? "—"}</td>
+                    <td className="px-2 py-1">
+                      {v.data_venda ? new Date(v.data_venda).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-right tabular-nums">{formatBRL(v.valor)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

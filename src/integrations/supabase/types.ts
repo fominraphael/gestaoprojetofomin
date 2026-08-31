@@ -628,6 +628,7 @@ export type Database = {
           cor: string | null
           created_at: string
           dados: Json
+          deleted_at: string | null
           id: string
           importado_em: string
           km: number | null
@@ -653,6 +654,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
           id?: string
           importado_em?: string
           km?: number | null
@@ -678,6 +680,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
           id?: string
           importado_em?: string
           km?: number | null
@@ -1204,6 +1207,7 @@ export type Database = {
           codigo_fipe: string | null
           created_at: string
           data_venda: string | null
+          deleted_at: string | null
           dias_em_estoque: number | null
           finalidade: string | null
           id: string
@@ -1214,6 +1218,7 @@ export type Database = {
           nome_cliente: string | null
           placa: string | null
           regional: string | null
+          updated_at: string
           valor_custo: number | null
           valor_imposto: number | null
           valor_venda: number | null
@@ -1226,6 +1231,7 @@ export type Database = {
           codigo_fipe?: string | null
           created_at?: string
           data_venda?: string | null
+          deleted_at?: string | null
           dias_em_estoque?: number | null
           finalidade?: string | null
           id?: string
@@ -1236,6 +1242,7 @@ export type Database = {
           nome_cliente?: string | null
           placa?: string | null
           regional?: string | null
+          updated_at?: string
           valor_custo?: number | null
           valor_imposto?: number | null
           valor_venda?: number | null
@@ -1248,6 +1255,7 @@ export type Database = {
           codigo_fipe?: string | null
           created_at?: string
           data_venda?: string | null
+          deleted_at?: string | null
           dias_em_estoque?: number | null
           finalidade?: string | null
           id?: string
@@ -1258,6 +1266,7 @@ export type Database = {
           nome_cliente?: string | null
           placa?: string | null
           regional?: string | null
+          updated_at?: string
           valor_custo?: number | null
           valor_imposto?: number | null
           valor_venda?: number | null

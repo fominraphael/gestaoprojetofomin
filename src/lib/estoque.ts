@@ -230,18 +230,143 @@ export async function getVendas(): Promise<VendaHistorica[]> {
   const { data, error } = await supabase
     .from("estoque_vendas_historico")
     .select("id,chassi,codigo_fipe,ano_modelo,km,data_venda,valor_venda")
+    .is("deleted_at", null)
     .order("data_venda", { ascending: false })
     .limit(20000);
   if (error) throw error;
   return (data ?? []) as unknown as VendaHistorica[];
 }
 
+/** Registro completo de venda histórica (aba "Vendas Históricas"). */
+export interface VendaHistoricoRow {
+  id: string;
+  chassi: string | null;
+  placa: string | null;
+  modelo: string | null;
+  versao: string | null;
+  ano_modelo: string | null;
+  km: number | null;
+  codigo_fipe: string | null;
+  data_venda: string | null;
+  valor_venda: number | null;
+  valor_custo: number | null;
+  valor_imposto: number | null;
+  lucro_bruto: number | null;
+  dias_em_estoque: number | null;
+  regional: string | null;
+  loja: string | null;
+  vendedor: string | null;
+  nome_cliente: string | null;
+  finalidade: string | null;
+  deleted_at: string | null;
+}
+
+export async function getVendasHistorico(opts: { lixeira?: boolean } = {}): Promise<
+  VendaHistoricoRow[]
+> {
+  let q = supabase
+    .from("estoque_vendas_historico")
+    .select("*")
+    .order("data_venda", { ascending: false })
+    .limit(20000);
+  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as unknown as VendaHistoricoRow[];
+}
+
+export async function atualizarVenda(
+  id: string,
+  patch: Partial<Omit<VendaHistoricoRow, "id" | "deleted_at">>,
+): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_vendas_historico")
+    .update({ ...patch, updated_at: new Date().toISOString() } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function moverVendaParaLixeira(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_vendas_historico")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function restaurarVenda(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_vendas_historico")
+    .update({ deleted_at: null } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getAnuncios(): Promise<Anuncio[]> {
   const { data, error } = await supabase
     .from("estoque_anuncios")
-    .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status");
+    .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
+    .is("deleted_at", null);
   if (error) throw error;
   return (data ?? []) as unknown as Anuncio[];
+}
+
+/** Registro completo de veículo anunciado (aba "Veículos Anunciados"). */
+export interface AnuncioRow {
+  id: string;
+  chassi: string;
+  codigo: string | null;
+  conta: string | null;
+  placa: string | null;
+  marca: string | null;
+  modelo: string | null;
+  versao: string | null;
+  ano_fabricacao: string | null;
+  ano_modelo: string | null;
+  cor: string | null;
+  km: number | null;
+  preco_venda: number | null;
+  qtd_fotos: number | null;
+  status: string | null;
+  canal_site_proprio: boolean;
+  canal_olx: boolean;
+  canal_webmotors: boolean;
+  deleted_at: string | null;
+}
+
+export async function getAnunciosCompletos(opts: { lixeira?: boolean } = {}): Promise<AnuncioRow[]> {
+  let q = supabase.from("estoque_anuncios").select("*").order("importado_em", { ascending: false });
+  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as unknown as AnuncioRow[];
+}
+
+export async function atualizarAnuncio(
+  id: string,
+  patch: Partial<Omit<AnuncioRow, "id" | "deleted_at">>,
+): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_anuncios")
+    .update({ ...patch, updated_at: new Date().toISOString() } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function moverAnuncioParaLixeira(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_anuncios")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function restaurarAnuncio(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_anuncios")
+    .update({ deleted_at: null } as never)
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function getUltimoHistorico(veiculoIds: string[]): Promise<Map<string, HistoricoValor>> {
@@ -584,30 +709,25 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, excluidosRes, vendasRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes, vendasRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
     // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
-    // de duplicidade. Lixeira e excluídos permanentemente nunca participam.
+    // de duplicidade. A lixeira nunca é consultada — o índice único do banco é
+    // parcial (`where deleted_at is null`), então reimportar é sempre permitido.
     supabase
       .from("estoque_veiculos")
       .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
       .is("deleted_at", null),
-    // Registros na lixeira: não voltam para a análise; a linha é ignorada
-    // (a constraint única não distingue excluídos, então inserir daria erro).
-    supabase
-      .from("estoque_veiculos")
-      .select("chassi,origem_id,chassi_resumido")
-      .not("deleted_at", "is", null),
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
     supabase
       .from("estoque_vendas_historico")
       .select("chassi,data_venda")
+      .is("deleted_at", null)
       .limit(20000),
   ]);
   if (ativosRes.error) throw ativosRes.error;
-  if (excluidosRes.error) throw excluidosRes.error;
   if (vendasRes.error) throw vendasRes.error;
 
   /** Maior data de venda por chassi — uma venda só casa com a compra se for
@@ -619,13 +739,7 @@ export async function importarEstoque(
     if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
   }
 
-  const excluidos = new Set(
-    ((excluidosRes.data ?? []) as {
-      chassi: string;
-      origem_id: string;
-      chassi_resumido: string;
-    }[]).map((v) => `${v.chassi}|${v.origem_id}|${v.chassi_resumido}`),
-  );
+
 
 
   const rel: RelatorioImportacao = {
@@ -775,15 +889,8 @@ export async function importarEstoque(
       continue;
     }
 
-    // Registro existe, porém excluído (lixeira): não retorna para a análise.
-    if (excluidos.has(`${chassi}|${origem.id}|${chassiResumido}`)) {
-      rel.ignorados.push({
-        linha: numeroLinha,
-        chassi,
-        motivo: "Veículo está na lixeira e foi desconsiderado da análise",
-      });
-      continue;
-    }
+    // A lixeira não participa da checagem: registro excluído não bloqueia o novo.
+
 
     // Chassi resumido diferente (ou inexistente) na origem → nova compra = novo registro.
 
