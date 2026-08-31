@@ -451,26 +451,48 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, existentes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
-    getVeiculos({}),
+    // Somente registros ATIVOS entram na checagem de duplicidade:
+    // veículos na lixeira (deleted_at) ou já excluídos definitivamente são ignorados.
+    supabase
+      .from("estoque_veiculos")
+      .select("id,chassi,origem_id,chassi_resumido")
+      .is("deleted_at", null),
   ]);
+  if (ativosRes.error) throw ativosRes.error;
 
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
     importados: 0,
     atualizados: 0,
+    novasCompras: 0,
     ignorados: [],
   };
 
   const finalidadesOk = finalidades
     .filter((f) => f.ativo)
     .map((f) => f.nome.trim().toLowerCase());
-  const chaveExistente = new Set(
-    existentes.map((v) => `${v.chassi}|${v.origem_id}|${v.chassi_resumido}`),
-  );
+
+  /**
+   * Índice de duplicidade escopado por ORIGEM (base NBS).
+   * Chave: `${chassi}|${origem_id}` → lista de chassis resumidos ativos.
+   * Nunca comparamos chassi resumido entre origens diferentes.
+   */
+  const porChassiOrigem = new Map<string, { id: string; chassi_resumido: string }[]>();
+  for (const v of (ativosRes.data ?? []) as {
+    id: string;
+    chassi: string;
+    origem_id: string;
+    chassi_resumido: string;
+  }[]) {
+    const chave = `${v.chassi}|${v.origem_id}`;
+    const lista = porChassiOrigem.get(chave) ?? [];
+    lista.push({ id: v.id, chassi_resumido: v.chassi_resumido });
+    porChassiOrigem.set(chave, lista);
+  }
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
