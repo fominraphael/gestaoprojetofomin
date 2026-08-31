@@ -128,7 +128,7 @@ export async function getEmpresasNbs(): Promise<EmpresaNbs[]> {
   const { data, error } = await supabase
     .from("estoque_empresas_nbs")
     .select("*")
-    .order("codigo_chassi_resumido");
+    .order("nome_exibicao");
   if (error) throw error;
   return (data ?? []) as EmpresaNbs[];
 }
