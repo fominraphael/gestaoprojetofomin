@@ -45,6 +45,8 @@ export function VeiculosTable({
   onExcluir,
   onRestaurar,
   onExcluirDefinitivo,
+  onAtualizado,
+
 }: VeiculosTableProps) {
   const [busca, setBusca] = useState("");
   const [origemFiltro, setOrigemFiltro] = useState(TODOS);
