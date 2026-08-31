@@ -37,6 +37,7 @@ import {
   normalizaNiveis,
   type ClassificacaoEstoque,
   type FaixaDias,
+  type FaixaKm,
   type GatilhoLeads,
   type NivelBase,
   type RegraEstoque,
@@ -46,6 +47,9 @@ import {
 import {
   getEmpresasNbs,
   getFaixas,
+  getFaixasKm,
+  salvarFaixaKm,
+  excluirFaixaKm,
   getFinalidades,
   getOrigens,
   getRegras,
