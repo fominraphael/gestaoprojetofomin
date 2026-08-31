@@ -239,6 +239,11 @@ function EstoqueRegras() {
           <FaixasEditor faixas={faixas} />
         </TabsContent>
 
+        <TabsContent value="faixas-km" className="mt-4">
+          <FaixasKmEditor />
+        </TabsContent>
+
+
         <TabsContent value="cadastros" className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
           <OrigensEditor origens={origens} />
           <EmpresasNbsEditor empresas={empresas} origens={origens} />
