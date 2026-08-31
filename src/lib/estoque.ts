@@ -924,8 +924,27 @@ export async function registrarImportacao(
 }
 
 
+/** Lote de inserção da base de estoque. */
+const LOTE_ESTOQUE = 200;
+
+interface AtualizacaoEstoque {
+  numeroLinha: number;
+  chassi: string;
+  id: string;
+  patch: Record<string, unknown>;
+  virouVendido: boolean;
+  vendaCancelada: boolean;
+}
+
+interface InsercaoEstoque {
+  numeroLinha: number;
+  chassi: string;
+  registro: Record<string, unknown>;
+}
+
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
+  onProgress?: ProgressoImportacao,
 ): Promise<RelatorioImportacao> {
   const [origens, empresas, finalidades, ativos, vendas] = await Promise.all([
     getOrigens(),
