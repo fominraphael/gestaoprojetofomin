@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@lovable.dev/email-js": "^0.1.0",
+    "@lovable.dev/email-js": "0.1.0",
     "@lovable.dev/webhooks-js": "^0.0.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -74,7 +74,9 @@
     "web-push": "^3.6.7",
     "worker-mailer": "^1.2.1",
     "xlsx": "^0.18.5",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -96,5 +98,10 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16"
+  },
+  "pnpm": {
+    "overrides": {
+      "entities": "4.5.0"
+    }
   }
 }
