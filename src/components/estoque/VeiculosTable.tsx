@@ -324,7 +324,29 @@ export function VeiculosTable({
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" className="ml-auto" onClick={() => void exportar()}>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              <Columns3 className="w-4 h-4" />
+              Colunas ({visiveis.length})
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Escolha as colunas visíveis. A preferência fica salva no seu usuário.
+            </p>
+            {COLUNAS.map((c) => (
+              <label key={c.key} className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={colunas.includes(c.key)}
+                  onCheckedChange={() => alternarColuna(c.key)}
+                />
+                {c.label}
+              </label>
+            ))}
+          </PopoverContent>
+        </Popover>
+        <Button variant="outline" onClick={() => void exportar()}>
           <Download className="w-4 h-4" />
           Exportar ({filtrados.length})
         </Button>
@@ -335,85 +357,93 @@ export function VeiculosTable({
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium">Modelo</th>
-              <th className="px-3 py-2 font-medium">Chassi</th>
-              <th className="px-3 py-2 font-medium">Empresa NBS</th>
-              <th className="px-3 py-2 font-medium">Class.</th>
-              <th className="px-3 py-2 font-medium text-right">Dias</th>
-              <th className="px-3 py-2 font-medium">Faixa</th>
-              <th className="px-3 py-2 font-medium text-right">Leads</th>
-              <th className="px-3 py-2 font-medium text-right">FIPE</th>
-              <th className="px-3 py-2 font-medium text-right">% FIPE</th>
-              <th className="px-3 py-2 font-medium text-right">Valor anúncio importado</th>
-              <th className="px-3 py-2 font-medium text-right">Valor anunciado sugerido</th>
-              <th className="px-3 py-2 font-medium">Canais</th>
+              {visiveis.map((c) => (
+                <th
+                  key={c.key}
+                  className={cn("px-3 py-2 font-medium", c.align === "right" && "text-right")}
+                >
+                  {c.label}
+                </th>
+              ))}
               <th className="px-3 py-2 font-medium text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-3 py-10 text-center text-muted-foreground">
-
+                <td
+                  colSpan={visiveis.length + 1}
+                  className="px-3 py-10 text-center text-muted-foreground"
+                >
                   Nenhum veículo encontrado.
                 </td>
               </tr>
             )}
             {filtrados.map((v) => {
               const anuncio = anunciosPorChassi.get(v.chassi.toUpperCase());
-              
-              return (
-                <tr key={v.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-3 py-2">
+
+              const celula: Record<ColunaKey, ReactNode> = {
+                modelo: (
+                  <>
                     <div className="font-medium text-foreground">{v.modelo ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">
                       {v.loja ?? "—"} · {v.placa ?? "sem placa"}
                     </div>
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">{v.chassi}</td>
-                  <td className="px-3 py-2">{nomeEmpresa(v)}</td>
-                  <td className="px-3 py-2">
-                    <Badge variant="secondary">{v.classificacao ?? "—"}</Badge>
-                  </td>
-                  <td className="px-3 py-2 text-right">{v.dias_em_estoque}</td>
-                  <td className="px-3 py-2">{nomeFaixa(v)}</td>
-                  <td className="px-3 py-2 text-right">{v.leads_60_dias}</td>
-                  <td className="px-3 py-2 text-right">{formatBRL(v.fipe)}</td>
-                  <td className="px-3 py-2 text-right">{percFipe(v)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {formatBRL(v.valor_anunciado_planilha)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setDetalhe(v)}
-                      title="Ver os veículos do histórico usados no cálculo"
-                      className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
-                    >
-                      {formatBRL(v.valor_anuncio_calculado)}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex gap-1">
-                      {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
-                        <span
-                          key={label}
-                          title={titulo}
-                          className={cn(
-                            "rounded px-1.5 py-0.5 text-[10px] font-medium border",
-                            estado === "cumpriu" &&
-                              "bg-status-done-bg text-status-done border-status-done/40",
-                            estado === "pendente" &&
-                              "bg-destructive/10 text-destructive border-destructive/40",
-                            estado === "opcional" && "bg-muted text-muted-foreground border-border",
-                          )}
-                        >
-                          {label}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
+                  </>
+                ),
+                chassi: <span className="font-mono text-xs">{v.chassi}</span>,
+                empresa: nomeEmpresa(v),
+                classificacao: <Badge variant="secondary">{v.classificacao ?? "—"}</Badge>,
+                dias: v.dias_em_estoque,
+                faixa: nomeFaixa(v),
+                leads: v.leads_60_dias,
+                fipe: formatBRL(v.fipe),
+                perc_fipe: percFipe(v),
+                valor_importado: (
+                  <span className="tabular-nums">{formatBRL(v.valor_anunciado_planilha)}</span>
+                ),
+                valor_sugerido: (
+                  <button
+                    type="button"
+                    onClick={() => setDetalhe(v)}
+                    title="Ver os veículos do histórico usados no cálculo"
+                    className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
+                  >
+                    {formatBRL(v.valor_anuncio_calculado)}
+                  </button>
+                ),
+                canais: (
+                  <div className="flex gap-1">
+                    {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
+                      <span
+                        key={label}
+                        title={titulo}
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-medium border",
+                          estado === "cumpriu" &&
+                            "bg-status-done-bg text-status-done border-status-done/40",
+                          estado === "pendente" &&
+                            "bg-destructive/10 text-destructive border-destructive/40",
+                          estado === "opcional" && "bg-muted text-muted-foreground border-border",
+                        )}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                ),
+              };
 
+              return (
+                <tr key={v.id} className="border-t border-border hover:bg-muted/30">
+                  {visiveis.map((c) => (
+                    <td
+                      key={c.key}
+                      className={cn("px-3 py-2", c.align === "right" && "text-right")}
+                    >
+                      {celula[c.key]}
+                    </td>
+                  ))}
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1">
                       {modo !== "lixeira" && onAtualizado && (
@@ -445,6 +475,7 @@ export function VeiculosTable({
                 </tr>
               );
             })}
+
           </tbody>
         </table>
       </div>
