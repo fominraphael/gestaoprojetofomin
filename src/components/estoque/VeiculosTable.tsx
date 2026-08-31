@@ -454,6 +454,18 @@ export function VeiculosTable({
                       {modo !== "lixeira" && onAtualizado && (
                         <EditarVeiculoDialog veiculo={v} onSalvo={onAtualizado} />
                       )}
+                      {modo !== "lixeira" && onRecalcular && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Recalcular preço (forçado)"
+                          aria-label="Recalcular preço (forçado)"
+                          onClick={() => void onRecalcular(v)}
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                      )}
+
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />
