@@ -22,6 +22,7 @@ import {
   CalendarCheck,
   Package,
   BarChart3,
+  CircleDollarSign,
   type LucideIcon,
 } from "lucide-react";
 
@@ -226,6 +227,7 @@ export const MODULES: ModuleDef[] = [
     navItems: [
       { to: "/estoque-matriz", label: "Veículos", icon: Package },
       { to: "/estoque-matriz/repasse", label: "Repasse", icon: Truck },
+      { to: "/estoque-matriz/vendidos", label: "Vendidos", icon: CircleDollarSign },
       { to: "/estoque-matriz/acoes-leads", label: "Ações de Leads", icon: ClipboardCheck },
       { to: "/estoque-matriz/importar", label: "Importação", icon: Upload },
       { to: "/estoque-matriz/lixeira", label: "Lixeira", icon: Archive },

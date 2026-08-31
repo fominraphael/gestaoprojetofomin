@@ -65,6 +65,8 @@ export interface Veiculo {
   valor_anuncio_calculado: number | null;
   faixa_id_atual: string | null;
   em_repasse: boolean;
+  em_vendido: boolean;
+  importado_em?: string;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
   /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
@@ -119,6 +121,10 @@ export interface RelatorioImportacao {
   atualizados: number;
   /** Novas compras do mesmo veículo (chassi já existia na origem com outro chassi resumido). */
   novasCompras?: number;
+  /** Veículos ativos movidos para a categoria Vendidos (venda localizada na planilha de vendas). */
+  movidosVendidos?: number;
+  /** Veículos que estavam em Vendidos e retornaram ao Estoque (venda cancelada). */
+  vendasCanceladas?: number;
   ignorados: LinhaRelatorio[];
 }
 
@@ -204,10 +210,17 @@ export async function upsertRegra(
 export async function getVeiculos(opts: {
   lixeira?: boolean;
   repasse?: boolean;
+  vendidos?: boolean;
 }): Promise<Veiculo[]> {
   let q = supabase.from("estoque_veiculos").select("*").order("dias_em_estoque", { ascending: false });
   q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  if (!opts.lixeira) q = q.eq("em_repasse", !!opts.repasse);
+  if (!opts.lixeira) {
+    if (opts.vendidos) {
+      q = q.eq("em_vendido", true);
+    } else {
+      q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+    }
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as unknown as Veiculo[];
@@ -571,14 +584,15 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, excluidosRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes, excluidosRes, vendasRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
-    // Somente registros ATIVOS entram na checagem de atualização.
+    // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
+    // de duplicidade. Lixeira e excluídos permanentemente nunca participam.
     supabase
       .from("estoque_veiculos")
-      .select("id,chassi,origem_id,chassi_resumido")
+      .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
       .is("deleted_at", null),
     // Registros na lixeira: não voltam para a análise; a linha é ignorada
     // (a constraint única não distingue excluídos, então inserir daria erro).
@@ -586,9 +600,24 @@ export async function importarEstoque(
       .from("estoque_veiculos")
       .select("chassi,origem_id,chassi_resumido")
       .not("deleted_at", "is", null),
+    // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
+    supabase
+      .from("estoque_vendas_historico")
+      .select("chassi,data_venda")
+      .limit(20000),
   ]);
   if (ativosRes.error) throw ativosRes.error;
   if (excluidosRes.error) throw excluidosRes.error;
+  if (vendasRes.error) throw vendasRes.error;
+
+  /** Maior data de venda por chassi — uma venda só casa com a compra se for
+   *  posterior à entrada dela no estoque (importado_em do registro). */
+  const vendaMaxPorChassi = new Map<string, string>();
+  for (const v of (vendasRes.data ?? []) as { chassi: string | null; data_venda: string | null }[]) {
+    if (!v.chassi || !v.data_venda) continue;
+    const atual = vendaMaxPorChassi.get(v.chassi);
+    if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
+  }
 
   const excluidos = new Set(
     ((excluidosRes.data ?? []) as {
@@ -616,16 +645,26 @@ export async function importarEstoque(
    * Chave: `${chassi}|${origem_id}` → lista de chassis resumidos ativos.
    * Nunca comparamos chassi resumido entre origens diferentes.
    */
-  const porChassiOrigem = new Map<string, { id: string; chassi_resumido: string }[]>();
+  const porChassiOrigem = new Map<
+    string,
+    { id: string; chassi_resumido: string; em_vendido: boolean; importado_em: string | null }[]
+  >();
   for (const v of (ativosRes.data ?? []) as {
     id: string;
     chassi: string;
     origem_id: string;
     chassi_resumido: string;
+    em_vendido: boolean;
+    importado_em: string | null;
   }[]) {
     const chave = `${v.chassi}|${v.origem_id}`;
     const lista = porChassiOrigem.get(chave) ?? [];
-    lista.push({ id: v.id, chassi_resumido: v.chassi_resumido });
+    lista.push({
+      id: v.id,
+      chassi_resumido: v.chassi_resumido,
+      em_vendido: v.em_vendido,
+      importado_em: v.importado_em,
+    });
     porChassiOrigem.set(chave, lista);
   }
 
@@ -703,16 +742,36 @@ export async function importarEstoque(
     const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
 
     if (mesmoRegistro) {
-      // Mesma compra já registrada nessa origem → apenas atualiza.
+      // Mesma compra já registrada nessa origem → atualiza e movimenta a categoria.
+      // Uma venda só casa com esta compra se aconteceu depois da entrada no estoque.
+      const dataVenda = vendaMaxPorChassi.get(chassi);
+      const entradaDia = (mesmoRegistro.importado_em ?? "").slice(0, 10);
+      const vendeu = !!dataVenda && !!entradaDia && dataVenda >= entradaDia;
+
+      const patch: Record<string, unknown> = { ...registro };
+      if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
+      else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
+
       const { error } = await supabase
         .from("estoque_veiculos")
-        .update(registro as never)
+        .update(patch as never)
         .eq("id", mesmoRegistro.id);
       if (error) {
         rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
         continue;
       }
-      rel.atualizados += 1;
+      if (vendeu && !mesmoRegistro.em_vendido) {
+        // Venda localizada na planilha de vendas → categoria Vendidos.
+        mesmoRegistro.em_vendido = true;
+        rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
+      } else if (!vendeu && mesmoRegistro.em_vendido) {
+        // Reapareceu no estoque sem venda correspondente → venda cancelada.
+        mesmoRegistro.em_vendido = false;
+        rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + 1;
+        rel.atualizados += 1;
+      } else {
+        rel.atualizados += 1;
+      }
       continue;
     }
 
@@ -737,7 +796,12 @@ export async function importarEstoque(
       rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
       continue;
     }
-    ativosDoChassi.push({ id: (inserido as { id: string }).id, chassi_resumido: chassiResumido });
+    ativosDoChassi.push({
+      id: (inserido as { id: string }).id,
+      chassi_resumido: chassiResumido,
+      em_vendido: false,
+      importado_em: registro.importado_em,
+    });
     porChassiOrigem.set(chave, ativosDoChassi);
     rel.importados += 1;
     if (ativosDoChassi.length > 1) rel.novasCompras = (rel.novasCompras ?? 0) + 1;
@@ -840,6 +904,41 @@ export async function importarVendas(
     }
     enviadas += lote.length;
     onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
+  }
+
+  // 4) Move para "Vendidos" os veículos ativos (Estoque/Repasse) cuja compra foi
+  //    vendida: a venda só casa com o registro se data_venda >= importado_em dele.
+  const dataMaxPorChassi = new Map<string, string>();
+  for (const r of finais) {
+    const dv = r.registro["data_venda"] as string;
+    const atual = dataMaxPorChassi.get(r.chassi);
+    if (!atual || dv > atual) dataMaxPorChassi.set(r.chassi, dv);
+  }
+  const chassisImportados = [...new Set(finais.map((r) => r.chassi))];
+  for (let i = 0; i < chassisImportados.length; i += 200) {
+    const chunk = chassisImportados.slice(i, i + 200);
+    const { data: ativos, error: errAtivos } = await supabase
+      .from("estoque_veiculos")
+      .select("id,chassi,importado_em")
+      .is("deleted_at", null)
+      .eq("em_vendido", false)
+      .in("chassi", chunk);
+    if (errAtivos) throw errAtivos;
+    // Compra mais recente elegível por chassi.
+    const porChassi = new Map<string, { id: string; importado_em: string }>();
+    for (const v of (ativos ?? []) as { id: string; chassi: string; importado_em: string }[]) {
+      const dv = dataMaxPorChassi.get(v.chassi);
+      if (!dv || dv < (v.importado_em ?? "").slice(0, 10)) continue;
+      const atual = porChassi.get(v.chassi);
+      if (!atual || v.importado_em > atual.importado_em) porChassi.set(v.chassi, v);
+    }
+    for (const v of porChassi.values()) {
+      const { error } = await supabase
+        .from("estoque_veiculos")
+        .update({ em_vendido: true } as never)
+        .eq("id", v.id);
+      if (!error) rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
+    }
   }
 
   return rel;
