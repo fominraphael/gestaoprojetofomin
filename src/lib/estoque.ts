@@ -318,6 +318,17 @@ export async function getAnuncios(): Promise<Anuncio[]> {
   return (data ?? []) as unknown as Anuncio[];
 }
 
+/** Anúncios usados pela checagem de mercado (média por canal de referência). */
+export async function getAnunciosMercado(): Promise<AnuncioMercado[]> {
+  const { data, error } = await supabase
+    .from("estoque_anuncios")
+    .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
+    .is("deleted_at", null);
+  if (error) throw error;
+  return (data ?? []) as unknown as AnuncioMercado[];
+}
+
+
 /** Registro completo de veículo anunciado (aba "Veículos Anunciados"). */
 export interface AnuncioRow {
   id: string;
