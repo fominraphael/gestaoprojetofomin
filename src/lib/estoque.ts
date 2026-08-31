@@ -709,30 +709,25 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, excluidosRes, vendasRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes, vendasRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
     // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
-    // de duplicidade. Lixeira e excluídos permanentemente nunca participam.
+    // de duplicidade. A lixeira nunca é consultada — o índice único do banco é
+    // parcial (`where deleted_at is null`), então reimportar é sempre permitido.
     supabase
       .from("estoque_veiculos")
       .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
       .is("deleted_at", null),
-    // Registros na lixeira: não voltam para a análise; a linha é ignorada
-    // (a constraint única não distingue excluídos, então inserir daria erro).
-    supabase
-      .from("estoque_veiculos")
-      .select("chassi,origem_id,chassi_resumido")
-      .not("deleted_at", "is", null),
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
     supabase
       .from("estoque_vendas_historico")
       .select("chassi,data_venda")
+      .is("deleted_at", null)
       .limit(20000),
   ]);
   if (ativosRes.error) throw ativosRes.error;
-  if (excluidosRes.error) throw excluidosRes.error;
   if (vendasRes.error) throw vendasRes.error;
 
   /** Maior data de venda por chassi — uma venda só casa com a compra se for
@@ -744,13 +739,7 @@ export async function importarEstoque(
     if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
   }
 
-  const excluidos = new Set(
-    ((excluidosRes.data ?? []) as {
-      chassi: string;
-      origem_id: string;
-      chassi_resumido: string;
-    }[]).map((v) => `${v.chassi}|${v.origem_id}|${v.chassi_resumido}`),
-  );
+
 
 
   const rel: RelatorioImportacao = {
