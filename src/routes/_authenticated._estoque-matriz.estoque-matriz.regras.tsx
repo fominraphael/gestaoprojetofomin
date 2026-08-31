@@ -44,6 +44,9 @@ import {
   getOrigens,
   getRegras,
   upsertRegra,
+  type EmpresaNbs,
+  type Finalidade,
+  type Origem,
 } from "@/lib/estoque";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/regras")({
