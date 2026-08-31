@@ -289,67 +289,36 @@ export function VeiculosTable({
                     {formatBRL(v.valor_anunciado_planilha)}
                   </td>
                   <td className="px-3 py-2 text-right">
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="font-semibold cursor-help underline decoration-dotted underline-offset-4">
-                            {formatBRL(v.valor_anuncio_calculado)}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm text-left">
-                          {hist ? (
-                            <div className="space-y-1 text-xs">
-                              <div>
-                                {formatBRL(hist.valor_anterior)} → {formatBRL(hist.valor_novo)}
-                              </div>
-                              <div>
-                                Regra: {hist.classificacao} / {hist.faixa_nome} ({hist.regra_tipo})
-                              </div>
-                              <div>Percentual: {hist.percentual ?? 0}%</div>
-                              <pre className="whitespace-pre-wrap break-all opacity-80">
-                                {JSON.stringify(hist.memoria_calculo, null, 1)}
-                              </pre>
-                            </div>
-                          ) : (
-                            <span className="text-xs">Sem histórico de alteração.</span>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <button
+                      type="button"
+                      onClick={() => setDetalhe(v)}
+                      title="Ver os veículos do histórico usados no cálculo"
+                      className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
+                    >
+                      {formatBRL(v.valor_anuncio_calculado)}
+                    </button>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      {(
-                        [
-                          ["Site", anuncio?.canal_site_proprio],
-                          ["OLX", anuncio?.canal_olx],
-                          ["WM", anuncio?.canal_webmotors],
-                        ] as [string, boolean | undefined][]
-                      ).map(([label, publicado]) => {
-                        // Pendente = canal ainda sem anúncio publicado → exige ação.
-                        const pendente = !publicado;
-                        return (
-                          <span
-                            key={label}
-                            title={
-                              pendente
-                                ? `${label}: ação pendente (anúncio não publicado)`
-                                : `${label}: publicado`
-                            }
-                            className={cn(
-                              "rounded px-1.5 py-0.5 text-[10px] font-medium border",
-                              pendente
-                                ? "bg-status-done-bg text-status-done border-status-done/40"
-                                : "bg-muted text-muted-foreground border-border",
-                            )}
-                          >
-                            {label}
-                          </span>
-                        );
-                      })}
+                      {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
+                        <span
+                          key={label}
+                          title={titulo}
+                          className={cn(
+                            "rounded px-1.5 py-0.5 text-[10px] font-medium border",
+                            estado === "cumpriu" &&
+                              "bg-status-done-bg text-status-done border-status-done/40",
+                            estado === "pendente" &&
+                              "bg-destructive/10 text-destructive border-destructive/40",
+                            estado === "opcional" && "bg-muted text-muted-foreground border-border",
+                          )}
+                        >
+                          {label}
+                        </span>
+                      ))}
                     </div>
                   </td>
+
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1">
                       {modo !== "lixeira" && onAtualizado && (
