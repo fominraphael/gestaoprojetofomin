@@ -23,6 +23,8 @@ import {
   Package,
   BarChart3,
   CircleDollarSign,
+  History,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
