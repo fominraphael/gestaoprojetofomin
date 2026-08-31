@@ -585,12 +585,14 @@ export async function atualizarVeiculo(
 /* ------------------------------ Tarefas de leads ----------------------------- */
 
 export async function getTarefasLead(): Promise<TarefaLead[]> {
-  const { data, error } = await supabase
-    .from("estoque_tarefas_lead")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as TarefaLead[];
+  return buscarTodos<TarefaLead>(
+    () =>
+      supabase
+        .from("estoque_tarefas_lead")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 export async function marcarTarefa(id: string, concluido: boolean): Promise<void> {
