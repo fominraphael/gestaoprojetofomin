@@ -258,7 +258,11 @@ export function VeiculosTable({
                   <td className="px-3 py-2 text-right">{v.leads_60_dias}</td>
                   <td className="px-3 py-2 text-right">{formatBRL(v.fipe)}</td>
                   <td className="px-3 py-2 text-right">{percFipe(v)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {formatBRL(v.valor_anunciado_planilha)}
+                  </td>
                   <td className="px-3 py-2 text-right">
+
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
