@@ -277,6 +277,14 @@ function EstoqueImportar() {
                         {rel.novasCompras} nova(s) compra(s) do mesmo veículo
                       </Badge>
                     )}
+                    {!!rel.movidosVendidos && (
+                      <Badge variant="outline">{rel.movidosVendidos} movido(s) para Vendidos</Badge>
+                    )}
+                    {!!rel.vendasCanceladas && (
+                      <Badge variant="outline">
+                        {rel.vendasCanceladas} venda(s) cancelada(s) — retornaram ao estoque
+                      </Badge>
+                    )}
                     <Badge variant={rel.ignorados.length ? "destructive" : "secondary"}>
                       {rel.ignorados.length} ignorados
                     </Badge>
