@@ -415,8 +415,11 @@ export function calcularValorAnuncio(
   faixas: FaixaDias[],
   regras: RegraEstoque[],
   vendas: VendaHistorica[],
-  hoje: Date = new Date(),
+  opts: { hoje?: Date; anuncios?: AnuncioMercado[] } = {},
 ): ResultadoCalculo {
+  const hoje = opts.hoje ?? new Date();
+  const anunciosMercado = opts.anuncios ?? [];
+
   const vazio: ResultadoCalculo = {
     alterou: false,
     valorAnterior: veiculo.valor_anuncio_calculado ?? null,
