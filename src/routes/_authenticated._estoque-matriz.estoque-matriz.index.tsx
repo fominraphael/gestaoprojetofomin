@@ -61,12 +61,12 @@ function EstoqueVeiculos() {
     enabled: veiculos.length > 0,
   });
 
-  const recalcular = async () => {
+  const recalcular = async (forcar = false) => {
     setRecalculando(true);
     try {
-      const r = await recalcularTodos();
+      const r = await recalcularTodos({ forcar });
       toast.success(
-        `Recálculo concluído: ${r.alterados} valores atualizados, ${r.repasse} para repasse, ${r.tarefas} tarefas criadas.`,
+        `${forcar ? "Recálculo forçado" : "Recálculo"} concluído: ${r.alterados} valores atualizados, ${r.repasse} para repasse, ${r.tarefas} tarefas criadas.`,
       );
       await qc.invalidateQueries({ queryKey: ["estoque"] });
     } catch (e) {
@@ -75,6 +75,7 @@ function EstoqueVeiculos() {
       setRecalculando(false);
     }
   };
+
 
   const excluir = async (id: string) => {
     try {
