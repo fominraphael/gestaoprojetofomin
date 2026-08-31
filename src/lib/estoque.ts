@@ -584,14 +584,15 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, excluidosRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativosRes, excluidosRes, vendasRes] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
-    // Somente registros ATIVOS entram na checagem de atualização.
+    // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
+    // de duplicidade. Lixeira e excluídos permanentemente nunca participam.
     supabase
       .from("estoque_veiculos")
-      .select("id,chassi,origem_id,chassi_resumido")
+      .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
       .is("deleted_at", null),
     // Registros na lixeira: não voltam para a análise; a linha é ignorada
     // (a constraint única não distingue excluídos, então inserir daria erro).
@@ -599,9 +600,24 @@ export async function importarEstoque(
       .from("estoque_veiculos")
       .select("chassi,origem_id,chassi_resumido")
       .not("deleted_at", "is", null),
+    // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
+    supabase
+      .from("estoque_vendas_historico")
+      .select("chassi,data_venda")
+      .limit(20000),
   ]);
   if (ativosRes.error) throw ativosRes.error;
   if (excluidosRes.error) throw excluidosRes.error;
+  if (vendasRes.error) throw vendasRes.error;
+
+  /** Maior data de venda por chassi — uma venda só casa com a compra se for
+   *  posterior à entrada dela no estoque (importado_em do registro). */
+  const vendaMaxPorChassi = new Map<string, string>();
+  for (const v of (vendasRes.data ?? []) as { chassi: string | null; data_venda: string | null }[]) {
+    if (!v.chassi || !v.data_venda) continue;
+    const atual = vendaMaxPorChassi.get(v.chassi);
+    if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
+  }
 
   const excluidos = new Set(
     ((excluidosRes.data ?? []) as {
@@ -629,16 +645,26 @@ export async function importarEstoque(
    * Chave: `${chassi}|${origem_id}` → lista de chassis resumidos ativos.
    * Nunca comparamos chassi resumido entre origens diferentes.
    */
-  const porChassiOrigem = new Map<string, { id: string; chassi_resumido: string }[]>();
+  const porChassiOrigem = new Map<
+    string,
+    { id: string; chassi_resumido: string; em_vendido: boolean; importado_em: string | null }[]
+  >();
   for (const v of (ativosRes.data ?? []) as {
     id: string;
     chassi: string;
     origem_id: string;
     chassi_resumido: string;
+    em_vendido: boolean;
+    importado_em: string | null;
   }[]) {
     const chave = `${v.chassi}|${v.origem_id}`;
     const lista = porChassiOrigem.get(chave) ?? [];
-    lista.push({ id: v.id, chassi_resumido: v.chassi_resumido });
+    lista.push({
+      id: v.id,
+      chassi_resumido: v.chassi_resumido,
+      em_vendido: v.em_vendido,
+      importado_em: v.importado_em,
+    });
     porChassiOrigem.set(chave, lista);
   }
 
