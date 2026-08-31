@@ -677,6 +677,10 @@ function EmpresasNbsEditor({
   return (
     <Card className="p-5 space-y-3">
       <h2 className="font-semibold">Empresas NBS</h2>
+      <p className="text-xs text-muted-foreground">
+        O chassi resumido não é cadastrado aqui: ele é um dado transacional de cada compra do
+        veículo e é lido da planilha, sempre validado dentro da mesma origem/base.
+      </p>
       <ul className="space-y-1 text-sm">
         {empresas.map((e) => (
           <li key={e.id} className="flex items-center gap-2 border-b border-border pb-1">
