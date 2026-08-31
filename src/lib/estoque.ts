@@ -619,11 +619,13 @@ export interface AcaoMatrizRegistro {
 }
 
 export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
-  const { data, error } = await supabase
-    .from("estoque_acoes_matriz")
-    .select("id,veiculo_id,tipo_acao,concluido,concluido_em");
-  if (error) throw error;
-  return (data ?? []) as unknown as AcaoMatrizRegistro[];
+  return buscarTodos<AcaoMatrizRegistro>(
+    () =>
+      supabase
+        .from("estoque_acoes_matriz")
+        .select("id,veiculo_id,tipo_acao,concluido,concluido_em")
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
