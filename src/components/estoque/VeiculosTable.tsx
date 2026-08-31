@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Trash2, RotateCcw, XCircle, Download, Columns3 } from "lucide-react";
+import { Trash2, RotateCcw, XCircle, Download, Columns3, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,10 @@ export interface VeiculosTableProps {
   regras?: RegraEstoque[];
   /** Vendas históricas — base da rastreabilidade do valor sugerido. */
   vendas?: VendaHistorica[];
+  /** Recálculo forçado deste veículo (refaz a base do zero). */
+  onRecalcular?: (v: Veiculo) => void | Promise<void>;
   onExcluir?: (v: Veiculo) => void;
+
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
   onAtualizado?: () => void | Promise<void>;
@@ -92,7 +95,9 @@ export function VeiculosTable({
   modo,
   regras = [],
   vendas = [],
+  onRecalcular,
   onExcluir,
+
   onRestaurar,
   onExcluirDefinitivo,
   onAtualizado,
@@ -449,6 +454,18 @@ export function VeiculosTable({
                       {modo !== "lixeira" && onAtualizado && (
                         <EditarVeiculoDialog veiculo={v} onSalvo={onAtualizado} />
                       )}
+                      {modo !== "lixeira" && onRecalcular && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Recalcular preço (forçado)"
+                          aria-label="Recalcular preço (forçado)"
+                          onClick={() => void onRecalcular(v)}
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                      )}
+
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />

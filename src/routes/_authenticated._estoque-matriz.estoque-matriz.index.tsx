@@ -61,12 +61,12 @@ function EstoqueVeiculos() {
     enabled: veiculos.length > 0,
   });
 
-  const recalcular = async () => {
+  const recalcular = async (forcar = false) => {
     setRecalculando(true);
     try {
-      const r = await recalcularTodos();
+      const r = await recalcularTodos({ forcar });
       toast.success(
-        `Recálculo concluído: ${r.alterados} valores atualizados, ${r.repasse} para repasse, ${r.tarefas} tarefas criadas.`,
+        `${forcar ? "Recálculo forçado" : "Recálculo"} concluído: ${r.alterados} valores atualizados, ${r.repasse} para repasse, ${r.tarefas} tarefas criadas.`,
       );
       await qc.invalidateQueries({ queryKey: ["estoque"] });
     } catch (e) {
@@ -75,6 +75,7 @@ function EstoqueVeiculos() {
       setRecalculando(false);
     }
   };
+
 
   const excluir = async (id: string) => {
     try {
@@ -97,10 +98,21 @@ function EstoqueVeiculos() {
             Estoque unificado com precificação automática pela matriz de regras.
           </p>
         </div>
-        <Button onClick={recalcular} disabled={recalculando}>
-          <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
-          Recalcular preços
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => recalcular(false)} disabled={recalculando}>
+            <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
+            Recalcular preços
+          </Button>
+          <Button
+            onClick={() => recalcular(true)}
+            disabled={recalculando}
+            title="Refaz a precificação base do zero, mesmo para veículos que continuam na mesma faixa de dias."
+          >
+            <RefreshCw className={recalculando ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
+            Recalcular (forçado)
+          </Button>
+        </div>
+
       </div>
 
       <VeiculosTable
@@ -113,7 +125,21 @@ function EstoqueVeiculos() {
         regras={regras}
         vendas={vendas}
         modo="ativo"
+        onRecalcular={async (v) => {
+          try {
+            const r = await recalcularTodos({ forcar: true, veiculoId: v.id });
+            toast.success(
+              r.alterados > 0
+                ? `Preço recalculado para ${v.placa ?? "o veículo"}.`
+                : "Nenhuma alteração: o valor já está atualizado.",
+            );
+            await qc.invalidateQueries({ queryKey: ["estoque"] });
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Falha ao recalcular");
+          }
+        }}
         onExcluir={(v) => excluir(v.id)}
+
         onAtualizado={() => qc.invalidateQueries({ queryKey: ["estoque", "veiculos"] })}
 
       />

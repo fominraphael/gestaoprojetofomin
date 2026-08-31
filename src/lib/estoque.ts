@@ -661,8 +661,10 @@ export interface ResumoRecalculo {
 }
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
-export async function recalcularTodos(): Promise<ResumoRecalculo> {
-  const [veiculos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
+export async function recalcularTodos(
+  opts: { forcar?: boolean; veiculoId?: string } = {},
+): Promise<ResumoRecalculo> {
+  const [todos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
     getVeiculos({}),
     getFaixas(),
     getRegras(),
@@ -671,11 +673,18 @@ export async function recalcularTodos(): Promise<ResumoRecalculo> {
     getFaixasKm(),
   ]);
 
+  const veiculos = opts.veiculoId ? todos.filter((v) => v.id === opts.veiculoId) : todos;
+
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
   for (const v of veiculos) {
-    const r = calcularValorAnuncio(v, faixas, regras, vendas, { anuncios: anunciosMercado, faixasKm });
+    const r = calcularValorAnuncio(v, faixas, regras, vendas, {
+      anuncios: anunciosMercado,
+      faixasKm,
+      forcar: opts.forcar === true,
+    });
     if (!r.alterou) continue;
+
 
 
     if (r.moverParaRepasse) {

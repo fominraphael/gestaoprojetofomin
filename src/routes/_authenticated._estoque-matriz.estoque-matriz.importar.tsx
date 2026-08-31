@@ -159,9 +159,11 @@ function EstoqueImportar() {
       );
       if (tipo !== "anuncios") {
         setProgresso((p) => (p ? { ...p, fase: "recalculando" } : p));
-        const res = await recalcularTodos();
+        // Importar vendas muda a base comparável: refaz a precificação do zero.
+        const res = await recalcularTodos({ forcar: tipo === "vendas" });
         toast.success(`Recálculo automático: ${res.alterados} valores atualizados.`);
       }
+
       await qc.invalidateQueries({ queryKey: ["estoque"] });
       setProgresso((p) => (p ? { ...p, fase: "concluido" } : p));
     } catch (e) {
