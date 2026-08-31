@@ -222,7 +222,8 @@ export function VeiculosTable({
               <th className="px-3 py-2 font-medium text-right">Leads</th>
               <th className="px-3 py-2 font-medium text-right">FIPE</th>
               <th className="px-3 py-2 font-medium text-right">% FIPE</th>
-              <th className="px-3 py-2 font-medium text-right">Valor anunciado</th>
+              <th className="px-3 py-2 font-medium text-right">Valor anúncio importado</th>
+              <th className="px-3 py-2 font-medium text-right">Valor anunciado sugerido</th>
               <th className="px-3 py-2 font-medium">Canais</th>
               <th className="px-3 py-2 font-medium text-right">Ações</th>
             </tr>
@@ -230,7 +231,8 @@ export function VeiculosTable({
           <tbody>
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={12} className="px-3 py-10 text-center text-muted-foreground">
+                <td colSpan={13} className="px-3 py-10 text-center text-muted-foreground">
+
                   Nenhum veículo encontrado.
                 </td>
               </tr>
