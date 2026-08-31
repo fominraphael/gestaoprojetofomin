@@ -19,6 +19,33 @@ import {
   type VendaHistorica,
 } from "./estoque-motor";
 
+/**
+ * O backend limita QUALQUER consulta a 1.000 linhas por requisição (teto do
+ * PostgREST), independentemente do `.limit()` enviado. Todas as listagens do
+ * módulo passam por este helper, que pagina em blocos até esgotar o resultado.
+ */
+const TAMANHO_PAGINA = 1000;
+
+interface QueryPaginavel {
+  range: (
+    de: number,
+    ate: number,
+  ) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>;
+}
+
+/** Executa a consulta em blocos de 1.000 e devolve todas as linhas. */
+async function buscarTodos<T>(criarQuery: () => QueryPaginavel): Promise<T[]> {
+  const todos: T[] = [];
+  for (let inicio = 0; ; inicio += TAMANHO_PAGINA) {
+    const { data, error } = await criarQuery().range(inicio, inicio + TAMANHO_PAGINA - 1);
+    if (error) throw error;
+    const lote = (data ?? []) as T[];
+    todos.push(...lote);
+    if (lote.length < TAMANHO_PAGINA) break;
+  }
+  return todos;
+}
+
 
 export interface Origem {
   id: string;
@@ -278,29 +305,35 @@ export async function getVeiculos(opts: {
   repasse?: boolean;
   vendidos?: boolean;
 }): Promise<Veiculo[]> {
-  let q = supabase.from("estoque_veiculos").select("*").order("dias_em_estoque", { ascending: false });
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  if (!opts.lixeira) {
-    if (opts.vendidos) {
-      q = q.eq("em_vendido", true);
-    } else {
-      q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+  // Ordenação estável (campo + id) para não repetir/pular linhas entre blocos.
+  return buscarTodos<Veiculo>(() => {
+    let q = supabase
+      .from("estoque_veiculos")
+      .select("*")
+      .order("dias_em_estoque", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    if (!opts.lixeira) {
+      if (opts.vendidos) {
+        q = q.eq("em_vendido", true);
+      } else {
+        q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+      }
     }
-  }
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as Veiculo[];
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function getVendas(): Promise<VendaHistorica[]> {
-  const { data, error } = await supabase
-    .from("estoque_vendas_historico")
-    .select("id,chassi,codigo_fipe,ano_modelo,km,data_venda,valor_venda")
-    .is("deleted_at", null)
-    .order("data_venda", { ascending: false })
-    .limit(20000);
-  if (error) throw error;
-  return (data ?? []) as unknown as VendaHistorica[];
+  return buscarTodos<VendaHistorica>(
+    () =>
+      supabase
+        .from("estoque_vendas_historico")
+        .select("id,chassi,codigo_fipe,ano_modelo,km,data_venda,valor_venda")
+        .is("deleted_at", null)
+        .order("data_venda", { ascending: false })
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Registro completo de venda histórica (aba "Vendas Históricas"). */
@@ -330,15 +363,15 @@ export interface VendaHistoricoRow {
 export async function getVendasHistorico(opts: { lixeira?: boolean } = {}): Promise<
   VendaHistoricoRow[]
 > {
-  let q = supabase
-    .from("estoque_vendas_historico")
-    .select("*")
-    .order("data_venda", { ascending: false })
-    .limit(20000);
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as VendaHistoricoRow[];
+  return buscarTodos<VendaHistoricoRow>(() => {
+    let q = supabase
+      .from("estoque_vendas_historico")
+      .select("*")
+      .order("data_venda", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function atualizarVenda(
@@ -369,22 +402,26 @@ export async function restaurarVenda(id: string): Promise<void> {
 }
 
 export async function getAnuncios(): Promise<Anuncio[]> {
-  const { data, error } = await supabase
-    .from("estoque_anuncios")
-    .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
-    .is("deleted_at", null);
-  if (error) throw error;
-  return (data ?? []) as unknown as Anuncio[];
+  return buscarTodos<Anuncio>(
+    () =>
+      supabase
+        .from("estoque_anuncios")
+        .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Anúncios usados pela checagem de mercado (média por canal de referência). */
 export async function getAnunciosMercado(): Promise<AnuncioMercado[]> {
-  const { data, error } = await supabase
-    .from("estoque_anuncios")
-    .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
-    .is("deleted_at", null);
-  if (error) throw error;
-  return (data ?? []) as unknown as AnuncioMercado[];
+  return buscarTodos<AnuncioMercado>(
+    () =>
+      supabase
+        .from("estoque_anuncios")
+        .select("chassi,modelo,ano_modelo,preco_venda,canal_site_proprio,canal_olx,canal_webmotors")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 
@@ -412,11 +449,15 @@ export interface AnuncioRow {
 }
 
 export async function getAnunciosCompletos(opts: { lixeira?: boolean } = {}): Promise<AnuncioRow[]> {
-  let q = supabase.from("estoque_anuncios").select("*").order("importado_em", { ascending: false });
-  q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as unknown as AnuncioRow[];
+  return buscarTodos<AnuncioRow>(() => {
+    let q = supabase
+      .from("estoque_anuncios")
+      .select("*")
+      .order("importado_em", { ascending: false })
+      .order("id", { ascending: true });
+    q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    return q as unknown as QueryPaginavel;
+  });
 }
 
 export async function atualizarAnuncio(
@@ -448,14 +489,23 @@ export async function restaurarAnuncio(id: string): Promise<void> {
 
 export async function getUltimoHistorico(veiculoIds: string[]): Promise<Map<string, HistoricoValor>> {
   if (veiculoIds.length === 0) return new Map();
-  const { data, error } = await supabase
-    .from("estoque_valor_historico")
-    .select("*")
-    .in("veiculo_id", veiculoIds)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
+  const data: HistoricoValor[] = [];
+  // Filtro `in` em blocos, e cada bloco paginado (o histórico tem várias linhas por veículo).
+  for (let i = 0; i < veiculoIds.length; i += 300) {
+    const chunk = veiculoIds.slice(i, i + 300);
+    const linhas = await buscarTodos<HistoricoValor>(
+      () =>
+        supabase
+          .from("estoque_valor_historico")
+          .select("*")
+          .in("veiculo_id", chunk)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    );
+    data.push(...linhas);
+  }
   const map = new Map<string, HistoricoValor>();
-  for (const h of (data ?? []) as unknown as HistoricoValor[]) {
+  for (const h of data) {
     if (!map.has(h.veiculo_id)) map.set(h.veiculo_id, h);
   }
   return map;
@@ -535,12 +585,14 @@ export async function atualizarVeiculo(
 /* ------------------------------ Tarefas de leads ----------------------------- */
 
 export async function getTarefasLead(): Promise<TarefaLead[]> {
-  const { data, error } = await supabase
-    .from("estoque_tarefas_lead")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as TarefaLead[];
+  return buscarTodos<TarefaLead>(
+    () =>
+      supabase
+        .from("estoque_tarefas_lead")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 export async function marcarTarefa(id: string, concluido: boolean): Promise<void> {
@@ -567,11 +619,13 @@ export interface AcaoMatrizRegistro {
 }
 
 export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
-  const { data, error } = await supabase
-    .from("estoque_acoes_matriz")
-    .select("id,veiculo_id,tipo_acao,concluido,concluido_em");
-  if (error) throw error;
-  return (data ?? []) as unknown as AcaoMatrizRegistro[];
+  return buscarTodos<AcaoMatrizRegistro>(
+    () =>
+      supabase
+        .from("estoque_acoes_matriz")
+        .select("id,veiculo_id,tipo_acao,concluido,concluido_em")
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
 }
 
 /** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
@@ -830,31 +884,43 @@ export async function registrarImportacao(
 export async function importarEstoque(
   linhas: Record<string, unknown>[],
 ): Promise<RelatorioImportacao> {
-  const [origens, empresas, finalidades, ativosRes, vendasRes] = await Promise.all([
+  const [origens, empresas, finalidades, ativos, vendas] = await Promise.all([
     getOrigens(),
     getEmpresasNbs(),
     getFinalidades(),
     // Somente registros ATIVOS (Estoque, Repasse e Vendidos) entram na checagem
     // de duplicidade. A lixeira nunca é consultada — o índice único do banco é
     // parcial (`where deleted_at is null`), então reimportar é sempre permitido.
-    supabase
-      .from("estoque_veiculos")
-      .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
-      .is("deleted_at", null),
+    buscarTodos<{
+      id: string;
+      chassi: string;
+      origem_id: string;
+      chassi_resumido: string;
+      em_vendido: boolean;
+      importado_em: string | null;
+    }>(
+      () =>
+        supabase
+          .from("estoque_veiculos")
+          .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
+          .is("deleted_at", null)
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    ),
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
-    supabase
-      .from("estoque_vendas_historico")
-      .select("chassi,data_venda")
-      .is("deleted_at", null)
-      .limit(20000),
+    buscarTodos<{ chassi: string | null; data_venda: string | null }>(
+      () =>
+        supabase
+          .from("estoque_vendas_historico")
+          .select("id,chassi,data_venda")
+          .is("deleted_at", null)
+          .order("id", { ascending: true }) as unknown as QueryPaginavel,
+    ),
   ]);
-  if (ativosRes.error) throw ativosRes.error;
-  if (vendasRes.error) throw vendasRes.error;
 
   /** Maior data de venda por chassi — uma venda só casa com a compra se for
    *  posterior à entrada dela no estoque (importado_em do registro). */
   const vendaMaxPorChassi = new Map<string, string>();
-  for (const v of (vendasRes.data ?? []) as { chassi: string | null; data_venda: string | null }[]) {
+  for (const v of vendas) {
     if (!v.chassi || !v.data_venda) continue;
     const atual = vendaMaxPorChassi.get(v.chassi);
     if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
@@ -884,14 +950,7 @@ export async function importarEstoque(
     string,
     { id: string; chassi_resumido: string; em_vendido: boolean; importado_em: string | null }[]
   >();
-  for (const v of (ativosRes.data ?? []) as {
-    id: string;
-    chassi: string;
-    origem_id: string;
-    chassi_resumido: string;
-    em_vendido: boolean;
-    importado_em: string | null;
-  }[]) {
+  for (const v of ativos) {
     const chave = `${v.chassi}|${v.origem_id}`;
     const lista = porChassiOrigem.get(chave) ?? [];
     lista.push({
