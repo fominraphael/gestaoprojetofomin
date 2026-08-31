@@ -409,22 +409,35 @@ export function toDate(valor: unknown): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
-/** Busca o valor de uma coluna aceitando variações de acento/caixa/espaço. */
+/**
+ * Busca o valor de uma coluna aceitando variações de acento/caixa/espaço.
+ *
+ * O "%" é convertido em "pct" ANTES de remover os não-alfanuméricos: sem isso
+ * "% Fipe" e "Fipe" colapsariam na mesma chave e o percentual sobrescreveria
+ * o valor FIPE oficial da planilha.
+ */
 export function coluna(linha: Record<string, unknown>, ...nomes: string[]): unknown {
   const norm = (s: string) =>
     s
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
+      .replace(/%/g, "pct")
       .replace(/[^a-z0-9]/g, "");
   const mapa = new Map<string, unknown>();
-  for (const [k, v] of Object.entries(linha)) mapa.set(norm(k), v);
+  for (const [k, v] of Object.entries(linha)) {
+    const chave = norm(k);
+    // Primeira ocorrência vence: evita que colunas auxiliares homônimas
+    // sobrescrevam a coluna principal.
+    if (!mapa.has(chave)) mapa.set(chave, v);
+  }
   for (const nome of nomes) {
     const v = mapa.get(norm(nome));
     if (v !== undefined) return v;
   }
   return undefined;
 }
+
 
 function canalPublicado(valor: unknown): boolean {
   const s = String(valor ?? "").toLowerCase();
