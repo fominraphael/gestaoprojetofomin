@@ -533,17 +533,10 @@ export async function importarEstoque(
       });
       continue;
     }
-    const empresa = empresas.find(
-      (e) => e.origem_id === origem.id && e.codigo_chassi_resumido === chassiResumido,
-    );
-    if (!empresa) {
-      rel.ignorados.push({
-        linha: numeroLinha,
-        chassi,
-        motivo: `Empresa NBS não cadastrada para código ${chassiResumido} na origem ${origem.nome}`,
-      });
-      continue;
-    }
+    // A empresa NBS é derivada da origem (base), nunca do chassi resumido.
+    const empresasDaOrigem = empresas.filter((e) => e.origem_id === origem.id && e.ativo);
+    const empresa = empresasDaOrigem.length === 1 ? empresasDaOrigem[0]! : null;
+
 
     const registro = {
       chassi,
