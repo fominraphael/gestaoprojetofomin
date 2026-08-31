@@ -168,15 +168,24 @@ export function arredonda990(valor: number): number {
   return base >= valor ? base : base + 1000;
 }
 
-/** Faixa de milhar de KM usada na busca de vendas comparáveis. */
-export function faixaKm(km: number | null | undefined): string {
+/**
+ * Faixa de KM usada na busca de vendas comparáveis.
+ * Usa as faixas cadastradas (aba Cadastros); sem cadastro, cai no padrão de 15k.
+ */
+export function faixaKm(km: number | null | undefined, faixas: FaixaKm[] = []): string {
   const v = km ?? 0;
+  const ativas = faixas.filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem);
+  if (ativas.length > 0) {
+    const encontrada = ativas.find((f) => v >= f.km_inicio && v <= f.km_fim);
+    return encontrada ? encontrada.id : "fora-de-faixa";
+  }
   if (v < 15000) return "0-15k";
   if (v < 30000) return "15-30k";
   if (v < 45000) return "30-45k";
   if (v < 60000) return "45-60k";
   return "+60k";
 }
+
 
 function normaliza(valor: string | null | undefined): string {
   return (valor ?? "").toString().trim().toUpperCase();
