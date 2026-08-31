@@ -9,7 +9,9 @@ import {
   getEmpresasNbs,
   getFaixas,
   getOrigens,
+  getRegras,
   getUltimoHistorico,
+  getVendas,
   getVeiculos,
   moverParaLixeira,
 } from "@/lib/estoque";
@@ -42,6 +44,8 @@ function EstoqueRepasse() {
   const { data: empresas = [] } = useQuery({ queryKey: ["estoque", "nbs"], queryFn: getEmpresasNbs });
   const { data: faixas = [] } = useQuery({ queryKey: ["estoque", "faixas"], queryFn: getFaixas });
   const { data: anuncios = [] } = useQuery({ queryKey: ["estoque", "anuncios"], queryFn: getAnuncios });
+  const { data: regras = [] } = useQuery({ queryKey: ["estoque", "regras"], queryFn: getRegras });
+  const { data: vendas = [] } = useQuery({ queryKey: ["estoque", "vendas"], queryFn: getVendas });
   const { data: historico = new Map() } = useQuery({
     queryKey: ["estoque", "historico", "repasse", veiculos.map((v) => v.id).join(",")],
     queryFn: () => getUltimoHistorico(veiculos.map((v) => v.id)),
@@ -75,6 +79,8 @@ function EstoqueRepasse() {
         faixas={faixas}
         anuncios={anuncios}
         historico={historico}
+        regras={regras}
+        vendas={vendas}
         modo="repasse"
         onExcluir={(v) => excluir(v.id)}
         onAtualizado={() => qc.invalidateQueries({ queryKey: ["estoque", "veiculos"] })}
