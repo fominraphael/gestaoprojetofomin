@@ -267,6 +267,56 @@ export async function excluirDefinitivo(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Campos do veículo que vêm da importação e podem ser editados manualmente. */
+export type CampoEditavel =
+  | "modelo"
+  | "loja"
+  | "regional"
+  | "ano_mod"
+  | "cor"
+  | "placa"
+  | "km"
+  | "custo_total"
+  | "valor_anunciado_planilha"
+  | "fipe"
+  | "percentual_fipe_planilha"
+  | "dias_em_estoque"
+  | "fotos_qtd"
+  | "leads_60_dias"
+  | "classificacao"
+  | "codigo_fipe"
+  | "finalidade"
+  | "finalidade_atual"
+  | "chassi"
+  | "chassi_resumido"
+  | "valor_anuncio_calculado";
+
+/**
+ * Persiste a edição manual do veículo e acumula em `campos_manuais` os campos
+ * tocados pelo usuário, para diferenciá-los do dado vindo da importação.
+ */
+export async function atualizarVeiculo(
+  veiculo: Veiculo,
+  patch: Partial<Record<CampoEditavel, unknown>>,
+): Promise<void> {
+  const alterados = (Object.keys(patch) as CampoEditavel[]).filter(
+    (k) => (patch[k] ?? null) !== ((veiculo as unknown as Record<string, unknown>)[k] ?? null),
+  );
+  const manuais = new Set([...(veiculo.campos_manuais ?? []), ...alterados]);
+
+  const { error } = await supabase
+    .from("estoque_veiculos")
+    .update({
+      ...patch,
+      campos_manuais: [...manuais],
+      editado_em: new Date().toISOString(),
+    } as never)
+    .eq("id", veiculo.id);
+  if (error) throw error;
+}
+
+
+
 /* ------------------------------ Tarefas de leads ----------------------------- */
 
 export async function getTarefasLead(): Promise<TarefaLead[]> {
