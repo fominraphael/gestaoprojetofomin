@@ -150,19 +150,6 @@ function EstoqueImportar() {
           ? await importarEstoque(linhas, reportar)
           : tipo === "vendas"
             ? await importarVendas(linhas, reportar)
-                const seg = Math.max((Date.now() - inicio) / 1000, 0.001);
-                setProgresso((p) =>
-                  p
-                    ? {
-                        ...p,
-                        fase,
-                        processadas,
-                        total,
-                        velocidade: Math.round(processadas / seg),
-                      }
-                    : p,
-                );
-              })
             : await importarAnuncios(linhas);
       const arquivoPath = await uploadPlanilhaImportacao(tipo, file);
       await registrarImportacao(tipo, file.name, rel, arquivoPath);
