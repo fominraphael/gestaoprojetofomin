@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Trash2, RotateCcw, XCircle } from "lucide-react";
+import { Trash2, RotateCcw, XCircle, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatBRL, type FaixaDias } from "@/lib/estoque-motor";
+import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
 
 export interface VeiculosTableProps {
@@ -26,7 +28,9 @@ export interface VeiculosTableProps {
   onExcluir?: (v: Veiculo) => void;
   onRestaurar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
+  onAtualizado?: () => void | Promise<void>;
 }
+
 
 const TODOS = "__todos__";
 
@@ -41,6 +45,8 @@ export function VeiculosTable({
   onExcluir,
   onRestaurar,
   onExcluirDefinitivo,
+  onAtualizado,
+
 }: VeiculosTableProps) {
   const [busca, setBusca] = useState("");
   const [origemFiltro, setOrigemFiltro] = useState(TODOS);
@@ -82,6 +88,58 @@ export function VeiculosTable({
   const nomeFaixa = (v: Veiculo) => faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
   const percFipe = (v: Veiculo) =>
     v.fipe && v.valor_anuncio_calculado ? `${((v.valor_anuncio_calculado / v.fipe) * 100).toFixed(1)}%` : "—";
+
+  /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
+  const exportar = async () => {
+    try {
+      if (filtrados.length === 0) {
+        toast.error("Nenhum veículo para exportar.");
+        return;
+      }
+      const XLSX = await import("xlsx");
+      const linhas = filtrados.map((v) => {
+        const a = anunciosPorChassi.get(v.chassi.toUpperCase());
+        return {
+          Chassi: v.chassi,
+          "Chassi resumido": v.chassi_resumido,
+          Origem: origens.find((o) => o.id === v.origem_id)?.nome ?? "",
+          "Empresa NBS": nomeEmpresa(v),
+          Regional: v.regional ?? "",
+          Loja: v.loja ?? "",
+          Modelo: v.modelo ?? "",
+          Placa: v.placa ?? "",
+          "Ano/Mod": v.ano_mod ?? "",
+          Cor: v.cor ?? "",
+          KM: v.km ?? "",
+          "Custo total": v.custo_total ?? "",
+          FIPE: v.fipe ?? "",
+          "Código FIPE": v.codigo_fipe ?? "",
+          "% FIPE": percFipe(v),
+          "Valor anúncio importado": v.valor_anunciado_planilha ?? "",
+          "Valor anunciado sugerido": v.valor_anuncio_calculado ?? "",
+          Classificação: v.classificacao ?? "",
+          "Dias em estoque": v.dias_em_estoque,
+          Faixa: nomeFaixa(v),
+          "Leads 60 dias": v.leads_60_dias,
+          Fotos: v.fotos_qtd ?? "",
+          Finalidade: v.finalidade_atual ?? v.finalidade ?? "",
+          "Canal Site próprio": a?.canal_site_proprio ? "Publicado" : "Pendente",
+          "Canal OLX": a?.canal_olx ? "Publicado" : "Pendente",
+          "Canal WebMotors": a?.canal_webmotors ? "Publicado" : "Pendente",
+          "Campos editados manualmente": (v.campos_manuais ?? []).join(", "),
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(linhas);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Estoque");
+      XLSX.writeFile(wb, `estoque-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success(`${linhas.length} veículos exportados.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao exportar.");
+    }
+  };
+
+
 
   return (
     <div className="space-y-4">
@@ -144,7 +202,12 @@ export function VeiculosTable({
             ))}
           </SelectContent>
         </Select>
+        <Button variant="outline" className="ml-auto" onClick={() => void exportar()}>
+          <Download className="w-4 h-4" />
+          Exportar ({filtrados.length})
+        </Button>
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
@@ -159,7 +222,8 @@ export function VeiculosTable({
               <th className="px-3 py-2 font-medium text-right">Leads</th>
               <th className="px-3 py-2 font-medium text-right">FIPE</th>
               <th className="px-3 py-2 font-medium text-right">% FIPE</th>
-              <th className="px-3 py-2 font-medium text-right">Valor anunciado</th>
+              <th className="px-3 py-2 font-medium text-right">Valor anúncio importado</th>
+              <th className="px-3 py-2 font-medium text-right">Valor anunciado sugerido</th>
               <th className="px-3 py-2 font-medium">Canais</th>
               <th className="px-3 py-2 font-medium text-right">Ações</th>
             </tr>
@@ -167,7 +231,8 @@ export function VeiculosTable({
           <tbody>
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={12} className="px-3 py-10 text-center text-muted-foreground">
+                <td colSpan={13} className="px-3 py-10 text-center text-muted-foreground">
+
                   Nenhum veículo encontrado.
                 </td>
               </tr>
@@ -193,7 +258,11 @@ export function VeiculosTable({
                   <td className="px-3 py-2 text-right">{v.leads_60_dias}</td>
                   <td className="px-3 py-2 text-right">{formatBRL(v.fipe)}</td>
                   <td className="px-3 py-2 text-right">{percFipe(v)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {formatBRL(v.valor_anunciado_planilha)}
+                  </td>
                   <td className="px-3 py-2 text-right">
+
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -224,32 +293,47 @@ export function VeiculosTable({
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      {[
-                        ["Site", anuncio?.canal_site_proprio],
-                        ["OLX", anuncio?.canal_olx],
-                        ["WM", anuncio?.canal_webmotors],
-                      ].map(([label, ativo]) => (
-                        <span
-                          key={String(label)}
-                          className={cn(
-                            "rounded px-1.5 py-0.5 text-[10px] font-medium border",
-                            ativo
-                              ? "bg-primary/10 text-primary border-primary/30"
-                              : "bg-muted text-muted-foreground border-border",
-                          )}
-                        >
-                          {label}
-                        </span>
-                      ))}
+                      {(
+                        [
+                          ["Site", anuncio?.canal_site_proprio],
+                          ["OLX", anuncio?.canal_olx],
+                          ["WM", anuncio?.canal_webmotors],
+                        ] as [string, boolean | undefined][]
+                      ).map(([label, publicado]) => {
+                        // Pendente = canal ainda sem anúncio publicado → exige ação.
+                        const pendente = !publicado;
+                        return (
+                          <span
+                            key={label}
+                            title={
+                              pendente
+                                ? `${label}: ação pendente (anúncio não publicado)`
+                                : `${label}: publicado`
+                            }
+                            className={cn(
+                              "rounded px-1.5 py-0.5 text-[10px] font-medium border",
+                              pendente
+                                ? "bg-status-done-bg text-status-done border-status-done/40"
+                                : "bg-muted text-muted-foreground border-border",
+                            )}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1">
+                      {modo !== "lixeira" && onAtualizado && (
+                        <EditarVeiculoDialog veiculo={v} onSalvo={onAtualizado} />
+                      )}
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
+
                       {modo === "lixeira" && (
                         <>
                           <Button size="icon" variant="ghost" onClick={() => onRestaurar?.(v)}>

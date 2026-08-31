@@ -67,6 +67,10 @@ export interface Veiculo {
   em_repasse: boolean;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
+  /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
+  campos_manuais?: string[] | null;
+  editado_em?: string | null;
+
 }
 
 export interface HistoricoValor {
@@ -263,6 +267,56 @@ export async function excluirDefinitivo(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Campos do veículo que vêm da importação e podem ser editados manualmente. */
+export type CampoEditavel =
+  | "modelo"
+  | "loja"
+  | "regional"
+  | "ano_mod"
+  | "cor"
+  | "placa"
+  | "km"
+  | "custo_total"
+  | "valor_anunciado_planilha"
+  | "fipe"
+  | "percentual_fipe_planilha"
+  | "dias_em_estoque"
+  | "fotos_qtd"
+  | "leads_60_dias"
+  | "classificacao"
+  | "codigo_fipe"
+  | "finalidade"
+  | "finalidade_atual"
+  | "chassi"
+  | "chassi_resumido"
+  | "valor_anuncio_calculado";
+
+/**
+ * Persiste a edição manual do veículo e acumula em `campos_manuais` os campos
+ * tocados pelo usuário, para diferenciá-los do dado vindo da importação.
+ */
+export async function atualizarVeiculo(
+  veiculo: Veiculo,
+  patch: Partial<Record<CampoEditavel, unknown>>,
+): Promise<void> {
+  const alterados = (Object.keys(patch) as CampoEditavel[]).filter(
+    (k) => (patch[k] ?? null) !== ((veiculo as unknown as Record<string, unknown>)[k] ?? null),
+  );
+  const manuais = new Set([...(veiculo.campos_manuais ?? []), ...alterados]);
+
+  const { error } = await supabase
+    .from("estoque_veiculos")
+    .update({
+      ...patch,
+      campos_manuais: [...manuais],
+      editado_em: new Date().toISOString(),
+    } as never)
+    .eq("id", veiculo.id);
+  if (error) throw error;
+}
+
+
+
 /* ------------------------------ Tarefas de leads ----------------------------- */
 
 export async function getTarefasLead(): Promise<TarefaLead[]> {
@@ -409,22 +463,35 @@ export function toDate(valor: unknown): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
-/** Busca o valor de uma coluna aceitando variações de acento/caixa/espaço. */
+/**
+ * Busca o valor de uma coluna aceitando variações de acento/caixa/espaço.
+ *
+ * O "%" é convertido em "pct" ANTES de remover os não-alfanuméricos: sem isso
+ * "% Fipe" e "Fipe" colapsariam na mesma chave e o percentual sobrescreveria
+ * o valor FIPE oficial da planilha.
+ */
 export function coluna(linha: Record<string, unknown>, ...nomes: string[]): unknown {
   const norm = (s: string) =>
     s
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
+      .replace(/%/g, "pct")
       .replace(/[^a-z0-9]/g, "");
   const mapa = new Map<string, unknown>();
-  for (const [k, v] of Object.entries(linha)) mapa.set(norm(k), v);
+  for (const [k, v] of Object.entries(linha)) {
+    const chave = norm(k);
+    // Primeira ocorrência vence: evita que colunas auxiliares homônimas
+    // sobrescrevam a coluna principal.
+    if (!mapa.has(chave)) mapa.set(chave, v);
+  }
   for (const nome of nomes) {
     const v = mapa.get(norm(nome));
     if (v !== undefined) return v;
   }
   return undefined;
 }
+
 
 function canalPublicado(valor: unknown): boolean {
   const s = String(valor ?? "").toLowerCase();
