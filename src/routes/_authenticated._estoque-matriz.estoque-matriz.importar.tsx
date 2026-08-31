@@ -151,6 +151,11 @@ function EstoqueImportar() {
                     <Badge variant="secondary">{rel.totalLinhas} linhas</Badge>
                     <Badge variant="secondary">{rel.importados} novos</Badge>
                     <Badge variant="secondary">{rel.atualizados} atualizados</Badge>
+                    {!!rel.novasCompras && (
+                      <Badge variant="outline">
+                        {rel.novasCompras} nova(s) compra(s) do mesmo veículo
+                      </Badge>
+                    )}
                     <Badge variant={rel.ignorados.length ? "destructive" : "secondary"}>
                       {rel.ignorados.length} ignorados
                     </Badge>
