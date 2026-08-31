@@ -906,6 +906,41 @@ export async function importarVendas(
     onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
   }
 
+  // 4) Move para "Vendidos" os veículos ativos (Estoque/Repasse) cuja compra foi
+  //    vendida: a venda só casa com o registro se data_venda >= importado_em dele.
+  const dataMaxPorChassi = new Map<string, string>();
+  for (const r of finais) {
+    const dv = r.registro["data_venda"] as string;
+    const atual = dataMaxPorChassi.get(r.chassi);
+    if (!atual || dv > atual) dataMaxPorChassi.set(r.chassi, dv);
+  }
+  const chassisImportados = [...new Set(finais.map((r) => r.chassi))];
+  for (let i = 0; i < chassisImportados.length; i += 200) {
+    const chunk = chassisImportados.slice(i, i + 200);
+    const { data: ativos, error: errAtivos } = await supabase
+      .from("estoque_veiculos")
+      .select("id,chassi,importado_em")
+      .is("deleted_at", null)
+      .eq("em_vendido", false)
+      .in("chassi", chunk);
+    if (errAtivos) throw errAtivos;
+    // Compra mais recente elegível por chassi.
+    const porChassi = new Map<string, { id: string; importado_em: string }>();
+    for (const v of (ativos ?? []) as { id: string; chassi: string; importado_em: string }[]) {
+      const dv = dataMaxPorChassi.get(v.chassi);
+      if (!dv || dv < (v.importado_em ?? "").slice(0, 10)) continue;
+      const atual = porChassi.get(v.chassi);
+      if (!atual || v.importado_em > atual.importado_em) porChassi.set(v.chassi, v);
+    }
+    for (const v of porChassi.values()) {
+      const { error } = await supabase
+        .from("estoque_veiculos")
+        .update({ em_vendido: true } as never)
+        .eq("id", v.id);
+      if (!error) rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
+    }
+  }
+
   return rel;
 }
 
