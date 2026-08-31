@@ -680,9 +680,7 @@ function EmpresasNbsEditor({
       <ul className="space-y-1 text-sm">
         {empresas.map((e) => (
           <li key={e.id} className="flex items-center gap-2 border-b border-border pb-1">
-            <span className="font-medium">
-              {e.codigo_chassi_resumido} — {e.nome_exibicao}
-            </span>
+            <span className="font-medium">{e.nome_exibicao}</span>
             <span className="text-xs text-muted-foreground">({nomeOrigem(e.origem_id)})</span>
             {!e.ativo && <Badge variant="secondary">Inativa</Badge>}
             <Button
