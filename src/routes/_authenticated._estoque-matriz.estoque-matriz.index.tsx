@@ -125,7 +125,21 @@ function EstoqueVeiculos() {
         regras={regras}
         vendas={vendas}
         modo="ativo"
+        onRecalcular={async (v) => {
+          try {
+            const r = await recalcularTodos({ forcar: true, veiculoId: v.id });
+            toast.success(
+              r.alterados > 0
+                ? `Preço recalculado para ${v.placa ?? "o veículo"}.`
+                : "Nenhuma alteração: o valor já está atualizado.",
+            );
+            await qc.invalidateQueries({ queryKey: ["estoque"] });
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Falha ao recalcular");
+          }
+        }}
         onExcluir={(v) => excluir(v.id)}
+
         onAtualizado={() => qc.invalidateQueries({ queryKey: ["estoque", "veiculos"] })}
 
       />
