@@ -66,9 +66,20 @@ async function lerPlanilha(file: File): Promise<Record<string, unknown>[]> {
   return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
 }
 
+interface ProgressoState {
+  tipo: Tipo;
+  arquivo: string;
+  fase: "lendo" | "enviando" | "recalculando" | "concluido" | "erro";
+  processadas: number;
+  total: number;
+  velocidade: number; // linhas/s
+  mensagem?: string;
+}
+
 function EstoqueImportar() {
   const qc = useQueryClient();
   const [processando, setProcessando] = useState<Tipo | null>(null);
+  const [progresso, setProgresso] = useState<ProgressoState | null>(null);
   const [relatorios, setRelatorios] = useState<Partial<Record<Tipo, RelatorioImportacao>>>({});
 
   const { data: historicoImport = [] } = useQuery({
@@ -86,13 +97,38 @@ function EstoqueImportar() {
 
   const processar = async (tipo: Tipo, file: File) => {
     setProcessando(tipo);
+    const inicio = Date.now();
+    setProgresso({
+      tipo,
+      arquivo: file.name,
+      fase: "lendo",
+      processadas: 0,
+      total: 0,
+      velocidade: 0,
+    });
     try {
       const linhas = await lerPlanilha(file);
+      setProgresso((p) =>
+        p ? { ...p, fase: "enviando", total: linhas.length, processadas: 0 } : p,
+      );
       const rel =
         tipo === "estoque"
           ? await importarEstoque(linhas)
           : tipo === "vendas"
-            ? await importarVendas(linhas)
+            ? await importarVendas(linhas, ({ processadas, total, fase }) => {
+                const seg = Math.max((Date.now() - inicio) / 1000, 0.001);
+                setProgresso((p) =>
+                  p
+                    ? {
+                        ...p,
+                        fase,
+                        processadas,
+                        total,
+                        velocidade: Math.round(processadas / seg),
+                      }
+                    : p,
+                );
+              })
             : await importarAnuncios(linhas);
       await registrarImportacao(tipo, file.name, rel);
       setRelatorios((r) => ({ ...r, [tipo]: rel }));
@@ -100,19 +136,81 @@ function EstoqueImportar() {
         `${rel.importados} novos, ${rel.atualizados} atualizados, ${rel.ignorados.length} ignorados.`,
       );
       if (tipo !== "anuncios") {
+        setProgresso((p) => (p ? { ...p, fase: "recalculando" } : p));
         const res = await recalcularTodos();
         toast.success(`Recálculo automático: ${res.alterados} valores atualizados.`);
       }
       await qc.invalidateQueries({ queryKey: ["estoque"] });
+      setProgresso((p) => (p ? { ...p, fase: "concluido" } : p));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha na importação");
+      const msg = e instanceof Error ? e.message : "Falha na importação";
+      toast.error(msg);
+      setProgresso((p) => (p ? { ...p, fase: "erro", mensagem: msg } : p));
     } finally {
       setProcessando(null);
     }
   };
 
+  const pct =
+    progresso && progresso.total > 0
+      ? Math.min(100, Math.round((progresso.processadas / progresso.total) * 100))
+      : progresso?.fase === "concluido"
+        ? 100
+        : 0;
+  const encerrado = progresso?.fase === "concluido" || progresso?.fase === "erro";
+
   return (
     <div className="p-6 space-y-6 w-full">
+      <Dialog
+        open={progresso !== null}
+        onOpenChange={(o) => {
+          if (!o && encerrado) setProgresso(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={encerrado}>
+          <DialogHeader>
+            <DialogTitle>
+              {progresso?.fase === "erro"
+                ? "Falha na importação"
+                : progresso?.fase === "concluido"
+                  ? "Importação concluída"
+                  : "Importando planilha"}
+            </DialogTitle>
+            <DialogDescription className="truncate">{progresso?.arquivo}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-200",
+                  progresso?.fase === "erro" ? "bg-destructive" : "bg-primary",
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {progresso?.fase === "lendo" && "Lendo arquivo…"}
+                {progresso?.fase === "enviando" &&
+                  `Enviando ${progresso.processadas.toLocaleString("pt-BR")} de ${progresso.total.toLocaleString("pt-BR")} linhas`}
+                {progresso?.fase === "recalculando" && "Recalculando valores…"}
+                {progresso?.fase === "concluido" && "Finalizado"}
+                {progresso?.fase === "erro" && progresso.mensagem}
+              </span>
+              <span className="tabular-nums">
+                {pct}%{progresso?.velocidade ? ` · ${progresso.velocidade} linhas/s` : ""}
+              </span>
+            </div>
+            {encerrado && (
+              <Button className="w-full" onClick={() => setProgresso(null)}>
+                Fechar
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
           <Upload className="w-5 h-5 text-primary" /> Importação
@@ -145,6 +243,7 @@ function EstoqueImportar() {
               {processando === c.tipo && (
                 <p className="text-xs text-muted-foreground">Processando planilha…</p>
               )}
+
               {rel && (
                 <div className="space-y-2 text-xs">
                   <div className="flex flex-wrap gap-2">
