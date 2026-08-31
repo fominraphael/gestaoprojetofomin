@@ -774,17 +774,29 @@ export function toText(valor: unknown): string | null {
  */
 export function toAnoModelo(valor: unknown): string | null {
   if (valor == null || valor === "") return null;
-  if (valor instanceof Date) {
-    if (Number.isNaN(valor.getTime())) return null;
-    const serial = Math.round((valor.getTime() - Date.UTC(1899, 11, 30)) / 86400000);
-    return serial >= 1900 && serial <= 2100 ? String(serial) : null;
+  const serialParaAno = (serial: number): string | null =>
+    serial >= 1900 && serial <= 2100 ? String(Math.round(serial)) : null;
+  const dataParaAno = (d: Date): string | null => {
+    if (Number.isNaN(d.getTime())) return null;
+    // Usa componentes locais: xlsx cria a data em horário local.
+    const utcMeiaNoite = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return serialParaAno(Math.round((utcMeiaNoite - Date.UTC(1899, 11, 30)) / 86400000));
+  };
+  if (valor instanceof Date) return dataParaAno(valor);
+  if (typeof valor === "number" && Number.isFinite(valor)) return serialParaAno(Math.round(valor));
+  const texto = toText(valor);
+  if (!texto) return null;
+  // Strings de data (ex.: "Mon Jul 17 1905 00:00:00 GMT-0300") também são
+  // seriais disfarçados — revertidos ao ano original.
+  if (/\b19(0[0-9]|1[0-9])\b/.test(texto) && /[a-z]{3}\s+[a-z]{3}\s+\d{1,2}/i.test(texto)) {
+    const d = new Date(texto);
+    const ano = dataParaAno(d);
+    if (ano) return ano;
   }
-  if (typeof valor === "number" && Number.isFinite(valor)) {
-    const n = Math.round(valor);
-    return n >= 1900 && n <= 2100 ? String(n) : null;
-  }
-  return toText(valor);
+  if (/^\d{4}$/.test(texto)) return texto;
+  return texto;
 }
+
 
 /** Converte serial de data do Excel (base 1899-12-30) em ISO yyyy-mm-dd. */
 function serialExcelParaIso(serial: number): string | null {
