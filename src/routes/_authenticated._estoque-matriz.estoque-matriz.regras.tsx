@@ -201,21 +201,9 @@ function EstoqueRegras() {
         </TabsContent>
 
         <TabsContent value="cadastros" className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
-          <ListaSimples
-            titulo="Origens"
-            itens={origens.map((o) => `${o.codigo} — ${o.nome}`)}
-            tabela="estoque_origens"
-          />
-          <ListaSimples
-            titulo="Empresas NBS"
-            itens={empresas.map((e) => `${e.codigo_chassi_resumido} — ${e.nome_exibicao}`)}
-            tabela="estoque_empresas_nbs"
-          />
-          <ListaSimples
-            titulo="Finalidades"
-            itens={finalidades.map((f) => f.nome)}
-            tabela="estoque_finalidades"
-          />
+          <OrigensEditor origens={origens} />
+          <EmpresasNbsEditor empresas={empresas} origens={origens} />
+          <FinalidadesEditor finalidades={finalidades} />
         </TabsContent>
       </Tabs>
 
