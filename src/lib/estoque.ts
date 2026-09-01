@@ -684,7 +684,12 @@ export interface ResumoRecalculo {
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
 export async function recalcularTodos(
-  opts: { forcar?: boolean; veiculoId?: string } = {},
+  opts: {
+    forcar?: boolean;
+    veiculoId?: string;
+    /** Feedback de andamento (evita a sensação de travamento em bases grandes). */
+    onProgress?: (p: { processados: number; total: number }) => void;
+  } = {},
 ): Promise<ResumoRecalculo> {
   const [todos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
     getVeiculos({}),
@@ -699,15 +704,18 @@ export async function recalcularTodos(
 
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
-  for (const v of veiculos) {
+  // Persistência em paralelo controlado: sequencial trava a UI em bases grandes.
+  const PARALELO = 20;
+  let processados = 0;
+  opts.onProgress?.({ processados: 0, total: veiculos.length });
+
+  const persistir = async (v: Veiculo) => {
     const r = calcularValorAnuncio(v, faixas, regras, vendas, {
       anuncios: anunciosMercado,
       faixasKm,
       forcar: opts.forcar === true,
     });
-    if (!r.alterou) continue;
-
-
+    if (!r.alterou) return;
 
     if (r.moverParaRepasse) {
       const { error } = await supabase
@@ -721,7 +729,7 @@ export async function recalcularTodos(
         .eq("id", v.id);
       if (error) throw error;
       resumo.repasse += 1;
-      continue;
+      return;
     }
 
     const { error } = await supabase
@@ -764,10 +772,18 @@ export async function recalcularTodos(
         resumo.tarefas += 1;
       }
     }
+  };
+
+  for (let i = 0; i < veiculos.length; i += PARALELO) {
+    const bloco = veiculos.slice(i, i + PARALELO);
+    await Promise.all(bloco.map(persistir));
+    processados += bloco.length;
+    opts.onProgress?.({ processados, total: veiculos.length });
   }
 
   return resumo;
 }
+
 
 export { faixaDoVeiculo };
 
@@ -1372,12 +1388,38 @@ export async function importarVendas(
   }
 
   // 4) Substituição total da categoria Vendidos: a base passa a refletir apenas
-  //    a última planilha importada. Soft delete mantém a rastreabilidade.
-  const { error: errLimpeza } = await supabase
+  //    a última planilha importada. Soft delete em blocos de ids (um UPDATE amplo
+  //    pode estourar o tempo limite e deixar registros antigos ativos).
+  const agora = new Date().toISOString();
+  const antigos = await buscarTodos<{ id: string }>(
+    () =>
+      supabase
+        .from("estoque_vendas_historico")
+        .select("id")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
+  for (let i = 0; i < antigos.length; i += 500) {
+    const chunk = antigos.slice(i, i + 500).map((r) => r.id);
+    const { error: errLimpeza } = await supabase
+      .from("estoque_vendas_historico")
+      .update({ deleted_at: agora } as never)
+      .in("id", chunk);
+    if (errLimpeza) throw errLimpeza;
+    onProgress?.({ processadas: i + chunk.length, total: antigos.length, fase: "enviando" });
+  }
+  // Verificação: nenhum registro antigo pode continuar ativo antes da nova carga.
+  const { count: restantes, error: errCount } = await supabase
     .from("estoque_vendas_historico")
-    .update({ deleted_at: new Date().toISOString() } as never)
+    .select("id", { count: "exact", head: true })
     .is("deleted_at", null);
-  if (errLimpeza) throw errLimpeza;
+  if (errCount) throw errCount;
+  if ((restantes ?? 0) > 0) {
+    throw new Error(
+      `Falha ao limpar a base de Vendidos: ${restantes} registro(s) antigo(s) permaneceram ativos. Nenhum dado novo foi inserido.`,
+    );
+  }
+
 
   // 5) Envio em lotes das linhas da nova planilha (reativa o registro equivalente).
   let enviadas = 0;

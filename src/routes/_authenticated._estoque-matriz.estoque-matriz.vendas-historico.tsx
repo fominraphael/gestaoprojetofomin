@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Pencil, RotateCcw, Trash2 } from "lucide-react";
@@ -98,7 +98,22 @@ function VendasHistoricoPage() {
     });
   }, [vendas, kmMin, kmMax, ano, fipe]);
 
+  // Paginação de 100 em 100 (a base pode ter milhares de linhas).
+  const POR_PAGINA = 100;
+  const [pagina, setPagina] = useState(1);
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaAtual - 1) * POR_PAGINA;
+  const pagados = filtrados.slice(inicio, inicio + POR_PAGINA);
+
+  // Filtros novos sempre começam na primeira página.
+  useEffect(() => {
+    setPagina(1);
+  }, [kmMin, kmMax, ano, fipe, lixeira]);
+
+
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "vendas-historico"] });
+
 
   const excluir = async (v: VendaHistoricoRow) => {
     try {
@@ -183,14 +198,15 @@ function VendasHistoricoPage() {
             </tr>
           </thead>
           <tbody>
-            {filtrados.length === 0 && (
+            {pagados.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-3 py-10 text-center text-muted-foreground">
                   Nenhuma venda encontrada.
                 </td>
               </tr>
             )}
-            {filtrados.map((v) => (
+            {pagados.map((v) => (
+
               <tr key={v.id} className="border-t border-border hover:bg-muted/30">
                 <td className="px-3 py-2">{v.modelo ?? "—"}</td>
                 <td className="px-3 py-2 font-mono text-xs">{v.chassi ?? "—"}</td>
@@ -226,9 +242,36 @@ function VendasHistoricoPage() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {filtrados.length} de {vendas.length} vendas
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {filtrados.length === 0
+            ? "Nenhum registro"
+            : `Exibindo ${inicio + 1}–${inicio + pagados.length} de ${filtrados.length} registros`}
+          {filtrados.length !== vendas.length && ` (base: ${vendas.length})`}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={paginaAtual <= 1}
+            onClick={() => setPagina(paginaAtual - 1)}
+          >
+            Anterior
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={paginaAtual >= totalPaginas}
+            onClick={() => setPagina(paginaAtual + 1)}
+          >
+            Próxima
+          </Button>
+        </div>
+      </div>
+
 
       <EditarVendaDialog venda={editando} onClose={() => setEditando(null)} onSalvo={recarregar} />
     </div>

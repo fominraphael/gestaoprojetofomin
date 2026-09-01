@@ -159,11 +159,20 @@ function EstoqueImportar() {
         `${rel.importados} novos, ${rel.atualizados} atualizados, ${rel.ignorados.length} ignorados.`,
       );
       if (tipo !== "anuncios") {
-        setProgresso((p) => (p ? { ...p, fase: "recalculando" } : p));
+        setProgresso((p) =>
+          p ? { ...p, fase: "recalculando", processadas: 0, total: 0, velocidade: 0 } : p,
+        );
         // Importar vendas muda a base comparável: refaz a precificação do zero.
-        const res = await recalcularTodos({ forcar: tipo === "vendas" });
+        const res = await recalcularTodos({
+          forcar: tipo === "vendas",
+          onProgress: ({ processados, total }) =>
+            setProgresso((p) =>
+              p ? { ...p, fase: "recalculando", processadas: processados, total } : p,
+            ),
+        });
         toast.success(`Recálculo automático: ${res.alterados} valores atualizados.`);
       }
+
 
       await qc.invalidateQueries({ queryKey: ["estoque"] });
       setProgresso((p) => (p ? { ...p, fase: "concluido" } : p));
@@ -219,7 +228,11 @@ function EstoqueImportar() {
                 {progresso?.fase === "lendo" && "Lendo arquivo…"}
                 {progresso?.fase === "enviando" &&
                   `Enviando ${progresso.processadas.toLocaleString("pt-BR")} de ${progresso.total.toLocaleString("pt-BR")} linhas`}
-                {progresso?.fase === "recalculando" && "Recalculando valores…"}
+                {progresso?.fase === "recalculando" &&
+                  (progresso.total > 0
+                    ? `Recalculando ${progresso.processadas.toLocaleString("pt-BR")} de ${progresso.total.toLocaleString("pt-BR")} veículos`
+                    : "Recalculando valores…")}
+
                 {progresso?.fase === "concluido" && "Finalizado"}
                 {progresso?.fase === "erro" && progresso.mensagem}
               </span>
