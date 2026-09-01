@@ -102,6 +102,8 @@ export function VeiculosTable({
   onExcluir,
 
   onRestaurar,
+  onReativar,
+
   onExcluirDefinitivo,
   onAtualizado,
 
