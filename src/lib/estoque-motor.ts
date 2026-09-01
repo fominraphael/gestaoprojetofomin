@@ -498,11 +498,30 @@ export function calcularValorAnuncio(
   const faixa = faixaDoVeiculo(veiculo.dias_em_estoque ?? 0, faixas);
   if (!faixa) return { ...vazio, motivo: "Nenhuma faixa de dias cadastrada" };
 
-  const regrasAtivas = regras.filter((r) => r.ativo && r.classificacao === classificacao);
-  const regra = regrasAtivas.find((r) => r.faixa_id === faixa.id) ?? null;
+  const regrasDaClasse = regras.filter((r) => r.classificacao === classificacao);
+  const regrasAtivas = regrasDaClasse.filter((r) => r.ativo);
+  const regraCelula = regrasDaClasse.find((r) => r.faixa_id === faixa.id) ?? null;
+
+  // Célula existente porém com "Regra ativa" desmarcada: nenhuma sugestão deve
+  // ser calculada nem mantida — o valor sugerido é explicitamente limpo.
+  if (regraCelula && !regraCelula.ativo) {
+    const tinhaValor = veiculo.valor_anuncio_calculado != null;
+    return {
+      ...vazio,
+      alterou: tinhaValor,
+      valorNovo: null,
+      faixa,
+      regra: null,
+      memoria: { classificacao, faixa: faixa.nome, regra_inativa: true },
+      motivo: `Não há regra ativa configurada para ${classificacao} / ${faixa.nome}`,
+    };
+  }
+
+  const regra = regraCelula;
   if (!regra) {
     return { ...vazio, faixa, motivo: `Sem regra cadastrada para ${classificacao} / ${faixa.nome}` };
   }
+
 
   const memoria: Record<string, unknown> = {
     classificacao,
