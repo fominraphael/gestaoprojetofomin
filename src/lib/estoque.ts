@@ -100,9 +100,13 @@ export interface Veiculo {
   faixa_id_atual: string | null;
   em_repasse: boolean;
   em_vendido: boolean;
+  /** Inativado automaticamente por não constar na última planilha de estoque importada. */
+  inativo?: boolean;
+  inativado_em?: string | null;
   importado_em?: string;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
+
   /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
   campos_manuais?: string[] | null;
   editado_em?: string | null;
@@ -159,8 +163,11 @@ export interface RelatorioImportacao {
   movidosVendidos?: number;
   /** Veículos que estavam em Vendidos e retornaram ao Estoque (venda cancelada). */
   vendasCanceladas?: number;
+  /** Veículos ativos inativados por não constarem na planilha importada. */
+  inativados?: number;
   ignorados: LinhaRelatorio[];
 }
+
 
 /* ------------------------------- Configuração ------------------------------- */
 
@@ -304,6 +311,8 @@ export async function getVeiculos(opts: {
   lixeira?: boolean;
   repasse?: boolean;
   vendidos?: boolean;
+  /** Somente veículos inativados automaticamente pela importação de estoque. */
+  inativos?: boolean;
 }): Promise<Veiculo[]> {
   // Ordenação estável (campo + id) para não repetir/pular linhas entre blocos.
   return buscarTodos<Veiculo>(() => {
@@ -314,14 +323,17 @@ export async function getVeiculos(opts: {
       .order("id", { ascending: true });
     q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
     if (!opts.lixeira) {
-      if (opts.vendidos) {
-        q = q.eq("em_vendido", true);
+      if (opts.inativos) {
+        q = q.eq("inativo", true);
+      } else if (opts.vendidos) {
+        q = q.eq("inativo", false).eq("em_vendido", true);
       } else {
-        q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+        q = q.eq("inativo", false).eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
       }
     }
     return q as unknown as QueryPaginavel;
   });
+
 }
 
 export async function getVendas(): Promise<VendaHistorica[]> {
@@ -518,6 +530,16 @@ export async function moverParaLixeira(id: string): Promise<void> {
     .eq("id", id);
   if (error) throw error;
 }
+
+/** Devolve à listagem ativa um veículo inativado pela importação de estoque. */
+export async function reativarVeiculo(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_veiculos")
+    .update({ inativo: false, inativado_em: null } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 
 export async function restaurarVeiculo(id: string): Promise<void> {
   const { error } = await supabase
@@ -959,15 +981,17 @@ export async function importarEstoque(
       origem_id: string;
       chassi_resumido: string;
       em_vendido: boolean;
+      inativo: boolean;
       importado_em: string | null;
     }>(
       () =>
         supabase
           .from("estoque_veiculos")
-          .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
+          .select("id,chassi,origem_id,chassi_resumido,em_vendido,inativo,importado_em")
           .is("deleted_at", null)
           .order("id", { ascending: true }) as unknown as QueryPaginavel,
     ),
+
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
     buscarTodos<{ chassi: string | null; data_venda: string | null }>(
       () =>
@@ -1024,8 +1048,14 @@ export async function importarEstoque(
     porChassiOrigem.set(chave, lista);
   }
 
+  /** Ids de registros ativos localizados na planilha (não podem ser inativados). */
+  const idsEncontrados = new Set<string>();
+  /** Origens (bases) presentes na planilha — a inativação só age dentro delas. */
+  const origensNaPlanilha = new Set<string>();
+
   const atualizacoes: AtualizacaoEstoque[] = [];
   const insercoes: InsercaoEstoque[] = [];
+
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
@@ -1097,6 +1127,7 @@ export async function importarEstoque(
     };
 
     const chave = `${chassi}|${origem.id}`;
+    origensNaPlanilha.add(origem.id);
     const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
     const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
 
@@ -1111,8 +1142,14 @@ export async function importarEstoque(
       // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
       // parecer "antes da entrada" e devolveria o veículo vendido ao estoque.
       delete patch.importado_em;
+      // Localizado na planilha → volta a ser ativo, mesmo que estivesse inativado.
+      patch.inativo = false;
+      patch.inativado_em = null;
+      idsEncontrados.add(mesmoRegistro.id);
       if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
       else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
+
+
 
       atualizacoes.push({
         numeroLinha,
@@ -1190,8 +1227,33 @@ export async function importarEstoque(
     avisar();
   }
 
+  // ---- Inativação dos ativos não localizados na planilha ----
+  // Só age dentro das origens (bases) presentes no arquivo importado e nunca
+  // toca em vendidos, na lixeira ou em registros já inativos.
+  const paraInativar = ativos
+    .filter(
+      (v) =>
+        origensNaPlanilha.has(v.origem_id) &&
+        !v.em_vendido &&
+        !v.inativo &&
+        !idsEncontrados.has(v.id),
+    )
+    .map((v) => v.id);
+
+  const agora = new Date().toISOString();
+  for (let i = 0; i < paraInativar.length; i += 200) {
+    const chunk = paraInativar.slice(i, i + 200);
+    const { error } = await supabase
+      .from("estoque_veiculos")
+      .update({ inativo: true, inativado_em: agora } as never)
+      .in("id", chunk);
+    if (error) throw error;
+    rel.inativados = (rel.inativados ?? 0) + chunk.length;
+  }
+
   return rel;
 }
+
 
 
 export type ProgressoImportacao = (info: {
@@ -1265,33 +1327,13 @@ export async function importarVendas(
   }
   const finais = [...unicos.values()];
 
-  // 3) Envio em lotes
-  let enviadas = 0;
-  for (let i = 0; i < finais.length; i += LOTE) {
-    const lote = finais.slice(i, i + LOTE);
-    const { error } = await supabase
-      .from("estoque_vendas_historico")
-      .upsert(lote.map((r) => r.registro) as never, {
-        onConflict: "chassi,data_venda,valor_venda",
-      });
-    if (error) {
-      // Fallback linha a linha para identificar exatamente o que falhou no lote
-      for (const r of lote) {
-        const { error: e2 } = await supabase
-          .from("estoque_vendas_historico")
-          .upsert(r.registro as never, { onConflict: "chassi,data_venda,valor_venda" });
-        if (e2) rel.ignorados.push({ linha: r.numeroLinha, chassi: r.chassi, motivo: e2.message });
-        else rel.importados += 1;
-      }
-    } else {
-      rel.importados += lote.length;
-    }
-    enviadas += lote.length;
-    onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
+  // Nada válido na planilha → preserva a base atual (não apaga Vendidos).
+  if (finais.length === 0) {
+    throw new Error(
+      "Nenhuma linha válida encontrada na planilha de vendas. A base atual foi preservada.",
+    );
   }
 
-  // 4) Move para "Vendidos" os veículos ativos (Estoque/Repasse) cuja compra foi
-  //    vendida: a venda só casa com o registro se data_venda >= importado_em dele.
   const dataMaxPorChassi = new Map<string, string>();
   for (const r of finais) {
     const dv = r.registro["data_venda"] as string;
@@ -1299,6 +1341,10 @@ export async function importarVendas(
     if (!atual || dv > atual) dataMaxPorChassi.set(r.chassi, dv);
   }
   const chassisImportados = [...new Set(finais.map((r) => r.chassi))];
+
+  // 3) Match com o Estoque ANTES de qualquer exclusão: veículos ativos cuja venda
+  //    aparece na planilha são movidos de Estoque/Repasse para Vendidos.
+  //    A venda só casa com o registro se data_venda >= importado_em dele.
   for (let i = 0; i < chassisImportados.length; i += 200) {
     const chunk = chassisImportados.slice(i, i + 200);
     const { data: ativos, error: errAtivos } = await supabase
@@ -1319,11 +1365,68 @@ export async function importarVendas(
     for (const v of porChassi.values()) {
       const { error } = await supabase
         .from("estoque_veiculos")
-        .update({ em_vendido: true } as never)
+        .update({ em_vendido: true, inativo: false, inativado_em: null } as never)
         .eq("id", v.id);
       if (!error) rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
     }
   }
+
+  // 4) Substituição total da categoria Vendidos: a base passa a refletir apenas
+  //    a última planilha importada. Soft delete mantém a rastreabilidade.
+  const { error: errLimpeza } = await supabase
+    .from("estoque_vendas_historico")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .is("deleted_at", null);
+  if (errLimpeza) throw errLimpeza;
+
+  // 5) Envio em lotes das linhas da nova planilha (reativa o registro equivalente).
+  let enviadas = 0;
+  for (let i = 0; i < finais.length; i += LOTE) {
+    const lote = finais.slice(i, i + LOTE);
+    const { error } = await supabase
+      .from("estoque_vendas_historico")
+      .upsert(lote.map((r) => ({ ...r.registro, deleted_at: null })) as never, {
+        onConflict: "chassi,data_venda,valor_venda",
+      });
+    if (error) {
+      // Fallback linha a linha para identificar exatamente o que falhou no lote
+      for (const r of lote) {
+        const { error: e2 } = await supabase
+          .from("estoque_vendas_historico")
+          .upsert({ ...r.registro, deleted_at: null } as never, {
+            onConflict: "chassi,data_venda,valor_venda",
+          });
+        if (e2) rel.ignorados.push({ linha: r.numeroLinha, chassi: r.chassi, motivo: e2.message });
+        else rel.importados += 1;
+      }
+    } else {
+      rel.importados += lote.length;
+    }
+    enviadas += lote.length;
+    onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
+  }
+
+  // 6) Vendidos que não constam na nova planilha voltam ao Estoque (venda cancelada).
+  const { data: vendidosAtuais, error: errVendidos } = await supabase
+    .from("estoque_veiculos")
+    .select("id,chassi")
+    .is("deleted_at", null)
+    .eq("em_vendido", true);
+  if (errVendidos) throw errVendidos;
+  const chassisSet = new Set(chassisImportados);
+  const retornar = ((vendidosAtuais ?? []) as { id: string; chassi: string }[])
+    .filter((v) => !chassisSet.has(v.chassi))
+    .map((v) => v.id);
+  for (let i = 0; i < retornar.length; i += 200) {
+    const chunk = retornar.slice(i, i + 200);
+    const { error } = await supabase
+      .from("estoque_veiculos")
+      .update({ em_vendido: false } as never)
+      .in("id", chunk);
+    if (error) throw error;
+    rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + chunk.length;
+  }
+
 
   return rel;
 }

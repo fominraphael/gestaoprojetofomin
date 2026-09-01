@@ -40,7 +40,7 @@ export interface VeiculosTableProps {
   faixas: FaixaDias[];
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
-  modo: "ativo" | "repasse" | "vendidos" | "lixeira";
+  modo: "ativo" | "repasse" | "vendidos" | "lixeira" | "inativos";
   /** Matriz de regras — define quais canais são obrigatórios por categoria. */
   regras?: RegraEstoque[];
   /** Vendas históricas — base da rastreabilidade do valor sugerido. */
@@ -50,7 +50,10 @@ export interface VeiculosTableProps {
   onExcluir?: (v: Veiculo) => void;
 
   onRestaurar?: (v: Veiculo) => void;
+  /** Devolve um veículo inativado para a listagem ativa. */
+  onReativar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
+
   onAtualizado?: () => void | Promise<void>;
 }
 
@@ -99,6 +102,8 @@ export function VeiculosTable({
   onExcluir,
 
   onRestaurar,
+  onReativar,
+
   onExcluirDefinitivo,
   onAtualizado,
 
@@ -466,11 +471,25 @@ export function VeiculosTable({
                         </Button>
                       )}
 
+                      {modo === "inativos" && onReativar && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Reativar veículo"
+                          aria-label="Reativar veículo"
+                          onClick={() => onReativar(v)}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
+                      )}
+
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
+
+
 
                       {modo === "lixeira" && (
                         <>

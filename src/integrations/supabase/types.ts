@@ -1205,6 +1205,8 @@ export type Database = {
           fotos_qtd: number | null
           id: string
           importado_em: string
+          inativado_em: string | null
+          inativo: boolean
           km: number | null
           leads_60_dias: number
           loja: string | null
@@ -1242,6 +1244,8 @@ export type Database = {
           fotos_qtd?: number | null
           id?: string
           importado_em?: string
+          inativado_em?: string | null
+          inativo?: boolean
           km?: number | null
           leads_60_dias?: number
           loja?: string | null
@@ -1279,6 +1283,8 @@ export type Database = {
           fotos_qtd?: number | null
           id?: string
           importado_em?: string
+          inativado_em?: string | null
+          inativo?: boolean
           km?: number | null
           leads_60_dias?: number
           loja?: string | null

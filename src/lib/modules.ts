@@ -23,6 +23,8 @@ import {
   Package,
   BarChart3,
   CircleDollarSign,
+  EyeOff,
+
   History,
   Megaphone,
   type LucideIcon,
@@ -230,6 +232,8 @@ export const MODULES: ModuleDef[] = [
       { to: "/estoque-matriz", label: "Veículos", icon: Package },
       { to: "/estoque-matriz/repasse", label: "Repasse", icon: Truck },
       { to: "/estoque-matriz/vendidos", label: "Vendidos", icon: CircleDollarSign },
+      { to: "/estoque-matriz/inativos", label: "Inativos", icon: EyeOff },
+
       { to: "/estoque-matriz/vendas-historico", label: "Vendas Históricas", icon: History },
       { to: "/estoque-matriz/anunciados", label: "Veículos Anunciados", icon: Megaphone },
       { to: "/estoque-matriz/acoes-leads", label: "Ações da Matriz", icon: ClipboardCheck },
