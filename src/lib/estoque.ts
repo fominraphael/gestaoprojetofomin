@@ -1048,8 +1048,14 @@ export async function importarEstoque(
     porChassiOrigem.set(chave, lista);
   }
 
+  /** Ids de registros ativos localizados na planilha (não podem ser inativados). */
+  const idsEncontrados = new Set<string>();
+  /** Origens (bases) presentes na planilha — a inativação só age dentro delas. */
+  const origensNaPlanilha = new Set<string>();
+
   const atualizacoes: AtualizacaoEstoque[] = [];
   const insercoes: InsercaoEstoque[] = [];
+
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
