@@ -98,7 +98,16 @@ function VendasHistoricoPage() {
     });
   }, [vendas, kmMin, kmMax, ano, fipe]);
 
+  // Paginação de 100 em 100 (a base pode ter milhares de linhas).
+  const POR_PAGINA = 100;
+  const [pagina, setPagina] = useState(1);
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaAtual - 1) * POR_PAGINA;
+  const pagados = filtrados.slice(inicio, inicio + POR_PAGINA);
+
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "vendas-historico"] });
+
 
   const excluir = async (v: VendaHistoricoRow) => {
     try {
