@@ -1,0 +1,1 @@
+CREATE POLICY "push_sub_update_own" ON public.push_subscriptions FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
