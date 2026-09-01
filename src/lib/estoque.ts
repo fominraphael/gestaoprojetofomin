@@ -163,8 +163,11 @@ export interface RelatorioImportacao {
   movidosVendidos?: number;
   /** Veículos que estavam em Vendidos e retornaram ao Estoque (venda cancelada). */
   vendasCanceladas?: number;
+  /** Veículos ativos inativados por não constarem na planilha importada. */
+  inativados?: number;
   ignorados: LinhaRelatorio[];
 }
+
 
 /* ------------------------------- Configuração ------------------------------- */
 
@@ -308,6 +311,8 @@ export async function getVeiculos(opts: {
   lixeira?: boolean;
   repasse?: boolean;
   vendidos?: boolean;
+  /** Somente veículos inativados automaticamente pela importação de estoque. */
+  inativos?: boolean;
 }): Promise<Veiculo[]> {
   // Ordenação estável (campo + id) para não repetir/pular linhas entre blocos.
   return buscarTodos<Veiculo>(() => {
@@ -318,14 +323,17 @@ export async function getVeiculos(opts: {
       .order("id", { ascending: true });
     q = opts.lixeira ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
     if (!opts.lixeira) {
-      if (opts.vendidos) {
-        q = q.eq("em_vendido", true);
+      if (opts.inativos) {
+        q = q.eq("inativo", true);
+      } else if (opts.vendidos) {
+        q = q.eq("inativo", false).eq("em_vendido", true);
       } else {
-        q = q.eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+        q = q.eq("inativo", false).eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
       }
     }
     return q as unknown as QueryPaginavel;
   });
+
 }
 
 export async function getVendas(): Promise<VendaHistorica[]> {
