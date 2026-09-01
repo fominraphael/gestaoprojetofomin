@@ -23,6 +23,8 @@ import {
   Package,
   BarChart3,
   CircleDollarSign,
+  EyeOff,
+
   History,
   Megaphone,
   type LucideIcon,
