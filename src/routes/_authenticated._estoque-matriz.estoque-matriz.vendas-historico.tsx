@@ -106,6 +106,12 @@ function VendasHistoricoPage() {
   const inicio = (paginaAtual - 1) * POR_PAGINA;
   const pagados = filtrados.slice(inicio, inicio + POR_PAGINA);
 
+  // Filtros novos sempre começam na primeira página.
+  useEffect(() => {
+    setPagina(1);
+  }, [kmMin, kmMax, ano, fipe, lixeira]);
+
+
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "vendas-historico"] });
 
 
