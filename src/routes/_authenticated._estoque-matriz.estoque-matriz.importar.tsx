@@ -228,7 +228,11 @@ function EstoqueImportar() {
                 {progresso?.fase === "lendo" && "Lendo arquivo…"}
                 {progresso?.fase === "enviando" &&
                   `Enviando ${progresso.processadas.toLocaleString("pt-BR")} de ${progresso.total.toLocaleString("pt-BR")} linhas`}
-                {progresso?.fase === "recalculando" && "Recalculando valores…"}
+                {progresso?.fase === "recalculando" &&
+                  (progresso.total > 0
+                    ? `Recalculando ${progresso.processadas.toLocaleString("pt-BR")} de ${progresso.total.toLocaleString("pt-BR")} veículos`
+                    : "Recalculando valores…")}
+
                 {progresso?.fase === "concluido" && "Finalizado"}
                 {progresso?.fase === "erro" && progresso.mensagem}
               </span>
