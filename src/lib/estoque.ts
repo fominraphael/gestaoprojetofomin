@@ -1108,6 +1108,9 @@ export async function importarEstoque(
       const vendeu = !!dataVenda && !!entradaDia && dataVenda >= entradaDia;
 
       const patch: Record<string, unknown> = { ...registro };
+      // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
+      // parecer "antes da entrada" e devolveria o veículo vendido ao estoque.
+      delete patch.importado_em;
       if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
       else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
 
