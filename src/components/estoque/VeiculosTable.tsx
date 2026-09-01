@@ -40,7 +40,7 @@ export interface VeiculosTableProps {
   faixas: FaixaDias[];
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
-  modo: "ativo" | "repasse" | "vendidos" | "lixeira";
+  modo: "ativo" | "repasse" | "vendidos" | "lixeira" | "inativos";
   /** Matriz de regras — define quais canais são obrigatórios por categoria. */
   regras?: RegraEstoque[];
   /** Vendas históricas — base da rastreabilidade do valor sugerido. */
@@ -50,7 +50,10 @@ export interface VeiculosTableProps {
   onExcluir?: (v: Veiculo) => void;
 
   onRestaurar?: (v: Veiculo) => void;
+  /** Devolve um veículo inativado para a listagem ativa. */
+  onReativar?: (v: Veiculo) => void;
   onExcluirDefinitivo?: (v: Veiculo) => void;
+
   onAtualizado?: () => void | Promise<void>;
 }
 
