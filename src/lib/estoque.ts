@@ -531,6 +531,16 @@ export async function moverParaLixeira(id: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Devolve à listagem ativa um veículo inativado pela importação de estoque. */
+export async function reativarVeiculo(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_veiculos")
+    .update({ inativo: false, inativado_em: null } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+
 export async function restaurarVeiculo(id: string): Promise<void> {
   const { error } = await supabase
     .from("estoque_veiculos")
