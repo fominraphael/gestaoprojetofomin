@@ -684,7 +684,12 @@ export interface ResumoRecalculo {
 
 /** Roda o motor sobre todos os veículos ativos e persiste valores, auditoria e tarefas. */
 export async function recalcularTodos(
-  opts: { forcar?: boolean; veiculoId?: string } = {},
+  opts: {
+    forcar?: boolean;
+    veiculoId?: string;
+    /** Feedback de andamento (evita a sensação de travamento em bases grandes). */
+    onProgress?: (p: { processados: number; total: number }) => void;
+  } = {},
 ): Promise<ResumoRecalculo> {
   const [todos, faixas, regras, vendas, anunciosMercado, faixasKm] = await Promise.all([
     getVeiculos({}),
@@ -699,15 +704,18 @@ export async function recalcularTodos(
 
   const resumo: ResumoRecalculo = { analisados: veiculos.length, alterados: 0, repasse: 0, tarefas: 0 };
 
-  for (const v of veiculos) {
+  // Persistência em paralelo controlado: sequencial trava a UI em bases grandes.
+  const PARALELO = 20;
+  let processados = 0;
+  opts.onProgress?.({ processados: 0, total: veiculos.length });
+
+  const persistir = async (v: Veiculo) => {
     const r = calcularValorAnuncio(v, faixas, regras, vendas, {
       anuncios: anunciosMercado,
       faixasKm,
       forcar: opts.forcar === true,
     });
-    if (!r.alterou) continue;
-
-
+    if (!r.alterou) return;
 
     if (r.moverParaRepasse) {
       const { error } = await supabase
@@ -721,7 +729,7 @@ export async function recalcularTodos(
         .eq("id", v.id);
       if (error) throw error;
       resumo.repasse += 1;
-      continue;
+      return;
     }
 
     const { error } = await supabase
@@ -764,10 +772,18 @@ export async function recalcularTodos(
         resumo.tarefas += 1;
       }
     }
+  };
+
+  for (let i = 0; i < veiculos.length; i += PARALELO) {
+    const bloco = veiculos.slice(i, i + PARALELO);
+    await Promise.all(bloco.map(persistir));
+    processados += bloco.length;
+    opts.onProgress?.({ processados, total: veiculos.length });
   }
 
   return resumo;
 }
+
 
 export { faixaDoVeiculo };
 
