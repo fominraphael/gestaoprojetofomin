@@ -1381,7 +1381,27 @@ export async function importarAnuncios(
       },
       dados: l as Record<string, unknown>,
       importado_em: new Date().toISOString(),
+      deleted_at: null,
     };
+    registros.push({ numeroLinha, chassi, registro });
+  }
+
+  // 2) Nada válido na planilha → não mexe na base existente.
+  if (registros.length === 0) {
+    throw new Error(
+      "Nenhuma linha válida encontrada na planilha de anunciados. A base atual foi preservada.",
+    );
+  }
+
+  // 3) Soft delete dos anúncios atuais (vão para a lixeira, podem ser restaurados).
+  const { error: delErro } = await supabase
+    .from("estoque_anuncios")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .is("deleted_at", null);
+  if (delErro) throw delErro;
+
+  // 4) Upsert das linhas da nova planilha (reativa o registro do mesmo chassi).
+  for (const { numeroLinha, chassi, registro } of registros) {
     const { error } = await supabase
       .from("estoque_anuncios")
       .upsert(registro as never, { onConflict: "chassi" });
