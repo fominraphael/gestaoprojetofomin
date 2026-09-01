@@ -1108,6 +1108,9 @@ export async function importarEstoque(
       const vendeu = !!dataVenda && !!entradaDia && dataVenda >= entradaDia;
 
       const patch: Record<string, unknown> = { ...registro };
+      // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
+      // parecer "antes da entrada" e devolveria o veículo vendido ao estoque.
+      delete patch.importado_em;
       if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
       else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
 
@@ -1336,14 +1339,8 @@ export async function importarAnuncios(
     ignorados: [],
   };
 
-  // Substituição total: a base de anúncios reflete SEMPRE a última importação.
-  const { error: delErro } = await supabase
-    .from("estoque_anuncios")
-    .delete()
-    .not("id", "is", null);
-  if (delErro) throw delErro;
-
-
+  // 1) Valida/prepara todas as linhas ANTES de mexer na base.
+  const registros: { numeroLinha: number; chassi: string; registro: Record<string, unknown> }[] = [];
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
@@ -1384,7 +1381,27 @@ export async function importarAnuncios(
       },
       dados: l as Record<string, unknown>,
       importado_em: new Date().toISOString(),
+      deleted_at: null,
     };
+    registros.push({ numeroLinha, chassi, registro });
+  }
+
+  // 2) Nada válido na planilha → não mexe na base existente.
+  if (registros.length === 0) {
+    throw new Error(
+      "Nenhuma linha válida encontrada na planilha de anunciados. A base atual foi preservada.",
+    );
+  }
+
+  // 3) Soft delete dos anúncios atuais (vão para a lixeira, podem ser restaurados).
+  const { error: delErro } = await supabase
+    .from("estoque_anuncios")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .is("deleted_at", null);
+  if (delErro) throw delErro;
+
+  // 4) Upsert das linhas da nova planilha (reativa o registro do mesmo chassi).
+  for (const { numeroLinha, chassi, registro } of registros) {
     const { error } = await supabase
       .from("estoque_anuncios")
       .upsert(registro as never, { onConflict: "chassi" });
