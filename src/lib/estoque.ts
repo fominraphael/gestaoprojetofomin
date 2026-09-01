@@ -1127,6 +1127,7 @@ export async function importarEstoque(
     };
 
     const chave = `${chassi}|${origem.id}`;
+    origensNaPlanilha.add(origem.id);
     const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
     const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
 
@@ -1141,8 +1142,14 @@ export async function importarEstoque(
       // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
       // parecer "antes da entrada" e devolveria o veículo vendido ao estoque.
       delete patch.importado_em;
+      // Localizado na planilha → volta a ser ativo, mesmo que estivesse inativado.
+      patch.inativo = false;
+      patch.inativado_em = null;
+      idsEncontrados.add(mesmoRegistro.id);
       if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
       else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
+
+
 
       atualizacoes.push({
         numeroLinha,
