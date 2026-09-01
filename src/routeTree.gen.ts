@@ -52,6 +52,7 @@ import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImp
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.repasse'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.lixeira'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.inativos'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.importar'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.anunciados'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.acoes-leads'
@@ -302,6 +303,12 @@ const AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute =
     path: '/estoque-matriz/lixeira',
     getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport.update({
+    id: '/estoque-matriz/inativos',
+    path: '/estoque-matriz/inativos',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
 const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
   AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport.update({
     id: '/estoque-matriz/importar',
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/estoque-matriz/anunciados': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute
   '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/estoque-matriz/inativos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
@@ -430,6 +438,7 @@ export interface FileRoutesByTo {
   '/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/estoque-matriz/anunciados': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute
   '/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/estoque-matriz/inativos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute
   '/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
@@ -486,6 +495,7 @@ export interface FileRoutesById {
   '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/anunciados': typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/importar': typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  '/_authenticated/_estoque-matriz/estoque-matriz/inativos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/lixeira': typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/regras': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/acoes-leads'
     | '/estoque-matriz/anunciados'
     | '/estoque-matriz/importar'
+    | '/estoque-matriz/inativos'
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
     | '/estoque-matriz/repasse'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/acoes-leads'
     | '/estoque-matriz/anunciados'
     | '/estoque-matriz/importar'
+    | '/estoque-matriz/inativos'
     | '/estoque-matriz/lixeira'
     | '/estoque-matriz/regras'
     | '/estoque-matriz/repasse'
@@ -639,6 +651,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads'
     | '/_authenticated/_estoque-matriz/estoque-matriz/anunciados'
     | '/_authenticated/_estoque-matriz/estoque-matriz/importar'
+    | '/_authenticated/_estoque-matriz/estoque-matriz/inativos'
     | '/_authenticated/_estoque-matriz/estoque-matriz/lixeira'
     | '/_authenticated/_estoque-matriz/estoque-matriz/regras'
     | '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
@@ -985,6 +998,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport
       parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
+    '/_authenticated/_estoque-matriz/estoque-matriz/inativos': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/inativos'
+      path: '/estoque-matriz/inativos'
+      fullPath: '/estoque-matriz/inativos'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
     '/_authenticated/_estoque-matriz/estoque-matriz/importar': {
       id: '/_authenticated/_estoque-matriz/estoque-matriz/importar'
       path: '/estoque-matriz/importar'
@@ -1095,6 +1115,7 @@ interface AuthenticatedEstoqueMatrizRouteChildren {
   AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute
+  AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute
   AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
@@ -1111,6 +1132,8 @@ const AuthenticatedEstoqueMatrizRouteChildren: AuthenticatedEstoqueMatrizRouteCh
       AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute,
+    AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute:
+      AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute:
       AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute,
     AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute:
