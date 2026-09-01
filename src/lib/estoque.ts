@@ -100,9 +100,13 @@ export interface Veiculo {
   faixa_id_atual: string | null;
   em_repasse: boolean;
   em_vendido: boolean;
+  /** Inativado automaticamente por não constar na última planilha de estoque importada. */
+  inativo?: boolean;
+  inativado_em?: string | null;
   importado_em?: string;
   ultimo_calculo_em: string | null;
   deleted_at: string | null;
+
   /** Campos alterados manualmente pelo usuário (diferencia do dado importado). */
   campos_manuais?: string[] | null;
   editado_em?: string | null;
