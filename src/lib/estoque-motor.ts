@@ -597,21 +597,32 @@ export function calcularValorAnuncio(
     // Nenhum outro percentual é encadeado sobre ele.
     valor = resBase.valor;
     percentualUsado = 0;
-    if (regraBase.arredonda_990) valor = arredonda990(valor);
-    valor = aplicaPisoTeto(valor, regraBase, veiculo.fipe, memoria);
     tipo = "base";
 
+    // Veículo já entrou numa faixa avançada: aplica, em cadeia, o ajuste de
+    // TODAS as faixas percorridas (da faixa seguinte à base até a faixa atual).
+    // O arredondamento e o piso/teto são aplicados apenas no final da cadeia,
+    // para não distorcer os percentuais intermediários.
+    const percorridas = ativas.filter((f) => f.ordem > primeira.ordem && f.ordem <= faixa.ordem);
+    const cadeia: { faixa: string; percentual: number; origem: string }[] = [];
+    let ultimaRegraAjuste: RegraEstoque | null = null;
 
-    // Entrou já numa faixa avançada: aplica direto o ajuste da faixa atual
-    if (faixa.id !== primeira.id && regra.tipo_regra === "ajuste") {
-      const { pct, origem } = percentualPorLeads(regra, veiculo.leads_60_dias ?? 0);
-      memoria["ajuste_faixa_atual"] = { percentual: pct, origem };
+    for (const fx of percorridas) {
+      const regraFx = regrasAtivas.find((r) => r.faixa_id === fx.id && r.tipo_regra === "ajuste");
+      if (!regraFx) continue;
+      const { pct, origem } = percentualPorLeads(regraFx, veiculo.leads_60_dias ?? 0);
       valor = valor * (1 + pct / 100);
-      if (regra.arredonda_990) valor = arredonda990(valor);
-      valor = aplicaPisoTeto(valor, regra, veiculo.fipe, memoria);
+      cadeia.push({ faixa: fx.nome, percentual: pct, origem });
+      ultimaRegraAjuste = regraFx;
       percentualUsado = pct;
       tipo = "ajuste";
     }
+
+    const regraFinal = ultimaRegraAjuste ?? regraBase;
+    if (cadeia.length > 0) memoria["ajustes_por_faixa"] = cadeia;
+    if (regraFinal.arredonda_990) valor = arredonda990(valor);
+    valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
+
   } else {
     // Ajuste cumulativo sobre o valor atualmente anunciado
     const { pct, origem } = percentualPorLeads(regra, veiculo.leads_60_dias ?? 0);
