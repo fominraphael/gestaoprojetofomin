@@ -575,20 +575,32 @@ export function calcularValorAnuncio(
       regra;
 
     const resBase = valorBaseConfiguravel(veiculo, regraBase, vendas, hoje, faixasKm);
-    const base = resBase.valor ?? 0;
     memoria["origem_valor_base"] = resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : "indefinida";
     memoria["base_motivo"] = resBase.motivo;
     memoria["historico"] = { motivo: resBase.motivo, vendas: resBase.vendasUsadas };
+
+    // Nenhum nível de fallback produziu valor: não há base para precificar.
+    // Antes o valor caía para 0 e o piso FIPE "inventava" um preço.
     if (resBase.valor == null) {
       memoria["excecao_base"] = "Nenhum nível de fallback ativo retornou valor válido";
+      return {
+        ...vazio,
+        faixa,
+        regra,
+        memoria,
+        motivo: resBase.motivo,
+      };
     }
 
-
-    percentualUsado = Number(regraBase.percentual);
-    valor = base * (1 + percentualUsado / 100);
+    // O valor base é exatamente o resultado do PRIMEIRO nível válido
+    // (média do histórico com o ajuste daquele nível, ou % fixo da FIPE).
+    // Nenhum outro percentual é encadeado sobre ele.
+    valor = resBase.valor;
+    percentualUsado = 0;
     if (regraBase.arredonda_990) valor = arredonda990(valor);
     valor = aplicaPisoTeto(valor, regraBase, veiculo.fipe, memoria);
     tipo = "base";
+
 
     // Entrou já numa faixa avançada: aplica direto o ajuste da faixa atual
     if (faixa.id !== primeira.id && regra.tipo_regra === "ajuste") {
