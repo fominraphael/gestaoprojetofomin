@@ -1327,33 +1327,13 @@ export async function importarVendas(
   }
   const finais = [...unicos.values()];
 
-  // 3) Envio em lotes
-  let enviadas = 0;
-  for (let i = 0; i < finais.length; i += LOTE) {
-    const lote = finais.slice(i, i + LOTE);
-    const { error } = await supabase
-      .from("estoque_vendas_historico")
-      .upsert(lote.map((r) => r.registro) as never, {
-        onConflict: "chassi,data_venda,valor_venda",
-      });
-    if (error) {
-      // Fallback linha a linha para identificar exatamente o que falhou no lote
-      for (const r of lote) {
-        const { error: e2 } = await supabase
-          .from("estoque_vendas_historico")
-          .upsert(r.registro as never, { onConflict: "chassi,data_venda,valor_venda" });
-        if (e2) rel.ignorados.push({ linha: r.numeroLinha, chassi: r.chassi, motivo: e2.message });
-        else rel.importados += 1;
-      }
-    } else {
-      rel.importados += lote.length;
-    }
-    enviadas += lote.length;
-    onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
+  // Nada válido na planilha → preserva a base atual (não apaga Vendidos).
+  if (finais.length === 0) {
+    throw new Error(
+      "Nenhuma linha válida encontrada na planilha de vendas. A base atual foi preservada.",
+    );
   }
 
-  // 4) Move para "Vendidos" os veículos ativos (Estoque/Repasse) cuja compra foi
-  //    vendida: a venda só casa com o registro se data_venda >= importado_em dele.
   const dataMaxPorChassi = new Map<string, string>();
   for (const r of finais) {
     const dv = r.registro["data_venda"] as string;
@@ -1361,6 +1341,10 @@ export async function importarVendas(
     if (!atual || dv > atual) dataMaxPorChassi.set(r.chassi, dv);
   }
   const chassisImportados = [...new Set(finais.map((r) => r.chassi))];
+
+  // 3) Match com o Estoque ANTES de qualquer exclusão: veículos ativos cuja venda
+  //    aparece na planilha são movidos de Estoque/Repasse para Vendidos.
+  //    A venda só casa com o registro se data_venda >= importado_em dele.
   for (let i = 0; i < chassisImportados.length; i += 200) {
     const chunk = chassisImportados.slice(i, i + 200);
     const { data: ativos, error: errAtivos } = await supabase
@@ -1381,11 +1365,68 @@ export async function importarVendas(
     for (const v of porChassi.values()) {
       const { error } = await supabase
         .from("estoque_veiculos")
-        .update({ em_vendido: true } as never)
+        .update({ em_vendido: true, inativo: false, inativado_em: null } as never)
         .eq("id", v.id);
       if (!error) rel.movidosVendidos = (rel.movidosVendidos ?? 0) + 1;
     }
   }
+
+  // 4) Substituição total da categoria Vendidos: a base passa a refletir apenas
+  //    a última planilha importada. Soft delete mantém a rastreabilidade.
+  const { error: errLimpeza } = await supabase
+    .from("estoque_vendas_historico")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .is("deleted_at", null);
+  if (errLimpeza) throw errLimpeza;
+
+  // 5) Envio em lotes das linhas da nova planilha (reativa o registro equivalente).
+  let enviadas = 0;
+  for (let i = 0; i < finais.length; i += LOTE) {
+    const lote = finais.slice(i, i + LOTE);
+    const { error } = await supabase
+      .from("estoque_vendas_historico")
+      .upsert(lote.map((r) => ({ ...r.registro, deleted_at: null })) as never, {
+        onConflict: "chassi,data_venda,valor_venda",
+      });
+    if (error) {
+      // Fallback linha a linha para identificar exatamente o que falhou no lote
+      for (const r of lote) {
+        const { error: e2 } = await supabase
+          .from("estoque_vendas_historico")
+          .upsert({ ...r.registro, deleted_at: null } as never, {
+            onConflict: "chassi,data_venda,valor_venda",
+          });
+        if (e2) rel.ignorados.push({ linha: r.numeroLinha, chassi: r.chassi, motivo: e2.message });
+        else rel.importados += 1;
+      }
+    } else {
+      rel.importados += lote.length;
+    }
+    enviadas += lote.length;
+    onProgress?.({ processadas: enviadas, total: finais.length, fase: "enviando" });
+  }
+
+  // 6) Vendidos que não constam na nova planilha voltam ao Estoque (venda cancelada).
+  const { data: vendidosAtuais, error: errVendidos } = await supabase
+    .from("estoque_veiculos")
+    .select("id,chassi")
+    .is("deleted_at", null)
+    .eq("em_vendido", true);
+  if (errVendidos) throw errVendidos;
+  const chassisSet = new Set(chassisImportados);
+  const retornar = ((vendidosAtuais ?? []) as { id: string; chassi: string }[])
+    .filter((v) => !chassisSet.has(v.chassi))
+    .map((v) => v.id);
+  for (let i = 0; i < retornar.length; i += 200) {
+    const chunk = retornar.slice(i, i + 200);
+    const { error } = await supabase
+      .from("estoque_veiculos")
+      .update({ em_vendido: false } as never)
+      .in("id", chunk);
+    if (error) throw error;
+    rel.vendasCanceladas = (rel.vendasCanceladas ?? 0) + chunk.length;
+  }
+
 
   return rel;
 }
