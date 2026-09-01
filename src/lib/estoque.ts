@@ -1227,8 +1227,33 @@ export async function importarEstoque(
     avisar();
   }
 
+  // ---- Inativação dos ativos não localizados na planilha ----
+  // Só age dentro das origens (bases) presentes no arquivo importado e nunca
+  // toca em vendidos, na lixeira ou em registros já inativos.
+  const paraInativar = ativos
+    .filter(
+      (v) =>
+        origensNaPlanilha.has(v.origem_id) &&
+        !v.em_vendido &&
+        !v.inativo &&
+        !idsEncontrados.has(v.id),
+    )
+    .map((v) => v.id);
+
+  const agora = new Date().toISOString();
+  for (let i = 0; i < paraInativar.length; i += 200) {
+    const chunk = paraInativar.slice(i, i + 200);
+    const { error } = await supabase
+      .from("estoque_veiculos")
+      .update({ inativo: true, inativado_em: agora } as never)
+      .in("id", chunk);
+    if (error) throw error;
+    rel.inativados = (rel.inativados ?? 0) + chunk.length;
+  }
+
   return rel;
 }
+
 
 
 export type ProgressoImportacao = (info: {
