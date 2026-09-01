@@ -236,9 +236,36 @@ function VendasHistoricoPage() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {filtrados.length} de {vendas.length} vendas
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {filtrados.length === 0
+            ? "Nenhum registro"
+            : `Exibindo ${inicio + 1}–${inicio + pagados.length} de ${filtrados.length} registros`}
+          {filtrados.length !== vendas.length && ` (base: ${vendas.length})`}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={paginaAtual <= 1}
+            onClick={() => setPagina(paginaAtual - 1)}
+          >
+            Anterior
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={paginaAtual >= totalPaginas}
+            onClick={() => setPagina(paginaAtual + 1)}
+          >
+            Próxima
+          </Button>
+        </div>
+      </div>
+
 
       <EditarVendaDialog venda={editando} onClose={() => setEditando(null)} onSalvo={recarregar} />
     </div>
