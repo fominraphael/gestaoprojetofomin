@@ -1339,14 +1339,8 @@ export async function importarAnuncios(
     ignorados: [],
   };
 
-  // Substituição total: a base de anúncios reflete SEMPRE a última importação.
-  const { error: delErro } = await supabase
-    .from("estoque_anuncios")
-    .delete()
-    .not("id", "is", null);
-  if (delErro) throw delErro;
-
-
+  // 1) Valida/prepara todas as linhas ANTES de mexer na base.
+  const registros: { numeroLinha: number; chassi: string; registro: Record<string, unknown> }[] = [];
 
   for (let i = 0; i < linhas.length; i++) {
     const l = linhas[i]!;
