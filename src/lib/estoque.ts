@@ -1388,12 +1388,38 @@ export async function importarVendas(
   }
 
   // 4) Substituição total da categoria Vendidos: a base passa a refletir apenas
-  //    a última planilha importada. Soft delete mantém a rastreabilidade.
-  const { error: errLimpeza } = await supabase
+  //    a última planilha importada. Soft delete em blocos de ids (um UPDATE amplo
+  //    pode estourar o tempo limite e deixar registros antigos ativos).
+  const agora = new Date().toISOString();
+  const antigos = await buscarTodos<{ id: string }>(
+    () =>
+      supabase
+        .from("estoque_vendas_historico")
+        .select("id")
+        .is("deleted_at", null)
+        .order("id", { ascending: true }) as unknown as QueryPaginavel,
+  );
+  for (let i = 0; i < antigos.length; i += 500) {
+    const chunk = antigos.slice(i, i + 500).map((r) => r.id);
+    const { error: errLimpeza } = await supabase
+      .from("estoque_vendas_historico")
+      .update({ deleted_at: agora } as never)
+      .in("id", chunk);
+    if (errLimpeza) throw errLimpeza;
+    onProgress?.({ processadas: i + chunk.length, total: antigos.length, fase: "enviando" });
+  }
+  // Verificação: nenhum registro antigo pode continuar ativo antes da nova carga.
+  const { count: restantes, error: errCount } = await supabase
     .from("estoque_vendas_historico")
-    .update({ deleted_at: new Date().toISOString() } as never)
+    .select("id", { count: "exact", head: true })
     .is("deleted_at", null);
-  if (errLimpeza) throw errLimpeza;
+  if (errCount) throw errCount;
+  if ((restantes ?? 0) > 0) {
+    throw new Error(
+      `Falha ao limpar a base de Vendidos: ${restantes} registro(s) antigo(s) permaneceram ativos. Nenhum dado novo foi inserido.`,
+    );
+  }
+
 
   // 5) Envio em lotes das linhas da nova planilha (reativa o registro equivalente).
   let enviadas = 0;
