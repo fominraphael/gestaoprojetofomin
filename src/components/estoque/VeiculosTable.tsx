@@ -471,11 +471,25 @@ export function VeiculosTable({
                         </Button>
                       )}
 
+                      {modo === "inativos" && onReativar && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Reativar veículo"
+                          aria-label="Reativar veículo"
+                          onClick={() => onReativar(v)}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
+                      )}
+
                       {modo !== "lixeira" && onExcluir && (
                         <Button size="icon" variant="ghost" onClick={() => onExcluir(v)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
+
+
 
                       {modo === "lixeira" && (
                         <>
