@@ -981,15 +981,17 @@ export async function importarEstoque(
       origem_id: string;
       chassi_resumido: string;
       em_vendido: boolean;
+      inativo: boolean;
       importado_em: string | null;
     }>(
       () =>
         supabase
           .from("estoque_veiculos")
-          .select("id,chassi,origem_id,chassi_resumido,em_vendido,importado_em")
+          .select("id,chassi,origem_id,chassi_resumido,em_vendido,inativo,importado_em")
           .is("deleted_at", null)
           .order("id", { ascending: true }) as unknown as QueryPaginavel,
     ),
+
     // Vendas históricas: identificam os veículos vendidos (categoria Vendidos).
     buscarTodos<{ chassi: string | null; data_venda: string | null }>(
       () =>
