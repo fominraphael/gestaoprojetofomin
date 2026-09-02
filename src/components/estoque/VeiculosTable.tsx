@@ -118,7 +118,111 @@ const COLUNAS_PADRAO: ColunaKey[] = [
   "canais",
 ];
 
-const rotuloColuna = (key: ColunaKey) => COLUNAS.find((c) => c.key === key)!.label;
+
+/** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
+const normCanal = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+const formatData = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString("pt-BR") : "—";
+
+export function VeiculosTable({
+  veiculos,
+  origens,
+  empresas,
+  faixas,
+  anuncios,
+  historico,
+  modo,
+  regras = [],
+  vendas = [],
+  onRecalcular,
+  onExcluir,
+  onRestaurar,
+  onReativar,
+  onExcluirDefinitivo,
+  onAtualizado,
+}: VeiculosTableProps) {
+  const [busca, setBusca] = useState("");
+  const [origemFiltro, setOrigemFiltro] = useState(TODOS);
+  const [classFiltro, setClassFiltro] = useState(TODOS);
+  const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
+  const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
+  const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
+  const [colunas, setColunas] = useState<ColunaKey[]>(COLUNAS_PADRAO);
+
+  // Rascunho do painel de configuração — só vira preferência ao clicar em "Salvar".
+  const [configAberta, setConfigAberta] = useState(false);
+  const [rascunho, setRascunho] = useState<ColunaKey[]>(COLUNAS_PADRAO);
+  const [salvando, setSalvando] = useState(false);
+
+  // Preferência de colunas por usuário — carregada uma vez ao montar.
+  useEffect(() => {
+    let ativo = true;
+    void getPrefColunas()
+      .then((pref) => {
+        if (!ativo || !pref) return;
+        const validas = pref.filter((c): c is ColunaKey =>
+          (TODAS_COLUNAS as string[]).includes(c),
+        );
+        if (validas.length > 0) {
+          setColunas(validas);
+          setRascunho(validas);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const abrirConfig = (aberta: boolean) => {
+    if (aberta) setRascunho(colunas);
+    setConfigAberta(aberta);
+  };
+
+  /** Marca/desmarca mantendo a ordem: novos entram no fim da lista. */
+  const alternarRascunho = (key: ColunaKey) =>
+    setRascunho((atual) =>
+      atual.includes(key) ? atual.filter((c) => c !== key) : [...atual, key],
+    );
+
+  const moverRascunho = (key: ColunaKey, delta: -1 | 1) =>
+    setRascunho((atual) => {
+      const i = atual.indexOf(key);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= atual.length) return atual;
+      const copia = [...atual];
+      const [item] = copia.splice(i, 1);
+      copia.splice(j, 0, item!);
+      return copia;
+    });
+
+  const salvarConfig = async () => {
+    if (rascunho.length === 0) {
+      toast.error("Mantenha ao menos uma coluna visível.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      await salvarPrefColunas(rascunho);
+      setColunas(rascunho);
+      setConfigAberta(false);
+      toast.success("Configuração de colunas salva.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar as colunas.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const visiveis = colunas.map((k) => COLUNAS.find((c) => c.key === k)!).filter(Boolean);
+
+
 
 
 
