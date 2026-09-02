@@ -596,16 +596,27 @@ export async function atualizarVeiculo(
   );
   const manuais = new Set([...(veiculo.campos_manuais ?? []), ...alterados]);
 
+  // Edição manual do valor anunciado: o valor passa a ser fixo até o veículo
+  // mudar de faixa de dias. Guardamos o último valor do motor para que o
+  // encadeamento da próxima faixa parta dele (e não do valor manual).
+  const extras: Record<string, unknown> = {};
+  if (alterados.includes("valor_anuncio_calculado")) {
+    extras["valor_motor"] = veiculo.valor_motor ?? veiculo.valor_anuncio_calculado ?? null;
+    extras["valor_manual_faixa_id"] = veiculo.faixa_id_atual;
+  }
+
   const { error } = await supabase
     .from("estoque_veiculos")
     .update({
       ...patch,
+      ...extras,
       campos_manuais: [...manuais],
       editado_em: new Date().toISOString(),
     } as never)
     .eq("id", veiculo.id);
   if (error) throw error;
 }
+
 
 
 
