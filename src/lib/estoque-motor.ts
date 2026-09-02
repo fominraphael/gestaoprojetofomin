@@ -429,7 +429,45 @@ function aplicaPisoTeto(
   return out;
 }
 
+/** Um passo da memória de cálculo (trilha de auditoria por faixa percorrida). */
+export interface PassoMemoria {
+  faixa: string;
+  classificacao: string;
+  /** Nível de fallback usado — só existe no passo de precificação base. */
+  nivel: string | null;
+  motivo: string | null;
+  percentual: number;
+  origem: string;
+  valor_antes: number | null;
+  valor_depois: number;
+  acoes: string[];
+  leads_min: number | null;
+  leads_reais: number;
+  piso: { ativo: boolean; percentual: number | null };
+  teto: { ativo: boolean; percentual: number | null };
+}
+
+/** Rótulos das ações operacionais ligadas na célula da matriz. */
+function acoesAtivas(regra: RegraEstoque): string[] {
+  return ACOES_MATRIZ.filter((a) => regra[a.campo] === true).map((a) => a.label);
+}
+
+/** Menor "leads_min" configurado nos gatilhos de leads da célula. */
+function leadsMinimoConfigurado(regra: RegraEstoque): number | null {
+  const mins = (regra.leads ?? [])
+    .map((g) => g.leads_min)
+    .filter((n): n is number => typeof n === "number");
+  return mins.length > 0 ? Math.min(...mins) : null;
+}
+
+function balizador(regra: RegraEstoque, tipo: "piso" | "teto") {
+  return tipo === "piso"
+    ? { ativo: !!regra.piso_fipe_ativo, percentual: regra.piso_fipe_percentual ?? null }
+    : { ativo: !!regra.teto_fipe_ativo, percentual: regra.teto_fipe_percentual ?? null };
+}
+
 export interface ResultadoCalculo {
+
   alterou: boolean;
   valorAnterior: number | null;
   valorNovo: number | null;
