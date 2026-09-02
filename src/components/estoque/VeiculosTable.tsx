@@ -572,6 +572,22 @@ export function VeiculosTable({
                     {formatBRL(v.valor_anuncio_calculado)}
                   </button>
                 ),
+                margem: (() => {
+                  const custo = v.custo_total ?? 0;
+                  const sugerido = v.valor_anuncio_calculado;
+                  if (!custo || sugerido == null) return "—";
+                  const lucro = sugerido - custo;
+                  const pct = (lucro / custo) * 100;
+                  return (
+                    <span
+                      className={cn("tabular-nums", lucro < 0 && "text-destructive")}
+                      title={`Lucro projetado: ${formatBRL(lucro)}`}
+                    >
+                      {pct.toFixed(1)}%
+                    </span>
+                  );
+                })(),
+
                 chassi_resumido: <span className="font-mono text-xs">{v.chassi_resumido}</span>,
                 origem: origens.find((o) => o.id === v.origem_id)?.nome ?? "—",
                 regional: v.regional ?? "—",
