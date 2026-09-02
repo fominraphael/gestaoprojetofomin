@@ -708,7 +708,25 @@ export function calcularValorAnuncio(
     valor = valorAtual * (1 + pct / 100);
     if (regra.arredonda_990) valor = arredonda990(valor);
     valor = aplicaPisoTeto(valor, regra, veiculo.fipe, memoria);
+    memoria["passos"] = [
+      {
+        faixa: faixa.nome,
+        classificacao,
+        nivel: null,
+        motivo: "Ajuste sobre o valor já anunciado",
+        percentual: pct,
+        origem,
+        valor_antes: valorAtual,
+        valor_depois: valor,
+        acoes: acoesAtivas(regra),
+        leads_min: leadsMinimoConfigurado(regra),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regra, "piso"),
+        teto: balizador(regra, "teto"),
+      } satisfies PassoMemoria,
+    ];
     tipo = "ajuste";
+
   }
 
   // Checagem de mercado: nunca anunciar abaixo da média do canal de referência.
