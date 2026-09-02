@@ -1121,7 +1121,9 @@ export async function importarEstoque(
     const registro = {
       chassi,
       origem_id: origem.id,
-      chassi_resumido: chassiResumido,
+      // Coluna NOT NULL no banco: sem chassi resumido, grava string vazia.
+      chassi_resumido: chassiResumido ?? "",
+
       empresa_nbs_id: empresa?.id ?? null,
       regional: toText(coluna(l, "Regional")),
       loja: toText(coluna(l, "Loja")),
