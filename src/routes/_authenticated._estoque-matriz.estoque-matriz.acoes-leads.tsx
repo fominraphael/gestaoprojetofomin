@@ -51,9 +51,11 @@ interface LinhaAcao {
   veiculoId: string;
   modelo: string;
   chassi: string;
+  placa: string;
   loja: string;
   classificacao: string;
   faixa: string;
+  faixaId: string | null;
   tipo: TipoAcaoMatriz;
   acao: string;
   concluido: boolean;
@@ -63,6 +65,10 @@ interface LinhaAcao {
 function AcoesMatriz() {
   const qc = useQueryClient();
   const [filtro, setFiltro] = useState<string>(TODOS);
+  const [filtroLoja, setFiltroLoja] = useState<string>(TODOS);
+  const [buscaPlaca, setBuscaPlaca] = useState("");
+  const [buscaChassi, setBuscaChassi] = useState("");
+  const [aba, setAba] = useState<"pendentes" | "realizadas">("pendentes");
 
   const { data: veiculos = [] } = useQuery({
     queryKey: ["estoque", "veiculos", "ativos"],
@@ -75,9 +81,17 @@ function AcoesMatriz() {
     queryFn: getAcoesMatriz,
   });
 
-  const concluidoPor = useMemo(() => {
-    const m = new Map<string, boolean>();
-    for (const a of acoes) m.set(`${a.veiculo_id}:${a.tipo_acao}`, a.concluido);
+  /**
+   * Uma ação só continua "realizada" enquanto o veículo permanecer na mesma
+   * faixa de dias em que foi concluída. Mudou de faixa → volta para "A Fazer".
+   */
+  const registroPor = useMemo(() => {
+    const m = new Map<string, { concluido: boolean; faixaId: string | null }>();
+    for (const a of acoes)
+      m.set(`${a.veiculo_id}:${a.tipo_acao}`, {
+        concluido: a.concluido,
+        faixaId: a.faixa_id ?? null,
+      });
     return m;
   }, [acoes]);
 
@@ -93,48 +107,77 @@ function AcoesMatriz() {
       for (const a of ACOES_MATRIZ) {
         if (!regra[a.campo]) continue;
         if (a.tipo === "fotos_ia" && veiculoFotografado(v.fotos_qtd, regra)) continue;
+        // Repescagem de leads só faz sentido quando o veículo tem leads.
+        if (a.tipo === "repescagem" && (v.leads_60_dias ?? 0) <= 0) continue;
+
+        const reg = registroPor.get(`${v.id}:${a.tipo}`);
+        const concluido =
+          !!reg?.concluido && (reg.faixaId ?? null) === (v.faixa_id_atual ?? null);
+
         out.push({
           veiculoId: v.id,
           modelo: v.modelo ?? "—",
           chassi: v.chassi,
+          placa: v.placa ?? "—",
           loja: v.loja ?? "—",
           classificacao: v.classificacao ?? "—",
           faixa,
+          faixaId: v.faixa_id_atual ?? null,
           tipo: a.tipo,
           acao: a.label,
-          concluido: concluidoPor.get(`${v.id}:${a.tipo}`) ?? false,
+          concluido,
           observacao:
             a.tipo === "fotos_ia"
               ? `${v.fotos_qtd ?? 0} foto(s) — mínimo ${regra.min_fotos ?? 2}`
-              : "",
+              : a.tipo === "repescagem"
+                ? `${v.leads_60_dias ?? 0} lead(s) em 60 dias`
+                : "",
         });
       }
     }
     return out;
-  }, [veiculos, regras, faixas, concluidoPor]);
+  }, [veiculos, regras, faixas, registroPor]);
 
-  const filtradas = useMemo(
-    () => (filtro === TODOS ? linhas : linhas.filter((l) => l.tipo === filtro)),
-    [linhas, filtro],
+  const lojas = useMemo(
+    () => Array.from(new Set(linhas.map((l) => l.loja).filter((l) => l && l !== "—"))).sort(),
+    [linhas],
   );
+
+  const filtradasBase = useMemo(() => {
+    const placa = buscaPlaca.trim().toLowerCase();
+    const chassi = buscaChassi.trim().toLowerCase();
+    return linhas.filter((l) => {
+      if (filtro !== TODOS && l.tipo !== filtro) return false;
+      if (filtroLoja !== TODOS && l.loja !== filtroLoja) return false;
+      if (placa && !l.placa.toLowerCase().includes(placa)) return false;
+      if (chassi && !l.chassi.toLowerCase().includes(chassi)) return false;
+      return true;
+    });
+  }, [linhas, filtro, filtroLoja, buscaPlaca, buscaChassi]);
+
+  const pendentes = useMemo(() => filtradasBase.filter((l) => !l.concluido), [filtradasBase]);
+  const realizadas = useMemo(() => filtradasBase.filter((l) => l.concluido), [filtradasBase]);
+  const visiveis = aba === "pendentes" ? pendentes : realizadas;
 
   const alternar = async (l: LinhaAcao, concluido: boolean) => {
     try {
-      await marcarAcaoMatriz(l.veiculoId, l.tipo, concluido);
+      await marcarAcaoMatriz(l.veiculoId, l.tipo, concluido, l.faixaId);
       await qc.invalidateQueries({ queryKey: ["estoque", "acoes-matriz"] });
+      toast.success(concluido ? "Ação movida para Realizadas." : "Ação restaurada para A Fazer.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao atualizar a ação");
     }
   };
 
   const exportar = async () => {
-    if (filtradas.length === 0) return toast.error("Nenhuma ação para exportar.");
+    if (visiveis.length === 0) return toast.error("Nenhuma ação para exportar.");
     try {
       const XLSX = await import("xlsx");
       const ws = XLSX.utils.json_to_sheet(
-        filtradas.map((l) => ({
+        visiveis.map((l) => ({
           Ação: l.acao,
           Modelo: l.modelo,
+          Placa: l.placa,
           Chassi: l.chassi,
           Loja: l.loja,
           Classificação: l.classificacao,
@@ -146,7 +189,7 @@ function AcoesMatriz() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Ações da Matriz");
       XLSX.writeFile(wb, `acoes-matriz-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success(`${filtradas.length} ações exportadas.`);
+      toast.success(`${visiveis.length} ações exportadas.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao exportar.");
     }
@@ -164,9 +207,9 @@ function AcoesMatriz() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Select value={filtro} onValueChange={setFiltro}>
-          <SelectTrigger className="w-[260px]">
+          <SelectTrigger className="w-[220px]">
             <SelectValue placeholder="Tipo de ação" />
           </SelectTrigger>
           <SelectContent>
@@ -178,9 +221,54 @@ function AcoesMatriz() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={filtroLoja} onValueChange={setFiltroLoja}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Loja" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS}>Todas as lojas</SelectItem>
+            {lojas.map((l) => (
+              <SelectItem key={l} value={l}>
+                {l}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          value={buscaPlaca}
+          onChange={(e) => setBuscaPlaca(e.target.value)}
+          placeholder="Placa"
+          className="w-[140px]"
+        />
+        <Input
+          value={buscaChassi}
+          onChange={(e) => setBuscaChassi(e.target.value)}
+          placeholder="Chassi"
+          className="w-[200px]"
+        />
+
         <Button variant="outline" className="ml-auto" onClick={() => void exportar()}>
           <Download className="w-4 h-4" />
-          Exportar ({filtradas.length})
+          Exportar ({visiveis.length})
+        </Button>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          variant={aba === "pendentes" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setAba("pendentes")}
+        >
+          A Fazer ({pendentes.length})
+        </Button>
+        <Button
+          variant={aba === "realizadas" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setAba("realizadas")}
+        >
+          Realizadas ({realizadas.length})
         </Button>
       </div>
 
@@ -191,6 +279,7 @@ function AcoesMatriz() {
               <th className="px-3 py-2 font-medium w-10">Feito</th>
               <th className="px-3 py-2 font-medium">Ação</th>
               <th className="px-3 py-2 font-medium">Veículo</th>
+              <th className="px-3 py-2 font-medium">Placa</th>
               <th className="px-3 py-2 font-medium">Chassi</th>
               <th className="px-3 py-2 font-medium">Class.</th>
               <th className="px-3 py-2 font-medium">Faixa</th>
@@ -198,19 +287,25 @@ function AcoesMatriz() {
             </tr>
           </thead>
           <tbody>
-            {filtradas.length === 0 && (
+            {visiveis.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
-                  Nenhuma ação ativa para os veículos atuais.
+                <td colSpan={8} className="px-3 py-10 text-center text-muted-foreground">
+                  {aba === "pendentes"
+                    ? "Nenhuma ação pendente para os filtros atuais."
+                    : "Nenhuma ação realizada para os filtros atuais."}
                 </td>
               </tr>
             )}
-            {filtradas.map((l) => (
-              <tr key={`${l.veiculoId}:${l.tipo}`} className="border-t border-border hover:bg-muted/30">
+            {visiveis.map((l) => (
+              <tr
+                key={`${l.veiculoId}:${l.tipo}`}
+                className="border-t border-border hover:bg-muted/30"
+              >
                 <td className="px-3 py-2">
                   <Checkbox
                     checked={l.concluido}
                     onCheckedChange={(c) => void alternar(l, c === true)}
+                    title={l.concluido ? "Restaurar para A Fazer" : "Marcar como realizada"}
                   />
                 </td>
                 <td className="px-3 py-2">{l.acao}</td>
@@ -218,6 +313,7 @@ function AcoesMatriz() {
                   <div className="font-medium text-foreground">{l.modelo}</div>
                   <div className="text-xs text-muted-foreground">{l.loja}</div>
                 </td>
+                <td className="px-3 py-2 font-mono text-xs">{l.placa}</td>
                 <td className="px-3 py-2 font-mono text-xs">{l.chassi}</td>
                 <td className="px-3 py-2">
                   <Badge variant="secondary">{l.classificacao}</Badge>
@@ -230,8 +326,9 @@ function AcoesMatriz() {
         </table>
       </div>
       <p className="text-xs text-muted-foreground">
-        {filtradas.length} de {linhas.length} ações
+        {visiveis.length} de {linhas.length} ações
       </p>
     </div>
   );
 }
+
