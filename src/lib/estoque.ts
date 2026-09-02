@@ -97,7 +97,12 @@ export interface Veiculo {
   finalidade: string | null;
   finalidade_atual: string | null;
   valor_anuncio_calculado: number | null;
+  /** Último valor sugerido pelo motor (base do encadeamento entre faixas). */
+  valor_motor?: number | null;
+  /** Faixa de dias em que o usuário editou manualmente o valor anunciado. */
+  valor_manual_faixa_id?: string | null;
   faixa_id_atual: string | null;
+
   em_repasse: boolean;
   em_vendido: boolean;
   /** Inativado automaticamente por não constar na última planilha de estoque importada. */
@@ -591,16 +596,27 @@ export async function atualizarVeiculo(
   );
   const manuais = new Set([...(veiculo.campos_manuais ?? []), ...alterados]);
 
+  // Edição manual do valor anunciado: o valor passa a ser fixo até o veículo
+  // mudar de faixa de dias. Guardamos o último valor do motor para que o
+  // encadeamento da próxima faixa parta dele (e não do valor manual).
+  const extras: Record<string, unknown> = {};
+  if (alterados.includes("valor_anuncio_calculado")) {
+    extras["valor_motor"] = veiculo.valor_motor ?? veiculo.valor_anuncio_calculado ?? null;
+    extras["valor_manual_faixa_id"] = veiculo.faixa_id_atual;
+  }
+
   const { error } = await supabase
     .from("estoque_veiculos")
     .update({
       ...patch,
+      ...extras,
       campos_manuais: [...manuais],
       editado_em: new Date().toISOString(),
     } as never)
     .eq("id", veiculo.id);
   if (error) throw error;
 }
+
 
 
 
@@ -638,6 +654,8 @@ export interface AcaoMatrizRegistro {
   tipo_acao: TipoAcaoMatriz;
   concluido: boolean;
   concluido_em: string | null;
+  /** Faixa de dias em que a ação foi concluída (reabre quando o veículo muda de faixa). */
+  faixa_id: string | null;
 }
 
 export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
@@ -645,16 +663,21 @@ export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
     () =>
       supabase
         .from("estoque_acoes_matriz")
-        .select("id,veiculo_id,tipo_acao,concluido,concluido_em")
+        .select("id,veiculo_id,tipo_acao,concluido,concluido_em,faixa_id")
         .order("id", { ascending: true }) as unknown as QueryPaginavel,
   );
 }
 
-/** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
+/**
+ * Marca (ou desmarca) que a ação operacional já foi executada para o veículo.
+ * O upsert por (veiculo_id, tipo_acao) evita duplicidade quando a planilha de
+ * estoque é reimportada; `faixaId` registra o ciclo em que foi concluída.
+ */
 export async function marcarAcaoMatriz(
   veiculoId: string,
   tipo: TipoAcaoMatriz,
   concluido: boolean,
+  faixaId?: string | null,
 ): Promise<void> {
   const { data: auth } = await supabase.auth.getUser();
   const { error } = await supabase.from("estoque_acoes_matriz").upsert(
@@ -662,6 +685,8 @@ export async function marcarAcaoMatriz(
       veiculo_id: veiculoId,
       tipo_acao: tipo,
       concluido,
+      faixa_id: concluido ? (faixaId ?? null) : null,
+
       concluido_em: concluido ? new Date().toISOString() : null,
       concluido_por: concluido ? (auth.user?.id ?? null) : null,
     } as never,
@@ -710,12 +735,23 @@ export async function recalcularTodos(
   opts.onProgress?.({ processados: 0, total: veiculos.length });
 
   const persistir = async (v: Veiculo) => {
-    const r = calcularValorAnuncio(v, faixas, regras, vendas, {
+    // Valor editado manualmente fica fixo enquanto o veículo estiver na mesma
+    // faixa; o encadeamento da próxima faixa parte do último valor do motor.
+    const temManual = v.valor_manual_faixa_id != null;
+    const baseMotor = temManual ? (v.valor_motor ?? v.valor_anuncio_calculado) : v.valor_anuncio_calculado;
+    const alvo: Veiculo =
+      temManual && baseMotor !== v.valor_anuncio_calculado
+        ? { ...v, valor_anuncio_calculado: baseMotor }
+        : v;
+
+    const r = calcularValorAnuncio(alvo, faixas, regras, vendas, {
       anuncios: anunciosMercado,
       faixasKm,
       forcar: opts.forcar === true,
     });
     if (!r.alterou) return;
+
+
 
     if (r.moverParaRepasse) {
       const { error } = await supabase
@@ -736,11 +772,15 @@ export async function recalcularTodos(
       .from("estoque_veiculos")
       .update({
         valor_anuncio_calculado: r.valorNovo,
+        valor_motor: r.valorNovo,
+        // O motor só atua na mudança de faixa: a trava manual é liberada.
+        valor_manual_faixa_id: null,
         faixa_id_atual: r.faixa?.id ?? null,
         ultimo_calculo_em: new Date().toISOString(),
       } as never)
       .eq("id", v.id);
     if (error) throw error;
+
 
     await supabase.from("estoque_valor_historico").insert({
       veiculo_id: v.id,

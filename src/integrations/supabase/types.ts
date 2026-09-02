@@ -621,6 +621,7 @@ export type Database = {
           concluido_em: string | null
           concluido_por: string | null
           created_at: string
+          faixa_id: string | null
           id: string
           tipo_acao: string
           updated_at: string
@@ -631,6 +632,7 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          faixa_id?: string | null
           id?: string
           tipo_acao: string
           updated_at?: string
@@ -641,6 +643,7 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          faixa_id?: string | null
           id?: string
           tipo_acao?: string
           updated_at?: string
@@ -1219,6 +1222,8 @@ export type Database = {
           updated_at: string
           valor_anunciado_planilha: number | null
           valor_anuncio_calculado: number | null
+          valor_manual_faixa_id: string | null
+          valor_motor: number | null
         }
         Insert: {
           acao_planilha?: string | null
@@ -1258,6 +1263,8 @@ export type Database = {
           updated_at?: string
           valor_anunciado_planilha?: number | null
           valor_anuncio_calculado?: number | null
+          valor_manual_faixa_id?: string | null
+          valor_motor?: number | null
         }
         Update: {
           acao_planilha?: string | null
@@ -1297,6 +1304,8 @@ export type Database = {
           updated_at?: string
           valor_anunciado_planilha?: number | null
           valor_anuncio_calculado?: number | null
+          valor_manual_faixa_id?: string | null
+          valor_motor?: number | null
         }
         Relationships: [
           {

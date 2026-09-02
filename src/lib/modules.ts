@@ -68,7 +68,10 @@ export interface ModuleNavItem {
   icon: LucideIcon | ComponentType<{ className?: string }>;
   /** Perfis Toyota que podem enxergar este item. Admin do sistema (isAdmin) ignora. */
   perfis?: PerfilToyota[];
+  /** Agrupa o item em um submenu recolhível da sidebar (ex.: "Bases"). */
+  grupo?: string;
 }
+
 
 export interface ModuleDef {
   /** Stable id, also used as the key in `user.modulos` */
@@ -234,11 +237,12 @@ export const MODULES: ModuleDef[] = [
       { to: "/estoque-matriz/vendidos", label: "Vendidos", icon: CircleDollarSign },
       { to: "/estoque-matriz/inativos", label: "Inativos", icon: EyeOff },
 
-      { to: "/estoque-matriz/vendas-historico", label: "Vendas Históricas", icon: History },
-      { to: "/estoque-matriz/anunciados", label: "Veículos Anunciados", icon: Megaphone },
       { to: "/estoque-matriz/acoes-leads", label: "Ações da Matriz", icon: ClipboardCheck },
-      { to: "/estoque-matriz/importar", label: "Importação", icon: Upload },
-      { to: "/estoque-matriz/lixeira", label: "Lixeira", icon: Archive },
+      { to: "/estoque-matriz/vendas-historico", label: "Vendas Históricas", icon: History, grupo: "Bases" },
+      { to: "/estoque-matriz/anunciados", label: "Veículos Anunciados", icon: Megaphone, grupo: "Bases" },
+      { to: "/estoque-matriz/importar", label: "Importação", icon: Upload, grupo: "Bases" },
+      { to: "/estoque-matriz/lixeira", label: "Lixeira", icon: Archive, grupo: "Bases" },
+
       { to: "/estoque-matriz/regras", label: "Configurações", icon: ListChecks },
     ],
 
