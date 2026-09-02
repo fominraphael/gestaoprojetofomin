@@ -153,6 +153,7 @@ export function VeiculosTable({
   origens,
   empresas,
   faixas,
+  faixasKm = [],
   anuncios,
   historico,
   modo,
@@ -761,21 +762,81 @@ interface DetalheCalculoProps {
  * de base (mesmo código FIPE + ano modelo + faixa de KM) e se o valor final foi
  * ajustado por piso/teto de FIPE.
  */
-function DetalheCalculo({ veiculo, vendas, hist }: DetalheCalculoProps) {
-  const base = useMemo(() => valorVendaHistorico(veiculo, vendas), [veiculo, vendas]);
+function DetalheCalculo({ veiculo, vendas, hist, faixas, faixasKm, regras }: DetalheCalculoProps) {
+  const base = useMemo(
+    () => valorVendaHistorico(veiculo, vendas, undefined, faixasKm),
+    [veiculo, vendas, faixasKm],
+  );
   const memoria = (hist?.memoria_calculo ?? {}) as Record<string, unknown>;
   const piso = memoria["piso_aplicado"] as { percentual: number; valor: number } | undefined;
   const teto = memoria["teto_aplicado"] as { percentual: number; valor: number } | undefined;
-  const passos = Array.isArray(memoria["passos"]) ? (memoria["passos"] as PassoMemoria[]) : [];
+  const gravados = Array.isArray(memoria["passos"]) ? (memoria["passos"] as PassoMemoria[]) : [];
+
+  // Quando o histórico gravado ainda não tem a trilha por faixa (registros
+  // anteriores a este recurso), a cadeia é simulada em tempo real com as
+  // regras/vendas atuais para que o modal nunca fique vazio.
+  const simulado = useMemo(() => {
+    if (gravados.length > 0) return [];
+    try {
+      const r = calcularValorAnuncio(veiculo, faixas, regras, vendas, {
+        faixasKm,
+        forcar: true,
+      });
+      const p = r.memoria["passos"];
+      return Array.isArray(p) ? (p as PassoMemoria[]) : [];
+    } catch {
+      return [];
+    }
+  }, [gravados.length, veiculo, faixas, regras, vendas, faixasKm]);
+
+  const passos = gravados.length > 0 ? gravados : simulado;
+  const ehSimulacao = gravados.length === 0 && simulado.length > 0;
 
   return (
     <div className="space-y-4 text-sm">
+      <div className="rounded-xl border border-border p-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+        <div>
+          <span className="text-muted-foreground block">Ano/Modelo</span>
+          <span className="font-medium">{veiculo.ano_mod ?? "—"}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">KM</span>
+          <span className="font-medium tabular-nums">
+            {veiculo.km != null ? veiculo.km.toLocaleString("pt-BR") : "—"}
+          </span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Dias em estoque</span>
+          <span className="font-medium tabular-nums">{veiculo.dias_em_estoque ?? 0}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Faixa de KM</span>
+          <span className="font-medium">{rotuloFaixaKm(veiculo.km, faixasKm)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Classificação</span>
+          <span className="font-medium">{veiculo.classificacao ?? "—"}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Faixa de dias</span>
+          <span className="font-medium">
+            {faixas.find((f) => f.id === veiculo.faixa_id_atual)?.nome ?? "—"}
+          </span>
+        </div>
+      </div>
+
       <div>
         <h3 className="font-medium mb-2">Memória de cálculo ({passos.length} faixa(s))</h3>
+        {ehSimulacao && (
+          <p className="text-xs text-muted-foreground mb-2">
+            Trilha simulada com as regras e o histórico atuais — o registro gravado deste veículo é
+            anterior a este recurso.
+          </p>
+        )}
         {passos.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Ainda não há memória detalhada por faixa para este veículo. Ela é gravada no próximo
-            recálculo.
+            Não foi possível montar a trilha por faixa: verifique a classificação, as faixas de dias
+            e a regra ativa para este veículo.
           </p>
         ) : (
           <ol className="space-y-2">
@@ -815,6 +876,19 @@ function DetalheCalculo({ veiculo, vendas, hist }: DetalheCalculoProps) {
                   {p.piso?.ativo ? `${p.piso.percentual}% da FIPE` : "desligado"} · teto{" "}
                   {p.teto?.ativo ? `${p.teto.percentual}% da FIPE` : "desligado"}
                 </p>
+                {p.arredondamento?.aplicado && (
+                  <p className="text-xs text-muted-foreground">
+                    Arredondamento final 990: {formatBRL(p.arredondamento.de)} →{" "}
+                    {formatBRL(p.arredondamento.para)}
+                  </p>
+                )}
+                {p.balizador_aplicado && (
+                  <p className="text-xs text-status-done">
+                    Balizador de {p.balizador_aplicado.tipo} acionado (
+                    {p.balizador_aplicado.percentual}% da FIPE):{" "}
+                    {formatBRL(p.balizador_aplicado.de)} → {formatBRL(p.balizador_aplicado.para)}
+                  </p>
+                )}
               </li>
             ))}
           </ol>
