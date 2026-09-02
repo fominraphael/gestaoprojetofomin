@@ -698,11 +698,33 @@ export function calcularValorAnuncio(
 
     const regraFinal = ultimaRegraAjuste ?? regraBase;
     if (cadeia.length > 0) memoria["ajustes_por_faixa"] = cadeia;
-    if (regraFinal.arredonda_990) valor = arredonda990(valor);
-    valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
     const ultimo = passos[passos.length - 1];
+    const antesArred = valor;
+    if (regraFinal.arredonda_990) valor = arredonda990(valor);
+    if (ultimo) {
+      ultimo.arredondamento = {
+        aplicado: !!regraFinal.arredonda_990 && valor !== antesArred,
+        de: antesArred,
+        para: valor,
+      };
+    }
+    const antesBalizador = valor;
+    valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
+    if (ultimo && valor !== antesBalizador) {
+      const tipoBal = valor > antesBalizador ? "piso" : "teto";
+      ultimo.balizador_aplicado = {
+        tipo: tipoBal,
+        percentual:
+          tipoBal === "piso"
+            ? (regraFinal.piso_fipe_percentual ?? null)
+            : (regraFinal.teto_fipe_percentual ?? null),
+        de: antesBalizador,
+        para: valor,
+      };
+    }
     if (ultimo) ultimo.valor_depois = valor;
     memoria["passos"] = passos;
+
 
 
   } else {
