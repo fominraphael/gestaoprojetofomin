@@ -97,7 +97,12 @@ export interface Veiculo {
   finalidade: string | null;
   finalidade_atual: string | null;
   valor_anuncio_calculado: number | null;
+  /** Último valor sugerido pelo motor (base do encadeamento entre faixas). */
+  valor_motor?: number | null;
+  /** Faixa de dias em que o usuário editou manualmente o valor anunciado. */
+  valor_manual_faixa_id?: string | null;
   faixa_id_atual: string | null;
+
   em_repasse: boolean;
   em_vendido: boolean;
   /** Inativado automaticamente por não constar na última planilha de estoque importada. */
