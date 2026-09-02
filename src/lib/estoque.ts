@@ -772,11 +772,15 @@ export async function recalcularTodos(
       .from("estoque_veiculos")
       .update({
         valor_anuncio_calculado: r.valorNovo,
+        valor_motor: r.valorNovo,
+        // O motor só atua na mudança de faixa: a trava manual é liberada.
+        valor_manual_faixa_id: null,
         faixa_id_atual: r.faixa?.id ?? null,
         ultimo_calculo_em: new Date().toISOString(),
       } as never)
       .eq("id", v.id);
     if (error) throw error;
+
 
     await supabase.from("estoque_valor_historico").insert({
       veiculo_id: v.id,
