@@ -60,92 +60,66 @@ export interface VeiculosTableProps {
 
 const TODOS = "__todos__";
 
-/** Colunas configuráveis da tabela (a coluna de ações é sempre exibida). */
+/**
+ * Todas as colunas disponíveis do veículo (importadas e calculadas/derivadas).
+ * A coluna de ações é sempre exibida e não é configurável.
+ */
 const COLUNAS = [
   { key: "modelo", label: "Modelo", align: "left" },
   { key: "chassi", label: "Chassi", align: "left" },
+  { key: "chassi_resumido", label: "Chassi resumido", align: "left" },
+  { key: "origem", label: "Origem", align: "left" },
   { key: "empresa", label: "Empresa NBS", align: "left" },
+  { key: "regional", label: "Regional", align: "left" },
+  { key: "loja", label: "Loja", align: "left" },
+  { key: "placa", label: "Placa", align: "left" },
+  { key: "ano_mod", label: "Ano/Mod", align: "left" },
+  { key: "cor", label: "Cor", align: "left" },
+  { key: "km", label: "KM", align: "right" },
+  { key: "custo_total", label: "Custo total", align: "right" },
   { key: "classificacao", label: "Class.", align: "left" },
   { key: "dias", label: "Dias", align: "right" },
   { key: "faixa", label: "Faixa", align: "left" },
   { key: "leads", label: "Leads", align: "right" },
+  { key: "fotos", label: "Fotos", align: "right" },
   { key: "fipe", label: "FIPE", align: "right" },
+  { key: "codigo_fipe", label: "Código FIPE", align: "left" },
   { key: "perc_fipe", label: "% FIPE", align: "right" },
+  { key: "perc_fipe_planilha", label: "% FIPE (planilha)", align: "right" },
   { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
   { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
+  { key: "finalidade", label: "Finalidade", align: "left" },
+  { key: "acao_planilha", label: "Ação (planilha)", align: "left" },
   { key: "canais", label: "Canais", align: "left" },
+  { key: "situacao", label: "Situação", align: "left" },
+  { key: "importado_em", label: "Importado em", align: "left" },
+  { key: "ultimo_calculo_em", label: "Último cálculo", align: "left" },
+  { key: "editado_em", label: "Editado em", align: "left" },
+  { key: "inativado_em", label: "Inativado em", align: "left" },
+  { key: "campos_manuais", label: "Campos editados", align: "left" },
 ] as const;
 
 type ColunaKey = (typeof COLUNAS)[number]["key"];
 const TODAS_COLUNAS: ColunaKey[] = COLUNAS.map((c) => c.key);
 
+/** Colunas exibidas quando o usuário ainda não salvou uma preferência. */
+const COLUNAS_PADRAO: ColunaKey[] = [
+  "modelo",
+  "chassi",
+  "empresa",
+  "classificacao",
+  "dias",
+  "faixa",
+  "leads",
+  "fipe",
+  "perc_fipe",
+  "valor_importado",
+  "valor_sugerido",
+  "canais",
+];
 
-/** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
-const normCanal = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
+const rotuloColuna = (key: ColunaKey) => COLUNAS.find((c) => c.key === key)!.label;
 
-export function VeiculosTable({
-  veiculos,
-  origens,
-  empresas,
-  faixas,
-  anuncios,
-  historico,
-  modo,
-  regras = [],
-  vendas = [],
-  onRecalcular,
-  onExcluir,
-
-  onRestaurar,
-  onReativar,
-
-  onExcluirDefinitivo,
-  onAtualizado,
-
-}: VeiculosTableProps) {
-  const [busca, setBusca] = useState("");
-  const [origemFiltro, setOrigemFiltro] = useState(TODOS);
-  const [classFiltro, setClassFiltro] = useState(TODOS);
-  const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
-  const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
-  const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
-  const [colunas, setColunas] = useState<ColunaKey[]>(TODAS_COLUNAS);
-
-  // Preferência de colunas por usuário — carregada uma vez ao montar.
-  useEffect(() => {
-    let ativo = true;
-    void getPrefColunas()
-      .then((pref) => {
-        if (!ativo || !pref) return;
-        const validas = pref.filter((c): c is ColunaKey =>
-          (TODAS_COLUNAS as string[]).includes(c),
-        );
-        if (validas.length > 0) setColunas(validas);
-      })
-      .catch(() => undefined);
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
-  const alternarColuna = (key: ColunaKey) => {
-    const proximas = colunas.includes(key)
-      ? colunas.filter((c) => c !== key)
-      : TODAS_COLUNAS.filter((c) => c === key || colunas.includes(c));
-    if (proximas.length === 0) {
-      toast.error("Mantenha ao menos uma coluna visível.");
-      return;
-    }
-    setColunas(proximas);
-    void salvarPrefColunas(proximas).catch(() => undefined);
-  };
-
-  const visiveis = COLUNAS.filter((c) => colunas.includes(c.key));
 
 
   const anunciosPorChassi = useMemo(() => {
