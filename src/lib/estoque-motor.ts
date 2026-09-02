@@ -445,7 +445,12 @@ export interface PassoMemoria {
   leads_reais: number;
   piso: { ativo: boolean; percentual: number | null };
   teto: { ativo: boolean; percentual: number | null };
+  /** Arredondamento para final 990 aplicado ao fim da cadeia (último passo). */
+  arredondamento?: { aplicado: boolean; de: number; para: number };
+  /** Balizador acionado ao fim da cadeia (último passo). */
+  balizador_aplicado?: { tipo: "piso" | "teto"; percentual: number | null; de: number; para: number };
 }
+
 
 /** Rótulos das ações operacionais ligadas na célula da matriz. */
 function acoesAtivas(regra: RegraEstoque): string[] {
@@ -693,11 +698,33 @@ export function calcularValorAnuncio(
 
     const regraFinal = ultimaRegraAjuste ?? regraBase;
     if (cadeia.length > 0) memoria["ajustes_por_faixa"] = cadeia;
-    if (regraFinal.arredonda_990) valor = arredonda990(valor);
-    valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
     const ultimo = passos[passos.length - 1];
+    const antesArred = valor;
+    if (regraFinal.arredonda_990) valor = arredonda990(valor);
+    if (ultimo) {
+      ultimo.arredondamento = {
+        aplicado: !!regraFinal.arredonda_990 && valor !== antesArred,
+        de: antesArred,
+        para: valor,
+      };
+    }
+    const antesBalizador = valor;
+    valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
+    if (ultimo && valor !== antesBalizador) {
+      const tipoBal = valor > antesBalizador ? "piso" : "teto";
+      ultimo.balizador_aplicado = {
+        tipo: tipoBal,
+        percentual:
+          tipoBal === "piso"
+            ? (regraFinal.piso_fipe_percentual ?? null)
+            : (regraFinal.teto_fipe_percentual ?? null),
+        de: antesBalizador,
+        para: valor,
+      };
+    }
     if (ultimo) ultimo.valor_depois = valor;
     memoria["passos"] = passos;
+
 
 
   } else {
