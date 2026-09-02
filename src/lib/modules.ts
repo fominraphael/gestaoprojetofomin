@@ -68,7 +68,10 @@ export interface ModuleNavItem {
   icon: LucideIcon | ComponentType<{ className?: string }>;
   /** Perfis Toyota que podem enxergar este item. Admin do sistema (isAdmin) ignora. */
   perfis?: PerfilToyota[];
+  /** Agrupa o item em um submenu recolhível da sidebar (ex.: "Bases"). */
+  grupo?: string;
 }
+
 
 export interface ModuleDef {
   /** Stable id, also used as the key in `user.modulos` */
