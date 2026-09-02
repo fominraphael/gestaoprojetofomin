@@ -599,6 +599,25 @@ export function calcularValorAnuncio(
     percentualUsado = 0;
     tipo = "base";
 
+    // Trilha de auditoria: cada faixa percorrida vira um passo da memória.
+    const passos: PassoMemoria[] = [
+      {
+        faixa: primeira.nome,
+        classificacao,
+        nivel: resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : null,
+        motivo: resBase.motivo,
+        percentual: 0,
+        origem: "Precificação base",
+        valor_antes: null,
+        valor_depois: valor,
+        acoes: acoesAtivas(regraBase),
+        leads_min: leadsMinimoConfigurado(regraBase),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regraBase, "piso"),
+        teto: balizador(regraBase, "teto"),
+      },
+    ];
+
     // Veículo já entrou numa faixa avançada: aplica, em cadeia, o ajuste de
     // TODAS as faixas percorridas (da faixa seguinte à base até a faixa atual).
     // O arredondamento e o piso/teto são aplicados apenas no final da cadeia,
@@ -611,8 +630,24 @@ export function calcularValorAnuncio(
       const regraFx = regrasAtivas.find((r) => r.faixa_id === fx.id && r.tipo_regra === "ajuste");
       if (!regraFx) continue;
       const { pct, origem } = percentualPorLeads(regraFx, veiculo.leads_60_dias ?? 0);
+      const antes = valor;
       valor = valor * (1 + pct / 100);
       cadeia.push({ faixa: fx.nome, percentual: pct, origem });
+      passos.push({
+        faixa: fx.nome,
+        classificacao,
+        nivel: null,
+        motivo: null,
+        percentual: pct,
+        origem,
+        valor_antes: antes,
+        valor_depois: valor,
+        acoes: acoesAtivas(regraFx),
+        leads_min: leadsMinimoConfigurado(regraFx),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regraFx, "piso"),
+        teto: balizador(regraFx, "teto"),
+      });
       ultimaRegraAjuste = regraFx;
       percentualUsado = pct;
       tipo = "ajuste";
@@ -622,6 +657,10 @@ export function calcularValorAnuncio(
     if (cadeia.length > 0) memoria["ajustes_por_faixa"] = cadeia;
     if (regraFinal.arredonda_990) valor = arredonda990(valor);
     valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
+    const ultimo = passos[passos.length - 1];
+    if (ultimo) ultimo.valor_depois = valor;
+    memoria["passos"] = passos;
+
 
   } else {
     // Ajuste cumulativo sobre o valor atualmente anunciado
