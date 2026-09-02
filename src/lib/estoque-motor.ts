@@ -445,7 +445,12 @@ export interface PassoMemoria {
   leads_reais: number;
   piso: { ativo: boolean; percentual: number | null };
   teto: { ativo: boolean; percentual: number | null };
+  /** Arredondamento para final 990 aplicado ao fim da cadeia (último passo). */
+  arredondamento?: { aplicado: boolean; de: number; para: number };
+  /** Balizador acionado ao fim da cadeia (último passo). */
+  balizador_aplicado?: { tipo: "piso" | "teto"; percentual: number | null; de: number; para: number };
 }
+
 
 /** Rótulos das ações operacionais ligadas na célula da matriz. */
 function acoesAtivas(regra: RegraEstoque): string[] {
