@@ -31,9 +31,12 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
+  calcularValorAnuncio,
+  faixaKm as rotuloFaixaKm,
   formatBRL,
   valorVendaHistorico,
   type FaixaDias,
+  type FaixaKm,
   type PassoMemoria,
   type RegraEstoque,
   type VendaHistorica,
@@ -49,6 +52,8 @@ export interface VeiculosTableProps {
   origens: Origem[];
   empresas: EmpresaNbs[];
   faixas: FaixaDias[];
+  /** Faixas de KM cadastradas — usadas no match do histórico de vendas. */
+  faixasKm?: FaixaKm[];
   anuncios: Anuncio[];
   historico: Map<string, HistoricoValor>;
   modo: "ativo" | "repasse" | "vendidos" | "lixeira" | "inativos";
@@ -726,7 +731,16 @@ export function VeiculosTable({
               {detalhe?.modelo ?? "—"} · {detalhe?.chassi}
             </DialogDescription>
           </DialogHeader>
-          {detalhe && <DetalheCalculo veiculo={detalhe} vendas={vendas} hist={historico.get(detalhe.id)} />}
+          {detalhe && (
+            <DetalheCalculo
+              veiculo={detalhe}
+              vendas={vendas}
+              hist={historico.get(detalhe.id)}
+              faixas={faixas}
+              faixasKm={faixasKm}
+              regras={regras}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
@@ -737,6 +751,9 @@ interface DetalheCalculoProps {
   veiculo: Veiculo;
   vendas: VendaHistorica[];
   hist: HistoricoValor | undefined;
+  faixas: FaixaDias[];
+  faixasKm: FaixaKm[];
+  regras: RegraEstoque[];
 }
 
 /**
