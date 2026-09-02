@@ -110,32 +110,49 @@ export function AppSidebar() {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {visibleItems.map((item) => {
-          const active =
-            item.to === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname === item.to || pathname.startsWith(item.to + "/");
-          const Icon = item.icon;
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {soltos.map((item) => renderItem(item))}
+
+        {grupos.map(([nome, itens]) => {
+          const aberto = gruposAbertos[nome] === true;
+          const algumAtivo = itens.some(
+            (i) => pathname === i.to || pathname.startsWith(i.to + "/"),
+          );
           return (
-            <Link
-              key={item.to}
-              to={item.to as any}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                isCollapsed ? "justify-center px-2" : "",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            <div key={nome} className="pt-1">
+              <button
+                type="button"
+                onClick={() => setGruposAbertos((p) => ({ ...p, [nome]: !aberto }))}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isCollapsed ? "justify-center px-2" : "",
+                  algumAtivo
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                )}
+                title={isCollapsed ? nome : undefined}
+                aria-expanded={aberto}
+              >
+                <Database className="w-4 h-4 shrink-0" />
+                {!isCollapsed && (
+                  <>
+                    <span className="truncate flex-1 text-left">{nome}</span>
+                    <ChevronDown
+                      className={cn("w-4 h-4 shrink-0 transition-transform", aberto && "rotate-180")}
+                    />
+                  </>
+                )}
+              </button>
+              {aberto && (
+                <div className={cn("space-y-1 mt-1", !isCollapsed && "pl-3")}>
+                  {itens.map((item) => renderItem(item))}
+                </div>
               )}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {!isCollapsed && <span className="truncate">{item.label}</span>}
-            </Link>
+            </div>
           );
         })}
       </nav>
+
 
       {/* Footer */}
       <div
