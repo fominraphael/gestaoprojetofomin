@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Trash2, RotateCcw, XCircle, Download, Columns3, RefreshCw } from "lucide-react";
+import {
+  Trash2,
+  RotateCcw,
+  XCircle,
+  Download,
+  Columns3,
+  RefreshCw,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,6 +25,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -561,6 +570,37 @@ export function VeiculosTable({
                     {formatBRL(v.valor_anuncio_calculado)}
                   </button>
                 ),
+                chassi_resumido: <span className="font-mono text-xs">{v.chassi_resumido}</span>,
+                origem: origens.find((o) => o.id === v.origem_id)?.nome ?? "—",
+                regional: v.regional ?? "—",
+                loja: v.loja ?? "—",
+                placa: v.placa ?? "—",
+                ano_mod: v.ano_mod ?? "—",
+                cor: v.cor ?? "—",
+                km: v.km != null ? v.km.toLocaleString("pt-BR") : "—",
+                custo_total: formatBRL(v.custo_total),
+                fotos: v.fotos_qtd ?? "—",
+                codigo_fipe: v.codigo_fipe ?? "—",
+                perc_fipe_planilha:
+                  v.percentual_fipe_planilha != null
+                    ? `${v.percentual_fipe_planilha.toFixed(1)}%`
+                    : "—",
+                finalidade: v.finalidade_atual ?? v.finalidade ?? "—",
+                acao_planilha: v.acao_planilha ?? "—",
+                situacao: v.deleted_at
+                  ? "Lixeira"
+                  : v.inativo
+                    ? "Inativo"
+                    : v.em_vendido
+                      ? "Vendido"
+                      : v.em_repasse
+                        ? "Repasse"
+                        : "Ativo",
+                importado_em: formatData(v.importado_em),
+                ultimo_calculo_em: formatData(v.ultimo_calculo_em),
+                editado_em: formatData(v.editado_em),
+                inativado_em: formatData(v.inativado_em),
+                campos_manuais: (v.campos_manuais ?? []).join(", ") || "—",
                 canais: (
                   <div className="flex gap-1">
                     {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
