@@ -412,28 +412,89 @@ export function VeiculosTable({
             ))}
           </SelectContent>
         </Select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              <Columns3 className="w-4 h-4" />
-              Colunas ({visiveis.length})
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Escolha as colunas visíveis. A preferência fica salva no seu usuário.
-            </p>
-            {COLUNAS.map((c) => (
-              <label key={c.key} className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={colunas.includes(c.key)}
-                  onCheckedChange={() => alternarColuna(c.key)}
-                />
-                {c.label}
-              </label>
-            ))}
-          </PopoverContent>
-        </Popover>
+        <Button variant="outline" className="ml-auto" onClick={() => abrirConfig(true)}>
+          <Columns3 className="w-4 h-4" />
+          Colunas ({visiveis.length})
+        </Button>
+        <Dialog open={configAberta} onOpenChange={abrirConfig}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Configurar colunas</DialogTitle>
+              <DialogDescription>
+                Marque os campos que deseja exibir e ajuste a ordem. A configuração é salva no
+                seu usuário e permanece após sair e entrar de novo.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Campos disponíveis ({COLUNAS.length})</h3>
+                <div className="rounded-xl border border-border p-3 space-y-2 max-h-72 overflow-y-auto">
+                  {COLUNAS.map((c) => (
+                    <label key={c.key} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={rascunho.includes(c.key)}
+                        onCheckedChange={() => alternarRascunho(c.key)}
+                      />
+                      {c.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Ordem das colunas ({rascunho.length})</h3>
+                <div className="rounded-xl border border-border p-2 space-y-1 max-h-72 overflow-y-auto">
+                  {rascunho.length === 0 && (
+                    <p className="p-2 text-xs text-muted-foreground">
+                      Nenhuma coluna selecionada.
+                    </p>
+                  )}
+                  {rascunho.map((key, i) => (
+                    <div
+                      key={key}
+                      className="flex items-center gap-2 rounded-lg bg-muted/40 px-2 py-1 text-sm"
+                    >
+                      <span className="flex-1 truncate">
+                        {COLUNAS.find((c) => c.key === key)?.label ?? key}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        aria-label="Mover para cima"
+                        disabled={i === 0}
+                        onClick={() => moverRascunho(key, -1)}
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        aria-label="Mover para baixo"
+                        disabled={i === rascunho.length - 1}
+                        onClick={() => moverRascunho(key, 1)}
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => abrirConfig(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => void salvarConfig()} disabled={salvando}>
+                {salvando ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Button variant="outline" onClick={() => void exportar()}>
           <Download className="w-4 h-4" />
           Exportar ({filtrados.length})
