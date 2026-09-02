@@ -747,9 +747,62 @@ function DetalheCalculo({ veiculo, vendas, hist }: DetalheCalculoProps) {
   const memoria = (hist?.memoria_calculo ?? {}) as Record<string, unknown>;
   const piso = memoria["piso_aplicado"] as { percentual: number; valor: number } | undefined;
   const teto = memoria["teto_aplicado"] as { percentual: number; valor: number } | undefined;
+  const passos = Array.isArray(memoria["passos"]) ? (memoria["passos"] as PassoMemoria[]) : [];
 
   return (
     <div className="space-y-4 text-sm">
+      <div>
+        <h3 className="font-medium mb-2">Memória de cálculo ({passos.length} faixa(s))</h3>
+        {passos.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Ainda não há memória detalhada por faixa para este veículo. Ela é gravada no próximo
+            recálculo.
+          </p>
+        ) : (
+          <ol className="space-y-2">
+            {passos.map((p, i) => (
+              <li key={`${p.faixa}-${i}`} className="rounded-xl border border-border p-3 space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">
+                    {i + 1}. {p.faixa} · Classificação {p.classificacao}
+                  </span>
+                  <span className="tabular-nums font-semibold">{formatBRL(p.valor_depois)}</span>
+                </div>
+                {p.nivel && (
+                  <p className="text-xs text-muted-foreground">
+                    Nível de fallback: <strong>{p.nivel}</strong>
+                    {p.motivo ? ` — ${p.motivo}` : ""}
+                  </p>
+                )}
+                {!p.nivel && p.motivo && (
+                  <p className="text-xs text-muted-foreground">{p.motivo}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Ajuste aplicado: {p.percentual > 0 ? "+" : ""}
+                  {p.percentual}% ({p.origem})
+                  {p.valor_antes != null ? ` · de ${formatBRL(p.valor_antes)}` : ""}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Gatilho de leads:{" "}
+                  {p.leads_min != null
+                    ? `mínimo configurado ${p.leads_min} · leads reais ${p.leads_reais}`
+                    : `sem mínimo configurado · leads reais ${p.leads_reais}`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Ações operacionais: {p.acoes.length > 0 ? p.acoes.join(", ") : "nenhuma ativa"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Balizadores: piso{" "}
+                  {p.piso?.ativo ? `${p.piso.percentual}% da FIPE` : "desligado"} · teto{" "}
+                  {p.teto?.ativo ? `${p.teto.percentual}% da FIPE` : "desligado"}
+                </p>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+
       <div className="rounded-xl border border-border p-3 space-y-1">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Valor bruto (histórico de vendas)</span>
