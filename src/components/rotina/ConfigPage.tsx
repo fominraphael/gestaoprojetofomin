@@ -77,7 +77,12 @@ export function ConfigPage() {
     ]);
     setSetores((setoresRes.data as any) ?? []);
     setKpis((kpisRes.data as any) ?? []);
-    setFuncoes((funcoesRes.data as any) ?? []);
+    setFuncoes(
+      (((funcoesRes.data as any) ?? []) as { id: string; nome: string }[]).map((t) => ({
+        valor: t.nome,
+        label: t.nome,
+      })),
+    );
     setUsuarios((profilesRes.data as any) ?? []);
     const sfMap: Record<string, string[]> = {};
     (sfRes.data as any ?? []).forEach((sf: any) => {
