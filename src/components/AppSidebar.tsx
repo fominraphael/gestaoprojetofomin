@@ -1,5 +1,15 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, LogOut, Layers, Users, Circle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  LogOut,
+  Layers,
+  Users,
+  Circle,
+  Database,
+} from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
