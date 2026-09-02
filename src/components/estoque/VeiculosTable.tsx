@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Trash2, RotateCcw, XCircle, Download, Columns3, RefreshCw } from "lucide-react";
+import {
+  Trash2,
+  RotateCcw,
+  XCircle,
+  Download,
+  Columns3,
+  RefreshCw,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,6 +25,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -60,24 +69,63 @@ export interface VeiculosTableProps {
 
 const TODOS = "__todos__";
 
-/** Colunas configuráveis da tabela (a coluna de ações é sempre exibida). */
+/**
+ * Todas as colunas disponíveis do veículo (importadas e calculadas/derivadas).
+ * A coluna de ações é sempre exibida e não é configurável.
+ */
 const COLUNAS = [
   { key: "modelo", label: "Modelo", align: "left" },
   { key: "chassi", label: "Chassi", align: "left" },
+  { key: "chassi_resumido", label: "Chassi resumido", align: "left" },
+  { key: "origem", label: "Origem", align: "left" },
   { key: "empresa", label: "Empresa NBS", align: "left" },
+  { key: "regional", label: "Regional", align: "left" },
+  { key: "loja", label: "Loja", align: "left" },
+  { key: "placa", label: "Placa", align: "left" },
+  { key: "ano_mod", label: "Ano/Mod", align: "left" },
+  { key: "cor", label: "Cor", align: "left" },
+  { key: "km", label: "KM", align: "right" },
+  { key: "custo_total", label: "Custo total", align: "right" },
   { key: "classificacao", label: "Class.", align: "left" },
   { key: "dias", label: "Dias", align: "right" },
   { key: "faixa", label: "Faixa", align: "left" },
   { key: "leads", label: "Leads", align: "right" },
+  { key: "fotos", label: "Fotos", align: "right" },
   { key: "fipe", label: "FIPE", align: "right" },
+  { key: "codigo_fipe", label: "Código FIPE", align: "left" },
   { key: "perc_fipe", label: "% FIPE", align: "right" },
+  { key: "perc_fipe_planilha", label: "% FIPE (planilha)", align: "right" },
   { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
   { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
+  { key: "finalidade", label: "Finalidade", align: "left" },
+  { key: "acao_planilha", label: "Ação (planilha)", align: "left" },
   { key: "canais", label: "Canais", align: "left" },
+  { key: "situacao", label: "Situação", align: "left" },
+  { key: "importado_em", label: "Importado em", align: "left" },
+  { key: "ultimo_calculo_em", label: "Último cálculo", align: "left" },
+  { key: "editado_em", label: "Editado em", align: "left" },
+  { key: "inativado_em", label: "Inativado em", align: "left" },
+  { key: "campos_manuais", label: "Campos editados", align: "left" },
 ] as const;
 
 type ColunaKey = (typeof COLUNAS)[number]["key"];
 const TODAS_COLUNAS: ColunaKey[] = COLUNAS.map((c) => c.key);
+
+/** Colunas exibidas quando o usuário ainda não salvou uma preferência. */
+const COLUNAS_PADRAO: ColunaKey[] = [
+  "modelo",
+  "chassi",
+  "empresa",
+  "classificacao",
+  "dias",
+  "faixa",
+  "leads",
+  "fipe",
+  "perc_fipe",
+  "valor_importado",
+  "valor_sugerido",
+  "canais",
+];
 
 
 /** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
@@ -87,6 +135,9 @@ const normCanal = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
+
+const formatData = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString("pt-BR") : "—";
 
 export function VeiculosTable({
   veiculos,
@@ -100,13 +151,10 @@ export function VeiculosTable({
   vendas = [],
   onRecalcular,
   onExcluir,
-
   onRestaurar,
   onReativar,
-
   onExcluirDefinitivo,
   onAtualizado,
-
 }: VeiculosTableProps) {
   const [busca, setBusca] = useState("");
   const [origemFiltro, setOrigemFiltro] = useState(TODOS);
@@ -114,7 +162,12 @@ export function VeiculosTable({
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
-  const [colunas, setColunas] = useState<ColunaKey[]>(TODAS_COLUNAS);
+  const [colunas, setColunas] = useState<ColunaKey[]>(COLUNAS_PADRAO);
+
+  // Rascunho do painel de configuração — só vira preferência ao clicar em "Salvar".
+  const [configAberta, setConfigAberta] = useState(false);
+  const [rascunho, setRascunho] = useState<ColunaKey[]>(COLUNAS_PADRAO);
+  const [salvando, setSalvando] = useState(false);
 
   // Preferência de colunas por usuário — carregada uma vez ao montar.
   useEffect(() => {
@@ -125,7 +178,10 @@ export function VeiculosTable({
         const validas = pref.filter((c): c is ColunaKey =>
           (TODAS_COLUNAS as string[]).includes(c),
         );
-        if (validas.length > 0) setColunas(validas);
+        if (validas.length > 0) {
+          setColunas(validas);
+          setRascunho(validas);
+        }
       })
       .catch(() => undefined);
     return () => {
@@ -133,19 +189,50 @@ export function VeiculosTable({
     };
   }, []);
 
-  const alternarColuna = (key: ColunaKey) => {
-    const proximas = colunas.includes(key)
-      ? colunas.filter((c) => c !== key)
-      : TODAS_COLUNAS.filter((c) => c === key || colunas.includes(c));
-    if (proximas.length === 0) {
+  const abrirConfig = (aberta: boolean) => {
+    if (aberta) setRascunho(colunas);
+    setConfigAberta(aberta);
+  };
+
+  /** Marca/desmarca mantendo a ordem: novos entram no fim da lista. */
+  const alternarRascunho = (key: ColunaKey) =>
+    setRascunho((atual) =>
+      atual.includes(key) ? atual.filter((c) => c !== key) : [...atual, key],
+    );
+
+  const moverRascunho = (key: ColunaKey, delta: -1 | 1) =>
+    setRascunho((atual) => {
+      const i = atual.indexOf(key);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= atual.length) return atual;
+      const copia = [...atual];
+      const [item] = copia.splice(i, 1);
+      copia.splice(j, 0, item!);
+      return copia;
+    });
+
+  const salvarConfig = async () => {
+    if (rascunho.length === 0) {
       toast.error("Mantenha ao menos uma coluna visível.");
       return;
     }
-    setColunas(proximas);
-    void salvarPrefColunas(proximas).catch(() => undefined);
+    setSalvando(true);
+    try {
+      await salvarPrefColunas(rascunho);
+      setColunas(rascunho);
+      setConfigAberta(false);
+      toast.success("Configuração de colunas salva.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar as colunas.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
-  const visiveis = COLUNAS.filter((c) => colunas.includes(c.key));
+  const visiveis = colunas.map((k) => COLUNAS.find((c) => c.key === k)!).filter(Boolean);
+
+
+
 
 
   const anunciosPorChassi = useMemo(() => {
@@ -334,28 +421,89 @@ export function VeiculosTable({
             ))}
           </SelectContent>
         </Select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              <Columns3 className="w-4 h-4" />
-              Colunas ({visiveis.length})
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Escolha as colunas visíveis. A preferência fica salva no seu usuário.
-            </p>
-            {COLUNAS.map((c) => (
-              <label key={c.key} className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={colunas.includes(c.key)}
-                  onCheckedChange={() => alternarColuna(c.key)}
-                />
-                {c.label}
-              </label>
-            ))}
-          </PopoverContent>
-        </Popover>
+        <Button variant="outline" className="ml-auto" onClick={() => abrirConfig(true)}>
+          <Columns3 className="w-4 h-4" />
+          Colunas ({visiveis.length})
+        </Button>
+        <Dialog open={configAberta} onOpenChange={abrirConfig}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Configurar colunas</DialogTitle>
+              <DialogDescription>
+                Marque os campos que deseja exibir e ajuste a ordem. A configuração é salva no
+                seu usuário e permanece após sair e entrar de novo.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Campos disponíveis ({COLUNAS.length})</h3>
+                <div className="rounded-xl border border-border p-3 space-y-2 max-h-72 overflow-y-auto">
+                  {COLUNAS.map((c) => (
+                    <label key={c.key} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={rascunho.includes(c.key)}
+                        onCheckedChange={() => alternarRascunho(c.key)}
+                      />
+                      {c.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Ordem das colunas ({rascunho.length})</h3>
+                <div className="rounded-xl border border-border p-2 space-y-1 max-h-72 overflow-y-auto">
+                  {rascunho.length === 0 && (
+                    <p className="p-2 text-xs text-muted-foreground">
+                      Nenhuma coluna selecionada.
+                    </p>
+                  )}
+                  {rascunho.map((key, i) => (
+                    <div
+                      key={key}
+                      className="flex items-center gap-2 rounded-lg bg-muted/40 px-2 py-1 text-sm"
+                    >
+                      <span className="flex-1 truncate">
+                        {COLUNAS.find((c) => c.key === key)?.label ?? key}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        aria-label="Mover para cima"
+                        disabled={i === 0}
+                        onClick={() => moverRascunho(key, -1)}
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        aria-label="Mover para baixo"
+                        disabled={i === rascunho.length - 1}
+                        onClick={() => moverRascunho(key, 1)}
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => abrirConfig(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => void salvarConfig()} disabled={salvando}>
+                {salvando ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Button variant="outline" onClick={() => void exportar()}>
           <Download className="w-4 h-4" />
           Exportar ({filtrados.length})
@@ -422,6 +570,37 @@ export function VeiculosTable({
                     {formatBRL(v.valor_anuncio_calculado)}
                   </button>
                 ),
+                chassi_resumido: <span className="font-mono text-xs">{v.chassi_resumido}</span>,
+                origem: origens.find((o) => o.id === v.origem_id)?.nome ?? "—",
+                regional: v.regional ?? "—",
+                loja: v.loja ?? "—",
+                placa: v.placa ?? "—",
+                ano_mod: v.ano_mod ?? "—",
+                cor: v.cor ?? "—",
+                km: v.km != null ? v.km.toLocaleString("pt-BR") : "—",
+                custo_total: formatBRL(v.custo_total),
+                fotos: v.fotos_qtd ?? "—",
+                codigo_fipe: v.codigo_fipe ?? "—",
+                perc_fipe_planilha:
+                  v.percentual_fipe_planilha != null
+                    ? `${v.percentual_fipe_planilha.toFixed(1)}%`
+                    : "—",
+                finalidade: v.finalidade_atual ?? v.finalidade ?? "—",
+                acao_planilha: v.acao_planilha ?? "—",
+                situacao: v.deleted_at
+                  ? "Lixeira"
+                  : v.inativo
+                    ? "Inativo"
+                    : v.em_vendido
+                      ? "Vendido"
+                      : v.em_repasse
+                        ? "Repasse"
+                        : "Ativo",
+                importado_em: formatData(v.importado_em),
+                ultimo_calculo_em: formatData(v.ultimo_calculo_em),
+                editado_em: formatData(v.editado_em),
+                inativado_em: formatData(v.inativado_em),
+                campos_manuais: (v.campos_manuais ?? []).join(", ") || "—",
                 canais: (
                   <div className="flex gap-1">
                     {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
