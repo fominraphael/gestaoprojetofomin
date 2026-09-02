@@ -63,6 +63,34 @@ export function AppSidebar() {
 
   const visibleItems = [...baseItems.slice(0, 1), ...setorItems, ...baseItems.slice(1)];
 
+  /** Itens sem grupo ficam soltos; itens com `grupo` viram submenus recolhíveis. */
+  const soltos = visibleItems.filter((i) => !i.grupo);
+  const grupos = Array.from(
+    visibleItems
+      .filter((i) => !!i.grupo)
+      .reduce((map, item) => {
+        const nome = item.grupo as string;
+        map.set(nome, [...(map.get(nome) ?? []), item]);
+        return map;
+      }, new Map<string, ModuleNavItem[]>())
+      .entries(),
+  );
+
+  // Submenus começam minimizados por padrão (preferência persistida por usuário).
+  const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem("sidebar-grupos") ?? "{}") as Record<string, boolean>;
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebar-grupos", JSON.stringify(gruposAbertos));
+  }, [gruposAbertos]);
+
+
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-collapsed") === "true";
