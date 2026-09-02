@@ -111,6 +111,32 @@ export function AppSidebar() {
     navigate({ to: "/login" });
   };
 
+  const renderItem = (item: ModuleNavItem) => {
+    const active =
+      item.to === "/dashboard"
+        ? pathname === "/dashboard"
+        : pathname === item.to || pathname.startsWith(item.to + "/");
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.to}
+        to={item.to as any}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+          isCollapsed ? "justify-center px-2" : "",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+            : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+        )}
+        title={isCollapsed ? item.label : undefined}
+      >
+        <Icon className="w-4 h-4 shrink-0" />
+        {!isCollapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    );
+  };
+
+
   return (
     <aside
       className={cn(
