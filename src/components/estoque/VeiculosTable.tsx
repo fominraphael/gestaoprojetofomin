@@ -34,9 +34,11 @@ import {
   formatBRL,
   valorVendaHistorico,
   type FaixaDias,
+  type PassoMemoria,
   type RegraEstoque,
   type VendaHistorica,
 } from "@/lib/estoque-motor";
+
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import { getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
