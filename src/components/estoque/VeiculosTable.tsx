@@ -97,6 +97,8 @@ const COLUNAS = [
   { key: "perc_fipe_planilha", label: "% FIPE (planilha)", align: "right" },
   { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
   { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
+  { key: "margem", label: "Margem (%)", align: "right" },
+
   { key: "finalidade", label: "Finalidade", align: "left" },
   { key: "acao_planilha", label: "Ação (planilha)", align: "left" },
   { key: "canais", label: "Canais", align: "left" },
