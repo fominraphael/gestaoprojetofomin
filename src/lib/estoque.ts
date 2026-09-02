@@ -1085,14 +1085,17 @@ export async function importarEstoque(
       rel.ignorados.push({ linha: numeroLinha, motivo: "Chassi não informado" });
       continue;
     }
-    if (codigoOrigem == null || !chassiResumido) {
+    // O Chassi Resumido é opcional: sem ele, o match passa a ser feito
+    // diretamente pelo chassi completo dentro da mesma origem (base).
+    if (codigoOrigem == null) {
       rel.ignorados.push({
         linha: numeroLinha,
         chassi,
-        motivo: "Origem ou Chassi Resumido não preenchidos",
+        motivo: "Origem não preenchida",
       });
       continue;
     }
+
     if (finalidadesOk.length > 0 && !finalidadesOk.includes((finalidade ?? "").toLowerCase())) {
       rel.ignorados.push({
         linha: numeroLinha,
