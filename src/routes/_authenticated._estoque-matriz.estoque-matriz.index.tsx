@@ -10,6 +10,7 @@ import {
   getAnuncios,
   getEmpresasNbs,
   getFaixas,
+  getFaixasKm,
   getOrigens,
   getRegras,
   getUltimoHistorico,
@@ -52,6 +53,7 @@ function EstoqueVeiculos() {
   const { data: origens = [] } = useQuery({ queryKey: ["estoque", "origens"], queryFn: getOrigens });
   const { data: empresas = [] } = useQuery({ queryKey: ["estoque", "nbs"], queryFn: getEmpresasNbs });
   const { data: faixas = [] } = useQuery({ queryKey: ["estoque", "faixas"], queryFn: getFaixas });
+  const { data: faixasKm = [] } = useQuery({ queryKey: ["estoque", "faixas-km"], queryFn: getFaixasKm });
   const { data: anuncios = [] } = useQuery({ queryKey: ["estoque", "anuncios"], queryFn: getAnuncios });
   const { data: regras = [] } = useQuery({ queryKey: ["estoque", "regras"], queryFn: getRegras });
   const { data: vendas = [] } = useQuery({ queryKey: ["estoque", "vendas"], queryFn: getVendas });
@@ -120,6 +122,7 @@ function EstoqueVeiculos() {
         origens={origens}
         empresas={empresas}
         faixas={faixas}
+        faixasKm={faixasKm}
         anuncios={anuncios}
         historico={historico}
         regras={regras}
