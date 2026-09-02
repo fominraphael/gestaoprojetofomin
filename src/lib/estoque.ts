@@ -1195,7 +1195,7 @@ export async function importarEstoque(
     insercoes.push({ numeroLinha, chassi, registro });
     ativosDoChassi.push({
       id: "",
-      chassi_resumido: chassiResumido,
+      chassi_resumido: chassiResumido ?? "",
       em_vendido: false,
       importado_em: registro.importado_em,
     });
