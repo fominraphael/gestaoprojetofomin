@@ -70,14 +70,19 @@ export function ConfigPage() {
     const [setoresRes, kpisRes, funcoesRes, sfRes, profilesRes, suRes] = await Promise.all([
       supabase.from("rotina_setores").select("*").order("ordem"),
       supabase.from("rotina_kpis").select("*").order("ordem"),
-      supabase.from("tipos_usuario_config").select("valor, label").order("label"),
+      supabase.from("tipos_usuario_config").select("id, nome").eq("ativo", true).order("nome"),
       supabase.from("rotina_setor_funcoes").select("setor_id, funcao_valor"),
       supabase.from("profiles").select("id, username, nome_fantasia").eq("ativo", true).order("username"),
       supabase.from("rotina_setor_usuarios").select("setor_id, user_id"),
     ]);
     setSetores((setoresRes.data as any) ?? []);
     setKpis((kpisRes.data as any) ?? []);
-    setFuncoes((funcoesRes.data as any) ?? []);
+    setFuncoes(
+      (((funcoesRes.data as any) ?? []) as { id: string; nome: string }[]).map((t) => ({
+        valor: t.nome,
+        label: t.nome,
+      })),
+    );
     setUsuarios((profilesRes.data as any) ?? []);
     const sfMap: Record<string, string[]> = {};
     (sfRes.data as any ?? []).forEach((sf: any) => {
