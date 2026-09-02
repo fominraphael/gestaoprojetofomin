@@ -1085,14 +1085,17 @@ export async function importarEstoque(
       rel.ignorados.push({ linha: numeroLinha, motivo: "Chassi não informado" });
       continue;
     }
-    if (codigoOrigem == null || !chassiResumido) {
+    // O Chassi Resumido é opcional: sem ele, o match passa a ser feito
+    // diretamente pelo chassi completo dentro da mesma origem (base).
+    if (codigoOrigem == null) {
       rel.ignorados.push({
         linha: numeroLinha,
         chassi,
-        motivo: "Origem ou Chassi Resumido não preenchidos",
+        motivo: "Origem não preenchida",
       });
       continue;
     }
+
     if (finalidadesOk.length > 0 && !finalidadesOk.includes((finalidade ?? "").toLowerCase())) {
       rel.ignorados.push({
         linha: numeroLinha,
@@ -1118,7 +1121,9 @@ export async function importarEstoque(
     const registro = {
       chassi,
       origem_id: origem.id,
-      chassi_resumido: chassiResumido,
+      // Coluna NOT NULL no banco: sem chassi resumido, grava string vazia.
+      chassi_resumido: chassiResumido ?? "",
+
       empresa_nbs_id: empresa?.id ?? null,
       regional: toText(coluna(l, "Regional")),
       loja: toText(coluna(l, "Loja")),
@@ -1145,7 +1150,13 @@ export async function importarEstoque(
     const chave = `${chassi}|${origem.id}`;
     origensNaPlanilha.add(origem.id);
     const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
-    const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
+    // Com Chassi Resumido: match por chassi resumido dentro da origem.
+    // Sem Chassi Resumido: match direto pelo chassi completo (primeiro ativo
+    // da origem que ainda não foi casado com outra linha da planilha).
+    const mesmoRegistro = chassiResumido
+      ? ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido)
+      : ativosDoChassi.find((v) => v.id !== "" && !idsEncontrados.has(v.id));
+
 
     if (mesmoRegistro) {
       // Mesma compra já registrada nessa origem → atualiza e movimenta a categoria.
@@ -1184,7 +1195,7 @@ export async function importarEstoque(
     insercoes.push({ numeroLinha, chassi, registro });
     ativosDoChassi.push({
       id: "",
-      chassi_resumido: chassiResumido,
+      chassi_resumido: chassiResumido ?? "",
       em_vendido: false,
       importado_em: registro.importado_em,
     });

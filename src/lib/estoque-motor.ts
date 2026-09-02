@@ -429,7 +429,45 @@ function aplicaPisoTeto(
   return out;
 }
 
+/** Um passo da memória de cálculo (trilha de auditoria por faixa percorrida). */
+export interface PassoMemoria {
+  faixa: string;
+  classificacao: string;
+  /** Nível de fallback usado — só existe no passo de precificação base. */
+  nivel: string | null;
+  motivo: string | null;
+  percentual: number;
+  origem: string;
+  valor_antes: number | null;
+  valor_depois: number;
+  acoes: string[];
+  leads_min: number | null;
+  leads_reais: number;
+  piso: { ativo: boolean; percentual: number | null };
+  teto: { ativo: boolean; percentual: number | null };
+}
+
+/** Rótulos das ações operacionais ligadas na célula da matriz. */
+function acoesAtivas(regra: RegraEstoque): string[] {
+  return ACOES_MATRIZ.filter((a) => regra[a.campo] === true).map((a) => a.label);
+}
+
+/** Menor "leads_min" configurado nos gatilhos de leads da célula. */
+function leadsMinimoConfigurado(regra: RegraEstoque): number | null {
+  const mins = (regra.leads ?? [])
+    .map((g) => g.leads_min)
+    .filter((n): n is number => typeof n === "number");
+  return mins.length > 0 ? Math.min(...mins) : null;
+}
+
+function balizador(regra: RegraEstoque, tipo: "piso" | "teto") {
+  return tipo === "piso"
+    ? { ativo: !!regra.piso_fipe_ativo, percentual: regra.piso_fipe_percentual ?? null }
+    : { ativo: !!regra.teto_fipe_ativo, percentual: regra.teto_fipe_percentual ?? null };
+}
+
 export interface ResultadoCalculo {
+
   alterou: boolean;
   valorAnterior: number | null;
   valorNovo: number | null;
@@ -599,6 +637,25 @@ export function calcularValorAnuncio(
     percentualUsado = 0;
     tipo = "base";
 
+    // Trilha de auditoria: cada faixa percorrida vira um passo da memória.
+    const passos: PassoMemoria[] = [
+      {
+        faixa: primeira.nome,
+        classificacao,
+        nivel: resBase.nivel ? ROTULO_NIVEL[resBase.nivel] : null,
+        motivo: resBase.motivo,
+        percentual: 0,
+        origem: "Precificação base",
+        valor_antes: null,
+        valor_depois: valor,
+        acoes: acoesAtivas(regraBase),
+        leads_min: leadsMinimoConfigurado(regraBase),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regraBase, "piso"),
+        teto: balizador(regraBase, "teto"),
+      },
+    ];
+
     // Veículo já entrou numa faixa avançada: aplica, em cadeia, o ajuste de
     // TODAS as faixas percorridas (da faixa seguinte à base até a faixa atual).
     // O arredondamento e o piso/teto são aplicados apenas no final da cadeia,
@@ -611,8 +668,24 @@ export function calcularValorAnuncio(
       const regraFx = regrasAtivas.find((r) => r.faixa_id === fx.id && r.tipo_regra === "ajuste");
       if (!regraFx) continue;
       const { pct, origem } = percentualPorLeads(regraFx, veiculo.leads_60_dias ?? 0);
+      const antes = valor;
       valor = valor * (1 + pct / 100);
       cadeia.push({ faixa: fx.nome, percentual: pct, origem });
+      passos.push({
+        faixa: fx.nome,
+        classificacao,
+        nivel: null,
+        motivo: null,
+        percentual: pct,
+        origem,
+        valor_antes: antes,
+        valor_depois: valor,
+        acoes: acoesAtivas(regraFx),
+        leads_min: leadsMinimoConfigurado(regraFx),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regraFx, "piso"),
+        teto: balizador(regraFx, "teto"),
+      });
       ultimaRegraAjuste = regraFx;
       percentualUsado = pct;
       tipo = "ajuste";
@@ -622,6 +695,10 @@ export function calcularValorAnuncio(
     if (cadeia.length > 0) memoria["ajustes_por_faixa"] = cadeia;
     if (regraFinal.arredonda_990) valor = arredonda990(valor);
     valor = aplicaPisoTeto(valor, regraFinal, veiculo.fipe, memoria);
+    const ultimo = passos[passos.length - 1];
+    if (ultimo) ultimo.valor_depois = valor;
+    memoria["passos"] = passos;
+
 
   } else {
     // Ajuste cumulativo sobre o valor atualmente anunciado
@@ -631,7 +708,25 @@ export function calcularValorAnuncio(
     valor = valorAtual * (1 + pct / 100);
     if (regra.arredonda_990) valor = arredonda990(valor);
     valor = aplicaPisoTeto(valor, regra, veiculo.fipe, memoria);
+    memoria["passos"] = [
+      {
+        faixa: faixa.nome,
+        classificacao,
+        nivel: null,
+        motivo: "Ajuste sobre o valor já anunciado",
+        percentual: pct,
+        origem,
+        valor_antes: valorAtual,
+        valor_depois: valor,
+        acoes: acoesAtivas(regra),
+        leads_min: leadsMinimoConfigurado(regra),
+        leads_reais: veiculo.leads_60_dias ?? 0,
+        piso: balizador(regra, "piso"),
+        teto: balizador(regra, "teto"),
+      } satisfies PassoMemoria,
+    ];
     tipo = "ajuste";
+
   }
 
   // Checagem de mercado: nunca anunciar abaixo da média do canal de referência.
