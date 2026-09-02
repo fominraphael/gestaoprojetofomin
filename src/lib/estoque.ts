@@ -1150,7 +1150,13 @@ export async function importarEstoque(
     const chave = `${chassi}|${origem.id}`;
     origensNaPlanilha.add(origem.id);
     const ativosDoChassi = porChassiOrigem.get(chave) ?? [];
-    const mesmoRegistro = ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido);
+    // Com Chassi Resumido: match por chassi resumido dentro da origem.
+    // Sem Chassi Resumido: match direto pelo chassi completo (primeiro ativo
+    // da origem que ainda não foi casado com outra linha da planilha).
+    const mesmoRegistro = chassiResumido
+      ? ativosDoChassi.find((v) => v.chassi_resumido === chassiResumido)
+      : ativosDoChassi.find((v) => v.id !== "" && !idsEncontrados.has(v.id));
+
 
     if (mesmoRegistro) {
       // Mesma compra já registrada nessa origem → atualiza e movimenta a categoria.
