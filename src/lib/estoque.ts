@@ -654,6 +654,8 @@ export interface AcaoMatrizRegistro {
   tipo_acao: TipoAcaoMatriz;
   concluido: boolean;
   concluido_em: string | null;
+  /** Faixa de dias em que a ação foi concluída (reabre quando o veículo muda de faixa). */
+  faixa_id: string | null;
 }
 
 export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
@@ -661,16 +663,21 @@ export async function getAcoesMatriz(): Promise<AcaoMatrizRegistro[]> {
     () =>
       supabase
         .from("estoque_acoes_matriz")
-        .select("id,veiculo_id,tipo_acao,concluido,concluido_em")
+        .select("id,veiculo_id,tipo_acao,concluido,concluido_em,faixa_id")
         .order("id", { ascending: true }) as unknown as QueryPaginavel,
   );
 }
 
-/** Marca (ou desmarca) que a ação operacional já foi executada para o veículo. */
+/**
+ * Marca (ou desmarca) que a ação operacional já foi executada para o veículo.
+ * O upsert por (veiculo_id, tipo_acao) evita duplicidade quando a planilha de
+ * estoque é reimportada; `faixaId` registra o ciclo em que foi concluída.
+ */
 export async function marcarAcaoMatriz(
   veiculoId: string,
   tipo: TipoAcaoMatriz,
   concluido: boolean,
+  faixaId?: string | null,
 ): Promise<void> {
   const { data: auth } = await supabase.auth.getUser();
   const { error } = await supabase.from("estoque_acoes_matriz").upsert(
@@ -678,6 +685,8 @@ export async function marcarAcaoMatriz(
       veiculo_id: veiculoId,
       tipo_acao: tipo,
       concluido,
+      faixa_id: concluido ? (faixaId ?? null) : null,
+
       concluido_em: concluido ? new Date().toISOString() : null,
       concluido_por: concluido ? (auth.user?.id ?? null) : null,
     } as never,
