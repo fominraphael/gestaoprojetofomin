@@ -169,6 +169,19 @@ export function arredonda990(valor: number): number {
 }
 
 /**
+ * Arredonda para BAIXO até o valor terminado em 990 anterior.
+ * Usado quando o teto FIPE limita o preço: subir para o próximo 990 estouraria
+ * o limite configurado.
+ */
+export function arredonda990ParaBaixo(valor: number): number {
+  if (!Number.isFinite(valor) || valor <= 0) return 0;
+  const base = Math.floor(valor / 1000) * 1000 + 990;
+  const out = base <= valor ? base : base - 1000;
+  return out > 0 ? out : 0;
+}
+
+
+/**
  * Faixa de KM usada na busca de vendas comparáveis.
  * Usa as faixas cadastradas (aba Cadastros); sem cadastro, cai no padrão de 15k.
  */
