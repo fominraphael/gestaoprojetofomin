@@ -169,6 +169,19 @@ export function arredonda990(valor: number): number {
 }
 
 /**
+ * Arredonda para BAIXO até o valor terminado em 990 anterior.
+ * Usado quando o teto FIPE limita o preço: subir para o próximo 990 estouraria
+ * o limite configurado.
+ */
+export function arredonda990ParaBaixo(valor: number): number {
+  if (!Number.isFinite(valor) || valor <= 0) return 0;
+  const base = Math.floor(valor / 1000) * 1000 + 990;
+  const out = base <= valor ? base : base - 1000;
+  return out > 0 ? out : 0;
+}
+
+
+/**
  * Faixa de KM usada na busca de vendas comparáveis.
  * Usa as faixas cadastradas (aba Cadastros); sem cadastro, cai no padrão de 15k.
  */
@@ -430,19 +443,23 @@ function aplicaPisoTeto(
   if (regra.piso_fipe_ativo && regra.piso_fipe_percentual != null) {
     const piso = (fipe * Number(regra.piso_fipe_percentual)) / 100;
     if (out < piso) {
-      memoria["piso_aplicado"] = { percentual: regra.piso_fipe_percentual, valor: piso };
-      out = piso;
+      // O piso é um valor "cru" da FIPE; quando a regra pede final 990, ele
+      // precisa ser arredondado também — para cima, para nunca ficar abaixo.
+      out = regra.arredonda_990 ? arredonda990(piso) : piso;
+      memoria["piso_aplicado"] = { percentual: regra.piso_fipe_percentual, valor: out };
     }
   }
   if (regra.teto_fipe_ativo && regra.teto_fipe_percentual != null) {
     const teto = (fipe * Number(regra.teto_fipe_percentual)) / 100;
     if (out > teto) {
-      memoria["teto_aplicado"] = { percentual: regra.teto_fipe_percentual, valor: teto };
-      out = teto;
+      // No teto o arredondamento vai para baixo, senão o preço estouraria o limite.
+      out = regra.arredonda_990 ? arredonda990ParaBaixo(teto) : teto;
+      memoria["teto_aplicado"] = { percentual: regra.teto_fipe_percentual, valor: out };
     }
   }
   return out;
 }
+
 
 /** Um passo da memória de cálculo (trilha de auditoria por faixa percorrida). */
 export interface PassoMemoria {
