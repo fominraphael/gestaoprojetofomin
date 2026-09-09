@@ -379,15 +379,30 @@ export function mediaCanalReferencia(
 }
 
 
+/**
+ * Faixas ativas em ordem cronológica real.
+ * Ordena pelo dia inicial (e só usa `ordem` como desempate), porque duas faixas
+ * podem estar cadastradas com o mesmo valor em `ordem` — nesse caso ordenar
+ * apenas por `ordem` deixava a sequência ambígua e faixas futuras acabavam
+ * sendo tratadas como já percorridas.
+ */
+export function faixasOrdenadas(faixas: FaixaDias[]): FaixaDias[] {
+  return faixas
+    .filter((f) => f.ativo)
+    .slice()
+    .sort((a, b) => a.dia_inicio - b.dia_inicio || a.ordem - b.ordem);
+}
+
 /** Faixa de dias em que o veículo se encontra (última faixa se ultrapassar o teto). */
 export function faixaDoVeiculo(dias: number, faixas: FaixaDias[]): FaixaDias | null {
-  const ativas = faixas.filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem);
+  const ativas = faixasOrdenadas(faixas);
   if (ativas.length === 0) return null;
   const encontrada = ativas.find((f) => dias >= f.dia_inicio && dias <= f.dia_fim);
   if (encontrada) return encontrada;
   const ultima = ativas[ativas.length - 1]!;
   return dias > ultima.dia_fim ? ultima : (ativas[0] ?? null);
 }
+
 
 function percentualPorLeads(regra: RegraEstoque, leads: number): { pct: number; origem: string } {
   const gatilhos = (regra.leads ?? []).slice().sort((a, b) => a.ordem - b.ordem);
