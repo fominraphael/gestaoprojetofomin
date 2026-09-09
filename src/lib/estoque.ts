@@ -1209,6 +1209,10 @@ export async function importarEstoque(
       // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
       // parecer "antes da entrada" e devolveria o veículo vendido ao estoque.
       delete patch.importado_em;
+      // Planilha sem "Chassi Resumido" não apaga o valor já gravado (e evita
+      // colisão com a unicidade chassi+origem+chassi_resumido).
+      if (!chassiResumido) delete patch.chassi_resumido;
+
       // Localizado na planilha → volta a ser ativo, mesmo que estivesse inativado.
       patch.inativo = false;
       patch.inativado_em = null;
