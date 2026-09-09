@@ -625,7 +625,8 @@ export function calcularValorAnuncio(
 
   if (valorAtual == null) {
     // Precificação base a partir da primeira faixa configurada
-    const ativas = faixas.filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem);
+    const ativas = faixasOrdenadas(faixas);
+
     const primeira = ativas[0] ?? faixa;
     const regraBase =
       regrasAtivas.find((r) => r.faixa_id === primeira.id && r.tipo_regra === "base") ??
@@ -680,7 +681,14 @@ export function calcularValorAnuncio(
     // TODAS as faixas percorridas (da faixa seguinte à base até a faixa atual).
     // O arredondamento e o piso/teto são aplicados apenas no final da cadeia,
     // para não distorcer os percentuais intermediários.
-    const percorridas = ativas.filter((f) => f.ordem > primeira.ordem && f.ordem <= faixa.ordem);
+    // A janela é definida pela POSIÇÃO na lista ordenada, não pelo campo
+    // `ordem` — faixas com `ordem` repetida faziam a comparação incluir faixas
+    // futuras (ex.: 61 a 75 sendo aplicada a um veículo com 47 dias).
+    const idxAtual = ativas.findIndex((f) => f.id === faixa.id);
+    const idxPrimeira = ativas.findIndex((f) => f.id === primeira.id);
+    const percorridas =
+      idxAtual < 0 ? [] : ativas.slice(Math.max(idxPrimeira, 0) + 1, idxAtual + 1);
+
     const cadeia: { faixa: string; percentual: number; origem: string }[] = [];
     let ultimaRegraAjuste: RegraEstoque | null = null;
 
