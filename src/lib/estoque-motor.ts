@@ -443,19 +443,23 @@ function aplicaPisoTeto(
   if (regra.piso_fipe_ativo && regra.piso_fipe_percentual != null) {
     const piso = (fipe * Number(regra.piso_fipe_percentual)) / 100;
     if (out < piso) {
-      memoria["piso_aplicado"] = { percentual: regra.piso_fipe_percentual, valor: piso };
-      out = piso;
+      // O piso é um valor "cru" da FIPE; quando a regra pede final 990, ele
+      // precisa ser arredondado também — para cima, para nunca ficar abaixo.
+      out = regra.arredonda_990 ? arredonda990(piso) : piso;
+      memoria["piso_aplicado"] = { percentual: regra.piso_fipe_percentual, valor: out };
     }
   }
   if (regra.teto_fipe_ativo && regra.teto_fipe_percentual != null) {
     const teto = (fipe * Number(regra.teto_fipe_percentual)) / 100;
     if (out > teto) {
-      memoria["teto_aplicado"] = { percentual: regra.teto_fipe_percentual, valor: teto };
-      out = teto;
+      // No teto o arredondamento vai para baixo, senão o preço estouraria o limite.
+      out = regra.arredonda_990 ? arredonda990ParaBaixo(teto) : teto;
+      memoria["teto_aplicado"] = { percentual: regra.teto_fipe_percentual, valor: out };
     }
   }
   return out;
 }
+
 
 /** Um passo da memória de cálculo (trilha de auditoria por faixa percorrida). */
 export interface PassoMemoria {
