@@ -922,7 +922,15 @@ function DetalheCalculo({ veiculo, vendas, hist, faixas, faixasKm, regras }: Det
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Valor sugerido final</span>
-          <span className="font-semibold">{formatBRL(veiculo.valor_anuncio_calculado)}</span>
+          <span className="font-semibold inline-flex items-center gap-1">
+            {formatBRL(veiculo.valor_anuncio_calculado)}
+            {temEdicaoManualValor(veiculo) && (
+              <Pencil
+                className="w-3.5 h-3.5 text-muted-foreground"
+                aria-label="Valor alterado manualmente"
+              />
+            )}
+          </span>
         </div>
         <p className="text-xs text-muted-foreground pt-1">{base.motivo}</p>
         {piso && (
