@@ -62,7 +62,11 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
     const base: Record<string, string> = {};
     for (const c of CAMPOS) {
       const v = (veiculo as unknown as Record<string, unknown>)[c.campo];
-      base[c.campo] = v == null ? "" : String(v);
+      if (c.tipo === "moeda") {
+        base[c.campo] = typeof v === "number" ? formatarMoedaBR(v) : "";
+      } else {
+        base[c.campo] = v == null ? "" : String(v);
+      }
     }
     return base;
   }, [veiculo]);
