@@ -83,7 +83,10 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
       const patch: Partial<Record<CampoEditavel, unknown>> = {};
       for (const c of CAMPOS) {
         const bruto = (valores[c.campo] ?? "").trim();
-        if (c.tipo === "numero") {
+        if (c.tipo === "moeda") {
+          // A máscara é apenas visual: o banco recebe o número puro.
+          patch[c.campo] = parseMoedaBR(bruto);
+        } else if (c.tipo === "numero") {
           const n = bruto === "" ? null : Number(bruto.replace(/\./g, "").replace(",", "."));
           if (n != null && !Number.isFinite(n)) {
             toast.error(`Valor inválido em "${c.label}".`);
@@ -144,9 +147,16 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
               </Label>
               <Input
                 id={`campo-${c.campo}`}
-                inputMode={c.tipo === "numero" ? "decimal" : "text"}
+                inputMode={c.tipo === "texto" ? "text" : "decimal"}
+                placeholder={c.tipo === "moeda" ? "R$ 0,00" : undefined}
                 value={valores[c.campo] ?? ""}
-                onChange={(e) => setValores((v) => ({ ...v, [c.campo]: e.target.value }))}
+                onChange={(e) =>
+                  setValores((v) => ({
+                    ...v,
+                    [c.campo]:
+                      c.tipo === "moeda" ? mascararMoedaBR(e.target.value) : e.target.value,
+                  }))
+                }
               />
             </div>
           ))}
