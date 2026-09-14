@@ -578,14 +578,22 @@ export function VeiculosTable({
                   <span className="tabular-nums">{formatBRL(v.valor_anunciado_planilha)}</span>
                 ),
                 valor_sugerido: (
-                  <button
-                    type="button"
-                    onClick={() => setDetalhe(v)}
-                    title="Ver os veículos do histórico usados no cálculo"
-                    className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
-                  >
-                    {formatBRL(v.valor_anuncio_calculado)}
-                  </button>
+                  <span className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setDetalhe(v)}
+                      title="Ver os veículos do histórico usados no cálculo"
+                      className="font-semibold underline decoration-dotted underline-offset-4 hover:text-primary"
+                    >
+                      {formatBRL(v.valor_anuncio_calculado)}
+                    </button>
+                    {temEdicaoManualValor(v) && (
+                      <Pencil
+                        className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                        aria-label="Valor alterado manualmente"
+                      />
+                    )}
+                  </span>
                 ),
                 margem: (() => {
                   const custo = v.custo_total ?? 0;
