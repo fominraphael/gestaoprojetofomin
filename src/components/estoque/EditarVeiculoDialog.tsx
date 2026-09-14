@@ -15,11 +15,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { atualizarVeiculo, type CampoEditavel, type Veiculo } from "@/lib/estoque";
+import { formatarMoedaBR, mascararMoedaBR, parseMoedaBR } from "@/lib/moeda";
 
 interface CampoDef {
   campo: CampoEditavel;
   label: string;
-  tipo: "texto" | "numero";
+  tipo: "texto" | "numero" | "moeda";
 }
 
 /** Todos os campos trazidos pela importação de estoque, editáveis manualmente. */
