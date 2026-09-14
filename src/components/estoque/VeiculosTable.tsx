@@ -950,6 +950,8 @@ function DetalheCalculo({ veiculo, vendas, hist, faixas, faixasKm, regras }: Det
         )}
       </div>
 
+      <HistoricoAlteracoes veiculoId={veiculo.id} />
+
       <div>
         <h3 className="font-medium mb-2">
           Veículos do histórico usados como referência ({base.vendasUsadas.length})
