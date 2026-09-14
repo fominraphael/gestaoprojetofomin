@@ -45,8 +45,13 @@ import {
 } from "@/lib/estoque-motor";
 
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
-import { getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
+import { getHistoricoVeiculo, getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
+
+/** Indica se o valor anunciado sugerido já sofreu intervenção manual. */
+function temEdicaoManualValor(v: Veiculo): boolean {
+  return (v.campos_manuais ?? []).includes("valor_anuncio_calculado");
+}
 
 
 export interface VeiculosTableProps {
