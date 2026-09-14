@@ -162,9 +162,10 @@ function EstoqueImportar() {
         setProgresso((p) =>
           p ? { ...p, fase: "recalculando", processadas: 0, total: 0, velocidade: 0 } : p,
         );
-        // Importar vendas muda a base comparável: refaz a precificação do zero.
+        // O valor sugerido fica congelado dentro da mesma faixa de dias: mesmo
+        // com o histórico de vendas atualizado, só é refeito na troca de faixa.
         const res = await recalcularTodos({
-          forcar: tipo === "vendas",
+          forcar: false,
           onProgress: ({ processados, total }) =>
             setProgresso((p) =>
               p ? { ...p, fase: "recalculando", processadas: processados, total } : p,
