@@ -988,3 +988,70 @@ function DetalheCalculo({ veiculo, vendas, hist, faixas, faixasKm, regras }: Det
     </div>
   );
 }
+
+/**
+ * Log de alterações do valor sugerido: data/hora, valor anterior/novo, origem
+ * (sistema ou manual + usuário) e a memória de cálculo que gerou o valor.
+ */
+function HistoricoAlteracoes({ veiculoId }: { veiculoId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["estoque", "valor-historico", veiculoId],
+    queryFn: () => getHistoricoVeiculo(veiculoId),
+  });
+
+  const itens: HistoricoValor[] = data ?? [];
+
+  return (
+    <div>
+      <h3 className="font-medium mb-2">Histórico de alterações do valor sugerido</h3>
+      {isLoading ? (
+        <p className="text-xs text-muted-foreground">Carregando…</p>
+      ) : itens.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Nenhuma alteração registrada para este veículo ainda.
+        </p>
+      ) : (
+        <ol className="space-y-2">
+          {itens.map((h) => {
+            const manual = h.origem === "manual";
+            const memoria = (h.memoria_calculo ?? {}) as Record<string, unknown>;
+            const motivo = typeof memoria["motivo"] === "string" ? memoria["motivo"] : null;
+            const origemBase =
+              typeof memoria["origem_valor_base"] === "string"
+                ? memoria["origem_valor_base"]
+                : null;
+            return (
+              <li key={h.id} className="rounded-xl border border-border p-3 text-xs space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">
+                    {new Date(h.created_at).toLocaleString("pt-BR")}
+                  </span>
+                  <Badge variant={manual ? "default" : "secondary"}>
+                    {manual
+                      ? `Manual${h.usuario_nome ? ` · ${h.usuario_nome}` : ""}`
+                      : "Sistema (recálculo automático)"}
+                  </Badge>
+                </div>
+                <p className="tabular-nums">
+                  {formatBRL(h.valor_anterior)} → <strong>{formatBRL(h.valor_novo)}</strong>
+                </p>
+                {h.faixa_nome && (
+                  <p className="text-muted-foreground">Faixa de dias: {h.faixa_nome}</p>
+                )}
+                {h.percentual != null && (
+                  <p className="text-muted-foreground">
+                    Ajuste aplicado: {h.percentual}% ({h.regra_tipo ?? "—"})
+                  </p>
+                )}
+                {origemBase && (
+                  <p className="text-muted-foreground">Base do cálculo: {origemBase}</p>
+                )}
+                {motivo && <p className="text-muted-foreground">{motivo}</p>}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  );
+}
