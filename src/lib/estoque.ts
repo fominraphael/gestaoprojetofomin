@@ -1572,6 +1572,7 @@ export async function importarVendas(
 
 export async function importarAnuncios(
   linhas: Record<string, unknown>[],
+  onProgress?: (p: { processadas: number; total: number; fase: "lendo" | "enviando" }) => void,
 ): Promise<RelatorioImportacao> {
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
@@ -1634,6 +1635,21 @@ export async function importarAnuncios(
     );
   }
 
+  // 2.1) Remove duplicidades de chassi na própria planilha (mantém a última
+  // ocorrência); o upsert em lote falha se o mesmo chassi aparecer 2x no batch.
+  const porChassi = new Map<string, { numeroLinha: number; chassi: string; registro: Record<string, unknown> }>();
+  for (const r of registros) {
+    if (porChassi.has(r.chassi)) {
+      rel.ignorados.push({
+        linha: r.numeroLinha,
+        chassi: r.chassi,
+        motivo: "Chassi duplicado na planilha (mantida a última ocorrência)",
+      });
+    }
+    porChassi.set(r.chassi, r);
+  }
+  const unicos = [...porChassi.values()];
+
   // 3) Soft delete dos anúncios atuais (vão para a lixeira, podem ser restaurados).
   const { error: delErro } = await supabase
     .from("estoque_anuncios")
@@ -1641,16 +1657,31 @@ export async function importarAnuncios(
     .is("deleted_at", null);
   if (delErro) throw delErro;
 
-  // 4) Upsert das linhas da nova planilha (reativa o registro do mesmo chassi).
-  for (const { numeroLinha, chassi, registro } of registros) {
+  // 4) Upsert em lotes (reativa o registro do mesmo chassi) com progresso.
+  const LOTE = 200;
+  const total = unicos.length;
+  onProgress?.({ processadas: 0, total, fase: "enviando" });
+
+  for (let i = 0; i < unicos.length; i += LOTE) {
+    const chunk = unicos.slice(i, i + LOTE);
     const { error } = await supabase
       .from("estoque_anuncios")
-      .upsert(registro as never, { onConflict: "chassi" });
+      .upsert(chunk.map((c) => c.registro) as never, { onConflict: "chassi" });
+
     if (error) {
-      rel.ignorados.push({ linha: numeroLinha, chassi, motivo: error.message });
-      continue;
+      // Fallback linha a linha para isolar apenas os registros problemáticos.
+      for (const { numeroLinha, chassi, registro } of chunk) {
+        const { error: e1 } = await supabase
+          .from("estoque_anuncios")
+          .upsert(registro as never, { onConflict: "chassi" });
+        if (e1) rel.ignorados.push({ linha: numeroLinha, chassi, motivo: e1.message });
+        else rel.importados += 1;
+      }
+    } else {
+      rel.importados += chunk.length;
     }
-    rel.importados += 1;
+
+    onProgress?.({ processadas: Math.min(i + LOTE, total), total, fase: "enviando" });
   }
 
   return rel;

@@ -150,7 +150,7 @@ function EstoqueImportar() {
           ? await importarEstoque(linhas, reportar)
           : tipo === "vendas"
             ? await importarVendas(linhas, reportar)
-            : await importarAnuncios(linhas);
+            : await importarAnuncios(linhas, reportar);
       const arquivoPath = await uploadPlanilhaImportacao(tipo, file);
       await registrarImportacao(tipo, file.name, rel, arquivoPath);
       await qc.invalidateQueries({ queryKey: ["estoque", "importacoes"] });
