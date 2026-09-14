@@ -1143,8 +1143,11 @@ export type Database = {
           faixa_nome: string | null
           id: string
           memoria_calculo: Json
+          origem: string
           percentual: number | null
           regra_tipo: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
           valor_anterior: number | null
           valor_novo: number | null
           veiculo_id: string
@@ -1155,8 +1158,11 @@ export type Database = {
           faixa_nome?: string | null
           id?: string
           memoria_calculo?: Json
+          origem?: string
           percentual?: number | null
           regra_tipo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
           valor_anterior?: number | null
           valor_novo?: number | null
           veiculo_id: string
@@ -1167,8 +1173,11 @@ export type Database = {
           faixa_nome?: string | null
           id?: string
           memoria_calculo?: Json
+          origem?: string
           percentual?: number | null
           regra_tipo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
           valor_anterior?: number | null
           valor_novo?: number | null
           veiculo_id?: string

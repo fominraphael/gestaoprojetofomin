@@ -128,7 +128,23 @@ export interface HistoricoValor {
   regra_tipo: string | null;
   percentual: number | null;
   memoria_calculo: Record<string, unknown>;
+  /** "sistema" (recálculo automático) ou "manual" (edição do usuário). */
+  origem?: string | null;
+  usuario_id?: string | null;
+  usuario_nome?: string | null;
   created_at: string;
+}
+
+/** Log completo de alterações do valor sugerido de um veículo (mais recente primeiro). */
+export async function getHistoricoVeiculo(veiculoId: string): Promise<HistoricoValor[]> {
+  const { data, error } = await supabase
+    .from("estoque_valor_historico")
+    .select("*")
+    .eq("veiculo_id", veiculoId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as unknown as HistoricoValor[];
 }
 
 export interface TarefaLead {
@@ -615,6 +631,30 @@ export async function atualizarVeiculo(
     } as never)
     .eq("id", veiculo.id);
   if (error) throw error;
+
+  // Log de alteração manual do valor sugerido (data/hora, valores e autor).
+  if (alterados.includes("valor_anuncio_calculado")) {
+    const { data: auth } = await supabase.auth.getUser();
+    const meta = (auth.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const nome =
+      (typeof meta["nome"] === "string" && meta["nome"]) ||
+      (typeof meta["full_name"] === "string" && meta["full_name"]) ||
+      auth.user?.email ||
+      null;
+    await supabase.from("estoque_valor_historico").insert({
+      veiculo_id: veiculo.id,
+      valor_anterior: veiculo.valor_anuncio_calculado,
+      valor_novo: (patch["valor_anuncio_calculado"] as number | null) ?? null,
+      classificacao: veiculo.classificacao,
+      faixa_nome: null,
+      regra_tipo: "manual",
+      percentual: null,
+      origem: "manual",
+      usuario_id: auth.user?.id ?? null,
+      usuario_nome: nome,
+      memoria_calculo: { motivo: "Alteração manual do valor anunciado sugerido" },
+    } as never);
+  }
 }
 
 
@@ -790,6 +830,7 @@ export async function recalcularTodos(
       faixa_nome: r.faixa?.nome ?? null,
       regra_tipo: r.tipo,
       percentual: r.percentual,
+      origem: "sistema",
       memoria_calculo: { ...r.memoria, motivo: r.motivo },
     } as never);
     resumo.alterados += 1;
