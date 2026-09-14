@@ -15,11 +15,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { atualizarVeiculo, type CampoEditavel, type Veiculo } from "@/lib/estoque";
+import { formatarMoedaBR, mascararMoedaBR, parseMoedaBR } from "@/lib/moeda";
 
 interface CampoDef {
   campo: CampoEditavel;
   label: string;
-  tipo: "texto" | "numero";
+  tipo: "texto" | "numero" | "moeda";
 }
 
 /** Todos os campos trazidos pela importação de estoque, editáveis manualmente. */
@@ -33,12 +34,12 @@ const CAMPOS: CampoDef[] = [
   { campo: "regional", label: "Regional", tipo: "texto" },
   { campo: "loja", label: "Loja", tipo: "texto" },
   { campo: "km", label: "KM", tipo: "numero" },
-  { campo: "custo_total", label: "Custo total (R$)", tipo: "numero" },
-  { campo: "fipe", label: "FIPE (R$)", tipo: "numero" },
+  { campo: "custo_total", label: "Custo total (R$)", tipo: "moeda" },
+  { campo: "fipe", label: "FIPE (R$)", tipo: "moeda" },
   { campo: "codigo_fipe", label: "Código FIPE", tipo: "texto" },
   { campo: "percentual_fipe_planilha", label: "% FIPE (planilha)", tipo: "numero" },
-  { campo: "valor_anunciado_planilha", label: "Valor anúncio importado (R$)", tipo: "numero" },
-  { campo: "valor_anuncio_calculado", label: "Valor anunciado sugerido (R$)", tipo: "numero" },
+  { campo: "valor_anunciado_planilha", label: "Valor anúncio importado (R$)", tipo: "moeda" },
+  { campo: "valor_anuncio_calculado", label: "Valor anunciado sugerido (R$)", tipo: "moeda" },
   { campo: "dias_em_estoque", label: "Dias em estoque", tipo: "numero" },
   { campo: "fotos_qtd", label: "Qtd. de fotos", tipo: "numero" },
   { campo: "leads_60_dias", label: "Leads 60 dias", tipo: "numero" },
@@ -61,7 +62,11 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
     const base: Record<string, string> = {};
     for (const c of CAMPOS) {
       const v = (veiculo as unknown as Record<string, unknown>)[c.campo];
-      base[c.campo] = v == null ? "" : String(v);
+      if (c.tipo === "moeda") {
+        base[c.campo] = typeof v === "number" ? formatarMoedaBR(v) : "";
+      } else {
+        base[c.campo] = v == null ? "" : String(v);
+      }
     }
     return base;
   }, [veiculo]);
@@ -78,7 +83,10 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
       const patch: Partial<Record<CampoEditavel, unknown>> = {};
       for (const c of CAMPOS) {
         const bruto = (valores[c.campo] ?? "").trim();
-        if (c.tipo === "numero") {
+        if (c.tipo === "moeda") {
+          // A máscara é apenas visual: o banco recebe o número puro.
+          patch[c.campo] = parseMoedaBR(bruto);
+        } else if (c.tipo === "numero") {
           const n = bruto === "" ? null : Number(bruto.replace(/\./g, "").replace(",", "."));
           if (n != null && !Number.isFinite(n)) {
             toast.error(`Valor inválido em "${c.label}".`);
@@ -139,9 +147,16 @@ export function EditarVeiculoDialog({ veiculo, onSalvo }: EditarVeiculoDialogPro
               </Label>
               <Input
                 id={`campo-${c.campo}`}
-                inputMode={c.tipo === "numero" ? "decimal" : "text"}
+                inputMode={c.tipo === "texto" ? "text" : "decimal"}
+                placeholder={c.tipo === "moeda" ? "R$ 0,00" : undefined}
                 value={valores[c.campo] ?? ""}
-                onChange={(e) => setValores((v) => ({ ...v, [c.campo]: e.target.value }))}
+                onChange={(e) =>
+                  setValores((v) => ({
+                    ...v,
+                    [c.campo]:
+                      c.tipo === "moeda" ? mascararMoedaBR(e.target.value) : e.target.value,
+                  }))
+                }
               />
             </div>
           ))}
