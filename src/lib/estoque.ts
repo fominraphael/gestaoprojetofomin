@@ -631,6 +631,30 @@ export async function atualizarVeiculo(
     } as never)
     .eq("id", veiculo.id);
   if (error) throw error;
+
+  // Log de alteração manual do valor sugerido (data/hora, valores e autor).
+  if (alterados.includes("valor_anuncio_calculado")) {
+    const { data: auth } = await supabase.auth.getUser();
+    const meta = (auth.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const nome =
+      (typeof meta["nome"] === "string" && meta["nome"]) ||
+      (typeof meta["full_name"] === "string" && meta["full_name"]) ||
+      auth.user?.email ||
+      null;
+    await supabase.from("estoque_valor_historico").insert({
+      veiculo_id: veiculo.id,
+      valor_anterior: veiculo.valor_anuncio_calculado,
+      valor_novo: (patch["valor_anuncio_calculado"] as number | null) ?? null,
+      classificacao: veiculo.classificacao,
+      faixa_nome: null,
+      regra_tipo: "manual",
+      percentual: null,
+      origem: "manual",
+      usuario_id: auth.user?.id ?? null,
+      usuario_nome: nome,
+      memoria_calculo: { motivo: "Alteração manual do valor anunciado sugerido" },
+    } as never);
+  }
 }
 
 
