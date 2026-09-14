@@ -830,6 +830,7 @@ export async function recalcularTodos(
       faixa_nome: r.faixa?.nome ?? null,
       regra_tipo: r.tipo,
       percentual: r.percentual,
+      origem: "sistema",
       memoria_calculo: { ...r.memoria, motivo: r.motivo },
     } as never);
     resumo.alterados += 1;
