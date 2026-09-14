@@ -128,7 +128,23 @@ export interface HistoricoValor {
   regra_tipo: string | null;
   percentual: number | null;
   memoria_calculo: Record<string, unknown>;
+  /** "sistema" (recálculo automático) ou "manual" (edição do usuário). */
+  origem?: string | null;
+  usuario_id?: string | null;
+  usuario_nome?: string | null;
   created_at: string;
+}
+
+/** Log completo de alterações do valor sugerido de um veículo (mais recente primeiro). */
+export async function getHistoricoVeiculo(veiculoId: string): Promise<HistoricoValor[]> {
+  const { data, error } = await supabase
+    .from("estoque_valor_historico")
+    .select("*")
+    .eq("veiculo_id", veiculoId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as unknown as HistoricoValor[];
 }
 
 export interface TarefaLead {
