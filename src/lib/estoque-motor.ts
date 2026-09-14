@@ -625,14 +625,26 @@ export function calcularValorAnuncio(
   }
 
   const valorRegistrado = veiculo.valor_anuncio_calculado ?? null;
-  // No modo forçado o valor anterior é descartado: a base é reconstruída do zero.
-  const valorAtual = forcar ? null : valorRegistrado;
   const mudouDeFaixa = veiculo.faixa_id_atual !== faixa.id;
 
-  // Nada muda enquanto o veículo continua na mesma faixa já precificada.
-  if (!forcar && valorAtual != null && !mudouDeFaixa) {
-    return { ...vazio, faixa, regra, memoria, motivo: "Veículo permanece na mesma faixa" };
+  // Congelamento: enquanto o veículo permanece na MESMA faixa já precificada o
+  // valor sugerido nunca muda — nem mesmo em recálculo forçado. A reprecificação
+  // só ocorre na transição de faixa ou quando ainda não há valor registrado.
+  if (valorRegistrado != null && !mudouDeFaixa) {
+    return {
+      ...vazio,
+      faixa,
+      regra,
+      memoria,
+      motivo: forcar
+        ? "Veículo permanece na mesma faixa (valor congelado mesmo no recálculo forçado)"
+        : "Veículo permanece na mesma faixa",
+    };
   }
+
+  // Chegando aqui, ou não há valor registrado ou houve mudança de faixa.
+  // No modo forçado a base é sempre reconstruída do zero.
+  const valorAtual = forcar ? null : valorRegistrado;
   if (forcar) memoria["recalculo_forcado"] = true;
 
 
