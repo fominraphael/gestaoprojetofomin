@@ -1572,6 +1572,7 @@ export async function importarVendas(
 
 export async function importarAnuncios(
   linhas: Record<string, unknown>[],
+  onProgress?: (p: { processadas: number; total: number; fase: "lendo" | "enviando" }) => void,
 ): Promise<RelatorioImportacao> {
   const rel: RelatorioImportacao = {
     totalLinhas: linhas.length,
