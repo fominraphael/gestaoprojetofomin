@@ -775,16 +775,10 @@ export async function recalcularTodos(
   opts.onProgress?.({ processados: 0, total: veiculos.length });
 
   const persistir = async (v: Veiculo) => {
-    // Valor editado manualmente fica fixo enquanto o veículo estiver na mesma
-    // faixa; o encadeamento da próxima faixa parte do último valor do motor.
-    const temManual = v.valor_manual_faixa_id != null;
-    const baseMotor = temManual ? (v.valor_motor ?? v.valor_anuncio_calculado) : v.valor_anuncio_calculado;
-    const alvo: Veiculo =
-      temManual && baseMotor !== v.valor_anuncio_calculado
-        ? { ...v, valor_anuncio_calculado: baseMotor }
-        : v;
-
-    const r = calcularValorAnuncio(alvo, faixas, regras, vendas, {
+    // A base de qualquer transição de faixa é SEMPRE o valor atualmente
+    // anunciado (automático ou manual). Nunca se reconstrói do zero quando já
+    // existe valor — o fallback (histórico/FIPE) só vale na primeira entrada.
+    const r = calcularValorAnuncio(v, faixas, regras, vendas, {
       anuncios: anunciosMercado,
       faixasKm,
       forcar: opts.forcar === true,
