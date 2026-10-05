@@ -21,7 +21,7 @@ export function ModuleErrorBoundary({ error, reset }: import("@tanstack/react-ro
           Não foi possível carregar esta tela
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "Ocorreu um erro inesperado neste módulo."}
+          {(error instanceof Error && error.message) || "Ocorreu um erro inesperado neste módulo."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
