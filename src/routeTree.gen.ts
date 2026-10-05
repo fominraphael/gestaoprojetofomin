@@ -9,68 +9,64 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RegistrarRouteImport } from './routes/registrar'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
-import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated._compras'
-import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
-import { Route as AuthenticatedEstoqueMatrizRouteImport } from './routes/_authenticated._estoque-matriz'
-import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
-import { Route as AuthenticatedRotinaRouteImport } from './routes/_authenticated._rotina'
 import { Route as AuthenticatedToyotaRouteImport } from './routes/_authenticated._toyota'
-import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
-import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
-import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
-import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_authenticated._gestao.historico'
-import { Route as AuthenticatedGestaoProjetosRouteImport } from './routes/_authenticated._gestao.projetos'
-import { Route as AuthenticatedGestaoRoadmapRouteImport } from './routes/_authenticated._gestao.roadmap'
-import { Route as AuthenticatedGestaoSolicitacoesRouteImport } from './routes/_authenticated._gestao.solicitacoes'
+import { Route as AuthenticatedRotinaRouteImport } from './routes/_authenticated._rotina'
+import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
+import { Route as AuthenticatedEstoqueMatrizRouteImport } from './routes/_authenticated._estoque-matriz'
+import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
+import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated._compras'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated.admin.usuarios'
-import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
-import { Route as AuthenticatedComprasComprasIdRouteImport } from './routes/_authenticated._compras.compras.$id'
-import { Route as AuthenticatedComprasComprasConfiguracoesRouteImport } from './routes/_authenticated._compras.compras.configuracoes'
-import { Route as AuthenticatedComprasComprasNovoRouteImport } from './routes/_authenticated._compras.compras.novo'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.index'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.acoes-leads'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.anunciados'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.importar'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.inativos'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.lixeira'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.repasse'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendas-historico'
-import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendidos'
+import { Route as AuthenticatedGestaoSolicitacoesRouteImport } from './routes/_authenticated._gestao.solicitacoes'
+import { Route as AuthenticatedGestaoRoadmapRouteImport } from './routes/_authenticated._gestao.roadmap'
+import { Route as AuthenticatedGestaoProjetosRouteImport } from './routes/_authenticated._gestao.projetos'
+import { Route as AuthenticatedGestaoHistoricoRouteImport } from './routes/_authenticated._gestao.historico'
+import { Route as AuthenticatedGestaoDashboardRouteImport } from './routes/_authenticated._gestao.dashboard'
+import { Route as AuthenticatedGestaoBacklogRouteImport } from './routes/_authenticated._gestao.backlog'
+import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
 import { Route as AuthenticatedRotinaRotinaIndexRouteImport } from './routes/_authenticated._rotina.rotina.index'
-import { Route as AuthenticatedRotinaRotinaSetorIdRouteImport } from './routes/_authenticated._rotina.rotina.$setorId'
-import { Route as AuthenticatedRotinaRotinaConfiguracoesRouteImport } from './routes/_authenticated._rotina.rotina.configuracoes'
-import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
-import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
-import { Route as AuthenticatedToyotaToyotaFilaPosvendasRouteImport } from './routes/_authenticated._toyota.toyota.fila-posvendas'
-import { Route as AuthenticatedToyotaToyotaFilaPreparadorRouteImport } from './routes/_authenticated._toyota.toyota.fila-preparador'
-import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
-import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
-import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
-import { Route as AuthenticatedToyotaToyotaRevisoesRouteImport } from './routes/_authenticated._toyota.toyota.revisoes'
-import { Route as ApiPublicCronVerificarNotificacoesRouteImport } from './routes/api/public/cron/verificar-notificacoes'
-import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
-import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.index'
+import { Route as AuthenticatedComprasComprasIndexRouteImport } from './routes/_authenticated._compras.compras.index'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as AuthenticatedRotinaRotinaAtividadeIdRouteImport } from './routes/_authenticated._rotina.rotina.atividade.$id'
-import { Route as AuthenticatedRotinaRotinaTarefaIdRouteImport } from './routes/_authenticated._rotina.rotina.tarefa.$id'
-import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksNotificarVencimentosTestRouteImport } from './routes/api/public/hooks/notificar-vencimentos-test'
+import { Route as ApiPublicHooksNotificarVencimentosRouteImport } from './routes/api/public/hooks/notificar-vencimentos'
+import { Route as ApiPublicCronVerificarNotificacoesRouteImport } from './routes/api/public/cron/verificar-notificacoes'
+import { Route as AuthenticatedToyotaToyotaRevisoesRouteImport } from './routes/_authenticated._toyota.toyota.revisoes'
+import { Route as AuthenticatedToyotaToyotaRegrasRouteImport } from './routes/_authenticated._toyota.toyota.regras'
+import { Route as AuthenticatedToyotaToyotaPainelGeralRouteImport } from './routes/_authenticated._toyota.toyota.painel-geral'
+import { Route as AuthenticatedToyotaToyotaPainelRouteImport } from './routes/_authenticated._toyota.toyota.painel'
+import { Route as AuthenticatedToyotaToyotaFilaPreparadorRouteImport } from './routes/_authenticated._toyota.toyota.fila-preparador'
+import { Route as AuthenticatedToyotaToyotaFilaPosvendasRouteImport } from './routes/_authenticated._toyota.toyota.fila-posvendas'
+import { Route as AuthenticatedToyotaToyotaElegiveisRouteImport } from './routes/_authenticated._toyota.toyota.elegiveis'
+import { Route as AuthenticatedToyotaToyotaConfiguracoesRouteImport } from './routes/_authenticated._toyota.toyota.configuracoes'
+import { Route as AuthenticatedRotinaRotinaConfiguracoesRouteImport } from './routes/_authenticated._rotina.rotina.configuracoes'
+import { Route as AuthenticatedRotinaRotinaSetorIdRouteImport } from './routes/_authenticated._rotina.rotina.$setorId'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendidos'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendas-historico'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.repasse'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.regras'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.lixeira'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.inativos'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.importar'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.anunciados'
+import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.acoes-leads'
+import { Route as AuthenticatedComprasComprasNovoRouteImport } from './routes/_authenticated._compras.compras.novo'
+import { Route as AuthenticatedComprasComprasConfiguracoesRouteImport } from './routes/_authenticated._compras.compras.configuracoes'
+import { Route as AuthenticatedComprasComprasIdRouteImport } from './routes/_authenticated._compras.compras.$id'
 import { Route as AuthenticatedToyotaToyotaRevisoesNovaRouteImport } from './routes/_authenticated._toyota.toyota.revisoes.nova'
+import { Route as AuthenticatedToyotaToyotaEstoqueImportarRouteImport } from './routes/_authenticated._toyota.toyota.estoque.importar'
+import { Route as AuthenticatedRotinaRotinaTarefaIdRouteImport } from './routes/_authenticated._rotina.rotina.tarefa.$id'
+import { Route as AuthenticatedRotinaRotinaAtividadeIdRouteImport } from './routes/_authenticated._rotina.rotina.atividade.$id'
 
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const RegistrarRoute = RegistrarRouteImport.update({
+  id: '/registrar',
+  path: '/registrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
@@ -78,9 +74,13 @@ const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
   path: '/recuperar-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegistrarRoute = RegistrarRouteImport.update({
-  id: '/registrar',
-  path: '/registrar',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -88,12 +88,16 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedComprasRoute = AuthenticatedComprasRouteImport.update({
-  id: '/_compras',
+const AuthenticatedToyotaRoute = AuthenticatedToyotaRouteImport.update({
+  id: '/_toyota',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
-  id: '/_documentos',
+const AuthenticatedRotinaRoute = AuthenticatedRotinaRouteImport.update({
+  id: '/_rotina',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
+  id: '/_gestao',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEstoqueMatrizRoute =
@@ -101,46 +105,24 @@ const AuthenticatedEstoqueMatrizRoute =
     id: '/_estoque-matriz',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
-  id: '/_gestao',
+const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
+  id: '/_documentos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedRotinaRoute = AuthenticatedRotinaRouteImport.update({
-  id: '/_rotina',
+const AuthenticatedComprasRoute = AuthenticatedComprasRouteImport.update({
+  id: '/_compras',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedToyotaRoute = AuthenticatedToyotaRouteImport.update({
-  id: '/_toyota',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDocumentosDocumentosRoute =
-  AuthenticatedDocumentosDocumentosRouteImport.update({
-    id: '/documentos',
-    path: '/documentos',
-    getParentRoute: () => AuthenticatedDocumentosRoute,
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/admin/usuarios',
+    path: '/admin/usuarios',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedGestaoBacklogRoute =
-  AuthenticatedGestaoBacklogRouteImport.update({
-    id: '/backlog',
-    path: '/backlog',
-    getParentRoute: () => AuthenticatedGestaoRoute,
-  } as any)
-const AuthenticatedGestaoDashboardRoute =
-  AuthenticatedGestaoDashboardRouteImport.update({
-    id: '/dashboard',
-    path: '/dashboard',
-    getParentRoute: () => AuthenticatedGestaoRoute,
-  } as any)
-const AuthenticatedGestaoHistoricoRoute =
-  AuthenticatedGestaoHistoricoRouteImport.update({
-    id: '/historico',
-    path: '/historico',
-    getParentRoute: () => AuthenticatedGestaoRoute,
-  } as any)
-const AuthenticatedGestaoProjetosRoute =
-  AuthenticatedGestaoProjetosRouteImport.update({
-    id: '/projetos',
-    path: '/projetos',
+const AuthenticatedGestaoSolicitacoesRoute =
+  AuthenticatedGestaoSolicitacoesRouteImport.update({
+    id: '/solicitacoes',
+    path: '/solicitacoes',
     getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
 const AuthenticatedGestaoRoadmapRoute =
@@ -149,101 +131,35 @@ const AuthenticatedGestaoRoadmapRoute =
     path: '/roadmap',
     getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedGestaoSolicitacoesRoute =
-  AuthenticatedGestaoSolicitacoesRouteImport.update({
-    id: '/solicitacoes',
-    path: '/solicitacoes',
+const AuthenticatedGestaoProjetosRoute =
+  AuthenticatedGestaoProjetosRouteImport.update({
+    id: '/projetos',
+    path: '/projetos',
     getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedAdminUsuariosRoute =
-  AuthenticatedAdminUsuariosRouteImport.update({
-    id: '/admin/usuarios',
-    path: '/admin/usuarios',
-    getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedGestaoHistoricoRoute =
+  AuthenticatedGestaoHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedComprasComprasIndexRoute =
-  AuthenticatedComprasComprasIndexRouteImport.update({
-    id: '/compras/',
-    path: '/compras/',
-    getParentRoute: () => AuthenticatedComprasRoute,
+const AuthenticatedGestaoDashboardRoute =
+  AuthenticatedGestaoDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedComprasComprasIdRoute =
-  AuthenticatedComprasComprasIdRouteImport.update({
-    id: '/compras/$id',
-    path: '/compras/$id',
-    getParentRoute: () => AuthenticatedComprasRoute,
+const AuthenticatedGestaoBacklogRoute =
+  AuthenticatedGestaoBacklogRouteImport.update({
+    id: '/backlog',
+    path: '/backlog',
+    getParentRoute: () => AuthenticatedGestaoRoute,
   } as any)
-const AuthenticatedComprasComprasConfiguracoesRoute =
-  AuthenticatedComprasComprasConfiguracoesRouteImport.update({
-    id: '/compras/configuracoes',
-    path: '/compras/configuracoes',
-    getParentRoute: () => AuthenticatedComprasRoute,
-  } as any)
-const AuthenticatedComprasComprasNovoRoute =
-  AuthenticatedComprasComprasNovoRouteImport.update({
-    id: '/compras/novo',
-    path: '/compras/novo',
-    getParentRoute: () => AuthenticatedComprasRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport.update({
-    id: '/estoque-matriz/',
-    path: '/estoque-matriz/',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport.update({
-    id: '/estoque-matriz/acoes-leads',
-    path: '/estoque-matriz/acoes-leads',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport.update({
-    id: '/estoque-matriz/anunciados',
-    path: '/estoque-matriz/anunciados',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport.update({
-    id: '/estoque-matriz/importar',
-    path: '/estoque-matriz/importar',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport.update({
-    id: '/estoque-matriz/inativos',
-    path: '/estoque-matriz/inativos',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport.update({
-    id: '/estoque-matriz/lixeira',
-    path: '/estoque-matriz/lixeira',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport.update({
-    id: '/estoque-matriz/regras',
-    path: '/estoque-matriz/regras',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport.update({
-    id: '/estoque-matriz/repasse',
-    path: '/estoque-matriz/repasse',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport.update({
-    id: '/estoque-matriz/vendas-historico',
-    path: '/estoque-matriz/vendas-historico',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
-  } as any)
-const AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute =
-  AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport.update({
-    id: '/estoque-matriz/vendidos',
-    path: '/estoque-matriz/vendidos',
-    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+const AuthenticatedDocumentosDocumentosRoute =
+  AuthenticatedDocumentosDocumentosRouteImport.update({
+    id: '/documentos',
+    path: '/documentos',
+    getParentRoute: () => AuthenticatedDocumentosRoute,
   } as any)
 const AuthenticatedRotinaRotinaIndexRoute =
   AuthenticatedRotinaRotinaIndexRouteImport.update({
@@ -251,70 +167,38 @@ const AuthenticatedRotinaRotinaIndexRoute =
     path: '/rotina/',
     getParentRoute: () => AuthenticatedRotinaRoute,
   } as any)
-const AuthenticatedRotinaRotinaSetorIdRoute =
-  AuthenticatedRotinaRotinaSetorIdRouteImport.update({
-    id: '/rotina/$setorId',
-    path: '/rotina/$setorId',
-    getParentRoute: () => AuthenticatedRotinaRoute,
+const AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport.update({
+    id: '/estoque-matriz/',
+    path: '/estoque-matriz/',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
   } as any)
-const AuthenticatedRotinaRotinaConfiguracoesRoute =
-  AuthenticatedRotinaRotinaConfiguracoesRouteImport.update({
-    id: '/rotina/configuracoes',
-    path: '/rotina/configuracoes',
-    getParentRoute: () => AuthenticatedRotinaRoute,
+const AuthenticatedComprasComprasIndexRoute =
+  AuthenticatedComprasComprasIndexRouteImport.update({
+    id: '/compras/',
+    path: '/compras/',
+    getParentRoute: () => AuthenticatedComprasRoute,
   } as any)
-const AuthenticatedToyotaToyotaConfiguracoesRoute =
-  AuthenticatedToyotaToyotaConfiguracoesRouteImport.update({
-    id: '/toyota/configuracoes',
-    path: '/toyota/configuracoes',
-    getParentRoute: () => AuthenticatedToyotaRoute,
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedToyotaToyotaElegiveisRoute =
-  AuthenticatedToyotaToyotaElegiveisRouteImport.update({
-    id: '/toyota/elegiveis',
-    path: '/toyota/elegiveis',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaFilaPosvendasRoute =
-  AuthenticatedToyotaToyotaFilaPosvendasRouteImport.update({
-    id: '/toyota/fila-posvendas',
-    path: '/toyota/fila-posvendas',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaFilaPreparadorRoute =
-  AuthenticatedToyotaToyotaFilaPreparadorRouteImport.update({
-    id: '/toyota/fila-preparador',
-    path: '/toyota/fila-preparador',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaPainelRoute =
-  AuthenticatedToyotaToyotaPainelRouteImport.update({
-    id: '/toyota/painel',
-    path: '/toyota/painel',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaPainelGeralRoute =
-  AuthenticatedToyotaToyotaPainelGeralRouteImport.update({
-    id: '/toyota/painel-geral',
-    path: '/toyota/painel-geral',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaRegrasRoute =
-  AuthenticatedToyotaToyotaRegrasRouteImport.update({
-    id: '/toyota/regras',
-    path: '/toyota/regras',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const AuthenticatedToyotaToyotaRevisoesRoute =
-  AuthenticatedToyotaToyotaRevisoesRouteImport.update({
-    id: '/toyota/revisoes',
-    path: '/toyota/revisoes',
-    getParentRoute: () => AuthenticatedToyotaRoute,
-  } as any)
-const ApiPublicCronVerificarNotificacoesRoute =
-  ApiPublicCronVerificarNotificacoesRouteImport.update({
-    id: '/api/public/cron/verificar-notificacoes',
-    path: '/api/public/cron/verificar-notificacoes',
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksNotificarVencimentosTestRoute =
+  ApiPublicHooksNotificarVencimentosTestRouteImport.update({
+    id: '/api/public/hooks/notificar-vencimentos-test',
+    path: '/api/public/hooks/notificar-vencimentos-test',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksNotificarVencimentosRoute =
@@ -323,39 +207,149 @@ const ApiPublicHooksNotificarVencimentosRoute =
     path: '/api/public/hooks/notificar-vencimentos',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksNotificarVencimentosTestRoute =
-  ApiPublicHooksNotificarVencimentosTestRouteImport.update({
-    id: '/api/public/hooks/notificar-vencimentos-test',
-    path: '/api/public/hooks/notificar-vencimentos-test',
+const ApiPublicCronVerificarNotificacoesRoute =
+  ApiPublicCronVerificarNotificacoesRouteImport.update({
+    id: '/api/public/cron/verificar-notificacoes',
+    path: '/api/public/cron/verificar-notificacoes',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedToyotaToyotaRevisoesRoute =
+  AuthenticatedToyotaToyotaRevisoesRouteImport.update({
+    id: '/toyota/revisoes',
+    path: '/toyota/revisoes',
+    getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
-const AuthenticatedRotinaRotinaAtividadeIdRoute =
-  AuthenticatedRotinaRotinaAtividadeIdRouteImport.update({
-    id: '/rotina/atividade/$id',
-    path: '/rotina/atividade/$id',
+const AuthenticatedToyotaToyotaRegrasRoute =
+  AuthenticatedToyotaToyotaRegrasRouteImport.update({
+    id: '/toyota/regras',
+    path: '/toyota/regras',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaPainelGeralRoute =
+  AuthenticatedToyotaToyotaPainelGeralRouteImport.update({
+    id: '/toyota/painel-geral',
+    path: '/toyota/painel-geral',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaPainelRoute =
+  AuthenticatedToyotaToyotaPainelRouteImport.update({
+    id: '/toyota/painel',
+    path: '/toyota/painel',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaFilaPreparadorRoute =
+  AuthenticatedToyotaToyotaFilaPreparadorRouteImport.update({
+    id: '/toyota/fila-preparador',
+    path: '/toyota/fila-preparador',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaFilaPosvendasRoute =
+  AuthenticatedToyotaToyotaFilaPosvendasRouteImport.update({
+    id: '/toyota/fila-posvendas',
+    path: '/toyota/fila-posvendas',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaElegiveisRoute =
+  AuthenticatedToyotaToyotaElegiveisRouteImport.update({
+    id: '/toyota/elegiveis',
+    path: '/toyota/elegiveis',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedToyotaToyotaConfiguracoesRoute =
+  AuthenticatedToyotaToyotaConfiguracoesRouteImport.update({
+    id: '/toyota/configuracoes',
+    path: '/toyota/configuracoes',
+    getParentRoute: () => AuthenticatedToyotaRoute,
+  } as any)
+const AuthenticatedRotinaRotinaConfiguracoesRoute =
+  AuthenticatedRotinaRotinaConfiguracoesRouteImport.update({
+    id: '/rotina/configuracoes',
+    path: '/rotina/configuracoes',
     getParentRoute: () => AuthenticatedRotinaRoute,
   } as any)
-const AuthenticatedRotinaRotinaTarefaIdRoute =
-  AuthenticatedRotinaRotinaTarefaIdRouteImport.update({
-    id: '/rotina/tarefa/$id',
-    path: '/rotina/tarefa/$id',
+const AuthenticatedRotinaRotinaSetorIdRoute =
+  AuthenticatedRotinaRotinaSetorIdRouteImport.update({
+    id: '/rotina/$setorId',
+    path: '/rotina/$setorId',
     getParentRoute: () => AuthenticatedRotinaRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport.update({
+    id: '/estoque-matriz/vendidos',
+    path: '/estoque-matriz/vendidos',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport.update({
+    id: '/estoque-matriz/vendas-historico',
+    path: '/estoque-matriz/vendas-historico',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport.update({
+    id: '/estoque-matriz/repasse',
+    path: '/estoque-matriz/repasse',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport.update({
+    id: '/estoque-matriz/regras',
+    path: '/estoque-matriz/regras',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport.update({
+    id: '/estoque-matriz/lixeira',
+    path: '/estoque-matriz/lixeira',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizInativosRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport.update({
+    id: '/estoque-matriz/inativos',
+    path: '/estoque-matriz/inativos',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizImportarRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport.update({
+    id: '/estoque-matriz/importar',
+    path: '/estoque-matriz/importar',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport.update({
+    id: '/estoque-matriz/anunciados',
+    path: '/estoque-matriz/anunciados',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRoute =
+  AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport.update({
+    id: '/estoque-matriz/acoes-leads',
+    path: '/estoque-matriz/acoes-leads',
+    getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedComprasComprasNovoRoute =
+  AuthenticatedComprasComprasNovoRouteImport.update({
+    id: '/compras/novo',
+    path: '/compras/novo',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
+const AuthenticatedComprasComprasConfiguracoesRoute =
+  AuthenticatedComprasComprasConfiguracoesRouteImport.update({
+    id: '/compras/configuracoes',
+    path: '/compras/configuracoes',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
+const AuthenticatedComprasComprasIdRoute =
+  AuthenticatedComprasComprasIdRouteImport.update({
+    id: '/compras/$id',
+    path: '/compras/$id',
+    getParentRoute: () => AuthenticatedComprasRoute,
+  } as any)
+const AuthenticatedToyotaToyotaRevisoesNovaRoute =
+  AuthenticatedToyotaToyotaRevisoesNovaRouteImport.update({
+    id: '/nova',
+    path: '/nova',
+    getParentRoute: () => AuthenticatedToyotaToyotaRevisoesRoute,
   } as any)
 const AuthenticatedToyotaToyotaEstoqueImportarRoute =
   AuthenticatedToyotaToyotaEstoqueImportarRouteImport.update({
@@ -363,11 +357,17 @@ const AuthenticatedToyotaToyotaEstoqueImportarRoute =
     path: '/toyota/estoque/importar',
     getParentRoute: () => AuthenticatedToyotaRoute,
   } as any)
-const AuthenticatedToyotaToyotaRevisoesNovaRoute =
-  AuthenticatedToyotaToyotaRevisoesNovaRouteImport.update({
-    id: '/nova',
-    path: '/nova',
-    getParentRoute: () => AuthenticatedToyotaToyotaRevisoesRoute,
+const AuthenticatedRotinaRotinaTarefaIdRoute =
+  AuthenticatedRotinaRotinaTarefaIdRouteImport.update({
+    id: '/rotina/tarefa/$id',
+    path: '/rotina/tarefa/$id',
+    getParentRoute: () => AuthenticatedRotinaRoute,
+  } as any)
+const AuthenticatedRotinaRotinaAtividadeIdRoute =
+  AuthenticatedRotinaRotinaAtividadeIdRouteImport.update({
+    id: '/rotina/atividade/$id',
+    path: '/rotina/atividade/$id',
+    getParentRoute: () => AuthenticatedRotinaRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -697,18 +697,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/registrar': {
+      id: '/registrar'
+      path: '/registrar'
+      fullPath: '/registrar'
+      preLoaderRoute: typeof RegistrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recuperar-senha': {
@@ -718,11 +711,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecuperarSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/registrar': {
-      id: '/registrar'
-      path: '/registrar'
-      fullPath: '/registrar'
-      preLoaderRoute: typeof RegistrarRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -732,32 +732,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_compras': {
-      id: '/_authenticated/_compras'
+    '/_authenticated/_toyota': {
+      id: '/_authenticated/_toyota'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedComprasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/_documentos': {
-      id: '/_authenticated/_documentos'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/_estoque-matriz': {
-      id: '/_authenticated/_estoque-matriz'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/_gestao': {
-      id: '/_authenticated/_gestao'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedGestaoRouteImport
+      preLoaderRoute: typeof AuthenticatedToyotaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_rotina': {
@@ -767,46 +746,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRotinaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_toyota': {
-      id: '/_authenticated/_toyota'
+    '/_authenticated/_gestao': {
+      id: '/_authenticated/_gestao'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedToyotaRouteImport
+      preLoaderRoute: typeof AuthenticatedGestaoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_documentos/documentos': {
-      id: '/_authenticated/_documentos/documentos'
-      path: '/documentos'
-      fullPath: '/documentos'
-      preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
-      parentRoute: typeof AuthenticatedDocumentosRoute
+    '/_authenticated/_estoque-matriz': {
+      id: '/_authenticated/_estoque-matriz'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_gestao/backlog': {
-      id: '/_authenticated/_gestao/backlog'
-      path: '/backlog'
-      fullPath: '/backlog'
-      preLoaderRoute: typeof AuthenticatedGestaoBacklogRouteImport
-      parentRoute: typeof AuthenticatedGestaoRoute
+    '/_authenticated/_documentos': {
+      id: '/_authenticated/_documentos'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_gestao/dashboard': {
-      id: '/_authenticated/_gestao/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedGestaoDashboardRouteImport
-      parentRoute: typeof AuthenticatedGestaoRoute
+    '/_authenticated/_compras': {
+      id: '/_authenticated/_compras'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedComprasRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_gestao/historico': {
-      id: '/_authenticated/_gestao/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof AuthenticatedGestaoHistoricoRouteImport
-      parentRoute: typeof AuthenticatedGestaoRoute
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
+      path: '/admin/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_gestao/projetos': {
-      id: '/_authenticated/_gestao/projetos'
-      path: '/projetos'
-      fullPath: '/projetos'
-      preLoaderRoute: typeof AuthenticatedGestaoProjetosRouteImport
+    '/_authenticated/_gestao/solicitacoes': {
+      id: '/_authenticated/_gestao/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes'
+      preLoaderRoute: typeof AuthenticatedGestaoSolicitacoesRouteImport
       parentRoute: typeof AuthenticatedGestaoRoute
     }
     '/_authenticated/_gestao/roadmap': {
@@ -816,117 +795,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGestaoRoadmapRouteImport
       parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/_gestao/solicitacoes': {
-      id: '/_authenticated/_gestao/solicitacoes'
-      path: '/solicitacoes'
-      fullPath: '/solicitacoes'
-      preLoaderRoute: typeof AuthenticatedGestaoSolicitacoesRouteImport
+    '/_authenticated/_gestao/projetos': {
+      id: '/_authenticated/_gestao/projetos'
+      path: '/projetos'
+      fullPath: '/projetos'
+      preLoaderRoute: typeof AuthenticatedGestaoProjetosRouteImport
       parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/admin/usuarios': {
-      id: '/_authenticated/admin/usuarios'
-      path: '/admin/usuarios'
-      fullPath: '/admin/usuarios'
-      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated/_gestao/historico': {
+      id: '/_authenticated/_gestao/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedGestaoHistoricoRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/_compras/compras/': {
-      id: '/_authenticated/_compras/compras/'
-      path: '/compras'
-      fullPath: '/compras/'
-      preLoaderRoute: typeof AuthenticatedComprasComprasIndexRouteImport
-      parentRoute: typeof AuthenticatedComprasRoute
+    '/_authenticated/_gestao/dashboard': {
+      id: '/_authenticated/_gestao/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedGestaoDashboardRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/_compras/compras/$id': {
-      id: '/_authenticated/_compras/compras/$id'
-      path: '/compras/$id'
-      fullPath: '/compras/$id'
-      preLoaderRoute: typeof AuthenticatedComprasComprasIdRouteImport
-      parentRoute: typeof AuthenticatedComprasRoute
+    '/_authenticated/_gestao/backlog': {
+      id: '/_authenticated/_gestao/backlog'
+      path: '/backlog'
+      fullPath: '/backlog'
+      preLoaderRoute: typeof AuthenticatedGestaoBacklogRouteImport
+      parentRoute: typeof AuthenticatedGestaoRoute
     }
-    '/_authenticated/_compras/compras/configuracoes': {
-      id: '/_authenticated/_compras/compras/configuracoes'
-      path: '/compras/configuracoes'
-      fullPath: '/compras/configuracoes'
-      preLoaderRoute: typeof AuthenticatedComprasComprasConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedComprasRoute
-    }
-    '/_authenticated/_compras/compras/novo': {
-      id: '/_authenticated/_compras/compras/novo'
-      path: '/compras/novo'
-      fullPath: '/compras/novo'
-      preLoaderRoute: typeof AuthenticatedComprasComprasNovoRouteImport
-      parentRoute: typeof AuthenticatedComprasRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/'
-      path: '/estoque-matriz'
-      fullPath: '/estoque-matriz/'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads'
-      path: '/estoque-matriz/acoes-leads'
-      fullPath: '/estoque-matriz/acoes-leads'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/anunciados': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/anunciados'
-      path: '/estoque-matriz/anunciados'
-      fullPath: '/estoque-matriz/anunciados'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/importar': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/importar'
-      path: '/estoque-matriz/importar'
-      fullPath: '/estoque-matriz/importar'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/inativos': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/inativos'
-      path: '/estoque-matriz/inativos'
-      fullPath: '/estoque-matriz/inativos'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/lixeira': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/lixeira'
-      path: '/estoque-matriz/lixeira'
-      fullPath: '/estoque-matriz/lixeira'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/regras': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/regras'
-      path: '/estoque-matriz/regras'
-      fullPath: '/estoque-matriz/regras'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/repasse': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
-      path: '/estoque-matriz/repasse'
-      fullPath: '/estoque-matriz/repasse'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
-      path: '/estoque-matriz/vendas-historico'
-      fullPath: '/estoque-matriz/vendas-historico'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
-    }
-    '/_authenticated/_estoque-matriz/estoque-matriz/vendidos': {
-      id: '/_authenticated/_estoque-matriz/estoque-matriz/vendidos'
-      path: '/estoque-matriz/vendidos'
-      fullPath: '/estoque-matriz/vendidos'
-      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport
-      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    '/_authenticated/_documentos/documentos': {
+      id: '/_authenticated/_documentos/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof AuthenticatedDocumentosDocumentosRouteImport
+      parentRoute: typeof AuthenticatedDocumentosRoute
     }
     '/_authenticated/_rotina/rotina/': {
       id: '/_authenticated/_rotina/rotina/'
@@ -935,102 +837,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRotinaRotinaIndexRouteImport
       parentRoute: typeof AuthenticatedRotinaRoute
     }
-    '/_authenticated/_rotina/rotina/$setorId': {
-      id: '/_authenticated/_rotina/rotina/$setorId'
-      path: '/rotina/$setorId'
-      fullPath: '/rotina/$setorId'
-      preLoaderRoute: typeof AuthenticatedRotinaRotinaSetorIdRouteImport
-      parentRoute: typeof AuthenticatedRotinaRoute
+    '/_authenticated/_estoque-matriz/estoque-matriz/': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/'
+      path: '/estoque-matriz'
+      fullPath: '/estoque-matriz/'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
     }
-    '/_authenticated/_rotina/rotina/configuracoes': {
-      id: '/_authenticated/_rotina/rotina/configuracoes'
-      path: '/rotina/configuracoes'
-      fullPath: '/rotina/configuracoes'
-      preLoaderRoute: typeof AuthenticatedRotinaRotinaConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedRotinaRoute
+    '/_authenticated/_compras/compras/': {
+      id: '/_authenticated/_compras/compras/'
+      path: '/compras'
+      fullPath: '/compras/'
+      preLoaderRoute: typeof AuthenticatedComprasComprasIndexRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
     }
-    '/_authenticated/_toyota/toyota/configuracoes': {
-      id: '/_authenticated/_toyota/toyota/configuracoes'
-      path: '/toyota/configuracoes'
-      fullPath: '/toyota/configuracoes'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/elegiveis': {
-      id: '/_authenticated/_toyota/toyota/elegiveis'
-      path: '/toyota/elegiveis'
-      fullPath: '/toyota/elegiveis'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaElegiveisRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/fila-posvendas': {
-      id: '/_authenticated/_toyota/toyota/fila-posvendas'
-      path: '/toyota/fila-posvendas'
-      fullPath: '/toyota/fila-posvendas'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaFilaPosvendasRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/fila-preparador': {
-      id: '/_authenticated/_toyota/toyota/fila-preparador'
-      path: '/toyota/fila-preparador'
-      fullPath: '/toyota/fila-preparador'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaFilaPreparadorRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/painel': {
-      id: '/_authenticated/_toyota/toyota/painel'
-      path: '/toyota/painel'
-      fullPath: '/toyota/painel'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/painel-geral': {
-      id: '/_authenticated/_toyota/toyota/painel-geral'
-      path: '/toyota/painel-geral'
-      fullPath: '/toyota/painel-geral'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelGeralRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/regras': {
-      id: '/_authenticated/_toyota/toyota/regras'
-      path: '/toyota/regras'
-      fullPath: '/toyota/regras'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaRegrasRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/_authenticated/_toyota/toyota/revisoes': {
-      id: '/_authenticated/_toyota/toyota/revisoes'
-      path: '/toyota/revisoes'
-      fullPath: '/toyota/revisoes'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaRevisoesRouteImport
-      parentRoute: typeof AuthenticatedToyotaRoute
-    }
-    '/api/public/cron/verificar-notificacoes': {
-      id: '/api/public/cron/verificar-notificacoes'
-      path: '/api/public/cron/verificar-notificacoes'
-      fullPath: '/api/public/cron/verificar-notificacoes'
-      preLoaderRoute: typeof ApiPublicCronVerificarNotificacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/notificar-vencimentos': {
-      id: '/api/public/hooks/notificar-vencimentos'
-      path: '/api/public/hooks/notificar-vencimentos'
-      fullPath: '/api/public/hooks/notificar-vencimentos'
-      preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/notificar-vencimentos-test': {
-      id: '/api/public/hooks/notificar-vencimentos-test'
-      path: '/api/public/hooks/notificar-vencimentos-test'
-      fullPath: '/api/public/hooks/notificar-vencimentos-test'
-      preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -1040,26 +865,194 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/_rotina/rotina/atividade/$id': {
-      id: '/_authenticated/_rotina/rotina/atividade/$id'
-      path: '/rotina/atividade/$id'
-      fullPath: '/rotina/atividade/$id'
-      preLoaderRoute: typeof AuthenticatedRotinaRotinaAtividadeIdRouteImport
+    '/api/public/hooks/notificar-vencimentos-test': {
+      id: '/api/public/hooks/notificar-vencimentos-test'
+      path: '/api/public/hooks/notificar-vencimentos-test'
+      fullPath: '/api/public/hooks/notificar-vencimentos-test'
+      preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/notificar-vencimentos': {
+      id: '/api/public/hooks/notificar-vencimentos'
+      path: '/api/public/hooks/notificar-vencimentos'
+      fullPath: '/api/public/hooks/notificar-vencimentos'
+      preLoaderRoute: typeof ApiPublicHooksNotificarVencimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/verificar-notificacoes': {
+      id: '/api/public/cron/verificar-notificacoes'
+      path: '/api/public/cron/verificar-notificacoes'
+      fullPath: '/api/public/cron/verificar-notificacoes'
+      preLoaderRoute: typeof ApiPublicCronVerificarNotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_toyota/toyota/revisoes': {
+      id: '/_authenticated/_toyota/toyota/revisoes'
+      path: '/toyota/revisoes'
+      fullPath: '/toyota/revisoes'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaRevisoesRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/regras': {
+      id: '/_authenticated/_toyota/toyota/regras'
+      path: '/toyota/regras'
+      fullPath: '/toyota/regras'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaRegrasRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/painel-geral': {
+      id: '/_authenticated/_toyota/toyota/painel-geral'
+      path: '/toyota/painel-geral'
+      fullPath: '/toyota/painel-geral'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelGeralRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/painel': {
+      id: '/_authenticated/_toyota/toyota/painel'
+      path: '/toyota/painel'
+      fullPath: '/toyota/painel'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaPainelRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/fila-preparador': {
+      id: '/_authenticated/_toyota/toyota/fila-preparador'
+      path: '/toyota/fila-preparador'
+      fullPath: '/toyota/fila-preparador'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaFilaPreparadorRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/fila-posvendas': {
+      id: '/_authenticated/_toyota/toyota/fila-posvendas'
+      path: '/toyota/fila-posvendas'
+      fullPath: '/toyota/fila-posvendas'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaFilaPosvendasRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/elegiveis': {
+      id: '/_authenticated/_toyota/toyota/elegiveis'
+      path: '/toyota/elegiveis'
+      fullPath: '/toyota/elegiveis'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaElegiveisRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_toyota/toyota/configuracoes': {
+      id: '/_authenticated/_toyota/toyota/configuracoes'
+      path: '/toyota/configuracoes'
+      fullPath: '/toyota/configuracoes'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedToyotaRoute
+    }
+    '/_authenticated/_rotina/rotina/configuracoes': {
+      id: '/_authenticated/_rotina/rotina/configuracoes'
+      path: '/rotina/configuracoes'
+      fullPath: '/rotina/configuracoes'
+      preLoaderRoute: typeof AuthenticatedRotinaRotinaConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRotinaRoute
     }
-    '/_authenticated/_rotina/rotina/tarefa/$id': {
-      id: '/_authenticated/_rotina/rotina/tarefa/$id'
-      path: '/rotina/tarefa/$id'
-      fullPath: '/rotina/tarefa/$id'
-      preLoaderRoute: typeof AuthenticatedRotinaRotinaTarefaIdRouteImport
+    '/_authenticated/_rotina/rotina/$setorId': {
+      id: '/_authenticated/_rotina/rotina/$setorId'
+      path: '/rotina/$setorId'
+      fullPath: '/rotina/$setorId'
+      preLoaderRoute: typeof AuthenticatedRotinaRotinaSetorIdRouteImport
       parentRoute: typeof AuthenticatedRotinaRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/vendidos': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/vendidos'
+      path: '/estoque-matriz/vendidos'
+      fullPath: '/estoque-matriz/vendidos'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
+      path: '/estoque-matriz/vendas-historico'
+      fullPath: '/estoque-matriz/vendas-historico'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/repasse': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
+      path: '/estoque-matriz/repasse'
+      fullPath: '/estoque-matriz/repasse'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/regras': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/regras'
+      path: '/estoque-matriz/regras'
+      fullPath: '/estoque-matriz/regras'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/lixeira': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/lixeira'
+      path: '/estoque-matriz/lixeira'
+      fullPath: '/estoque-matriz/lixeira'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizLixeiraRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/inativos': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/inativos'
+      path: '/estoque-matriz/inativos'
+      fullPath: '/estoque-matriz/inativos'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizInativosRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/importar': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/importar'
+      path: '/estoque-matriz/importar'
+      fullPath: '/estoque-matriz/importar'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizImportarRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/anunciados': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/anunciados'
+      path: '/estoque-matriz/anunciados'
+      fullPath: '/estoque-matriz/anunciados'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAnunciadosRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads': {
+      id: '/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads'
+      path: '/estoque-matriz/acoes-leads'
+      fullPath: '/estoque-matriz/acoes-leads'
+      preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizAcoesLeadsRouteImport
+      parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_compras/compras/novo': {
+      id: '/_authenticated/_compras/compras/novo'
+      path: '/compras/novo'
+      fullPath: '/compras/novo'
+      preLoaderRoute: typeof AuthenticatedComprasComprasNovoRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/_authenticated/_compras/compras/configuracoes': {
+      id: '/_authenticated/_compras/compras/configuracoes'
+      path: '/compras/configuracoes'
+      fullPath: '/compras/configuracoes'
+      preLoaderRoute: typeof AuthenticatedComprasComprasConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/_authenticated/_compras/compras/$id': {
+      id: '/_authenticated/_compras/compras/$id'
+      path: '/compras/$id'
+      fullPath: '/compras/$id'
+      preLoaderRoute: typeof AuthenticatedComprasComprasIdRouteImport
+      parentRoute: typeof AuthenticatedComprasRoute
+    }
+    '/_authenticated/_toyota/toyota/revisoes/nova': {
+      id: '/_authenticated/_toyota/toyota/revisoes/nova'
+      path: '/nova'
+      fullPath: '/toyota/revisoes/nova'
+      preLoaderRoute: typeof AuthenticatedToyotaToyotaRevisoesNovaRouteImport
+      parentRoute: typeof AuthenticatedToyotaToyotaRevisoesRoute
     }
     '/_authenticated/_toyota/toyota/estoque/importar': {
       id: '/_authenticated/_toyota/toyota/estoque/importar'
@@ -1068,12 +1061,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToyotaToyotaEstoqueImportarRouteImport
       parentRoute: typeof AuthenticatedToyotaRoute
     }
-    '/_authenticated/_toyota/toyota/revisoes/nova': {
-      id: '/_authenticated/_toyota/toyota/revisoes/nova'
-      path: '/nova'
-      fullPath: '/toyota/revisoes/nova'
-      preLoaderRoute: typeof AuthenticatedToyotaToyotaRevisoesNovaRouteImport
-      parentRoute: typeof AuthenticatedToyotaToyotaRevisoesRoute
+    '/_authenticated/_rotina/rotina/tarefa/$id': {
+      id: '/_authenticated/_rotina/rotina/tarefa/$id'
+      path: '/rotina/tarefa/$id'
+      fullPath: '/rotina/tarefa/$id'
+      preLoaderRoute: typeof AuthenticatedRotinaRotinaTarefaIdRouteImport
+      parentRoute: typeof AuthenticatedRotinaRoute
+    }
+    '/_authenticated/_rotina/rotina/atividade/$id': {
+      id: '/_authenticated/_rotina/rotina/atividade/$id'
+      path: '/rotina/atividade/$id'
+      fullPath: '/rotina/atividade/$id'
+      preLoaderRoute: typeof AuthenticatedRotinaRotinaAtividadeIdRouteImport
+      parentRoute: typeof AuthenticatedRotinaRoute
     }
   }
 }
