@@ -643,8 +643,10 @@ export function calcularValorAnuncio(
   }
 
   // Chegando aqui, ou não há valor registrado ou houve mudança de faixa.
-  // No modo forçado a base é sempre reconstruída do zero.
-  const valorAtual = forcar ? null : valorRegistrado;
+  // Havendo valor anunciado (automático ou manual), ele é SEMPRE a base do
+  // ajuste da nova faixa — inclusive no recálculo forçado. Os níveis de
+  // fallback (histórico/FIPE) só são usados na primeira entrada do veículo.
+  const valorAtual = valorRegistrado;
   if (forcar) memoria["recalculo_forcado"] = true;
 
 
