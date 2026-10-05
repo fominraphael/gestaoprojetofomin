@@ -3,7 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import { useEffect } from "react";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 
-export function ModuleErrorBoundary({ error, reset }: { error: Error; reset: () => void }) {
+export function ModuleErrorBoundary({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   const router = useRouter();
 
   useEffect(() => {
