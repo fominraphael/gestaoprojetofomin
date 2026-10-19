@@ -32,6 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ordenarLista, type ValorOrdenavel } from "@/lib/ordenacao";
+import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import {
   calcularValorAnuncio,
   faixaKm as rotuloFaixaKm,
@@ -183,7 +185,7 @@ export function VeiculosTable({
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
   const [webmotorsFiltro, setWebmotorsFiltro] = useState<"todos" | "com" | "sem">("todos");
-  const [ordemWm, setOrdemWm] = useState<"asc" | "desc" | null>(null);
+  const ordem = useOrdenacao(`veiculos-${modo}`);
   const [regionais] = useRegionaisSelecionadas();
   const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
@@ -271,6 +273,58 @@ export function VeiculosTable({
     [veiculos],
   );
 
+  /** Valor bruto de cada coluna para ordenação (número/data reais, nunca o texto formatado). */
+  const valorOrdenacao = (v: Veiculo, key: string): ValorOrdenavel => {
+    const data = (d?: string | null) => (d ? new Date(d) : null);
+    switch (key as ColunaKey) {
+      case "modelo": return v.modelo;
+      case "chassi": return v.chassi;
+      case "chassi_resumido": return v.chassi_resumido;
+      case "origem": return origens.find((o) => o.id === v.origem_id)?.nome;
+      case "empresa": return empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;
+      case "regional": return v.regional;
+      case "loja": return v.loja;
+      case "placa": return v.placa?.toUpperCase();
+      case "ano_mod": return v.ano_mod;
+      case "cor": return v.cor;
+      case "km": return v.km;
+      case "custo_total": return v.custo_total;
+      case "classificacao": return v.classificacao;
+      case "dias": return v.dias_em_estoque;
+      case "faixa": {
+        const f = faixas.find((x) => x.id === v.faixa_id_atual);
+        return f ? f.dia_inicio : null;
+      }
+      case "leads": return v.leads_60_dias;
+      case "fotos": return v.fotos_qtd;
+      case "fipe": return v.fipe;
+      case "codigo_fipe": return v.codigo_fipe;
+      case "perc_fipe": return v.fipe && v.valor_anuncio_calculado ? v.valor_anuncio_calculado / v.fipe : null;
+      case "perc_fipe_planilha": return v.percentual_fipe_planilha;
+      case "valor_importado": return v.valor_anunciado_planilha;
+      case "valor_sugerido": return v.valor_anuncio_calculado;
+      case "margem":
+        return v.custo_total && v.valor_anuncio_calculado != null
+          ? (v.valor_anuncio_calculado - v.custo_total) / v.custo_total
+          : null;
+      case "webmotors": return v.webmotors_valor;
+      case "finalidade": return v.finalidade_atual ?? v.finalidade;
+      case "acao_planilha": return v.acao_planilha;
+      case "canais":
+        return canaisDoVeiculo(v, anunciosPorChassi.get(v.chassi.toUpperCase())).filter(
+          (c) => c.estado === "cumpriu",
+        ).length;
+      case "situacao":
+        return v.deleted_at ? "Lixeira" : v.inativo ? "Inativo" : v.em_vendido ? "Vendido" : v.em_repasse ? "Repasse" : "Ativo";
+      case "importado_em": return data(v.importado_em);
+      case "ultimo_calculo_em": return data(v.ultimo_calculo_em);
+      case "editado_em": return data(v.editado_em);
+      case "inativado_em": return data(v.inativado_em);
+      case "campos_manuais": return (v.campos_manuais ?? []).join(", ");
+      default: return null;
+    }
+  };
+
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     const lista = veiculos.filter((v) => {
@@ -290,15 +344,8 @@ export function VeiculosTable({
         (c ?? "").toLowerCase().includes(termo),
       );
     });
-    if (!ordemWm) return lista;
-    const sinal = ordemWm === "asc" ? 1 : -1;
-    // Veículos sem valor ficam sempre no fim.
-    return [...lista].sort((a, b) => {
-      if (a.webmotors_valor == null) return b.webmotors_valor == null ? 0 : 1;
-      if (b.webmotors_valor == null) return -1;
-      return (a.webmotors_valor - b.webmotors_valor) * sinal;
-    });
-  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, webmotorsFiltro, ordemWm]);
+    return ordenarLista(lista, ordem.criterios, valorOrdenacao);
+  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, webmotorsFiltro, ordem.criterios, valorOrdenacao]);
 
   const nomeEmpresa = (v: Veiculo) =>
     empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;
@@ -312,10 +359,10 @@ export function VeiculosTable({
    * - "pendente" (vermelho) → canal obrigatório e NÃO publicado.
    * - "opcional" (cinza)    → canal não obrigatório para a categoria.
    */
-  const canaisDoVeiculo = (
+  function canaisDoVeiculo(
     v: Veiculo,
     anuncio: Anuncio | undefined,
-  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] => {
+  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] {
     const regra = regras.find(
       (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
     );
@@ -342,7 +389,7 @@ export function VeiculosTable({
             titulo: `${nomeCanal}: obrigatório e ainda não publicado`,
           };
     });
-  };
+  }
 
   /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
   const exportar = async () => {
@@ -560,6 +607,13 @@ export function VeiculosTable({
       </div>
 
 
+      <ResumoOrdenacao
+        criterios={ordem.criterios}
+        rotulo={(k) => COLUNAS.find((c) => c.key === k)?.label ?? k}
+        onInverter={ordem.inverter}
+        onRemover={ordem.remover}
+        onLimpar={ordem.limpar}
+      />
       <div className="rounded-2xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
@@ -569,20 +623,14 @@ export function VeiculosTable({
                   key={c.key}
                   className={cn("px-3 py-2 font-medium", c.align === "right" && "text-right")}
                 >
-                  {c.key === "webmotors" ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 hover:text-foreground"
-                      onClick={() => setOrdemWm((o) => (o === null ? "desc" : o === "desc" ? "asc" : null))}
-                      title="Ordenar pelo Valor Webmotors"
-                    >
-                      {c.label}
-                      {ordemWm === "desc" && <ArrowDown className="w-3 h-3" />}
-                      {ordemWm === "asc" && <ArrowUp className="w-3 h-3" />}
-                    </button>
-                  ) : (
-                    c.label
-                  )}
+                  <CabecalhoOrdenavel
+                    colKey={c.key}
+                    criterios={ordem.criterios}
+                    onAlternar={ordem.alternar}
+                    alinhar={c.align}
+                  >
+                    {c.label}
+                  </CabecalhoOrdenavel>
                 </th>
               ))}
               <th className="px-3 py-2 font-medium text-right">Ações</th>
