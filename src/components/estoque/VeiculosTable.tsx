@@ -359,10 +359,10 @@ export function VeiculosTable({
    * - "pendente" (vermelho) → canal obrigatório e NÃO publicado.
    * - "opcional" (cinza)    → canal não obrigatório para a categoria.
    */
-  const canaisDoVeiculo = (
+  function canaisDoVeiculo(
     v: Veiculo,
     anuncio: Anuncio | undefined,
-  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] => {
+  ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] {
     const regra = regras.find(
       (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
     );
@@ -389,7 +389,7 @@ export function VeiculosTable({
             titulo: `${nomeCanal}: obrigatório e ainda não publicado`,
           };
     });
-  };
+  }
 
   /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */
   const exportar = async () => {
