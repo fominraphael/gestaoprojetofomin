@@ -39,8 +39,17 @@ export function useOrdenacao(idTabela: string) {
     [criterios, atualizar],
   );
   const limpar = useCallback(() => atualizar([]), [atualizar]);
+  const inverter = useCallback(
+    (key: string) =>
+      atualizar(
+        criterios.map((c) =>
+          c.key === key ? { key, sentido: c.sentido === "asc" ? "desc" : "asc" } : c,
+        ),
+      ),
+    [criterios, atualizar],
+  );
 
-  return { criterios, alternar, remover, limpar };
+  return { criterios, alternar, remover, limpar, inverter };
 }
 
 export interface CabecalhoOrdenavelProps {
@@ -89,13 +98,13 @@ export function CabecalhoOrdenavel({
 export interface ResumoOrdenacaoProps {
   criterios: CriterioOrdem[];
   rotulo: (key: string) => string;
-  onAlternar: (key: string, multiplo: boolean) => void;
+  onInverter: (key: string) => void;
   onRemover: (key: string) => void;
   onLimpar: () => void;
 }
 
 /** Lista as colunas ordenadas com prioridade, permitindo inverter, remover e limpar. */
-export function ResumoOrdenacao({ criterios, rotulo, onAlternar, onRemover, onLimpar }: ResumoOrdenacaoProps) {
+export function ResumoOrdenacao({ criterios, rotulo, onInverter, onRemover, onLimpar }: ResumoOrdenacaoProps) {
   if (criterios.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -107,7 +116,7 @@ export function ResumoOrdenacao({ criterios, rotulo, onAlternar, onRemover, onLi
             type="button"
             className="inline-flex items-center gap-1 hover:text-foreground"
             title="Inverter sentido"
-            onClick={() => onAlternar(c.key, true)}
+            onClick={() => onInverter(c.key)}
           >
             {rotulo(c.key)}
             {c.sentido === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
