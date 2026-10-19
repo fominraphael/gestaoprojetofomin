@@ -1,3 +1,5 @@
+import { ordenarLista } from "@/lib/ordenacao";
+import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -149,6 +151,7 @@ function AcoesMatriz() {
     [linhas],
   );
 
+  const ordem = useOrdenacao("acoes-matriz");
   const filtradasBase = useMemo(() => {
     const placa = buscaPlaca.trim().toLowerCase();
     const chassi = buscaChassi.trim().toLowerCase();
@@ -163,7 +166,15 @@ function AcoesMatriz() {
 
   const pendentes = useMemo(() => filtradasBase.filter((l) => !l.concluido), [filtradasBase]);
   const realizadas = useMemo(() => filtradasBase.filter((l) => l.concluido), [filtradasBase]);
-  const visiveis = aba === "pendentes" ? pendentes : realizadas;
+  const visiveis = useMemo(
+    () =>
+      ordenarLista(aba === "pendentes" ? pendentes : realizadas, ordem.criterios, (l, k) =>
+        k === "faixa"
+          ? (faixas.find((f) => f.id === l.faixaId)?.dia_inicio ?? null)
+          : ((l as unknown as Record<string, string | boolean | null>)[k] ?? null),
+      ),
+    [aba, pendentes, realizadas, ordem.criterios, faixas],
+  );
 
   const alternar = async (l: LinhaAcao, concluido: boolean) => {
     try {
@@ -279,18 +290,57 @@ function AcoesMatriz() {
         </Button>
       </div>
 
+      <ResumoOrdenacao
+        criterios={ordem.criterios}
+        rotulo={(k) => (({ concluido: "Feito", acao: "Ação", modelo: "Veículo", placa: "Placa", chassi: "Chassi", classificacao: "Class.", faixa: "Faixa", observacao: "Observação" }) as Record<string, string>)[k] ?? k}
+        onInverter={ordem.inverter}
+        onRemover={ordem.remover}
+        onLimpar={ordem.limpar}
+      />
       <div className="rounded-2xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium w-10">Feito</th>
-              <th className="px-3 py-2 font-medium">Ação</th>
-              <th className="px-3 py-2 font-medium">Veículo</th>
-              <th className="px-3 py-2 font-medium">Placa</th>
-              <th className="px-3 py-2 font-medium">Chassi</th>
-              <th className="px-3 py-2 font-medium">Class.</th>
-              <th className="px-3 py-2 font-medium">Faixa</th>
-              <th className="px-3 py-2 font-medium">Observação</th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="concluido" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Feito
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="acao" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Ação
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="modelo" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Veículo
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="placa" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Placa
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="chassi" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Chassi
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="classificacao" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Class.
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="faixa" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Faixa
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="observacao" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Observação
+                </CabecalhoOrdenavel>
+              </th>
             </tr>
           </thead>
           <tbody>
