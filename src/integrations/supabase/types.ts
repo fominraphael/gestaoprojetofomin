@@ -1233,6 +1233,11 @@ export type Database = {
           valor_anuncio_calculado: number | null
           valor_manual_faixa_id: string | null
           valor_motor: number | null
+          webmotors_atualizado_em: string | null
+          webmotors_data_referencia: string | null
+          webmotors_observacao: string | null
+          webmotors_url: string | null
+          webmotors_valor: number | null
         }
         Insert: {
           acao_planilha?: string | null
@@ -1274,6 +1279,11 @@ export type Database = {
           valor_anuncio_calculado?: number | null
           valor_manual_faixa_id?: string | null
           valor_motor?: number | null
+          webmotors_atualizado_em?: string | null
+          webmotors_data_referencia?: string | null
+          webmotors_observacao?: string | null
+          webmotors_url?: string | null
+          webmotors_valor?: number | null
         }
         Update: {
           acao_planilha?: string | null
@@ -1315,6 +1325,11 @@ export type Database = {
           valor_anuncio_calculado?: number | null
           valor_manual_faixa_id?: string | null
           valor_motor?: number | null
+          webmotors_atualizado_em?: string | null
+          webmotors_data_referencia?: string | null
+          webmotors_observacao?: string | null
+          webmotors_url?: string | null
+          webmotors_valor?: number | null
         }
         Relationships: [
           {
@@ -1414,6 +1429,59 @@ export type Database = {
           versao?: string | null
         }
         Relationships: []
+      }
+      estoque_webmotors_historico: {
+        Row: {
+          arquivo_nome: string | null
+          created_at: string
+          data_referencia: string | null
+          id: string
+          observacao: string | null
+          placa: string
+          url_anuncio: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
+          valor_anterior: number | null
+          valor_novo: number
+          veiculo_id: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          observacao?: string | null
+          placa: string
+          url_anuncio?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: number | null
+          valor_novo: number
+          veiculo_id: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          created_at?: string
+          data_referencia?: string | null
+          id?: string
+          observacao?: string | null
+          placa?: string
+          url_anuncio?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+          valor_anterior?: number | null
+          valor_novo?: number
+          veiculo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_webmotors_historico_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_codes: {
         Row: {
@@ -2797,6 +2865,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      importar_webmotors: {
+        Args: { _arquivo: string; _itens: Json; _usuario_nome: string }
+        Returns: number
       }
       purge_old_trash: { Args: never; Returns: undefined }
       user_has_setor: {

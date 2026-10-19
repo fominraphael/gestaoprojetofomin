@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/estoque-motor";
+import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+
 import {
   atualizarVenda,
   getVendasHistorico,
@@ -84,19 +86,22 @@ function VendasHistoricoPage() {
     queryFn: () => getVendasHistorico({ lixeira }),
   });
 
+  const [regionaisSel] = useRegionaisSelecionadas();
+  const opcoesRegional = useMemo(() => listarRegionais(vendas.map((v) => v.regional)), [vendas]);
   const filtrados = useMemo(() => {
     const min = kmMin === "" ? null : Number(kmMin);
     const max = kmMax === "" ? null : Number(kmMax);
     const a = ano.trim().toLowerCase();
     const f = fipe.trim().toLowerCase();
     return vendas.filter((v) => {
+      if (!passaRegional(v.regional, regionaisSel)) return false;
       if (min != null && (v.km ?? 0) < min) return false;
       if (max != null && (v.km ?? 0) > max) return false;
       if (a && !(v.ano_modelo ?? "").toLowerCase().includes(a)) return false;
       if (f && !(v.codigo_fipe ?? "").toLowerCase().includes(f)) return false;
       return true;
     });
-  }, [vendas, kmMin, kmMax, ano, fipe]);
+  }, [vendas, kmMin, kmMax, ano, fipe, regionaisSel]);
 
   // Paginação de 100 em 100 (a base pode ter milhares de linhas).
   const POR_PAGINA = 100;
@@ -153,6 +158,7 @@ function VendasHistoricoPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <RegionalFilter opcoes={opcoesRegional} />
         <Input
           className="w-[120px]"
           placeholder="KM mín."

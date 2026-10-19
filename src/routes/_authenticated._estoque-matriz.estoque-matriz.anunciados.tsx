@@ -16,12 +16,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/estoque-motor";
+import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+
 import {
   atualizarAnuncio,
   getAnunciosCompletos,
   moverAnuncioParaLixeira,
   restaurarAnuncio,
   type AnuncioRow,
+  getVeiculos,
 } from "@/lib/estoque";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/anunciados")({
@@ -81,15 +84,27 @@ function AnunciadosPage() {
     queryFn: () => getAnunciosCompletos({ lixeira }),
   });
 
+  const { data: veiculosAtivos = [] } = useQuery({
+    queryKey: ["estoque", "veiculos", "ativos"],
+    queryFn: () => getVeiculos({ repasse: false }),
+  });
+  const regionalPorChassi = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const v of veiculosAtivos) m.set(v.chassi.toUpperCase(), v.regional);
+    return m;
+  }, [veiculosAtivos]);
+  const [regionaisSel] = useRegionaisSelecionadas();
+  const opcoesRegional = useMemo(() => listarRegionais(veiculosAtivos.map((v) => v.regional)), [veiculosAtivos]);
   const filtrados = useMemo(() => {
     const c = chassi.trim().toLowerCase();
     const p = placa.trim().toLowerCase();
     return anuncios.filter((a) => {
+      if (!passaRegional(regionalPorChassi.get(a.chassi.toUpperCase()), regionaisSel)) return false;
       if (c && !a.chassi.toLowerCase().includes(c)) return false;
       if (p && !(a.placa ?? "").toLowerCase().includes(p)) return false;
       return true;
     });
-  }, [anuncios, chassi, placa]);
+  }, [anuncios, chassi, placa, regionalPorChassi, regionaisSel]);
 
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "anunciados"] });
 
@@ -131,6 +146,7 @@ function AnunciadosPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <RegionalFilter opcoes={opcoesRegional} />
         <Input
           className="w-full sm:w-[240px]"
           placeholder="Filtrar por chassi"

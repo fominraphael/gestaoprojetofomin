@@ -23,6 +23,7 @@ import {
   getVeiculos,
   marcarAcaoMatriz,
 } from "@/lib/estoque";
+import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
 import { ACOES_MATRIZ, veiculoFotografado, type TipoAcaoMatriz } from "@/lib/estoque-motor";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads")({
@@ -70,6 +71,7 @@ function AcoesMatriz() {
   const [filtroLoja, setFiltroLoja] = useState<string>(TODOS);
   const [buscaPlaca, setBuscaPlaca] = useState("");
   const [buscaChassi, setBuscaChassi] = useState("");
+  const [regionaisSel] = useRegionaisSelecionadas();
   const [aba, setAba] = useState<"pendentes" | "realizadas">("pendentes");
 
   const { data: veiculos = [] } = useQuery({
@@ -101,6 +103,7 @@ function AcoesMatriz() {
   const linhas = useMemo<LinhaAcao[]>(() => {
     const out: LinhaAcao[] = [];
     for (const v of veiculos) {
+      if (!passaRegional(v.regional, regionaisSel)) continue;
       const regra = regras.find(
         (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
       );
@@ -138,7 +141,8 @@ function AcoesMatriz() {
       }
     }
     return out;
-  }, [veiculos, regras, faixas, registroPor]);
+  }, [veiculos, regras, faixas, registroPor, regionaisSel]);
+  const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
 
   const lojas = useMemo(
     () => Array.from(new Set(linhas.map((l) => l.loja).filter((l) => l && l !== "—"))).sort(),
@@ -210,6 +214,7 @@ function AcoesMatriz() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <RegionalFilter opcoes={opcoesRegional} />
         <Select value={filtro} onValueChange={setFiltro}>
           <SelectTrigger className="w-[220px]">
             <SelectValue placeholder="Tipo de ação" />

@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ImportarWebmotorsCard } from "@/components/estoque/ImportarWebmotorsCard";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
@@ -321,6 +322,7 @@ function EstoqueImportar() {
             </Card>
           );
         })}
+        <ImportarWebmotorsCard />
       </div>
 
       <div>

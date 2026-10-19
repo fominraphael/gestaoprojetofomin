@@ -44,6 +44,7 @@ import {
   type VendaHistorica,
 } from "@/lib/estoque-motor";
 
+import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import { getHistoricoVeiculo, getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
@@ -112,6 +113,8 @@ const COLUNAS = [
   { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
   { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
   { key: "margem", label: "Margem (%)", align: "right" },
+  { key: "webmotors", label: "Valor Webmotors", align: "right" },
+
 
   { key: "finalidade", label: "Finalidade", align: "left" },
   { key: "acao_planilha", label: "Ação (planilha)", align: "left" },
@@ -140,6 +143,7 @@ const COLUNAS_PADRAO: ColunaKey[] = [
   "perc_fipe",
   "valor_importado",
   "valor_sugerido",
+  "webmotors",
   "canais",
 ];
 
@@ -178,6 +182,10 @@ export function VeiculosTable({
   const [classFiltro, setClassFiltro] = useState(TODOS);
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
   const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
+  const [webmotorsFiltro, setWebmotorsFiltro] = useState<"todos" | "com" | "sem">("todos");
+  const [ordemWm, setOrdemWm] = useState<"asc" | "desc" | null>(null);
+  const [regionais] = useRegionaisSelecionadas();
+  const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
   const [colunas, setColunas] = useState<ColunaKey[]>(COLUNAS_PADRAO);
 
@@ -265,7 +273,10 @@ export function VeiculosTable({
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return veiculos.filter((v) => {
+    const lista = veiculos.filter((v) => {
+      if (!passaRegional(v.regional, regionais)) return false;
+      if (webmotorsFiltro === "com" && v.webmotors_valor == null) return false;
+      if (webmotorsFiltro === "sem" && v.webmotors_valor != null) return false;
       if (origemFiltro !== TODOS && v.origem_id !== origemFiltro) return false;
       if (classFiltro !== TODOS && (v.classificacao ?? "") !== classFiltro) return false;
       if (faixaFiltro !== TODOS && (v.faixa_id_atual ?? "") !== faixaFiltro) return false;
@@ -279,7 +290,15 @@ export function VeiculosTable({
         (c ?? "").toLowerCase().includes(termo),
       );
     });
-  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro]);
+    if (!ordemWm) return lista;
+    const sinal = ordemWm === "asc" ? 1 : -1;
+    // Veículos sem valor ficam sempre no fim.
+    return [...lista].sort((a, b) => {
+      if (a.webmotors_valor == null) return b.webmotors_valor == null ? 0 : 1;
+      if (b.webmotors_valor == null) return -1;
+      return (a.webmotors_valor - b.webmotors_valor) * sinal;
+    });
+  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, webmotorsFiltro, ordemWm]);
 
   const nomeEmpresa = (v: Veiculo) =>
     empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;
@@ -353,6 +372,8 @@ export function VeiculosTable({
           "% FIPE": percFipe(v),
           "Valor anúncio importado": v.valor_anunciado_planilha ?? "",
           "Valor anunciado sugerido": v.valor_anuncio_calculado ?? "",
+          "Valor Webmotors": v.webmotors_valor ?? "Não informado",
+          "Data ref. Webmotors": v.webmotors_data_referencia ?? "",
           Classificação: v.classificacao ?? "",
           "Dias em estoque": v.dias_em_estoque,
           Faixa: nomeFaixa(v),
@@ -380,6 +401,7 @@ export function VeiculosTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
+        <RegionalFilter opcoes={opcoesRegional} />
         <Input
           placeholder="Buscar por chassi, placa, modelo ou loja"
           value={busca}
@@ -436,6 +458,16 @@ export function VeiculosTable({
                 {f}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={webmotorsFiltro} onValueChange={(v) => setWebmotorsFiltro(v as "todos" | "com" | "sem")}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Webmotors" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Webmotors: todos</SelectItem>
+            <SelectItem value="com">Com valor Webmotors</SelectItem>
+            <SelectItem value="sem">Sem valor Webmotors</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" className="ml-auto" onClick={() => abrirConfig(true)}>
@@ -537,7 +569,20 @@ export function VeiculosTable({
                   key={c.key}
                   className={cn("px-3 py-2 font-medium", c.align === "right" && "text-right")}
                 >
-                  {c.label}
+                  {c.key === "webmotors" ? (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                      onClick={() => setOrdemWm((o) => (o === null ? "desc" : o === "desc" ? "asc" : null))}
+                      title="Ordenar pelo Valor Webmotors"
+                    >
+                      {c.label}
+                      {ordemWm === "desc" && <ArrowDown className="w-3 h-3" />}
+                      {ordemWm === "asc" && <ArrowUp className="w-3 h-3" />}
+                    </button>
+                  ) : (
+                    c.label
+                  )}
                 </th>
               ))}
               <th className="px-3 py-2 font-medium text-right">Ações</th>
@@ -637,6 +682,7 @@ export function VeiculosTable({
                       : v.em_repasse
                         ? "Repasse"
                         : "Ativo",
+                webmotors: <WebmotorsCelula v={v} />,
                 importado_em: formatData(v.importado_em),
                 ultimo_calculo_em: formatData(v.ultimo_calculo_em),
                 editado_em: formatData(v.editado_em),
@@ -748,6 +794,12 @@ export function VeiculosTable({
             </DialogDescription>
           </DialogHeader>
           {detalhe && (
+            <div className="rounded-xl border border-border p-3 text-sm flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">Valor Webmotors</span>
+              <WebmotorsCelula v={detalhe} />
+            </div>
+          )}
+          {detalhe && (
             <DetalheCalculo
               veiculo={detalhe}
               vendas={vendas}
@@ -759,6 +811,33 @@ export function VeiculosTable({
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Valor Webmotors + data de referência + link opcional do anúncio. */
+function WebmotorsCelula({ v }: { v: Veiculo }) {
+  if (v.webmotors_valor == null) return <span className="text-muted-foreground">Não informado</span>;
+  const data = v.webmotors_data_referencia
+    ? new Date(`${v.webmotors_data_referencia}T00:00:00`).toLocaleDateString("pt-BR")
+    : formatData(v.webmotors_atualizado_em);
+  return (
+    <div className="text-right">
+      <div className="tabular-nums">
+        {formatBRL(v.webmotors_valor)}
+        {v.webmotors_url && (
+          <a
+            href={v.webmotors_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 text-xs text-primary underline-offset-2 hover:underline"
+            aria-label="Abrir anúncio na Webmotors"
+          >
+            ↗
+          </a>
+        )}
+      </div>
+      <div className="text-[10px] text-muted-foreground">ref. {data}</div>
     </div>
   );
 }
