@@ -24,6 +24,7 @@ import {
   moverAnuncioParaLixeira,
   restaurarAnuncio,
   type AnuncioRow,
+  getVeiculos,
 } from "@/lib/estoque";
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/anunciados")({
