@@ -1,3 +1,5 @@
+import { ordenarLista } from "@/lib/ordenacao";
+import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -88,12 +90,13 @@ function VendasHistoricoPage() {
 
   const [regionaisSel] = useRegionaisSelecionadas();
   const opcoesRegional = useMemo(() => listarRegionais(vendas.map((v) => v.regional)), [vendas]);
+  const ordem = useOrdenacao(`vendas-historico-${lixeira ? "lixeira" : "ativos"}`);
   const filtrados = useMemo(() => {
     const min = kmMin === "" ? null : Number(kmMin);
     const max = kmMax === "" ? null : Number(kmMax);
     const a = ano.trim().toLowerCase();
     const f = fipe.trim().toLowerCase();
-    return vendas.filter((v) => {
+    const lista = vendas.filter((v) => {
       if (!passaRegional(v.regional, regionaisSel)) return false;
       if (min != null && (v.km ?? 0) < min) return false;
       if (max != null && (v.km ?? 0) > max) return false;
@@ -101,7 +104,14 @@ function VendasHistoricoPage() {
       if (f && !(v.codigo_fipe ?? "").toLowerCase().includes(f)) return false;
       return true;
     });
-  }, [vendas, kmMin, kmMax, ano, fipe, regionaisSel]);
+    return ordenarLista(lista, ordem.criterios, (v, k) =>
+      k === "data_venda"
+        ? v.data_venda ? new Date(v.data_venda) : null
+        : k === "placa"
+          ? v.placa?.toUpperCase()
+          : ((v as unknown as Record<string, string | number | null>)[k] ?? null),
+    );
+  }, [vendas, kmMin, kmMax, ano, fipe, regionaisSel, ordem.criterios]);
 
   // Paginação de 100 em 100 (a base pode ter milhares de linhas).
   const POR_PAGINA = 100;
@@ -187,19 +197,62 @@ function VendasHistoricoPage() {
         />
       </div>
 
+      <ResumoOrdenacao
+        criterios={ordem.criterios}
+        rotulo={(k) => (({ modelo: "Modelo", chassi: "Chassi", placa: "Placa", ano_modelo: "Ano/Mod", km: "KM", codigo_fipe: "Cód. FIPE", data_venda: "Data", valor_venda: "Valor", loja: "Loja" }) as Record<string, string>)[k] ?? k}
+        onInverter={ordem.inverter}
+        onRemover={ordem.remover}
+        onLimpar={ordem.limpar}
+      />
       <div className="rounded-2xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium">Modelo</th>
-              <th className="px-3 py-2 font-medium">Chassi</th>
-              <th className="px-3 py-2 font-medium">Placa</th>
-              <th className="px-3 py-2 font-medium">Ano/Mod</th>
-              <th className="px-3 py-2 font-medium text-right">KM</th>
-              <th className="px-3 py-2 font-medium">Cód. FIPE</th>
-              <th className="px-3 py-2 font-medium">Data</th>
-              <th className="px-3 py-2 font-medium text-right">Valor</th>
-              <th className="px-3 py-2 font-medium">Loja</th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="modelo" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Modelo
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="chassi" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Chassi
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="placa" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Placa
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="ano_modelo" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Ano/Mod
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium text-right">
+                <CabecalhoOrdenavel colKey="km" criterios={ordem.criterios} onAlternar={ordem.alternar} alinhar="right">
+                  KM
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="codigo_fipe" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Cód. FIPE
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="data_venda" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Data
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium text-right">
+                <CabecalhoOrdenavel colKey="valor_venda" criterios={ordem.criterios} onAlternar={ordem.alternar} alinhar="right">
+                  Valor
+                </CabecalhoOrdenavel>
+              </th>
+              <th className="px-3 py-2 font-medium">
+                <CabecalhoOrdenavel colKey="loja" criterios={ordem.criterios} onAlternar={ordem.alternar}>
+                  Loja
+                </CabecalhoOrdenavel>
+              </th>
               <th className="px-3 py-2 font-medium text-right">Ações</th>
             </tr>
           </thead>
