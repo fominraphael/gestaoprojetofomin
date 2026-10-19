@@ -112,6 +112,8 @@ const COLUNAS = [
   { key: "valor_importado", label: "Valor anúncio importado", align: "right" },
   { key: "valor_sugerido", label: "Valor anunciado sugerido", align: "right" },
   { key: "margem", label: "Margem (%)", align: "right" },
+  { key: "webmotors", label: "Valor Webmotors", align: "right" },
+
 
   { key: "finalidade", label: "Finalidade", align: "left" },
   { key: "acao_planilha", label: "Ação (planilha)", align: "left" },

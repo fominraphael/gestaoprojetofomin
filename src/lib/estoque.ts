@@ -116,6 +116,14 @@ export interface Veiculo {
   campos_manuais?: string[] | null;
   editado_em?: string | null;
 
+  /** Valor importado da Webmotors (por placa). */
+  webmotors_valor?: number | null;
+  webmotors_data_referencia?: string | null;
+  webmotors_url?: string | null;
+  webmotors_observacao?: string | null;
+  webmotors_atualizado_em?: string | null;
+
+
 }
 
 export interface HistoricoValor {
