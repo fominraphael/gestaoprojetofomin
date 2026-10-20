@@ -47,6 +47,7 @@ import {
 } from "@/lib/estoque-motor";
 
 import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import { getHistoricoVeiculo, getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
@@ -187,6 +188,8 @@ export function VeiculosTable({
   const [webmotorsFiltro, setWebmotorsFiltro] = useState<"todos" | "com" | "sem">("todos");
   const ordem = useOrdenacao(`veiculos-${modo}`);
   const [regionais] = useRegionaisSelecionadas();
+  const [anosSel] = useAnosModeloSelecionados();
+  const opcoesAno = useMemo(() => listarAnosModelo(veiculos.map((v) => v.ano_mod)), [veiculos]);
   const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
   const [colunas, setColunas] = useState<ColunaKey[]>(COLUNAS_PADRAO);
@@ -329,6 +332,7 @@ export function VeiculosTable({
     const termo = busca.trim().toLowerCase();
     const lista = veiculos.filter((v) => {
       if (!passaRegional(v.regional, regionais)) return false;
+      if (!passaAnoModelo(v.ano_mod, anosSel)) return false;
       if (webmotorsFiltro === "com" && v.webmotors_valor == null) return false;
       if (webmotorsFiltro === "sem" && v.webmotors_valor != null) return false;
       if (origemFiltro !== TODOS && v.origem_id !== origemFiltro) return false;
@@ -449,6 +453,7 @@ export function VeiculosTable({
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <RegionalFilter opcoes={opcoesRegional} />
+        <AnoModeloFilter opcoes={opcoesAno} />
         <Input
           placeholder="Buscar por chassi, placa, modelo ou loja"
           value={busca}

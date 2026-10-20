@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/estoque-motor";
 import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 
 import {
   atualizarVenda,
@@ -89,6 +90,8 @@ function VendasHistoricoPage() {
   });
 
   const [regionaisSel] = useRegionaisSelecionadas();
+  const [anosSel] = useAnosModeloSelecionados();
+  const opcoesAno = useMemo(() => listarAnosModelo(vendas.map((v) => v.ano_modelo)), [vendas]);
   const opcoesRegional = useMemo(() => listarRegionais(vendas.map((v) => v.regional)), [vendas]);
   const ordem = useOrdenacao(`vendas-historico-${lixeira ? "lixeira" : "ativos"}`);
   const filtrados = useMemo(() => {
@@ -98,6 +101,7 @@ function VendasHistoricoPage() {
     const f = fipe.trim().toLowerCase();
     const lista = vendas.filter((v) => {
       if (!passaRegional(v.regional, regionaisSel)) return false;
+      if (!passaAnoModelo(v.ano_modelo, anosSel)) return false;
       if (min != null && (v.km ?? 0) < min) return false;
       if (max != null && (v.km ?? 0) > max) return false;
       if (a && !(v.ano_modelo ?? "").toLowerCase().includes(a)) return false;
@@ -169,6 +173,7 @@ function VendasHistoricoPage() {
 
       <div className="flex flex-wrap gap-2">
         <RegionalFilter opcoes={opcoesRegional} />
+        <AnoModeloFilter opcoes={opcoesAno} />
         <Input
           className="w-[120px]"
           placeholder="KM mín."
