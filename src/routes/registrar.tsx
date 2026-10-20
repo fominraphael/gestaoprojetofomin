@@ -95,12 +95,16 @@ function RegistrarPage() {
       setError("O login de acesso é obrigatório.");
       return;
     }
+    if (!/^[a-zA-Z0-9._-]+$/.test(username.trim())) {
+      setError("O login pode ter apenas letras sem acento, números, ponto, hífen ou sublinhado (sem espaços).");
+      return;
+    }
     if (!nomeFantasia.trim()) {
       setError("O nome ou nome fantasia é obrigatório.");
       return;
     }
-    if (password.length < 4) {
-      setError("A senha deve ter pelo menos 4 caracteres.");
+    if (password.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
@@ -162,7 +166,18 @@ function RegistrarPage() {
 
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || "Erro ao solicitar conta.");
+      const msg: string = err?.message ?? "";
+      if (/weak|easy to guess|pwned/i.test(msg)) {
+        setError("Essa senha é muito comum e fácil de adivinhar. Escolha uma senha mais forte.");
+      } else if (/at least|characters/i.test(msg) && /password/i.test(msg)) {
+        setError("A senha é curta demais. Use pelo menos 6 caracteres.");
+      } else if (/validate email|invalid format/i.test(msg)) {
+        setError("Login inválido. Use apenas letras sem acento, números, ponto, hífen ou sublinhado.");
+      } else if (/already registered|already exists/i.test(msg)) {
+        setError("Esse login já está em uso. Escolha outro.");
+      } else {
+        setError(msg || "Erro ao solicitar conta.");
+      }
     } finally {
       setLoading(false);
     }
