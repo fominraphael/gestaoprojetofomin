@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatBRL } from "@/lib/estoque-motor";
 import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 
 import {
   atualizarAnuncio,
@@ -96,6 +97,8 @@ function AnunciadosPage() {
     return m;
   }, [veiculosAtivos]);
   const [regionaisSel] = useRegionaisSelecionadas();
+  const [anosSel] = useAnosModeloSelecionados();
+  const opcoesAno = useMemo(() => listarAnosModelo(anuncios.map((a) => a.ano_modelo)), [anuncios]);
   const opcoesRegional = useMemo(() => listarRegionais(veiculosAtivos.map((v) => v.regional)), [veiculosAtivos]);
   const ordem = useOrdenacao(`anunciados-${lixeira ? "lixeira" : "ativos"}`);
   const filtrados = useMemo(() => {
@@ -103,6 +106,7 @@ function AnunciadosPage() {
     const p = placa.trim().toLowerCase();
     const lista = anuncios.filter((a) => {
       if (!passaRegional(regionalPorChassi.get(a.chassi.toUpperCase()), regionaisSel)) return false;
+      if (!passaAnoModelo(a.ano_modelo, anosSel)) return false;
       if (c && !a.chassi.toLowerCase().includes(c)) return false;
       if (p && !(a.placa ?? "").toLowerCase().includes(p)) return false;
       return true;
@@ -114,7 +118,7 @@ function AnunciadosPage() {
           ? a.placa?.toUpperCase()
           : ((a as unknown as Record<string, string | number | null>)[k] ?? null),
     );
-  }, [anuncios, chassi, placa, regionalPorChassi, regionaisSel, ordem.criterios]);
+  }, [anuncios, chassi, placa, regionalPorChassi, regionaisSel, anosSel, ordem.criterios]);
 
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "anunciados"] });
 
@@ -157,6 +161,7 @@ function AnunciadosPage() {
 
       <div className="flex flex-wrap gap-2">
         <RegionalFilter opcoes={opcoesRegional} />
+        <AnoModeloFilter opcoes={opcoesAno} />
         <Input
           className="w-full sm:w-[240px]"
           placeholder="Filtrar por chassi"
