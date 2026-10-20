@@ -115,7 +115,7 @@ function VendasHistoricoPage() {
           ? v.placa?.toUpperCase()
           : ((v as unknown as Record<string, string | number | null>)[k] ?? null),
     );
-  }, [vendas, kmMin, kmMax, ano, fipe, regionaisSel, ordem.criterios]);
+  }, [vendas, kmMin, kmMax, ano, fipe, regionaisSel, anosSel, ordem.criterios]);
 
   // Paginação de 100 em 100 (a base pode ter milhares de linhas).
   const POR_PAGINA = 100;

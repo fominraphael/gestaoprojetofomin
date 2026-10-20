@@ -349,7 +349,7 @@ export function VeiculosTable({
       );
     });
     return ordenarLista(lista, ordem.criterios, valorOrdenacao);
-  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, webmotorsFiltro, ordem.criterios, valorOrdenacao]);
+  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, anosSel, webmotorsFiltro, ordem.criterios, valorOrdenacao]);
 
   const nomeEmpresa = (v: Veiculo) =>
     empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;

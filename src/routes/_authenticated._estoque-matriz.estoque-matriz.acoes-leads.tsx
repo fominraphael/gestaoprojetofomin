@@ -146,7 +146,7 @@ function AcoesMatriz() {
       }
     }
     return out;
-  }, [veiculos, regras, faixas, registroPor, regionaisSel]);
+  }, [veiculos, regras, faixas, registroPor, regionaisSel, anosSel]);
   const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const opcoesAno = useMemo(() => listarAnosModelo(veiculos.map((v) => v.ano_mod)), [veiculos]);
 
