@@ -81,7 +81,7 @@ async function enviarPush(
   url: string,
 ): Promise<{ enviados: number; erro?: string }> {
   try {
-    const webpush = await import("web-push");
+    const { buildPushPayload } = await import("@block65/webcrypto-web-push");
 
     const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
@@ -92,7 +92,11 @@ async function enviarPush(
       return { enviados: 0, erro: msg };
     }
 
-    webpush.default.setVapidDetails("mailto:admin@moduloabsn.com", vapidPublicKey, vapidPrivateKey);
+    const vapid = {
+      subject: "mailto:admin@moduloabsn.com",
+      publicKey: vapidPublicKey,
+      privateKey: vapidPrivateKey,
+    };
 
     // Buscar subscriptions do usuário
     const { data: subs, error: subsErr } = await admin
@@ -116,17 +120,26 @@ async function enviarPush(
     console.log(`[push] Enviando para ${subs.length} subscription(s) do usuário ${userId}`);
 
     let enviados = 0;
-    const payload = JSON.stringify({ title, body, url, tag: `chamado-${url.split("/").pop()}` });
+    const dados = { title, body, url, tag: `chamado-${url.split("/").pop() ?? ""}` };
 
     for (const sub of subs) {
       try {
-        await webpush.default.sendNotification(
+        const req = await buildPushPayload(
+          { data: dados, options: { ttl: 86400 } },
           {
             endpoint: sub.endpoint,
+            expirationTime: null,
             keys: { p256dh: sub.p256dh, auth: sub.auth_key },
           },
-          payload,
+          vapid,
         );
+        const resp = await fetch(sub.endpoint, req);
+        if (!resp.ok) {
+          const texto = await resp.text().catch(() => "");
+          throw Object.assign(new Error(`Serviço de push respondeu ${resp.status} ${texto}`.trim()), {
+            statusCode: resp.status,
+          });
+        }
 
         await admin
           .from("push_subscriptions")
