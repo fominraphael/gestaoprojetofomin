@@ -84,7 +84,6 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^5.2.0",
     "drizzle-kit": "0.x",
     "drizzle-orm": "0.x",
