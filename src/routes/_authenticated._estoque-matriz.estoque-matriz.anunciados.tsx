@@ -118,7 +118,7 @@ function AnunciadosPage() {
           ? a.placa?.toUpperCase()
           : ((a as unknown as Record<string, string | number | null>)[k] ?? null),
     );
-  }, [anuncios, chassi, placa, regionalPorChassi, regionaisSel, ordem.criterios]);
+  }, [anuncios, chassi, placa, regionalPorChassi, regionaisSel, anosSel, ordem.criterios]);
 
   const recarregar = () => qc.invalidateQueries({ queryKey: ["estoque", "anunciados"] });
 
