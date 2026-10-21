@@ -1611,6 +1611,27 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_lojas: {
+        Row: {
+          created_at: string
+          id: string
+          loja: string
+          regional: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja: string
+          regional: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja?: string
+          regional?: string
+        }
+        Relationships: []
+      }
       prep_lojas_agrupamento: {
         Row: {
           created_at: string
