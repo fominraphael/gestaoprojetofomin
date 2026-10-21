@@ -10,3 +10,5 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+- Preparação/Anúncios module: pending status is computed on read in `src/lib/preparacao-anuncios.ts` from the latest import of each base (`prep_base_linhas`, replaced per base on import), so config changes apply instantly without recalculation jobs.
