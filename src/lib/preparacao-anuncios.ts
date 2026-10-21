@@ -255,10 +255,11 @@ export async function carregarConfig() {
   };
 }
 
-export async function carregarVeiculosCalculados(ativos: boolean, placa?: string): Promise<VeiculoCalculado[]> {
+export async function carregarVeiculosCalculados(ativos: boolean | null, placa?: string): Promise<VeiculoCalculado[]> {
   const cfg = await carregarConfig();
   const veiculos = await buscarTodos<VeiculoPrep>((de, ate) => {
-    let q = supabase.from("prep_veiculos").select("*").eq("ativo", ativos);
+    let q = supabase.from("prep_veiculos").select("*");
+    if (ativos !== null) q = q.eq("ativo", ativos);
     if (placa) q = q.eq("placa", placa);
     return q.order("placa").range(de, ate) as never;
   });
