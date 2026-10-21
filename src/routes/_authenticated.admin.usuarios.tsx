@@ -822,7 +822,7 @@ export function AdminUsuariosPage() {
       existingUsers.map((u) => [u.username.toLowerCase().trim(), u]),
     );
 
-    const MODULE_IDS = ["gestao", "documentos", "toyota", "compras", "rotina", "estoque-matriz"];
+    const MODULE_IDS = ["gestao", "documentos", "toyota", "compras", "rotina", "estoque-matriz", "preparacao-anuncios"];
 
     const results = { created: 0, updated: 0, failed: 0, errors: [] as string[] };
 
@@ -857,6 +857,7 @@ export function AdminUsuariosPage() {
         toyota: ["toyota", "certificação toyota", "certificacao toyota"],
         compras: ["compras", "purchases", "seminovos"],
         rotina: ["rotina", "routine", "tarefas", "gestão de rotina"],
+        "preparacao-anuncios": ["preparacao", "preparação", "pendências preparação", "anuncios"],
         "estoque-matriz": ["estoque matriz", "analise de estoque", "análise de estoque", "estoque-matriz", "estoque_matriz"],
       };
       for (const [modId, aliases] of Object.entries(moduleAliases)) {
@@ -1424,6 +1425,7 @@ export function AdminUsuariosPage() {
                         { key: "compras", label: "Compras Seminovos" },
                         { key: "rotina", label: "Gestão de Rotina" },
                         { key: "estoque-matriz", label: "Análise de Estoque - Matriz" },
+                        { key: "preparacao-anuncios", label: "Pendências Preparação/Anúncios" },
                       ].map(({ key, label }) => (
                         <label
                           key={key}
@@ -1733,6 +1735,7 @@ export function AdminUsuariosPage() {
                           { key: "compras", label: "Compras Seminovos" },
                           { key: "rotina", label: "Gestão de Rotina" },
                           { key: "estoque-matriz", label: "Análise de Estoque - Matriz" },
+                        { key: "preparacao-anuncios", label: "Pendências Preparação/Anúncios" },
                         ].map(({ key, label }) => (
                           <label
                             key={key}
@@ -2211,6 +2214,7 @@ export function AdminUsuariosPage() {
                     { id: "compras", label: "Compras Seminovos" },
                     { id: "rotina", label: "Gestão de Rotina" },
                     { id: "estoque-matriz", label: "Análise de Estoque - Matriz" },
+                    { id: "preparacao-anuncios", label: "Pendências Preparação/Anúncios" },
                   ].map((mod) => (
                     <label
                       key={mod.id}

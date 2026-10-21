@@ -1513,6 +1513,310 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_base_linhas: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          importacao_id: string | null
+          placa: string
+          placa_alt: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          importacao_id?: string | null
+          placa: string
+          placa_alt?: string | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          importacao_id?: string | null
+          placa?: string
+          placa_alt?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_base_linhas_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "prep_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_config_indicadores: {
+        Row: {
+          config: Json
+          habilitado: boolean
+          indicador: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          habilitado?: boolean
+          indicador: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          habilitado?: boolean
+          indicador?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prep_importacoes: {
+        Row: {
+          arquivo_nome: string | null
+          created_at: string
+          id: string
+          mensagem: string | null
+          status: string
+          tipo: string
+          total_linhas: number
+          total_validas: number
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          created_at?: string
+          id?: string
+          mensagem?: string | null
+          status?: string
+          tipo: string
+          total_linhas?: number
+          total_validas?: number
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          created_at?: string
+          id?: string
+          mensagem?: string | null
+          status?: string
+          tipo?: string
+          total_linhas?: number
+          total_validas?: number
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: []
+      }
+      prep_lojas_agrupamento: {
+        Row: {
+          created_at: string
+          id: string
+          loja_canonica: string
+          loja_origem: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja_canonica: string
+          loja_origem: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja_canonica?: string
+          loja_origem?: string
+        }
+        Relationships: []
+      }
+      prep_lojas_direcionamento: {
+        Row: {
+          created_at: string
+          id: string
+          loja_responsavel: string
+          loja_sem_operacao: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja_responsavel: string
+          loja_sem_operacao: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja_responsavel?: string
+          loja_sem_operacao?: string
+        }
+        Relationships: []
+      }
+      prep_observacoes: {
+        Row: {
+          autor_id: string | null
+          autor_nome: string | null
+          created_at: string
+          id: string
+          placa: string
+          texto: string
+        }
+        Insert: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          id?: string
+          placa: string
+          texto: string
+        }
+        Update: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          id?: string
+          placa?: string
+          texto?: string
+        }
+        Relationships: []
+      }
+      prep_observacoes_anexos: {
+        Row: {
+          created_at: string
+          id: string
+          nome_original: string
+          observacao_id: string
+          storage_path: string
+          tamanho: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_original: string
+          observacao_id: string
+          storage_path: string
+          tamanho?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_original?: string
+          observacao_id?: string
+          storage_path?: string
+          tamanho?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_observacoes_anexos_observacao_id_fkey"
+            columns: ["observacao_id"]
+            isOneToOne: false
+            referencedRelation: "prep_observacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_regional_responsavel: {
+        Row: {
+          chave: string
+          chave_tipo: string
+          created_at: string
+          id: string
+          responsavel: string
+        }
+        Insert: {
+          chave: string
+          chave_tipo: string
+          created_at?: string
+          id?: string
+          responsavel: string
+        }
+        Update: {
+          chave?: string
+          chave_tipo?: string
+          created_at?: string
+          id?: string
+          responsavel?: string
+        }
+        Relationships: []
+      }
+      prep_veiculos: {
+        Row: {
+          ano_mod: string | null
+          ativo: boolean
+          chassi: string | null
+          classificacao: string | null
+          cor: string | null
+          created_at: string
+          custo_total: number | null
+          dados: Json
+          dias_em_estoque: number | null
+          finalidade: string | null
+          fipe: number | null
+          fotos_qtd: number | null
+          id: string
+          inativado_em: string | null
+          km: number | null
+          leads_60_dias: number | null
+          loja_bruta: string | null
+          modelo: string | null
+          placa: string
+          regional: string | null
+          ultima_importacao_id: string | null
+          updated_at: string
+          valor_anunciado: number | null
+        }
+        Insert: {
+          ano_mod?: string | null
+          ativo?: boolean
+          chassi?: string | null
+          classificacao?: string | null
+          cor?: string | null
+          created_at?: string
+          custo_total?: number | null
+          dados?: Json
+          dias_em_estoque?: number | null
+          finalidade?: string | null
+          fipe?: number | null
+          fotos_qtd?: number | null
+          id?: string
+          inativado_em?: string | null
+          km?: number | null
+          leads_60_dias?: number | null
+          loja_bruta?: string | null
+          modelo?: string | null
+          placa: string
+          regional?: string | null
+          ultima_importacao_id?: string | null
+          updated_at?: string
+          valor_anunciado?: number | null
+        }
+        Update: {
+          ano_mod?: string | null
+          ativo?: boolean
+          chassi?: string | null
+          classificacao?: string | null
+          cor?: string | null
+          created_at?: string
+          custo_total?: number | null
+          dados?: Json
+          dias_em_estoque?: number | null
+          finalidade?: string | null
+          fipe?: number | null
+          fotos_qtd?: number | null
+          id?: string
+          inativado_em?: string | null
+          km?: number | null
+          leads_60_dias?: number | null
+          loja_bruta?: string | null
+          modelo?: string | null
+          placa?: string
+          regional?: string | null
+          ultima_importacao_id?: string | null
+          updated_at?: string
+          valor_anunciado?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean

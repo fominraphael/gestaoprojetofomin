@@ -18,6 +18,7 @@ import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated._documentos'
 import { Route as AuthenticatedEstoqueMatrizRouteImport } from './routes/_authenticated._estoque-matriz'
 import { Route as AuthenticatedGestaoRouteImport } from './routes/_authenticated._gestao'
+import { Route as AuthenticatedPreparacaoAnunciosRouteImport } from './routes/_authenticated._preparacao-anuncios'
 import { Route as AuthenticatedRotinaRouteImport } from './routes/_authenticated._rotina'
 import { Route as AuthenticatedToyotaRouteImport } from './routes/_authenticated._toyota'
 import { Route as AuthenticatedDocumentosDocumentosRouteImport } from './routes/_authenticated._documentos.documentos'
@@ -42,6 +43,11 @@ import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRegrasRouteImport } fro
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.repasse'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendas-historico'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendidos'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.index'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.$placa'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.configuracoes'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.importar'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.inativos'
 import { Route as AuthenticatedRotinaRotinaIndexRouteImport } from './routes/_authenticated._rotina.rotina.index'
 import { Route as AuthenticatedRotinaRotinaSetorIdRouteImport } from './routes/_authenticated._rotina.rotina.$setorId'
 import { Route as AuthenticatedRotinaRotinaConfiguracoesRouteImport } from './routes/_authenticated._rotina.rotina.configuracoes'
@@ -105,6 +111,11 @@ const AuthenticatedGestaoRoute = AuthenticatedGestaoRouteImport.update({
   id: '/_gestao',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPreparacaoAnunciosRoute =
+  AuthenticatedPreparacaoAnunciosRouteImport.update({
+    id: '/_preparacao-anuncios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRotinaRoute = AuthenticatedRotinaRouteImport.update({
   id: '/_rotina',
   getParentRoute: () => AuthenticatedRoute,
@@ -244,6 +255,38 @@ const AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute =
     id: '/estoque-matriz/vendidos',
     path: '/estoque-matriz/vendidos',
     getParentRoute: () => AuthenticatedEstoqueMatrizRoute,
+  } as any)
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRouteImport.update({
+    id: '/preparacao-anuncios/',
+    path: '/preparacao-anuncios/',
+    getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
+  } as any)
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport.update({
+    id: '/preparacao-anuncios/$placa',
+    path: '/preparacao-anuncios/$placa',
+    getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
+  } as any)
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRouteImport.update(
+    {
+      id: '/preparacao-anuncios/configuracoes',
+      path: '/preparacao-anuncios/configuracoes',
+      getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
+    } as any,
+  )
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRouteImport.update({
+    id: '/preparacao-anuncios/importar',
+    path: '/preparacao-anuncios/importar',
+    getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
+  } as any)
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRouteImport.update({
+    id: '/preparacao-anuncios/inativos',
+    path: '/preparacao-anuncios/inativos',
+    getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
   } as any)
 const AuthenticatedRotinaRotinaIndexRoute =
   AuthenticatedRotinaRotinaIndexRouteImport.update({
@@ -395,6 +438,10 @@ export interface FileRoutesByFullPath {
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
+  '/preparacao-anuncios/configuracoes': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute
+  '/preparacao-anuncios/importar': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute
+  '/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
@@ -413,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/preparacao-anuncios/': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute
   '/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
   '/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -444,6 +492,10 @@ export interface FileRoutesByTo {
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
+  '/preparacao-anuncios/configuracoes': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute
+  '/preparacao-anuncios/importar': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute
+  '/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
   '/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
@@ -462,6 +514,7 @@ export interface FileRoutesByTo {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/compras': typeof AuthenticatedComprasComprasIndexRoute
   '/estoque-matriz': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/preparacao-anuncios': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute
   '/rotina': typeof AuthenticatedRotinaRotinaIndexRoute
   '/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -478,6 +531,7 @@ export interface FileRoutesById {
   '/_authenticated/_documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/_estoque-matriz': typeof AuthenticatedEstoqueMatrizRouteWithChildren
   '/_authenticated/_gestao': typeof AuthenticatedGestaoRouteWithChildren
+  '/_authenticated/_preparacao-anuncios': typeof AuthenticatedPreparacaoAnunciosRouteWithChildren
   '/_authenticated/_rotina': typeof AuthenticatedRotinaRouteWithChildren
   '/_authenticated/_toyota': typeof AuthenticatedToyotaRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -501,6 +555,10 @@ export interface FileRoutesById {
   '/_authenticated/_estoque-matriz/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/configuracoes': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/importar': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/_authenticated/_rotina/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/_authenticated/_rotina/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
   '/_authenticated/_toyota/toyota/configuracoes': typeof AuthenticatedToyotaToyotaConfiguracoesRoute
@@ -519,6 +577,7 @@ export interface FileRoutesById {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/_compras/compras/': typeof AuthenticatedComprasComprasIndexRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/': typeof AuthenticatedEstoqueMatrizEstoqueMatrizIndexRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute
   '/_authenticated/_rotina/rotina/': typeof AuthenticatedRotinaRotinaIndexRoute
   '/_authenticated/_rotina/rotina/atividade/$id': typeof AuthenticatedRotinaRotinaAtividadeIdRoute
   '/_authenticated/_rotina/rotina/tarefa/$id': typeof AuthenticatedRotinaRotinaTarefaIdRoute
@@ -552,6 +611,10 @@ export interface FileRouteTypes {
     | '/estoque-matriz/repasse'
     | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
+    | '/preparacao-anuncios/$placa'
+    | '/preparacao-anuncios/configuracoes'
+    | '/preparacao-anuncios/importar'
+    | '/preparacao-anuncios/inativos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
     | '/toyota/configuracoes'
@@ -570,6 +633,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/compras/'
     | '/estoque-matriz/'
+    | '/preparacao-anuncios/'
     | '/rotina/'
     | '/rotina/atividade/$id'
     | '/rotina/tarefa/$id'
@@ -601,6 +665,10 @@ export interface FileRouteTypes {
     | '/estoque-matriz/repasse'
     | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
+    | '/preparacao-anuncios/$placa'
+    | '/preparacao-anuncios/configuracoes'
+    | '/preparacao-anuncios/importar'
+    | '/preparacao-anuncios/inativos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
     | '/toyota/configuracoes'
@@ -619,6 +687,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/compras'
     | '/estoque-matriz'
+    | '/preparacao-anuncios'
     | '/rotina'
     | '/rotina/atividade/$id'
     | '/rotina/tarefa/$id'
@@ -634,6 +703,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_documentos'
     | '/_authenticated/_estoque-matriz'
     | '/_authenticated/_gestao'
+    | '/_authenticated/_preparacao-anuncios'
     | '/_authenticated/_rotina'
     | '/_authenticated/_toyota'
     | '/_authenticated/'
@@ -657,6 +727,10 @@ export interface FileRouteTypes {
     | '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
     | '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
     | '/_authenticated/_estoque-matriz/estoque-matriz/vendidos'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/configuracoes'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/importar'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos'
     | '/_authenticated/_rotina/rotina/$setorId'
     | '/_authenticated/_rotina/rotina/configuracoes'
     | '/_authenticated/_toyota/toyota/configuracoes'
@@ -675,6 +749,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/_authenticated/_compras/compras/'
     | '/_authenticated/_estoque-matriz/estoque-matriz/'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/'
     | '/_authenticated/_rotina/rotina/'
     | '/_authenticated/_rotina/rotina/atividade/$id'
     | '/_authenticated/_rotina/rotina/tarefa/$id'
@@ -758,6 +833,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedGestaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_preparacao-anuncios': {
+      id: '/_authenticated/_preparacao-anuncios'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_rotina': {
@@ -927,6 +1009,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/estoque-matriz/vendidos'
       preLoaderRoute: typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport
       parentRoute: typeof AuthenticatedEstoqueMatrizRoute
+    }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/'
+      path: '/preparacao-anuncios'
+      fullPath: '/preparacao-anuncios/'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
+    }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa'
+      path: '/preparacao-anuncios/$placa'
+      fullPath: '/preparacao-anuncios/$placa'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
+    }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/configuracoes': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/configuracoes'
+      path: '/preparacao-anuncios/configuracoes'
+      fullPath: '/preparacao-anuncios/configuracoes'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
+    }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/importar': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/importar'
+      path: '/preparacao-anuncios/importar'
+      fullPath: '/preparacao-anuncios/importar'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
+    }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos'
+      path: '/preparacao-anuncios/inativos'
+      fullPath: '/preparacao-anuncios/inativos'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
     }
     '/_authenticated/_rotina/rotina/': {
       id: '/_authenticated/_rotina/rotina/'
@@ -1174,6 +1291,33 @@ const AuthenticatedGestaoRouteChildren: AuthenticatedGestaoRouteChildren = {
 const AuthenticatedGestaoRouteWithChildren =
   AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
+interface AuthenticatedPreparacaoAnunciosRouteChildren {
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute
+}
+
+const AuthenticatedPreparacaoAnunciosRouteChildren: AuthenticatedPreparacaoAnunciosRouteChildren =
+  {
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute,
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosConfiguracoesRoute,
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosImportarRoute,
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute,
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute,
+  }
+
+const AuthenticatedPreparacaoAnunciosRouteWithChildren =
+  AuthenticatedPreparacaoAnunciosRoute._addFileChildren(
+    AuthenticatedPreparacaoAnunciosRouteChildren,
+  )
+
 interface AuthenticatedRotinaRouteChildren {
   AuthenticatedRotinaRotinaSetorIdRoute: typeof AuthenticatedRotinaRotinaSetorIdRoute
   AuthenticatedRotinaRotinaConfiguracoesRoute: typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -1250,6 +1394,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedEstoqueMatrizRoute: typeof AuthenticatedEstoqueMatrizRouteWithChildren
   AuthenticatedGestaoRoute: typeof AuthenticatedGestaoRouteWithChildren
+  AuthenticatedPreparacaoAnunciosRoute: typeof AuthenticatedPreparacaoAnunciosRouteWithChildren
   AuthenticatedRotinaRoute: typeof AuthenticatedRotinaRouteWithChildren
   AuthenticatedToyotaRoute: typeof AuthenticatedToyotaRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -1261,6 +1406,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedEstoqueMatrizRoute: AuthenticatedEstoqueMatrizRouteWithChildren,
   AuthenticatedGestaoRoute: AuthenticatedGestaoRouteWithChildren,
+  AuthenticatedPreparacaoAnunciosRoute:
+    AuthenticatedPreparacaoAnunciosRouteWithChildren,
   AuthenticatedRotinaRoute: AuthenticatedRotinaRouteWithChildren,
   AuthenticatedToyotaRoute: AuthenticatedToyotaRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,

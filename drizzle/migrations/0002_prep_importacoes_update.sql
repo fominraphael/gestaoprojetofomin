@@ -1,0 +1,1 @@
+CREATE POLICY "Atualiza propria importacao" ON public.prep_importacoes FOR UPDATE TO authenticated USING (usuario_id = auth.uid()) WITH CHECK (usuario_id = auth.uid());

@@ -27,6 +27,7 @@ import {
 
   History,
   Megaphone,
+  Camera,
   type LucideIcon,
 } from "lucide-react";
 
@@ -246,6 +247,23 @@ export const MODULES: ModuleDef[] = [
       { to: "/estoque-matriz/regras", label: "Configurações", icon: ListChecks },
     ],
 
+  },
+  {
+    id: "preparacao-anuncios",
+    label: "Pendências Preparação/Anúncios",
+    description:
+      "Pendências de preparação por veículo e loja: OS, fotos, TCUV e auditoria, com mural por placa.",
+    icon: Camera,
+    href: "/preparacao-anuncios",
+    requiredModule: "preparacao-anuncios",
+    gradient: "from-emerald-500/15 to-teal-700/15",
+    iconBg: "from-emerald-500 to-teal-700",
+    navItems: [
+      { to: "/preparacao-anuncios", label: "Veículos", icon: Package },
+      { to: "/preparacao-anuncios/inativos", label: "Inativos", icon: EyeOff },
+      { to: "/preparacao-anuncios/importar", label: "Importação", icon: Upload },
+      { to: "/preparacao-anuncios/configuracoes", label: "Configurações", icon: Settings },
+    ],
   },
 ];
 
