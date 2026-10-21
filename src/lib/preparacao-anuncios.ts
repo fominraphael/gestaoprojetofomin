@@ -294,10 +294,11 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
   const comPlaca = linhas
     .map((l) => ({ l, placa: normPlaca(campo(l, ...def.colunaPlaca)) }))
     .filter((x) => x.placa.length >= 5);
+  let importacaoId: string | null = null;
   try {
     if (!comPlaca.length) throw new Error("Nenhuma linha com placa encontrada. Verifique o cabeçalho da planilha.");
     let inativadas = 0;
-    const importacaoId = await registrarLog(tipo, arquivo, linhas.length, comPlaca.length, "sucesso", "Processando");
+    importacaoId = await registrarLog(tipo, arquivo, linhas.length, comPlaca.length, "sucesso", "Processando...");
     if (tipo === "estoque") {
       const unicos = new Map(comPlaca.map((x) => [x.placa, x.l]));
       const registros = Array.from(unicos, ([placa, l]) => ({
@@ -348,9 +349,12 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
         if (error) throw error;
       }
     }
+    await supabase.from("prep_importacoes").update({ mensagem: inativadas ? `Concluída — ${inativadas} veículo(s) inativado(s)` : "Concluída" }).eq("id", importacaoId);
     return { total: linhas.length, validas: comPlaca.length, ignoradas: linhas.length - comPlaca.length, inativadas };
   } catch (e) {
-    await registrarLog(tipo, arquivo, linhas.length, 0, "erro", e instanceof Error ? e.message : "Erro desconhecido").catch(() => undefined);
+    const msg = e instanceof Error ? e.message : "Erro desconhecido";
+    if (importacaoId) await supabase.from("prep_importacoes").update({ status: "erro", mensagem: msg }).eq("id", importacaoId);
+    else await registrarLog(tipo, arquivo, linhas.length, 0, "erro", msg).catch(() => undefined);
     throw e;
   }
 }

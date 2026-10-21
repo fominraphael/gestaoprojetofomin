@@ -15,6 +15,13 @@
       "when": 1792615096475,
       "tag": "0001_preparacao_anuncios",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792615212928,
+      "tag": "0002_prep_importacoes_update",
+      "breakpoints": true
     }
   ]
 }
