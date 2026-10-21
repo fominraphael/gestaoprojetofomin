@@ -22,6 +22,13 @@
       "when": 1792615212928,
       "tag": "0002_prep_importacoes_update",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792616214738,
+      "tag": "0003_prep_lojas_cadastro",
+      "breakpoints": true
     }
   ]
 }
