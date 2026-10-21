@@ -47,6 +47,16 @@ function Configuracoes() {
       return Array.from(new Set((data ?? []).map((d) => normTexto(d.loja_bruta)).filter(Boolean))).sort();
     },
   });
+  const { data: cadastro = [] } = useQuery({
+    queryKey: ["prep", "lojas-cadastro"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("prep_lojas").select("id, loja, regional").order("regional").order("loja");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const sugestoes = Array.from(new Set([...lojas, ...cadastro.map((c) => normTexto(c.loja))])).sort();
+  const regionais = Array.from(new Set(cadastro.map((c) => c.regional))).sort();
   const [cfg, setCfg] = useState<Record<IndicadorId, ConfigIndicador> | null>(null);
   const [tipoResp, setTipoResp] = useState<"loja" | "regional">("loja");
   useEffect(() => { if (data) setCfg(data.config); }, [data]);
@@ -102,10 +112,20 @@ function Configuracoes() {
 
         <TabsContent value="lojas" className="space-y-4">
           <Card className="p-4 space-y-2">
+            <h2 className="font-semibold">Cadastro de lojas</h2>
+            <p className="text-sm text-muted-foreground">{cadastro.length} lojas em {regionais.length} regionais. Base usada nas sugestões de direcionamento, agrupamento e responsáveis.</p>
+            <TabelaMapeamento
+              rotuloDe="Loja" rotuloPara="Regional" sugestoesDe={regionais}
+              linhas={cadastro.map((c) => ({ id: c.id, de: c.loja, para: c.regional }))}
+              onAdicionar={(de, para) => exec(supabase.from("prep_lojas").insert({ loja: de, regional: para }))}
+              onRemover={(id) => exec(supabase.from("prep_lojas").delete().eq("id", id))}
+            />
+          </Card>
+          <Card className="p-4 space-y-2">
             <h2 className="font-semibold">1. Direcionamento</h2>
             <p className="text-sm text-muted-foreground">Loja sem operação de seminovos → loja responsável. Aplicado primeiro.</p>
             <TabelaMapeamento
-              rotuloDe="Loja sem operação" rotuloPara="Loja responsável" sugestoesDe={lojas}
+              rotuloDe="Loja sem operação" rotuloPara="Loja responsável" sugestoesDe={sugestoes}
               linhas={(data?.direc ?? []).map((d) => ({ id: d.id, de: d.loja_sem_operacao, para: d.loja_responsavel }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_direcionamento").insert({ loja_sem_operacao: de, loja_responsavel: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_direcionamento").delete().eq("id", id))}
@@ -115,7 +135,7 @@ function Configuracoes() {
             <h2 className="font-semibold">2. Agrupamento</h2>
             <p className="text-sm text-muted-foreground">Variações de nome da mesma loja → nome canônico. Aplicado depois do direcionamento.</p>
             <TabelaMapeamento
-              rotuloDe="Loja origem" rotuloPara="Loja canônica" sugestoesDe={lojas}
+              rotuloDe="Loja origem" rotuloPara="Loja canônica" sugestoesDe={sugestoes}
               linhas={(data?.agrup ?? []).map((d) => ({ id: d.id, de: d.loja_origem, para: d.loja_canonica }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_agrupamento").insert({ loja_origem: de, loja_canonica: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_agrupamento").delete().eq("id", id))}
@@ -128,7 +148,7 @@ function Configuracoes() {
             <p className="text-sm text-muted-foreground">O responsável é buscado primeiro pela loja final e, se não houver, pela regional.</p>
             <TabelaMapeamento
               rotuloDe={tipoResp === "loja" ? "Loja final" : "Regional"} rotuloPara="Responsável"
-              sugestoesDe={tipoResp === "loja" ? lojas : []}
+              sugestoesDe={tipoResp === "loja" ? sugestoes : regionais}
               extra={
                 <Select value={tipoResp} onValueChange={(v) => setTipoResp(v as "loja" | "regional")}>
                   <SelectTrigger className="w-36" aria-label="Tipo"><SelectValue /></SelectTrigger>
