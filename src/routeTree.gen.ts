@@ -44,6 +44,7 @@ import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRouteImport } fr
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendas-historico'
 import { Route as AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRouteImport } from './routes/_authenticated._estoque-matriz.estoque-matriz.vendidos'
 import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.index'
+import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.$placa'
 import { Route as AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRouteImport } from './routes/_authenticated._preparacao-anuncios.preparacao-anuncios.inativos'
 import { Route as AuthenticatedRotinaRotinaIndexRouteImport } from './routes/_authenticated._rotina.rotina.index'
 import { Route as AuthenticatedRotinaRotinaSetorIdRouteImport } from './routes/_authenticated._rotina.rotina.$setorId'
@@ -259,6 +260,12 @@ const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute =
     path: '/preparacao-anuncios/',
     getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
   } as any)
+const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute =
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport.update({
+    id: '/preparacao-anuncios/$placa',
+    path: '/preparacao-anuncios/$placa',
+    getParentRoute: () => AuthenticatedPreparacaoAnunciosRoute,
+  } as any)
 const AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute =
   AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRouteImport.update({
     id: '/preparacao-anuncios/inativos',
@@ -415,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
   '/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -466,6 +474,7 @@ export interface FileRoutesByTo {
   '/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
   '/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -526,6 +535,7 @@ export interface FileRoutesById {
   '/_authenticated/_estoque-matriz/estoque-matriz/repasse': typeof AuthenticatedEstoqueMatrizEstoqueMatrizRepasseRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendasHistoricoRoute
   '/_authenticated/_estoque-matriz/estoque-matriz/vendidos': typeof AuthenticatedEstoqueMatrizEstoqueMatrizVendidosRoute
+  '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
   '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos': typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   '/_authenticated/_rotina/rotina/$setorId': typeof AuthenticatedRotinaRotinaSetorIdRoute
   '/_authenticated/_rotina/rotina/configuracoes': typeof AuthenticatedRotinaRotinaConfiguracoesRoute
@@ -579,6 +589,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/repasse'
     | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
+    | '/preparacao-anuncios/$placa'
     | '/preparacao-anuncios/inativos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/estoque-matriz/repasse'
     | '/estoque-matriz/vendas-historico'
     | '/estoque-matriz/vendidos'
+    | '/preparacao-anuncios/$placa'
     | '/preparacao-anuncios/inativos'
     | '/rotina/$setorId'
     | '/rotina/configuracoes'
@@ -689,6 +701,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_estoque-matriz/estoque-matriz/repasse'
     | '/_authenticated/_estoque-matriz/estoque-matriz/vendas-historico'
     | '/_authenticated/_estoque-matriz/estoque-matriz/vendidos'
+    | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa'
     | '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos'
     | '/_authenticated/_rotina/rotina/$setorId'
     | '/_authenticated/_rotina/rotina/configuracoes'
@@ -976,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRouteImport
       parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
     }
+    '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa': {
+      id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa'
+      path: '/preparacao-anuncios/$placa'
+      fullPath: '/preparacao-anuncios/$placa'
+      preLoaderRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRouteImport
+      parentRoute: typeof AuthenticatedPreparacaoAnunciosRoute
+    }
     '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos': {
       id: '/_authenticated/_preparacao-anuncios/preparacao-anuncios/inativos'
       path: '/preparacao-anuncios/inativos'
@@ -1230,12 +1250,15 @@ const AuthenticatedGestaoRouteWithChildren =
   AuthenticatedGestaoRoute._addFileChildren(AuthenticatedGestaoRouteChildren)
 
 interface AuthenticatedPreparacaoAnunciosRouteChildren {
+  AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute
   AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute
   AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute: typeof AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute
 }
 
 const AuthenticatedPreparacaoAnunciosRouteChildren: AuthenticatedPreparacaoAnunciosRouteChildren =
   {
+    AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute:
+      AuthenticatedPreparacaoAnunciosPreparacaoAnunciosPlacaRoute,
     AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute:
       AuthenticatedPreparacaoAnunciosPreparacaoAnunciosInativosRoute,
     AuthenticatedPreparacaoAnunciosPreparacaoAnunciosIndexRoute:
