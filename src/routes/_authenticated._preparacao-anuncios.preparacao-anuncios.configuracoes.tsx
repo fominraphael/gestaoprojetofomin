@@ -115,7 +115,7 @@ function Configuracoes() {
             <h2 className="font-semibold">Cadastro de lojas</h2>
             <p className="text-sm text-muted-foreground">{cadastro.length} lojas em {regionais.length} regionais. Base usada nas sugestões de direcionamento, agrupamento e responsáveis.</p>
             <TabelaMapeamento
-              rotuloDe="Loja" rotuloPara="Regional" sugestoesDe={regionais}
+              rotuloDe="Loja" rotuloPara="Regional" sugestoesDe={sugestoes}
               linhas={cadastro.map((c) => ({ id: c.id, de: c.loja, para: c.regional }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas").insert({ loja: de, regional: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas").delete().eq("id", id))}
