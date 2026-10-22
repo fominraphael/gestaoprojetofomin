@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/_preparacao-anuncios/prepa
 const DESCRICAO: Record<IndicadorId, string> = {
   os: "Pendente quando a placa aparece na base Pendências OS.",
   foto: "Pendente quando as fotos do Estoque BI ficam abaixo do mínimo, sem registro recente no Gosystem nem no Banco de Fotos.",
-  tcuv: "Pendente quando SOLICITADO tem data válida e RETORNO está vazio.",
+  tcuv: "Pendente quando SOLICITADO está preenchido e RETORNO está vazio.",
   auditoria: "Pendente quando encontrado = NAO na conferência física.",
 };
 

@@ -35,9 +35,11 @@ describe("indicadores", () => {
     expect(calcularIndicadores("ABC1D23", 4, ctx([{ tipo: "gosystem", placa: "ABC1D23", placa_alt: null, dados: { "Data Inicio": "01/10/2026" } }])).foto.status).toBe("pendente");
     expect(calcularIndicadores("ABC1D23", 4, ctx([{ tipo: "banco_fotos", placa: "ABC1234", placa_alt: null, dados: { "PARA NOVA": "ABC1D23" } }])).foto.status).toBe("ok");
   });
-  it("TCUV pendente com SOLICITADO data e RETORNO vazio; valor 1 não gera pendência", () => {
+  it("TCUV pendente com SOLICITADO data e RETORNO vazio; qualquer valor preenchido gera pendência", () => {
     expect(calcularIndicadores("X1", 9, ctx([{ tipo: "tcuv", placa: "X1", placa_alt: null, dados: { SOLICITADO: "10/10/2026", RETORNO: null } }])).tcuv.status).toBe("pendente");
-    expect(calcularIndicadores("X1", 9, ctx([{ tipo: "tcuv", placa: "X1", placa_alt: null, dados: { SOLICITADO: 1, RETORNO: null } }])).tcuv.status).toBe("revisar");
+    expect(calcularIndicadores("X1", 9, ctx([{ tipo: "tcuv", placa: "X1", placa_alt: null, dados: { SOLICITADO: 1, RETORNO: null } }])).tcuv.status).toBe("pendente");
+    expect(calcularIndicadores("X1", 9, ctx([{ tipo: "tcuv", placa: "X1", placa_alt: null, dados: { SOLICITADO: null, RETORNO: null } }])).tcuv.status).toBe("ok");
+    expect(calcularIndicadores("X1", 9, ctx([{ tipo: "tcuv", placa: "X1", placa_alt: null, dados: { SOLICITADO: "10/10/2026", RETORNO: "12/10/2026" } }])).tcuv.status).toBe("ok");
     expect(dataValida(1)).toBeNull();
   });
   it("auditoria pendente com encontrado NAO", () => {
