@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 import { ModuleErrorBoundary } from "@/components/ModuleErrorBoundary";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IndicadorBadge } from "@/components/preparacao/IndicadorBadge";
 import { MuralObservacoes } from "@/components/preparacao/MuralObservacoes";
-import { INDICADORES, carregarVeiculosCalculados } from "@/lib/preparacao-anuncios";
+import { INDICADORES, campo, carregarVeiculosCalculados } from "@/lib/preparacao-anuncios";
 import { formatarMoedaBR } from "@/lib/moeda";
 
 export const Route = createFileRoute("/_authenticated/_preparacao-anuncios/preparacao-anuncios/$placa")({
@@ -28,6 +28,23 @@ function valorDado(v: unknown): string {
   if (v instanceof Date) return v.toLocaleDateString("pt-BR");
   if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T/.test(v)) return new Date(v).toLocaleDateString("pt-BR");
   return v == null ? "" : String(v);
+}
+
+/** Link(s) de foto da conferência física (coluna "foto" da planilha de Auditoria). */
+function LinksFotoAuditoria({ dados }: { dados: Record<string, unknown>[] }) {
+  const links = dados.map((d) => String(campo(d, "foto") ?? "").trim()).filter(Boolean);
+  if (!links.length) return <p className="text-sm text-muted-foreground">Sem foto disponível</p>;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {links.map((url, idx) => /^https?:\/\//i.test(url) ? (
+        <a key={url + idx} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+          <ExternalLink className="h-3 w-3" /> Abrir foto{links.length > 1 ? ` ${idx + 1}` : ""}
+        </a>
+      ) : (
+        <span key={url + idx} className="text-sm text-muted-foreground">Sem foto disponível (link inválido)</span>
+      ))}
+    </div>
+  );
 }
 
 function DetalheVeiculo() {
@@ -67,7 +84,7 @@ function DetalheVeiculo() {
         </dl>
         <div className="mt-4 text-sm">
           <span className="text-xs text-muted-foreground">Resolução de loja: </span>
-          {data.loja.bruta || "—"} → {data.loja.direcionada || "—"} → <strong>{data.loja.final || "—"}</strong>
+          <span className="text-muted-foreground">Loja Estoque:</span> {data.loja.bruta || "—"} → <span className="text-muted-foreground">Loja Direcionamento:</span> {data.loja.direcionada || "—"} → <span className="text-muted-foreground">Loja Agrupamento:</span> {data.loja.final || "—"} → <span className="text-muted-foreground">Loja Pendência:</span> <strong>{data.loja.final || "—"}</strong>
         </div>
       </Card>
 
@@ -78,6 +95,7 @@ function DetalheVeiculo() {
             <Card key={i.id} className="p-4 space-y-2">
               <div className="flex items-center gap-2"><h2 className="font-semibold">{i.label}</h2><IndicadorBadge label={i.label} status={r.status} /></div>
               <p className="text-sm text-muted-foreground">{r.motivo}</p>
+              {i.id === "auditoria" && <LinksFotoAuditoria dados={r.dados} />}
               {r.dados.slice(0, 5).map((d, idx) => (
                 <div key={idx} className="rounded border border-border bg-muted/40 p-2 text-xs">
                   {Object.entries(d).filter(([, v]) => v !== null && v !== "").map(([k, v]) => (
