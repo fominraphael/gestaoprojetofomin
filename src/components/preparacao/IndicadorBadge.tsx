@@ -4,7 +4,7 @@ import type { StatusIndicador } from "@/lib/preparacao-anuncios";
 
 const MAPA: Record<StatusIndicador, { cls: string; Icon: typeof CheckCircle2; texto: string }> = {
   pendente: { cls: "bg-destructive/15 text-destructive border-destructive/30", Icon: AlertTriangle, texto: "Pendente" },
-  ok: { cls: "bg-primary/10 text-primary border-primary/30", Icon: CheckCircle2, texto: "OK" },
+  ok: { cls: "bg-status-done-bg text-status-done border-status-done/40", Icon: CheckCircle2, texto: "OK" },
   aguardando: { cls: "bg-accent text-accent-foreground border-border", Icon: Clock, texto: "Aguardando" },
   revisar: { cls: "bg-muted text-foreground border-border", Icon: HelpCircle, texto: "Revisar" },
   desabilitado: { cls: "bg-muted text-muted-foreground border-border", Icon: MinusCircle, texto: "Desabilitado" },

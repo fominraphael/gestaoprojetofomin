@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export interface LinhaMapeamento { id: string; de: string; para: string; extra?: string }
@@ -11,6 +12,8 @@ export interface TabelaMapeamentoProps {
   rotuloPara: string;
   linhas: LinhaMapeamento[];
   sugestoesDe?: string[];
+  /** Quando informado, o destino vira uma lista fechada (ex.: usuários com acesso ao módulo). */
+  opcoesPara?: string[];
   onAdicionar: (de: string, para: string) => Promise<void>;
   onRemover: (id: string) => Promise<void>;
   /** Campo extra opcional exibido antes do "de" (ex.: tipo loja/regional). */
@@ -18,7 +21,7 @@ export interface TabelaMapeamentoProps {
 }
 
 /** Tabela genérica N:1 (origem → destino) com inclusão e remoção. */
-export function TabelaMapeamento({ rotuloDe, rotuloPara, linhas, sugestoesDe = [], onAdicionar, onRemover, extra }: TabelaMapeamentoProps) {
+export function TabelaMapeamento({ rotuloDe, rotuloPara, linhas, sugestoesDe = [], opcoesPara, onAdicionar, onRemover, extra }: TabelaMapeamentoProps) {
   const [de, setDe] = useState("");
   const [para, setPara] = useState("");
   const idLista = `sug-${rotuloDe.replace(/\W/g, "")}`;
@@ -35,7 +38,14 @@ export function TabelaMapeamento({ rotuloDe, rotuloPara, linhas, sugestoesDe = [
         <Input list={idLista} value={de} onChange={(e) => setDe(e.target.value)} placeholder={rotuloDe} className="w-full sm:w-64" aria-label={rotuloDe} />
         <datalist id={idLista}>{sugestoesDe.map((s) => <option key={s} value={s} />)}</datalist>
         <span className="text-muted-foreground">→</span>
-        <Input value={para} onChange={(e) => setPara(e.target.value)} placeholder={rotuloPara} className="w-full sm:w-64" aria-label={rotuloPara} />
+        {opcoesPara ? (
+          <Select value={para} onValueChange={setPara}>
+            <SelectTrigger className="w-full sm:w-64" aria-label={rotuloPara}><SelectValue placeholder={opcoesPara.length ? rotuloPara : "Nenhum usuário com acesso ao módulo"} /></SelectTrigger>
+            <SelectContent>{opcoesPara.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+          </Select>
+        ) : (
+          <Input value={para} onChange={(e) => setPara(e.target.value)} placeholder={rotuloPara} className="w-full sm:w-64" aria-label={rotuloPara} />
+        )}
         <Button size="sm" onClick={adicionar}><Plus className="h-4 w-4" /> Adicionar</Button>
       </div>
       <Table>

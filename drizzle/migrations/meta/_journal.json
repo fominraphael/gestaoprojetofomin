@@ -29,6 +29,13 @@
       "when": 1792616214738,
       "tag": "0003_prep_lojas_cadastro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792677971178,
+      "tag": "0004_prep_indices_listagem",
+      "breakpoints": true
     }
   ]
 }

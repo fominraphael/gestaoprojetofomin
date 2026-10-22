@@ -20,7 +20,7 @@ export const BASES: { tipo: TipoBase; titulo: string; descricao: string; colunaP
   { tipo: "os", titulo: "Pendências OS", descricao: "Já filtrada: placa presente = pendência de OS.", colunaPlaca: ["placa"] },
   { tipo: "banco_fotos", titulo: "Banco de Fotos", descricao: "De-para de placas (PLACA / PARA NOVA / PARA ANTIGA) e confirmação de foto.", colunaPlaca: ["placa"] },
   { tipo: "gosystem", titulo: "Fotografia Gosystem", descricao: "Registros do fotógrafo por placa.", colunaPlaca: ["placaarquivo", "placa"] },
-  { tipo: "tcuv", titulo: "Pendências TCUV", descricao: "Pendente quando SOLICITADO tem data e RETORNO está vazio.", colunaPlaca: ["placa"] },
+  { tipo: "tcuv", titulo: "Pendências TCUV", descricao: "Pendente quando SOLICITADO está preenchido e RETORNO está vazio.", colunaPlaca: ["placa"] },
   { tipo: "auditoria", titulo: "Auditoria", descricao: "Pendente quando encontrado = NAO.", colunaPlaca: ["placa"] },
 ];
 
@@ -180,13 +180,11 @@ export function calcularIndicadores(
   const tcuv = linhasDe(ctx, "tcuv", placas);
   if (desab("tcuv")) r.tcuv = { status: "desabilitado", motivo: "Indicador desabilitado", dados: [] };
   else {
-    const pend = tcuv.filter((l) => dataValida(campo(l.dados, "SOLICITADO")) && vazio(campo(l.dados, "RETORNO")));
-    const revisar = tcuv.filter((l) => !vazio(campo(l.dados, "SOLICITADO")) && !dataValida(campo(l.dados, "SOLICITADO")));
+    // Regra: SOLICITADO preenchido (qualquer valor) e RETORNO vazio = pendente.
+    const pend = tcuv.filter((l) => !vazio(campo(l.dados, "SOLICITADO")) && vazio(campo(l.dados, "RETORNO")));
     r.tcuv = pend.length
       ? { status: "pendente", motivo: "Solicitado sem retorno", dados: pend.map((l) => l.dados) }
-      : revisar.length
-        ? { status: "revisar", motivo: "SOLICITADO sem data válida — revisar registro", dados: revisar.map((l) => l.dados) }
-        : { status: "ok", motivo: tcuv.length ? "Retorno registrado" : "Sem registro TCUV", dados: tcuv.map((l) => l.dados) };
+      : { status: "ok", motivo: tcuv.length ? "Sem solicitação em aberto" : "Sem registro TCUV", dados: tcuv.map((l) => l.dados) };
   }
 
   // Auditoria: encontrado = NAO
@@ -238,6 +236,13 @@ export interface VeiculoCalculado extends VeiculoPrep {
   pendente: boolean;
 }
 
+/** Usuários (perfis ativos) com acesso ao módulo — opções do campo Responsável. */
+export async function carregarUsuariosModulo(): Promise<string[]> {
+  const { data, error } = await supabase.from("profiles").select("username, modulos").contains("modulos", ["preparacao-anuncios"]);
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((p) => normTexto(p.username)).filter(Boolean))).sort();
+}
+
 export async function carregarConfig() {
   const [cfg, agrup, direc, resp] = await Promise.all([
     supabase.from("prep_config_indicadores").select("*"),
@@ -258,14 +263,19 @@ export async function carregarConfig() {
 export async function carregarVeiculosCalculados(ativos: boolean | null, placa?: string): Promise<VeiculoCalculado[]> {
   const cfg = await carregarConfig();
   const veiculos = await buscarTodos<VeiculoPrep>((de, ate) => {
-    let q = supabase.from("prep_veiculos").select("*");
+    // Listagem carrega só as colunas exibidas; o detalhe (placa) carrega tudo.
+    const colunas = placa ? "*" : "id, placa, regional, loja_bruta, modelo, ano_mod, km, dias_em_estoque, fotos_qtd, classificacao, ativo, inativado_em";
+    let q = supabase.from("prep_veiculos").select(colunas);
     if (ativos !== null) q = q.eq("ativo", ativos);
     if (placa) q = q.eq("placa", placa);
     return q.order("placa").range(de, ate) as never;
   });
-  const linhas = await buscarTodos<LinhaBase>((de, ate) =>
-    supabase.from("prep_base_linhas").select("tipo, placa, placa_alt, dados").order("id").range(de, ate) as never,
-  );
+  const linhas = await buscarTodos<LinhaBase>((de, ate) => {
+    let q = supabase.from("prep_base_linhas").select("tipo, placa, placa_alt, dados");
+    // No detalhe, só as linhas da placa e equivalentes (de-para do Banco de Fotos).
+    if (placa) q = q.or(`placa.eq.${placa},placa_alt.eq.${placa},tipo.eq.banco_fotos`);
+    return q.order("id").range(de, ate) as never;
+  });
   const porTipo = indexarLinhas(linhas);
   const depara = montarDepara(linhas.filter((l) => l.tipo === "banco_fotos"));
   const ctx: ContextoCalculo = { porTipo, depara, config: cfg.config };
