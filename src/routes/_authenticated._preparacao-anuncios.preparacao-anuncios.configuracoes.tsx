@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TabelaMapeamento } from "@/components/preparacao/TabelaMapeamento";
 import { supabase } from "@/integrations/supabase/client";
-import { INDICADORES, carregarConfig, normTexto, type ConfigIndicador, type IndicadorId } from "@/lib/preparacao-anuncios";
+import { INDICADORES, carregarConfig, carregarUsuariosModulo, normTexto, type ConfigIndicador, type IndicadorId } from "@/lib/preparacao-anuncios";
 
 export const Route = createFileRoute("/_authenticated/_preparacao-anuncios/preparacao-anuncios/configuracoes")({
   errorComponent: ModuleErrorBoundary,
@@ -55,6 +55,7 @@ function Configuracoes() {
       return data ?? [];
     },
   });
+  const { data: usuariosModulo = [] } = useQuery({ queryKey: ["prep", "usuarios-modulo"], queryFn: carregarUsuariosModulo });
   const sugestoes = Array.from(new Set([...lojas, ...cadastro.map((c) => normTexto(c.loja))])).sort();
   const regionais = Array.from(new Set(cadastro.map((c) => c.regional))).sort();
   const [cfg, setCfg] = useState<Record<IndicadorId, ConfigIndicador> | null>(null);
@@ -123,9 +124,9 @@ function Configuracoes() {
           </Card>
           <Card className="p-4 space-y-2">
             <h2 className="font-semibold">1. Direcionamento</h2>
-            <p className="text-sm text-muted-foreground">Loja sem operação de seminovos → loja responsável. Aplicado primeiro.</p>
+            <p className="text-sm text-muted-foreground">Loja Estoque sem operação de seminovos → Loja Direcionamento. Aplicado primeiro.</p>
             <TabelaMapeamento
-              rotuloDe="Loja sem operação" rotuloPara="Loja responsável" sugestoesDe={sugestoes}
+              rotuloDe="Loja Estoque (sem operação)" rotuloPara="Loja Direcionamento" sugestoesDe={sugestoes}
               linhas={(data?.direc ?? []).map((d) => ({ id: d.id, de: d.loja_sem_operacao, para: d.loja_responsavel }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_direcionamento").insert({ loja_sem_operacao: de, loja_responsavel: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_direcionamento").delete().eq("id", id))}
@@ -133,9 +134,9 @@ function Configuracoes() {
           </Card>
           <Card className="p-4 space-y-2">
             <h2 className="font-semibold">2. Agrupamento</h2>
-            <p className="text-sm text-muted-foreground">Variações de nome da mesma loja → nome canônico. Aplicado depois do direcionamento.</p>
+            <p className="text-sm text-muted-foreground">Variações de nome da mesma loja → Loja Agrupamento. O resultado final é a Loja Pendência.</p>
             <TabelaMapeamento
-              rotuloDe="Loja origem" rotuloPara="Loja canônica" sugestoesDe={sugestoes}
+              rotuloDe="Loja Direcionamento" rotuloPara="Loja Agrupamento" sugestoesDe={sugestoes}
               linhas={(data?.agrup ?? []).map((d) => ({ id: d.id, de: d.loja_origem, para: d.loja_canonica }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_agrupamento").insert({ loja_origem: de, loja_canonica: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_agrupamento").delete().eq("id", id))}
@@ -145,9 +146,10 @@ function Configuracoes() {
 
         <TabsContent value="responsaveis">
           <Card className="p-4 space-y-2">
-            <p className="text-sm text-muted-foreground">O responsável é buscado primeiro pela loja final e, se não houver, pela regional.</p>
+            <p className="text-sm text-muted-foreground">O responsável é buscado primeiro pela Loja Pendência e, se não houver, pela regional. Só aparecem usuários com acesso a este módulo.</p>
             <TabelaMapeamento
-              rotuloDe={tipoResp === "loja" ? "Loja final" : "Regional"} rotuloPara="Responsável"
+              rotuloDe={tipoResp === "loja" ? "Loja Pendência" : "Regional"} rotuloPara="Responsável"
+              opcoesPara={usuariosModulo}
               sugestoesDe={tipoResp === "loja" ? sugestoes : regionais}
               extra={
                 <Select value={tipoResp} onValueChange={(v) => setTipoResp(v as "loja" | "regional")}>
