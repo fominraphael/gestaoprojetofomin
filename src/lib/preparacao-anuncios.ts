@@ -298,6 +298,19 @@ async function registrarLog(tipo: TipoBase, arquivo: string, total: number, vali
   return data.id as string;
 }
 
+export interface RegistroAuditoria { id: string; importado_em: string; dados: Record<string, unknown> }
+
+/** Histórico completo de Auditoria da placa (todas as importações), mais recente primeiro. */
+export async function carregarHistoricoAuditoria(placa: string): Promise<RegistroAuditoria[]> {
+  const { data, error } = await supabase
+    .from("prep_auditoria_historico")
+    .select("id, importado_em, dados")
+    .eq("placa", placa)
+    .order("importado_em", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as RegistroAuditoria[];
+}
+
 export interface ResultadoImportacao { total: number; validas: number; ignoradas: number; inativadas: number }
 
 export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Record<string, unknown>[]): Promise<ResultadoImportacao> {
@@ -358,6 +371,14 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
       for (let i = 0; i < registros.length; i += 500) {
         const { error } = await supabase.from("prep_base_linhas").insert(registros.slice(i, i + 500) as never);
         if (error) throw error;
+      }
+      // Auditoria: acumula histórico por placa (a base vigente continua sendo só a última importação).
+      if (tipo === "auditoria") {
+        const hist = registros.map((r) => ({ placa: r.placa, importacao_id: importacaoId, dados: r.dados }));
+        for (let i = 0; i < hist.length; i += 500) {
+          const { error } = await supabase.from("prep_auditoria_historico").insert(hist.slice(i, i + 500) as never);
+          if (error) throw error;
+        }
       }
     }
     await supabase.from("prep_importacoes").update({ mensagem: inativadas ? `Concluída — ${inativadas} veículo(s) inativado(s)` : "Concluída" }).eq("id", importacaoId);
