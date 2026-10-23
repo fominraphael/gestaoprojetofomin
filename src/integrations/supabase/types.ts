@@ -1513,6 +1513,41 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_auditoria_historico: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          importacao_id: string | null
+          importado_em: string
+          placa: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          importacao_id?: string | null
+          importado_em?: string
+          placa: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          importacao_id?: string | null
+          importado_em?: string
+          placa?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_auditoria_historico_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "prep_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prep_base_linhas: {
         Row: {
           created_at: string
