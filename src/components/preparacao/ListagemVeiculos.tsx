@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import { ordenarLista, type CriterioOrdem, type ValorOrdenavel } from "@/lib/ordenacao";
 import { IndicadorBadge } from "./IndicadorBadge";
-import { INDICADORES, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
+import { INDICADORES, campo, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
 
 const TODOS = "__todos__";
 const POR_PAGINA = 100;
@@ -21,7 +22,7 @@ const POR_PAGINA = 100;
 const ORDEM_PADRAO: CriterioOrdem[] = [{ key: "dias", sentido: "desc" }];
 const ROTULOS: Record<string, string> = {
   placa: "Placa", modelo: "Modelo", regional: "Regional", loja: "Loja Pendência", responsavel: "Responsável",
-  classificacao: "Classificação", dias: "Dias", ...Object.fromEntries(INDICADORES.map((i) => [i.id, i.label])),
+  dias: "Dias", ...Object.fromEntries(INDICADORES.map((i) => [i.id, i.label])),
 };
 const PESO_STATUS: Record<StatusIndicador, number> = { pendente: 0, aguardando: 1, revisar: 2, ok: 3, desabilitado: 4 };
 
@@ -32,10 +33,25 @@ function acessor(v: VeiculoCalculado, key: string): ValorOrdenavel {
     case "regional": return v.regional;
     case "loja": return v.loja.final;
     case "responsavel": return v.responsavel;
-    case "classificacao": return v.classificacao;
     case "dias": return v.dias_em_estoque;
     default: return v.indicadores[key as IndicadorId] ? PESO_STATUS[v.indicadores[key as IndicadorId].status] : null;
   }
+}
+
+const ROTULO_STATUS: Record<StatusIndicador, string> = { pendente: "Pendente", ok: "OK", aguardando: "Aguardando", desabilitado: "Desabilitado", revisar: "Revisar" };
+
+/** Exporta o recorte filtrado (na ordem exibida) com a observação do TCUV. */
+function exportar(lista: VeiculoCalculado[]) {
+  const linhas = lista.map((v) => ({
+    Placa: v.placa, Modelo: v.modelo ?? "", Regional: v.regional ?? "",
+    "Loja Estoque": v.loja.bruta, "Loja Pendência": v.loja.final, "Responsável": v.responsavel ?? "",
+    Dias: v.dias_em_estoque ?? "",
+    ...Object.fromEntries(INDICADORES.map((i) => [i.label, ROTULO_STATUS[v.indicadores[i.id].status]])),
+    "Observação TCUV": v.indicadores.tcuv.dados.map((d) => String(campo(d, "OBSERVAÇÃO", "OBSERVACAO") ?? "").trim()).filter(Boolean).join(" | "),
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas), "Veículos");
+  XLSX.writeFile(wb, `pendencias-preparacao-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
 export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
@@ -50,8 +66,7 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
   const [regional, setRegional] = useState(TODOS);
   const [loja, setLoja] = useState(TODOS);
   const [responsavel, setResponsavel] = useState(TODOS);
-  const [classificacao, setClassificacao] = useState(TODOS);
-  const [indicador, setIndicador] = useState(TODOS);
+  const [filtroInd, setFiltroInd] = useState<Record<IndicadorId, string>>({ os: TODOS, foto: TODOS, tcuv: TODOS, auditoria: TODOS });
   const [placa, setPlaca] = useState("");
   const [pagina, setPagina] = useState(0);
 
@@ -61,7 +76,6 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
       regionais: u(data.map((v) => v.regional)),
       lojas: u(data.map((v) => v.loja.final)),
       responsaveis: u(data.map((v) => v.responsavel)),
-      classificacoes: u(data.map((v) => v.classificacao)),
     };
   }, [data]);
 
@@ -73,12 +87,11 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         (regional === TODOS || v.regional === regional) &&
         (loja === TODOS || v.loja.final === loja) &&
         (responsavel === TODOS || v.responsavel === responsavel) &&
-        (classificacao === TODOS || v.classificacao === classificacao) &&
-        (indicador === TODOS || v.indicadores[indicador as IndicadorId]?.status === "pendente") &&
+        INDICADORES.every((i) => filtroInd[i.id] === TODOS || (v.indicadores[i.id]?.status === "pendente") === (filtroInd[i.id] === "sim")) &&
         (!p || v.placa.includes(p)),
     );
     return ordenarLista(lista, criterios, acessor);
-  }, [data, somentePendentes, regional, loja, responsavel, classificacao, indicador, placa, criterios]);
+  }, [data, somentePendentes, regional, loja, responsavel, filtroInd, placa, criterios]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaAtual = Math.min(pagina, totalPaginas - 1);
@@ -112,8 +125,9 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         {filtroSelect("Regional", regional, setRegional, lista(opcoes.regionais))}
         {filtroSelect("Loja Pendência", loja, setLoja, lista(opcoes.lojas))}
         {filtroSelect("Responsável", responsavel, setResponsavel, lista(opcoes.responsaveis))}
-        {filtroSelect("Classificação", classificacao, setClassificacao, lista(opcoes.classificacoes))}
-        {filtroSelect("Pendente em", indicador, setIndicador, INDICADORES.map((i) => ({ v: i.id, l: i.label })))}
+        {INDICADORES.map((i) => (
+          <div key={i.id}>{filtroSelect(`${i.label} pendente`, filtroInd[i.id], (x) => setFiltroInd((f) => ({ ...f, [i.id]: x })), [{ v: "sim", l: "Sim" }, { v: "nao", l: "Não" }])}</div>
+        ))}
         <div className="flex items-center gap-2 pb-2">
           <Switch id="so-pendentes" checked={somentePendentes} onCheckedChange={(v) => { setSomentePendentes(v); setPagina(0); }} />
           <Label htmlFor="so-pendentes">Somente pendentes</Label>
@@ -121,6 +135,9 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         <div className="ml-auto pb-2 text-sm text-muted-foreground">
           {filtrados.length} de {data.length} veículos · {data.filter((v) => v.pendente).length} com pendência
         </div>
+        <Button variant="outline" size="sm" className="mb-1" disabled={!filtrados.length} onClick={() => exportar(filtrados)}>
+          <Download className="mr-1 h-4 w-4" /> Exportar
+        </Button>
       </Card>
 
       <ResumoOrdenacao criterios={criterios} rotulo={(k) => ROTULOS[k] ?? k} onInverter={ord.inverter} onRemover={ord.remover} onLimpar={ord.limpar} />
@@ -141,7 +158,6 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
                 <TableHead>{cab("regional")}</TableHead>
                 <TableHead>{cab("loja")}</TableHead>
                 <TableHead>{cab("responsavel")}</TableHead>
-                <TableHead>{cab("classificacao")}</TableHead>
                 <TableHead className="text-right">{cab("dias", "right")}</TableHead>
                 {INDICADORES.map((i) => <TableHead key={i.id}>{cab(i.id)}</TableHead>)}
                 <TableHead />
@@ -168,7 +184,6 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
                     </HoverCard>
                   </TableCell>
                   <TableCell>{v.responsavel ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell>{v.classificacao ?? "—"}</TableCell>
                   <TableCell className="text-right">{v.dias_em_estoque ?? "—"}</TableCell>
                   {INDICADORES.map((i) => (
                     <TableCell key={i.id}>
