@@ -3184,6 +3184,7 @@ export type Database = {
         Args: { _filial_id: string; _user_id: string }
         Returns: boolean
       }
+      has_modulo: { Args: { _mod: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3195,6 +3196,7 @@ export type Database = {
         Args: { _arquivo: string; _itens: Json; _usuario_nome: string }
         Returns: number
       }
+      is_central_compras: { Args: never; Returns: boolean }
       purge_old_trash: { Args: never; Returns: undefined }
       user_has_setor: {
         Args: { p_setor_id: string; p_user_id?: string }

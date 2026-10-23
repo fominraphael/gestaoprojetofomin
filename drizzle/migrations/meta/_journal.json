@@ -43,6 +43,13 @@
       "when": 1792759228455,
       "tag": "0005_pin_search_path_setor_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792762082920,
+      "tag": "0006_restrict_rls_by_module",
+      "breakpoints": true
     }
   ]
 }
