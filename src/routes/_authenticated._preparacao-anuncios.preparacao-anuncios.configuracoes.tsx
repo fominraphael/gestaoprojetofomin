@@ -57,6 +57,7 @@ function Configuracoes() {
   });
   const { data: usuariosModulo = [] } = useQuery({ queryKey: ["prep", "usuarios-modulo"], queryFn: carregarUsuariosModulo });
   const sugestoes = Array.from(new Set([...lojas, ...cadastro.map((c) => normTexto(c.loja))])).sort();
+  const lojasCadastro = Array.from(new Set(cadastro.map((c) => normTexto(c.loja)).filter(Boolean))).sort();
   const regionais = Array.from(new Set(cadastro.map((c) => c.regional))).sort();
   const [cfg, setCfg] = useState<Record<IndicadorId, ConfigIndicador> | null>(null);
   const [tipoResp, setTipoResp] = useState<"loja" | "regional">("loja");
@@ -126,7 +127,7 @@ function Configuracoes() {
             <h2 className="font-semibold">1. Direcionamento</h2>
             <p className="text-sm text-muted-foreground">Loja Estoque sem operação de seminovos → Loja Direcionamento. Aplicado primeiro.</p>
             <TabelaMapeamento
-              rotuloDe="Loja Estoque (sem operação)" rotuloPara="Loja Direcionamento" sugestoesDe={sugestoes}
+              rotuloDe="Loja Estoque (sem operação)" rotuloPara="Loja Direcionamento" opcoesBusca={lojasCadastro}
               linhas={(data?.direc ?? []).map((d) => ({ id: d.id, de: d.loja_sem_operacao, para: d.loja_responsavel }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_direcionamento").insert({ loja_sem_operacao: de, loja_responsavel: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_direcionamento").delete().eq("id", id))}
@@ -136,7 +137,7 @@ function Configuracoes() {
             <h2 className="font-semibold">2. Agrupamento</h2>
             <p className="text-sm text-muted-foreground">Variações de nome da mesma loja → Loja Agrupamento. O resultado final é a Loja Pendência.</p>
             <TabelaMapeamento
-              rotuloDe="Loja Direcionamento" rotuloPara="Loja Agrupamento" sugestoesDe={sugestoes}
+              rotuloDe="Loja Direcionamento" rotuloPara="Loja Agrupamento" opcoesBusca={lojasCadastro}
               linhas={(data?.agrup ?? []).map((d) => ({ id: d.id, de: d.loja_origem, para: d.loja_canonica }))}
               onAdicionar={(de, para) => exec(supabase.from("prep_lojas_agrupamento").insert({ loja_origem: de, loja_canonica: para }))}
               onRemover={(id) => exec(supabase.from("prep_lojas_agrupamento").delete().eq("id", id))}
