@@ -52,7 +52,7 @@ function Importar() {
     try {
       const linhas = await lerPlanilha(file);
       const r = await importarBase(tipo, file.name, linhas);
-      toast.success(`${TITULO[tipo]}: ${r.validas} linhas importadas${r.ignoradas ? `, ${r.ignoradas} sem placa ignoradas` : ""}${r.inativadas ? `, ${r.inativadas} veículos inativados` : ""}.`);
+      toast.success(`${TITULO[tipo]}: ${r.validas} linhas importadas${r.ignoradas ? `, ${r.ignoradas} sem placa ignoradas` : ""}${r.inativadas ? `, ${r.inativadas} veículos inativados` : ""}${r.naoLocalizadas?.length ? `, ${r.naoLocalizadas.length} placas não localizadas no Estoque (ver Últimas importações)` : ""}.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro na importação.");
     } finally {

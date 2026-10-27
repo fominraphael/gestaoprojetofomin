@@ -18,7 +18,7 @@ export const INDICADORES: { id: IndicadorId; label: string }[] = [
 export const BASES: { tipo: TipoBase; titulo: string; descricao: string; colunaPlaca: string[] }[] = [
   { tipo: "estoque", titulo: "Estoque BI", descricao: "Universo de veículos. Placas ausentes na nova importação ficam inativas.", colunaPlaca: ["placa"] },
   { tipo: "os", titulo: "Pendências OS", descricao: "Já filtrada: placa presente = pendência de OS.", colunaPlaca: ["placa"] },
-  { tipo: "banco_fotos", titulo: "Banco de Fotos", descricao: "De-para de placas (PLACA / PARA NOVA / PARA ANTIGA) e confirmação de foto.", colunaPlaca: ["placa"] },
+  { tipo: "banco_fotos", titulo: "Banco de Fotos", descricao: "Layout CODIGO | PASTA | QTD DE FOTOS | RESPONSAVEL | CADASTRADO EM | ALTERADO EM. A placa (coluna PASTA) no formato antigo é convertida para Mercosul.", colunaPlaca: ["pasta", "placa"] },
   { tipo: "gosystem", titulo: "Fotografia Gosystem", descricao: "Registros do fotógrafo por placa.", colunaPlaca: ["placaarquivo", "placa"] },
   { tipo: "tcuv", titulo: "Pendências TCUV", descricao: "Pendente quando SOLICITADO está preenchido e RETORNO está vazio.", colunaPlaca: ["placa"] },
   { tipo: "auditoria", titulo: "Auditoria", descricao: "Pendente quando encontrado = NAO.", colunaPlaca: ["placa"] },
@@ -41,6 +41,16 @@ export function normPlaca(v: unknown): string {
 export function normTexto(v: unknown): string {
   return String(v ?? "").trim().toUpperCase().replace(/\s+/g, " ");
 }
+/**
+ * Converte placa antiga (LLL0000) para Mercosul (LLL0L00): o 2º dígito vira letra (0→A … 9→J).
+ * Placas já no formato novo (ou fora dos dois padrões) são devolvidas apenas normalizadas.
+ */
+export function converterPlacaMercosul(v: unknown): string {
+  const p = normPlaca(v);
+  const m = /^([A-Z]{3})(\d)(\d)(\d{2})$/.exec(p);
+  return m ? `${m[1]}${m[2]}${String.fromCharCode(65 + Number(m[3]))}${m[4]}` : p;
+}
+
 function normChave(k: string): string {
   return k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -264,7 +274,7 @@ export async function carregarVeiculosCalculados(ativos: boolean | null, placa?:
   const cfg = await carregarConfig();
   const veiculos = await buscarTodos<VeiculoPrep>((de, ate) => {
     // Listagem carrega só as colunas exibidas; o detalhe (placa) carrega tudo.
-    const colunas = placa ? "*" : "id, placa, regional, loja_bruta, modelo, ano_mod, km, dias_em_estoque, fotos_qtd, classificacao, ativo, inativado_em";
+    const colunas = placa ? "*" : "id, placa, regional, loja_bruta, modelo, ano_mod, cor, km, custo_total, valor_anunciado, dias_em_estoque, fotos_qtd, classificacao, ativo, inativado_em";
     let q = supabase.from("prep_veiculos").select(colunas);
     if (ativos !== null) q = q.eq("ativo", ativos);
     if (placa) q = q.eq("placa", placa);
@@ -311,17 +321,22 @@ export async function carregarHistoricoAuditoria(placa: string): Promise<Registr
   return (data ?? []) as RegistroAuditoria[];
 }
 
-export interface ResultadoImportacao { total: number; validas: number; ignoradas: number; inativadas: number }
+export interface ResultadoImportacao { total: number; validas: number; ignoradas: number; inativadas: number; naoLocalizadas?: string[] }
 
 export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Record<string, unknown>[]): Promise<ResultadoImportacao> {
   const def = BASES.find((b) => b.tipo === tipo)!;
   const comPlaca = linhas
-    .map((l) => ({ l, placa: normPlaca(campo(l, ...def.colunaPlaca)) }))
+    .map((l) => {
+      const original = normPlaca(campo(l, ...def.colunaPlaca));
+      // Banco de Fotos: placa antiga na coluna PASTA é convertida para Mercosul antes do cruzamento.
+      return { l, original, placa: tipo === "banco_fotos" ? converterPlacaMercosul(original) : original };
+    })
     .filter((x) => x.placa.length >= 5);
   let importacaoId: string | null = null;
   try {
     if (!comPlaca.length) throw new Error("Nenhuma linha com placa encontrada. Verifique o cabeçalho da planilha.");
     let inativadas = 0;
+    let naoLocalizadas: string[] = [];
     importacaoId = await registrarLog(tipo, arquivo, linhas.length, comPlaca.length, "sucesso", "Processando...");
     if (tipo === "estoque") {
       const unicos = new Map(comPlaca.map((x) => [x.placa, x.l]));
@@ -363,9 +378,10 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
     } else {
       const { error: delErr } = await supabase.from("prep_base_linhas").delete().eq("tipo", tipo);
       if (delErr) throw delErr;
-      const registros = comPlaca.map(({ l, placa }) => ({
+      const registros = comPlaca.map(({ l, placa, original }) => ({
         tipo, placa, importacao_id: importacaoId,
-        placa_alt: tipo === "banco_fotos" ? normPlaca(campo(l, "PARA NOVA")) || normPlaca(campo(l, "PARA ANTIGA")) || null : null,
+        // Banco de Fotos: guarda a placa original (antiga) como equivalente, para o de-para.
+        placa_alt: tipo === "banco_fotos" ? (original !== placa ? original : normPlaca(campo(l, "PARA NOVA")) || normPlaca(campo(l, "PARA ANTIGA")) || null) : null,
         dados: JSON.parse(JSON.stringify(l)),
       }));
       for (let i = 0; i < registros.length; i += 500) {
@@ -380,6 +396,19 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
           if (error) throw error;
         }
       }
+    }
+    if (tipo === "banco_fotos") {
+      // Registra (sem bloquear) as placas que não existem no Estoque.
+      const estoque = await buscarTodos<{ placa: string }>((de, ate) =>
+        supabase.from("prep_veiculos").select("placa").order("placa").range(de, ate) as never,
+      );
+      const set = new Set(estoque.map((e) => e.placa));
+      naoLocalizadas = Array.from(new Set(comPlaca.filter((x) => !set.has(x.placa) && !set.has(x.original)).map((x) => x.original === x.placa ? x.placa : `${x.original}→${x.placa}`)));
+      const msg = naoLocalizadas.length
+        ? `Concluída — ${naoLocalizadas.length} placa(s) não localizada(s) no Estoque: ${naoLocalizadas.slice(0, 200).join(", ")}${naoLocalizadas.length > 200 ? "…" : ""}`
+        : "Concluída";
+      await supabase.from("prep_importacoes").update({ mensagem: msg }).eq("id", importacaoId);
+      return { total: linhas.length, validas: comPlaca.length, ignoradas: linhas.length - comPlaca.length, inativadas, naoLocalizadas };
     }
     await supabase.from("prep_importacoes").update({ mensagem: inativadas ? `Concluída — ${inativadas} veículo(s) inativado(s)` : "Concluída" }).eq("id", importacaoId);
     return { total: linhas.length, validas: comPlaca.length, ignoradas: linhas.length - comPlaca.length, inativadas };
