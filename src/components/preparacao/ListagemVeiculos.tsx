@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, ChevronLeft, ChevronRight, Download, Loader2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const POR_PAGINA = 100;
 const ORDEM_PADRAO: CriterioOrdem[] = [{ key: "dias", sentido: "desc" }];
 const ROTULOS: Record<string, string> = {
   placa: "Placa", modelo: "Modelo", regional: "Regional", loja: "Loja Pendência", responsavel: "Responsável",
+  ano: "Ano Modelo", cor: "Cor", km: "KM", custo: "Custo", valor: "Valor de Anúncio", classificacao: "Classificação",
   dias: "Dias", ...Object.fromEntries(INDICADORES.map((i) => [i.id, i.label])),
 };
 const PESO_STATUS: Record<StatusIndicador, number> = { pendente: 0, aguardando: 1, revisar: 2, ok: 3, desabilitado: 4 };
@@ -34,6 +36,12 @@ function acessor(v: VeiculoCalculado, key: string): ValorOrdenavel {
     case "loja": return v.loja.final;
     case "responsavel": return v.responsavel;
     case "dias": return v.dias_em_estoque;
+    case "ano": return v.ano_mod;
+    case "cor": return v.cor;
+    case "km": return v.km;
+    case "custo": return v.custo_total;
+    case "valor": return v.valor_anunciado;
+    case "classificacao": return v.classificacao;
     default: return v.indicadores[key as IndicadorId] ? PESO_STATUS[v.indicadores[key as IndicadorId].status] : null;
   }
 }
@@ -54,7 +62,11 @@ function exportar(lista: VeiculoCalculado[]) {
   XLSX.writeFile(wb, `pendencias-preparacao-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+const moeda = (n: number | null) => n == null ? "—" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
 export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
+  const qc = useQueryClient();
+  const [reprocessando, setReprocessando] = useState(false);
   const { data = [], isLoading, error } = useQuery({
     queryKey: ["prep", "veiculos", ativos],
     queryFn: () => carregarVeiculosCalculados(ativos),
@@ -69,6 +81,23 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
   const [filtroInd, setFiltroInd] = useState<Record<IndicadorId, string>>({ os: TODOS, foto: TODOS, tcuv: TODOS, auditoria: TODOS });
   const [placa, setPlaca] = useState("");
   const [pagina, setPagina] = useState(0);
+
+  /** Reaplica as regras vigentes de Direcionamento/Agrupamento sobre a Loja Estoque de cada placa. */
+  const reprocessar = async () => {
+    setReprocessando(true);
+    try {
+      const antes = new Map(data.map((v) => [v.placa, v.loja.final]));
+      qc.removeQueries({ queryKey: ["prep", "config"] });
+      const novos = await qc.fetchQuery({ queryKey: ["prep", "veiculos", ativos], queryFn: () => carregarVeiculosCalculados(ativos), staleTime: 0 });
+      const alterados = novos.filter((v) => antes.has(v.placa) && antes.get(v.placa) !== v.loja.final).length;
+      await qc.invalidateQueries({ queryKey: ["prep", "veiculos", !ativos] });
+      toast.success(`Regras de loja reprocessadas: ${novos.length} veículos verificados, ${alterados} com Loja Pendência alterada.`);
+    } catch (e) {
+      toast.error(`Falha ao reprocessar: ${e instanceof Error ? e.message : "erro desconhecido"}`);
+    } finally {
+      setReprocessando(false);
+    }
+  };
 
   const opcoes = useMemo(() => {
     const u = (xs: (string | null)[]) => Array.from(new Set(xs.filter(Boolean) as string[])).sort();
@@ -135,6 +164,9 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         <div className="ml-auto pb-2 text-sm text-muted-foreground">
           {filtrados.length} de {data.length} veículos · {data.filter((v) => v.pendente).length} com pendência
         </div>
+        <Button variant="outline" size="sm" className="mb-1" disabled={reprocessando || isLoading} onClick={reprocessar}>
+          {reprocessando ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />} Reprocessar regras de loja
+        </Button>
         <Button variant="outline" size="sm" className="mb-1" disabled={!filtrados.length} onClick={() => exportar(filtrados)}>
           <Download className="mr-1 h-4 w-4" /> Exportar
         </Button>
@@ -153,11 +185,15 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>{cab("loja")}</TableHead>
                 <TableHead>{cab("placa")}</TableHead>
                 <TableHead>{cab("modelo")}</TableHead>
-                <TableHead>{cab("regional")}</TableHead>
-                <TableHead>{cab("loja")}</TableHead>
-                <TableHead>{cab("responsavel")}</TableHead>
+                <TableHead>{cab("ano")}</TableHead>
+                <TableHead>{cab("cor")}</TableHead>
+                <TableHead className="text-right">{cab("km", "right")}</TableHead>
+                <TableHead className="text-right">{cab("custo", "right")}</TableHead>
+                <TableHead className="text-right">{cab("valor", "right")}</TableHead>
+                <TableHead>{cab("classificacao")}</TableHead>
                 <TableHead className="text-right">{cab("dias", "right")}</TableHead>
                 {INDICADORES.map((i) => <TableHead key={i.id}>{cab(i.id)}</TableHead>)}
                 <TableHead />
@@ -166,9 +202,6 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
             <TableBody>
               {visiveis.map((v) => (
                 <TableRow key={v.id}>
-                  <TableCell className="font-mono font-medium">{v.placa}</TableCell>
-                  <TableCell className="max-w-48 truncate">{v.modelo}</TableCell>
-                  <TableCell>{v.regional}</TableCell>
                   <TableCell>
                     <HoverCard openDelay={150}>
                       <HoverCardTrigger asChild>
@@ -183,7 +216,14 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
                       </HoverCardContent>
                     </HoverCard>
                   </TableCell>
-                  <TableCell>{v.responsavel ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell className="font-mono font-medium">{v.placa}</TableCell>
+                  <TableCell className="min-w-64 whitespace-normal">{v.modelo}</TableCell>
+                  <TableCell>{v.ano_mod ?? "—"}</TableCell>
+                  <TableCell>{v.cor ?? "—"}</TableCell>
+                  <TableCell className="text-right">{v.km == null ? "—" : v.km.toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{moeda(v.custo_total)}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{moeda(v.valor_anunciado)}</TableCell>
+                  <TableCell>{v.classificacao ?? "—"}</TableCell>
                   <TableCell className="text-right">{v.dias_em_estoque ?? "—"}</TableCell>
                   {INDICADORES.map((i) => (
                     <TableCell key={i.id}>

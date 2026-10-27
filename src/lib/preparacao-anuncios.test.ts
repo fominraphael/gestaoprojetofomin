@@ -52,3 +52,10 @@ describe("inatividade", () => {
     expect(placasParaInativar(["A", "B", "C"], ["A", "C", "D"])).toEqual(["B"]);
   });
 });
+
+import { converterPlacaMercosul } from "./preparacao-anuncios";
+describe("converterPlacaMercosul", () => {
+  it("converte placa antiga: TOL4897 → TOL4I97", () => expect(converterPlacaMercosul("TOL4897")).toBe("TOL4I97"));
+  it("dígito 0 vira A", () => expect(converterPlacaMercosul("abc-1023")).toBe("ABC1A23"));
+  it("mantém placa já Mercosul", () => expect(converterPlacaMercosul("TOL4I97")).toBe("TOL4I97"));
+});
