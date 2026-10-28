@@ -174,6 +174,8 @@ export interface Anuncio {
   canal_webmotors: boolean;
   preco_venda: number | null;
   status: string | null;
+  /** Coluna "WebMotors Plano(s)" da planilha de anúncios. */
+  webmotors_planos: string | null;
 }
 
 export interface LinhaRelatorio {
@@ -447,7 +449,7 @@ export async function getAnuncios(): Promise<Anuncio[]> {
     () =>
       supabase
         .from("estoque_anuncios")
-        .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status")
+        .select("id,chassi,canal_site_proprio,canal_olx,canal_webmotors,preco_venda,status,webmotors_planos")
         .is("deleted_at", null)
         .order("id", { ascending: true }) as unknown as QueryPaginavel,
   );
@@ -740,6 +742,34 @@ export async function marcarAcaoMatriz(
     } as never,
     { onConflict: "veiculo_id,tipo_acao" },
   );
+  if (error) throw error;
+}
+
+/** Remove o registro da ação (ex.: desfazer a flag "Destacar OLX"). */
+export async function removerAcaoMatriz(veiculoId: string, tipo: TipoAcaoMatriz): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_acoes_matriz")
+    .delete()
+    .eq("veiculo_id", veiculoId)
+    .eq("tipo_acao", tipo);
+  if (error) throw error;
+}
+
+/* ---------------------------- Parâmetros do módulo --------------------------- */
+
+export const CHAVE_PLANO_ACELERADO_WM = "webmotors_plano_acelerado";
+export const PLANO_ACELERADO_WM_PADRAO = "Super Acelerador VIP";
+
+export async function getConfigEstoque(): Promise<Record<string, string>> {
+  const { data, error } = await supabase.from("estoque_config").select("chave,valor");
+  if (error) throw error;
+  return Object.fromEntries((data ?? []).map((r) => [r.chave, r.valor]));
+}
+
+export async function salvarConfigEstoque(chave: string, valor: string): Promise<void> {
+  const { error } = await supabase
+    .from("estoque_config")
+    .upsert({ chave, valor, updated_at: new Date().toISOString() }, { onConflict: "chave" });
   if (error) throw error;
 }
 
@@ -1612,6 +1642,7 @@ export async function importarAnuncios(
       canal_site_proprio: canalPublicado(coluna(l, "Autoforce")),
       canal_olx: canalPublicado(coluna(l, "Olx")),
       canal_webmotors: canalPublicado(coluna(l, "WebMotors")),
+      webmotors_planos: toText(coluna(l, "WebMotors Plano(s)", "WebMotors Planos", "Webmotors Plano(s)")),
       plataformas: {
         stellantis: toText(coluna(l, "Stellantis")),
         webmotors: toText(coluna(l, "WebMotors")),
