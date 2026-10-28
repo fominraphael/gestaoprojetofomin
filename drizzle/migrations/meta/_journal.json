@@ -64,6 +64,13 @@
       "when": 1792775644192,
       "tag": "0008_fix_compras_upload_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793201024682,
+      "tag": "0009_estoque_acelerados_anunciar_portal",
+      "breakpoints": true
     }
   ]
 }
