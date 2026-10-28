@@ -9,6 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   Pencil,
+  Rocket,
+  Flag,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -49,7 +51,19 @@ import {
 import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
 import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
-import { getHistoricoVeiculo, getPrefColunas, salvarPrefColunas } from "@/lib/estoque";
+import {
+  CHAVE_PLANO_ACELERADO_WM,
+  PLANO_ACELERADO_WM_PADRAO,
+  getAcoesMatriz,
+  getConfigEstoque,
+  getHistoricoVeiculo,
+  getPrefColunas,
+  marcarAcaoMatriz,
+  removerAcaoMatriz,
+  salvarPrefColunas,
+} from "@/lib/estoque";
+import { estadoDestaqueOlx, webmotorsAcelerado, type EstadoOlx } from "@/lib/estoque-acelerado";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Anuncio, EmpresaNbs, HistoricoValor, Origem, Veiculo } from "@/lib/estoque";
 
 /** Indica se o valor anunciado sugerido já sofreu intervenção manual. */
@@ -181,6 +195,37 @@ export function VeiculosTable({
   onAtualizado,
 }: VeiculosTableProps) {
   const [busca, setBusca] = useState("");
+  const qcAcel = useQueryClient();
+  const { data: configEstoque = {} } = useQuery({
+    queryKey: ["estoque", "config"],
+    queryFn: getConfigEstoque,
+  });
+  const { data: acoesMatriz = [] } = useQuery({
+    queryKey: ["estoque", "acoes-matriz"],
+    queryFn: getAcoesMatriz,
+  });
+  const planoAceleradoWm = configEstoque[CHAVE_PLANO_ACELERADO_WM] ?? PLANO_ACELERADO_WM_PADRAO;
+  /** Estado do destaque OLX por veículo (flag manual + 30 dias após o check). */
+  const olxPorVeiculo = useMemo(() => {
+    const m = new Map<string, EstadoOlx>();
+    for (const a of acoesMatriz)
+      if (a.tipo_acao === "destacar_olx") m.set(a.veiculo_id, estadoDestaqueOlx(a));
+    return m;
+  }, [acoesMatriz]);
+  const alternarFlagOlx = async (v: Veiculo, estado: EstadoOlx) => {
+    try {
+      if (estado.tipo === "solicitado") {
+        await removerAcaoMatriz(v.id, "destacar_olx");
+        toast.success("Flag de destaque OLX removida.");
+      } else {
+        await marcarAcaoMatriz(v.id, "destacar_olx", false);
+        toast.success("Veículo enviado para Ações como “Destacar OLX”.");
+      }
+      await qcAcel.invalidateQueries({ queryKey: ["estoque", "acoes-matriz"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao atualizar a flag OLX");
+    }
+  };
   const [origemFiltro, setOrigemFiltro] = useState(TODOS);
   const [classFiltro, setClassFiltro] = useState(TODOS);
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
@@ -743,7 +788,20 @@ export function VeiculosTable({
                 campos_manuais: (v.campos_manuais ?? []).join(", ") || "—",
                 canais: (
                   <div className="flex gap-1">
-                    {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => (
+                    {canaisDoVeiculo(v, anuncio).map(({ label, estado, titulo }) => {
+                      const olx = olxPorVeiculo.get(v.id) ?? { tipo: "nenhum" as const };
+                      const acelerado =
+                        label === "WM"
+                          ? webmotorsAcelerado(anuncio?.webmotors_planos, planoAceleradoWm)
+                          : label === "OLX" && olx.tipo === "acelerado";
+                      const tituloAcel =
+                        label === "WM"
+                          ? `Acelerado no Webmotors (${planoAceleradoWm})`
+                          : olx.tipo === "acelerado"
+                            ? `Acelerado no OLX até ${olx.ate.toLocaleDateString("pt-BR")}`
+                            : "";
+                      return (
+                      <span key={label} className="inline-flex items-center gap-0.5">
                       <span
                         key={label}
                         title={titulo}
@@ -758,7 +816,34 @@ export function VeiculosTable({
                       >
                         {label}
                       </span>
-                    ))}
+                      {acelerado && (
+                        <span title={tituloAcel} aria-label={tituloAcel} className="text-primary">
+                          <Rocket className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                      {label === "OLX" && (modo === "ativo" || modo === "repasse") ? (
+                        olx.tipo !== "acelerado" && (
+                          <button
+                            type="button"
+                            onClick={() => void alternarFlagOlx(v, olx)}
+                            title={
+                              olx.tipo === "solicitado"
+                                ? "Destaque OLX solicitado — clique para remover a flag"
+                                : "Flagar para acelerar no OLX"
+                            }
+                            aria-label="Flag destacar OLX"
+                            className={cn(
+                              "rounded p-0.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              olx.tipo === "solicitado" ? "text-primary" : "text-muted-foreground",
+                            )}
+                          >
+                            <Flag className={cn("w-3 h-3", olx.tipo === "solicitado" && "fill-current")} />
+                          </button>
+                        )
+                      ) : null}
+                      </span>
+                      );
+                    })}
                   </div>
                 ),
               };

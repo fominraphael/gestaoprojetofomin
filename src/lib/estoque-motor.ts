@@ -117,7 +117,15 @@ export interface RegraEstoque {
 }
 
 /** Ações operacionais configuráveis por célula da matriz. */
-export type TipoAcaoMatriz = "aceleradores" | "fotos_ia" | "repescagem" | "auditoria";
+export type TipoAcaoMatriz =
+  | "aceleradores"
+  | "fotos_ia"
+  | "repescagem"
+  | "auditoria"
+  /** Flag manual na listagem de veículos (acelerar no OLX). */
+  | "destacar_olx"
+  /** Derivada: portal exigido pela matriz sem anúncio na base importada. */
+  | "anunciar_portal";
 
 export const ACOES_MATRIZ: { tipo: TipoAcaoMatriz; label: string; campo: keyof RegraEstoque }[] = [
   { tipo: "aceleradores", label: "Aceleradores", campo: "acao_aceleradores" },

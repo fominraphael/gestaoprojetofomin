@@ -685,6 +685,7 @@ export type Database = {
           status: string | null
           updated_at: string
           versao: string | null
+          webmotors_planos: string | null
         }
         Insert: {
           ano_fabricacao?: string | null
@@ -711,6 +712,7 @@ export type Database = {
           status?: string | null
           updated_at?: string
           versao?: string | null
+          webmotors_planos?: string | null
         }
         Update: {
           ano_fabricacao?: string | null
@@ -737,6 +739,25 @@ export type Database = {
           status?: string | null
           updated_at?: string
           versao?: string | null
+          webmotors_planos?: string | null
+        }
+        Relationships: []
+      }
+      estoque_config: {
+        Row: {
+          chave: string
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          chave: string
+          updated_at?: string
+          valor: string
+        }
+        Update: {
+          chave?: string
+          updated_at?: string
+          valor?: string
         }
         Relationships: []
       }

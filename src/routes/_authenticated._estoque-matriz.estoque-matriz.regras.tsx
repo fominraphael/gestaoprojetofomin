@@ -26,6 +26,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  CHAVE_PLANO_ACELERADO_WM,
+  PLANO_ACELERADO_WM_PADRAO,
+  getConfigEstoque,
+  salvarConfigEstoque,
+} from "@/lib/estoque";
 import { useAuth } from "@/hooks/use-auth";
 import { ModuleAccessDenied } from "@/components/ModuleAccessDenied";
 import {
@@ -192,6 +198,7 @@ function EstoqueRegras() {
           <TabsTrigger value="faixas-km">Faixas de KM</TabsTrigger>
 
           <TabsTrigger value="cadastros">Cadastros</TabsTrigger>
+          <TabsTrigger value="parametros">Parâmetros</TabsTrigger>
         </TabsList>
 
         <TabsContent value="matriz" className="mt-4">
@@ -247,6 +254,10 @@ function EstoqueRegras() {
           <FaixasKmEditor />
         </TabsContent>
 
+
+        <TabsContent value="parametros" className="mt-4">
+          <ParametrosEditor />
+        </TabsContent>
 
         <TabsContent value="cadastros" className="mt-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
           <OrigensEditor origens={origens} />
@@ -1087,6 +1098,51 @@ function FinalidadesEditor({ finalidades }: { finalidades: Finalidade[] }) {
         </div>
         <Button size="sm" onClick={criar}>
           <Plus className="w-4 h-4" /> Adicionar
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+
+/** Parâmetros gerais do módulo (ex.: plano que caracteriza o Webmotors acelerado). */
+function ParametrosEditor() {
+  const qc = useQueryClient();
+  const { data: config } = useQuery({ queryKey: ["estoque", "config"], queryFn: getConfigEstoque });
+  const atual = config?.[CHAVE_PLANO_ACELERADO_WM] ?? PLANO_ACELERADO_WM_PADRAO;
+  const [valor, setValor] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const exibido = valor ?? atual;
+
+  const salvar = async () => {
+    const texto = exibido.trim();
+    if (!texto) return toast.error("Informe o nome do plano.");
+    setSalvando(true);
+    try {
+      await salvarConfigEstoque(CHAVE_PLANO_ACELERADO_WM, texto);
+      await qc.invalidateQueries({ queryKey: ["estoque", "config"] });
+      setValor(null);
+      toast.success("Parâmetro salvo.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <Card className="p-5 space-y-3 max-w-xl">
+      <div className="space-y-1">
+        <Label htmlFor="plano-wm">Valor do Plano Acelerado — Webmotors</Label>
+        <p className="text-xs text-muted-foreground">
+          O veículo é marcado como acelerado no Webmotors quando a coluna “WebMotors Plano(s)” da
+          planilha de anúncios contém este texto.
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Input id="plano-wm" value={exibido} onChange={(e) => setValor(e.target.value)} />
+        <Button onClick={() => void salvar()} disabled={salvando}>
+          <Save className="w-4 h-4" /> Salvar
         </Button>
       </div>
     </Card>
