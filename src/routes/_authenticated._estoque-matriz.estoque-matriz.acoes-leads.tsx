@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   getAcoesMatriz,
+  getAnuncios,
   getFaixas,
   getRegras,
   getVeiculos,
@@ -28,6 +29,13 @@ import {
 import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
 import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 import { ACOES_MATRIZ, veiculoFotografado, type TipoAcaoMatriz } from "@/lib/estoque-motor";
+import { estadoDestaqueOlx, portaisFaltantes } from "@/lib/estoque-acelerado";
+
+/** Ações fora da matriz: flag manual do OLX e divergência de portais. */
+const ACOES_EXTRAS: { tipo: TipoAcaoMatriz; label: string }[] = [
+  { tipo: "destacar_olx", label: "Destacar OLX" },
+  { tipo: "anunciar_portal", label: "Anunciar Portal" },
+];
 
 export const Route = createFileRoute("/_authenticated/_estoque-matriz/estoque-matriz/acoes-leads")({
   errorComponent: ModuleErrorBoundary,
@@ -66,6 +74,8 @@ interface LinhaAcao {
   acao: string;
   concluido: boolean;
   observacao: string;
+  /** Portais pendentes (somente na ação "Anunciar Portal"). */
+  portais: string[];
 }
 
 function AcoesMatriz() {
@@ -88,16 +98,22 @@ function AcoesMatriz() {
     queryKey: ["estoque", "acoes-matriz"],
     queryFn: getAcoesMatriz,
   });
+  const { data: anuncios = [] } = useQuery({ queryKey: ["estoque", "anuncios"], queryFn: getAnuncios });
+  const anuncioPorChassi = useMemo(
+    () => new Map(anuncios.map((a) => [a.chassi.toUpperCase(), a])),
+    [anuncios],
+  );
 
   /**
    * Uma ação só continua "realizada" enquanto o veículo permanecer na mesma
    * faixa de dias em que foi concluída. Mudou de faixa → volta para "A Fazer".
    */
   const registroPor = useMemo(() => {
-    const m = new Map<string, { concluido: boolean; faixaId: string | null }>();
+    const m = new Map<string, { concluido: boolean; concluidoEm: string | null; faixaId: string | null }>();
     for (const a of acoes)
       m.set(`${a.veiculo_id}:${a.tipo_acao}`, {
         concluido: a.concluido,
+        concluidoEm: a.concluido_em,
         faixaId: a.faixa_id ?? null,
       });
     return m;
@@ -112,8 +128,56 @@ function AcoesMatriz() {
       const regra = regras.find(
         (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
       );
-      if (!regra) continue;
       const faixa = faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
+      const base = {
+        veiculoId: v.id,
+        modelo: v.modelo ?? "—",
+        chassi: v.chassi,
+        placa: v.placa ?? "—",
+        loja: v.loja ?? "—",
+        classificacao: v.classificacao ?? "—",
+        faixa,
+        faixaId: v.faixa_id_atual ?? null,
+      };
+
+      // Destacar OLX: existe enquanto houver flag; após o check vale 30 dias e some sozinha.
+      const regOlx = registroPor.get(`${v.id}:destacar_olx`);
+      if (regOlx) {
+        const est = estadoDestaqueOlx({ concluido: regOlx.concluido, concluido_em: regOlx.concluidoEm });
+        if (est.tipo !== "nenhum") {
+          out.push({
+            ...base,
+            tipo: "destacar_olx",
+            acao: "Destacar OLX",
+            concluido: est.tipo === "acelerado",
+            portais: [],
+            observacao:
+              est.tipo === "acelerado"
+                ? `Acelerado no OLX até ${est.ate.toLocaleDateString("pt-BR")}`
+                : "Aguardando destaque no OLX",
+          });
+        }
+      }
+
+      if (!regra) continue;
+
+      // Anunciar Portal: some automaticamente quando a base de anúncios regulariza.
+      const faltantes = portaisFaltantes(
+        regra.canais_exigidos,
+        anuncioPorChassi.get(v.chassi.toUpperCase()),
+      );
+      if (faltantes.length > 0) {
+        const reg = registroPor.get(`${v.id}:anunciar_portal`);
+        out.push({
+          ...base,
+          tipo: "anunciar_portal",
+          acao: "Anunciar Portal",
+          concluido: !!reg?.concluido && (reg.faixaId ?? null) === (v.faixa_id_atual ?? null),
+          portais: faltantes,
+          observacao: `Falta: ${faltantes.join(", ")}`,
+        });
+      }
+
       for (const a of ACOES_MATRIZ) {
         if (!regra[a.campo]) continue;
         if (a.tipo === "fotos_ia" && veiculoFotografado(v.fotos_qtd, regra)) continue;
@@ -136,6 +200,7 @@ function AcoesMatriz() {
           tipo: a.tipo,
           acao: a.label,
           concluido,
+          portais: [],
           observacao:
             a.tipo === "fotos_ia"
               ? `${v.fotos_qtd ?? 0} foto(s) — mínimo ${regra.min_fotos ?? 2}`
@@ -146,7 +211,7 @@ function AcoesMatriz() {
       }
     }
     return out;
-  }, [veiculos, regras, faixas, registroPor, regionaisSel, anosSel]);
+  }, [veiculos, regras, faixas, registroPor, regionaisSel, anosSel, anuncioPorChassi]);
   const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const opcoesAno = useMemo(() => listarAnosModelo(veiculos.map((v) => v.ano_mod)), [veiculos]);
 
@@ -204,6 +269,7 @@ function AcoesMatriz() {
           Classificação: l.classificacao,
           Faixa: l.faixa,
           Observação: l.observacao,
+          "Portais pendentes": l.portais.join(", "),
           Realizada: l.concluido ? "Sim" : "Não",
         })),
       );
@@ -237,7 +303,7 @@ function AcoesMatriz() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={TODOS}>Todas as ações</SelectItem>
-            {ACOES_MATRIZ.map((a) => (
+            {[...ACOES_MATRIZ, ...ACOES_EXTRAS].map((a) => (
               <SelectItem key={a.tipo} value={a.tipo}>
                 {a.label}
               </SelectItem>
@@ -381,7 +447,19 @@ function AcoesMatriz() {
                   <Badge variant="secondary">{l.classificacao}</Badge>
                 </td>
                 <td className="px-3 py-2">{l.faixa}</td>
-                <td className="px-3 py-2 text-xs text-muted-foreground">{l.observacao}</td>
+                <td className="px-3 py-2 text-xs text-muted-foreground">
+                  {l.portais.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {l.portais.map((p) => (
+                        <Badge key={p} variant="outline" className="border-destructive/40 text-destructive">
+                          {p}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    l.observacao
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
