@@ -9,6 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   Pencil,
+  Rocket,
+  Flag,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -819,7 +821,7 @@ export function VeiculosTable({
                           <Rocket className="w-3.5 h-3.5" />
                         </span>
                       )}
-                      {label === "OLX" && modo === "ativo" || label === "OLX" && modo === "repasse" ? (
+                      {label === "OLX" && (modo === "ativo" || modo === "repasse") ? (
                         olx.tipo !== "acelerado" && (
                           <button
                             type="button"
