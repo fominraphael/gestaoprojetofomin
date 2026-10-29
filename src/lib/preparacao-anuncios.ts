@@ -5,7 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type TipoBase = "estoque" | "os" | "banco_fotos" | "gosystem" | "tcuv" | "auditoria";
-export type IndicadorId = "os" | "foto" | "tcuv" | "auditoria";
+export type IndicadorId = "os" | "foto" | "tcuv" | "auditoria" | "anuncio";
 export type StatusIndicador = "pendente" | "ok" | "aguardando" | "desabilitado" | "revisar";
 
 export const INDICADORES: { id: IndicadorId; label: string }[] = [
@@ -13,6 +13,7 @@ export const INDICADORES: { id: IndicadorId; label: string }[] = [
   { id: "foto", label: "Foto" },
   { id: "tcuv", label: "TCUV" },
   { id: "auditoria", label: "Auditoria" },
+  { id: "anuncio", label: "Anúncio" },
 ];
 
 export const BASES: { tipo: TipoBase; titulo: string; descricao: string; colunaPlaca: string[] }[] = [
@@ -156,6 +157,7 @@ export function calcularIndicadores(
   placa: string,
   fotosQtd: number | null,
   ctx: ContextoCalculo,
+  anunciado: boolean | null = null,
 ): Record<IndicadorId, ResultadoIndicador> {
   const placas = placasEquivalentes(placa, ctx.depara);
   const hoje = ctx.hoje ?? new Date();
@@ -206,7 +208,22 @@ export function calcularIndicadores(
       ? { status: "pendente", motivo: "Não encontrado na conferência física", dados: nao.map((l) => l.dados) }
       : { status: "ok", motivo: aud.length ? "Encontrado na conferência" : "Sem registro de auditoria", dados: aud.map((l) => l.dados) };
   }
+  // Anúncio: coluna "Anunciado?" do Estoque BI. FALSO = pendente; vazio = sem informação (não pendente).
+  if (desab("anuncio")) r.anuncio = { status: "desabilitado", motivo: "Indicador desabilitado", dados: [] };
+  else if (anunciado === false) r.anuncio = { status: "pendente", motivo: "Veículo não anunciado (Anunciado? = FALSO)", dados: [] };
+  else if (anunciado === true) r.anuncio = { status: "ok", motivo: "Veículo anunciado", dados: [] };
+  else r.anuncio = { status: "ok", motivo: "Sem informação de anúncio no Estoque BI", dados: [] };
   return r;
+}
+
+/** Interpreta a coluna "Anunciado?" (VERDADEIRO/FALSO, SIM/NÃO, TRUE/FALSE, 1/0). */
+export function lerAnunciado(v: unknown): boolean | null {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v !== 0;
+  const t = normChave(String(v ?? ""));
+  if (["verdadeiro", "true", "sim", "s", "1", "v"].includes(t)) return true;
+  if (["falso", "false", "nao", "n", "0", "f"].includes(t)) return false;
+  return null;
 }
 
 export function temPendencia(r: Record<IndicadorId, ResultadoIndicador>): boolean {
@@ -236,6 +253,7 @@ export type VeiculoPrep = {
   ano_mod: string | null; cor: string | null; km: number | null; custo_total: number | null;
   valor_anunciado: number | null; fipe: number | null; dias_em_estoque: number | null; fotos_qtd: number | null;
   leads_60_dias: number | null; classificacao: string | null; chassi: string | null; finalidade: string | null;
+  anunciado: boolean | null;
   ativo: boolean; inativado_em: string | null; dados: Record<string, unknown>;
 };
 
@@ -274,7 +292,7 @@ export async function carregarVeiculosCalculados(ativos: boolean | null, placa?:
   const cfg = await carregarConfig();
   const veiculos = await buscarTodos<VeiculoPrep>((de, ate) => {
     // Listagem carrega só as colunas exibidas; o detalhe (placa) carrega tudo.
-    const colunas = placa ? "*" : "id, placa, regional, loja_bruta, modelo, ano_mod, cor, km, custo_total, valor_anunciado, dias_em_estoque, fotos_qtd, classificacao, ativo, inativado_em";
+    const colunas = placa ? "*" : "id, placa, regional, loja_bruta, modelo, ano_mod, cor, km, custo_total, valor_anunciado, dias_em_estoque, fotos_qtd, classificacao, anunciado, ativo, inativado_em";
     let q = supabase.from("prep_veiculos").select(colunas);
     if (ativos !== null) q = q.eq("ativo", ativos);
     if (placa) q = q.eq("placa", placa);
@@ -291,7 +309,7 @@ export async function carregarVeiculosCalculados(ativos: boolean | null, placa?:
   const ctx: ContextoCalculo = { porTipo, depara, config: cfg.config };
   return veiculos.map((v) => {
     const loja = resolverLoja(v.loja_bruta, cfg.direc, cfg.agrup);
-    const indicadores = calcularIndicadores(v.placa, v.fotos_qtd, ctx);
+    const indicadores = calcularIndicadores(v.placa, v.fotos_qtd, ctx, v.anunciado);
     return { ...v, loja, responsavel: resolverResponsavel(loja.final, v.regional, cfg.resp), indicadores, pendente: temPendencia(indicadores) };
   });
 }
@@ -357,6 +375,7 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
         classificacao: (campo(l, "Classificação") as string) ?? null,
         chassi: (campo(l, "Chassi") as string) ?? null,
         finalidade: (campo(l, "Finalidade") as string) ?? null,
+        anunciado: lerAnunciado(campo(l, "Anunciado?", "Anunciado")),
         dados: JSON.parse(JSON.stringify(l)),
         ativo: true,
         inativado_em: null,

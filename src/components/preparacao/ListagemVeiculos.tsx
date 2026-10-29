@@ -78,7 +78,7 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
   const [regional, setRegional] = useState(TODOS);
   const [loja, setLoja] = useState(TODOS);
   const [responsavel, setResponsavel] = useState(TODOS);
-  const [filtroInd, setFiltroInd] = useState<Record<IndicadorId, string>>({ os: TODOS, foto: TODOS, tcuv: TODOS, auditoria: TODOS });
+  const [filtroInd, setFiltroInd] = useState<Record<IndicadorId, string>>({ os: TODOS, foto: TODOS, tcuv: TODOS, auditoria: TODOS, anuncio: TODOS });
   const [placa, setPlaca] = useState("");
   const [pagina, setPagina] = useState(0);
 

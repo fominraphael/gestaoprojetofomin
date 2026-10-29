@@ -1819,6 +1819,7 @@ export type Database = {
       prep_veiculos: {
         Row: {
           ano_mod: string | null
+          anunciado: boolean | null
           ativo: boolean
           chassi: string | null
           classificacao: string | null
@@ -1844,6 +1845,7 @@ export type Database = {
         }
         Insert: {
           ano_mod?: string | null
+          anunciado?: boolean | null
           ativo?: boolean
           chassi?: string | null
           classificacao?: string | null
@@ -1869,6 +1871,7 @@ export type Database = {
         }
         Update: {
           ano_mod?: string | null
+          anunciado?: boolean | null
           ativo?: boolean
           chassi?: string | null
           classificacao?: string | null
