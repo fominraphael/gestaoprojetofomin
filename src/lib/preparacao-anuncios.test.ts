@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 import {
-  calcularIndicadores, dataValida, indexarLinhas, montarDepara, placasParaInativar, resolverLoja,
+  calcularIndicadores, lerAnunciado, dataValida, indexarLinhas, montarDepara, placasParaInativar, resolverLoja,
   type ConfigIndicador, type IndicadorId, type LinhaBase,
 } from "./preparacao-anuncios";
 
@@ -10,6 +10,7 @@ const config = {
   foto: { indicador: "foto", habilitado: true, config: { min_fotos: 5, dias_gosystem: 7 } },
   tcuv: { indicador: "tcuv", habilitado: true, config: {} },
   auditoria: { indicador: "auditoria", habilitado: true, config: {} },
+  anuncio: { indicador: "anuncio", habilitado: true, config: {} },
 } as Record<IndicadorId, ConfigIndicador>;
 const hoje = new Date(2026, 9, 21);
 function ctx(linhas: LinhaBase[]) {
@@ -58,4 +59,13 @@ describe("converterPlacaMercosul", () => {
   it("converte placa antiga: TOL4897 → TOL4I97", () => expect(converterPlacaMercosul("TOL4897")).toBe("TOL4I97"));
   it("dígito 0 vira A", () => expect(converterPlacaMercosul("abc-1023")).toBe("ABC1A23"));
   it("mantém placa já Mercosul", () => expect(converterPlacaMercosul("TOL4I97")).toBe("TOL4I97"));
+});
+
+describe("indicador Anúncio", () => {
+  it("Anunciado? = FALSO é pendente", () => expect(calcularIndicadores("X1", 9, ctx([]), lerAnunciado("FALSO")).anuncio.status).toBe("pendente"));
+  it("Anunciado? = VERDADEIRO não é pendente", () => expect(calcularIndicadores("X1", 9, ctx([]), lerAnunciado("VERDADEIRO")).anuncio.status).toBe("ok"));
+  it("desabilitado não gera pendência", () => {
+    const c = { ...ctx([]), config: { ...config, anuncio: { indicador: "anuncio", habilitado: false, config: {} } } } as never;
+    expect(calcularIndicadores("X1", 9, c, false).anuncio.status).toBe("desabilitado");
+  });
 });
