@@ -71,6 +71,13 @@
       "when": 1793201024682,
       "tag": "0009_estoque_acelerados_anunciar_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793300140263,
+      "tag": "0010_prep_indicador_anuncio",
+      "breakpoints": true
     }
   ]
 }
