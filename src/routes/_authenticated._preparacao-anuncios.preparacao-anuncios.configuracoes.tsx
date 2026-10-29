@@ -34,6 +34,7 @@ const DESCRICAO: Record<IndicadorId, string> = {
   foto: "Pendente quando as fotos do Estoque BI ficam abaixo do mínimo, sem registro recente no Gosystem nem no Banco de Fotos.",
   tcuv: "Pendente quando SOLICITADO está preenchido e RETORNO está vazio.",
   auditoria: "Pendente quando encontrado = NAO na conferência física.",
+  anuncio: "Pendente quando a coluna Anunciado? do Estoque BI for FALSO.",
 };
 
 function Configuracoes() {
