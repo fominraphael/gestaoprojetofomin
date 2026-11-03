@@ -34,7 +34,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ordenarLista, type ValorOrdenavel } from "@/lib/ordenacao";
+import { type ValorOrdenavel } from "@/lib/ordenacao";
+import { ordenarVeiculosPorFipe } from "@/lib/estoque-agrupamento-fipe";
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import {
   calcularValorAnuncio,
@@ -393,7 +394,7 @@ export function VeiculosTable({
         (c ?? "").toLowerCase().includes(termo),
       );
     });
-    return ordenarLista(lista, ordem.criterios, valorOrdenacao);
+    return ordenarVeiculosPorFipe(lista, ordem.criterios, valorOrdenacao);
   }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, anosSel, webmotorsFiltro, ordem.criterios, valorOrdenacao]);
 
   const nomeEmpresa = (v: Veiculo) =>
