@@ -56,9 +56,29 @@ export function opcoesFiltrosVeiculos(veiculos: readonly VeiculoFiltravel[]) {
   };
 }
 
-/** Catálogo da tela separado das opções disponíveis no resultado atual. */
-export function estadoOpcoesFiltrosVeiculos(
-  base: readonly VeiculoFiltravel[], resultado: readonly VeiculoFiltravel[],
+type ChaveFiltro = "regionais" | "anos" | "classificacao" | "faixa" | "codigoFipe" | "valorImportadoZero";
+
+/**
+ * Opções visíveis estilo Excel: cada filtro lista o que existe nos veículos que
+ * passam pelos OUTROS filtros, mais as opções já selecionadas (para desmarcar).
+ */
+export function opcoesVisiveisFiltrosVeiculos(
+  base: readonly VeiculoFiltravel[], filtros: FiltrosVeiculos,
 ) {
-  return { todas: opcoesFiltrosVeiculos(base), disponiveis: opcoesFiltrosVeiculos(resultado) };
+  const de = (chave: ChaveFiltro) => opcoesFiltrosVeiculos(filtrarVeiculos(base, (() => {
+    const f: FiltrosVeiculos = { ...filtros };
+    if (chave === "regionais" || chave === "anos") f[chave] = [];
+    else if (chave === "valorImportadoZero") f.valorImportadoZero = false;
+    else f[chave] = null;
+    return f;
+  })()));
+  const unir = (lista: string[], sel: string[]) => [...lista, ...sel.filter((s) => !lista.includes(s))];
+  const regionais = unir(de("regionais").regionais, filtros.regionais.map((r) => r.trim().toUpperCase()).filter(Boolean));
+  const anos = unir(de("anos").anos, filtros.anos);
+  const classificacoes = unir(de("classificacao").classificacoes, filtros.classificacao ? [filtros.classificacao] : []);
+  const faixas = de("faixa").faixas;
+  if (filtros.faixa) faixas.add(filtros.faixa);
+  const codigosFipe = unir(de("codigoFipe").codigosFipe, filtros.codigoFipe ? [filtros.codigoFipe] : []);
+  const temValorZero = filtros.valorImportadoZero || de("valorImportadoZero").temValorZero;
+  return { regionais, anos, classificacoes, faixas, codigosFipe, temValorZero };
 }
