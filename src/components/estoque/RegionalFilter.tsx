@@ -72,10 +72,11 @@ export function listarRegionais(valores: (string | null | undefined)[]): string[
 
 export interface RegionalFilterProps {
   opcoes: string[];
+  disponiveis?: string[];
   className?: string;
 }
 
-export function RegionalFilter({ opcoes, className }: RegionalFilterProps) {
+export function RegionalFilter({ opcoes, disponiveis, className }: RegionalFilterProps) {
   const [sel, setSel] = useRegionaisSelecionadas();
   const alternar = (r: string) => setSel(sel.includes(r) ? sel.filter((x) => x !== r) : [...sel, r]);
 
@@ -97,7 +98,10 @@ export function RegionalFilter({ opcoes, className }: RegionalFilterProps) {
               <CommandEmpty>Nenhuma regional encontrada.</CommandEmpty>
               <CommandGroup>
                 {opcoes.map((r) => (
-                  <CommandItem key={r} value={r} onSelect={() => alternar(r)}>
+                  <CommandItem key={r} value={r} onSelect={() => alternar(r)}
+                    data-disponivel={!disponiveis || disponiveis.includes(r)}
+                    className={cn(disponiveis && (disponiveis.includes(r) ? "font-medium text-foreground" : "text-muted-foreground"))}
+                    title={disponiveis && !disponiveis.includes(r) ? "Sem veículos na listagem atual" : undefined}>
                     <Check className={cn("w-4 h-4", sel.includes(r) ? "opacity-100" : "opacity-0")} />
                     {r}
                   </CommandItem>

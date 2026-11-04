@@ -42,7 +42,7 @@ export function filtrarVeiculos<T extends VeiculoFiltravel>(
   );
 }
 
-/** Opções derivadas exclusivamente do resultado exibido, nunca da base inteira. */
+/** Extrai opções dos dados recebidos, mantendo a normalização dos filtros. */
 export function opcoesFiltrosVeiculos(veiculos: readonly VeiculoFiltravel[]) {
   const textos = (valores: (string | null)[]) =>
     [...new Set(valores.map((v) => v?.trim()).filter((v): v is string => Boolean(v)))].sort();
@@ -54,4 +54,11 @@ export function opcoesFiltrosVeiculos(veiculos: readonly VeiculoFiltravel[]) {
     codigosFipe: textos(veiculos.map((v) => v.codigo_fipe)),
     temValorZero: veiculos.some((v) => v.valor_anunciado_planilha === 0),
   };
+}
+
+/** Catálogo da tela separado das opções disponíveis no resultado atual. */
+export function estadoOpcoesFiltrosVeiculos(
+  base: readonly VeiculoFiltravel[], resultado: readonly VeiculoFiltravel[],
+) {
+  return { todas: opcoesFiltrosVeiculos(base), disponiveis: opcoesFiltrosVeiculos(resultado) };
 }
