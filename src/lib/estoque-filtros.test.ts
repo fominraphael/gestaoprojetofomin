@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estadoOpcoesFiltrosVeiculos, filtrarVeiculos, opcoesFiltrosVeiculos, type FiltrosVeiculos, type VeiculoFiltravel } from "./estoque-filtros";
+import { estadoOpcoesFiltrosVeiculos, opcoesVisiveisFiltrosVeiculos, filtrarVeiculos, opcoesFiltrosVeiculos, type FiltrosVeiculos, type VeiculoFiltravel } from "./estoque-filtros";
 import { ordenarLista } from "./ordenacao";
 
 const filtros: FiltrosVeiculos = { busca: "", regionais: [], anos: [], classificacao: null, faixa: null, codigoFipe: null, valorImportadoZero: false };
@@ -23,6 +23,18 @@ describe("filtros da Matriz de Estoque", () => {
     expect(estado.disponiveis.regionais).toEqual([]);
     expect(estado.disponiveis.codigosFipe).toEqual([]);
     expect(estado.disponiveis.temValorZero).toBe(false);
+  });
+  it("estilo Excel: esconde opções sem veículos nos outros filtros, mantendo as do próprio filtro", () => {
+    const op = opcoesVisiveisFiltrosVeiculos(veiculos, { ...filtros, regionais: ["NORTE"] });
+    expect(op.regionais).toEqual(["NORTE", "SUL"]);
+    expect(op.anos).toEqual(["2024"]);
+    expect(op.classificacoes).toEqual(["A"]);
+    expect(op.faixas).toEqual(new Set(["f1"]));
+  });
+  it("estilo Excel: opção selecionada sem veículos continua visível", () => {
+    const op = opcoesVisiveisFiltrosVeiculos(veiculos, { ...filtros, regionais: ["SUL"], codigoFipe: "002001-0" });
+    expect(op.codigosFipe).toEqual(["001001-0", "002001-0"]);
+    expect(op.anos).toEqual([]);
   });
   it("valor importado = 0 não inclui valores ausentes nem positivos", () => {
     expect(filtrarVeiculos(veiculos, { ...filtros, valorImportadoZero: true }).map((v) => v.chassi)).toEqual(["a"]);
