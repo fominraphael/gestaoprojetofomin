@@ -7,11 +7,12 @@ import { cn } from "@/lib/utils";
 
 export interface CodigoFipeFilterProps {
   opcoes: string[];
+  disponiveis?: string[];
   valor: string | null;
   onChange: (valor: string | null) => void;
 }
 
-export function CodigoFipeFilter({ opcoes, valor, onChange }: CodigoFipeFilterProps) {
+export function CodigoFipeFilter({ opcoes, disponiveis, valor, onChange }: CodigoFipeFilterProps) {
   const [aberto, setAberto] = useState(false);
   const selecionar = (codigo: string | null) => {
     onChange(codigo);
@@ -32,7 +33,10 @@ export function CodigoFipeFilter({ opcoes, valor, onChange }: CodigoFipeFilterPr
             <CommandEmpty>Nenhum código FIPE encontrado.</CommandEmpty>
             <CommandGroup>
               {opcoes.map((codigo) => (
-                <CommandItem key={codigo} value={codigo} onSelect={() => selecionar(codigo)}>
+                <CommandItem key={codigo} value={codigo} onSelect={() => selecionar(codigo)}
+                  data-disponivel={!disponiveis || disponiveis.includes(codigo)}
+                  className={cn(disponiveis && (disponiveis.includes(codigo) ? "font-medium text-foreground" : "text-muted-foreground"))}
+                  title={disponiveis && !disponiveis.includes(codigo) ? "Sem veículos na listagem atual" : undefined}>
                   <Check className={cn("w-4 h-4", valor === codigo ? "opacity-100" : "opacity-0")} />
                   {codigo}
                 </CommandItem>

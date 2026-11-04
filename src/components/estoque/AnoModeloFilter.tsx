@@ -87,10 +87,11 @@ export function listarAnosModelo(valores: (string | number | null | undefined)[]
 
 export interface AnoModeloFilterProps {
   opcoes: string[];
+  disponiveis?: string[];
   className?: string;
 }
 
-export function AnoModeloFilter({ opcoes, className }: AnoModeloFilterProps) {
+export function AnoModeloFilter({ opcoes, disponiveis, className }: AnoModeloFilterProps) {
   const [sel, setSel] = useAnosModeloSelecionados();
   const alternar = (a: string) => setSel(sel.includes(a) ? sel.filter((x) => x !== a) : [...sel, a]);
   const rotulo =
@@ -115,7 +116,10 @@ export function AnoModeloFilter({ opcoes, className }: AnoModeloFilterProps) {
               <CommandEmpty>Nenhum ano encontrado.</CommandEmpty>
               <CommandGroup>
                 {opcoes.map((a) => (
-                  <CommandItem key={a} value={a} onSelect={() => alternar(a)}>
+                  <CommandItem key={a} value={a} onSelect={() => alternar(a)}
+                    data-disponivel={!disponiveis || disponiveis.includes(a)}
+                    className={cn(disponiveis && (disponiveis.includes(a) ? "font-medium text-foreground" : "text-muted-foreground"))}
+                    title={disponiveis && !disponiveis.includes(a) ? "Sem veículos na listagem atual" : undefined}>
                     <Check className={cn("w-4 h-4", sel.includes(a) ? "opacity-100" : "opacity-0")} />
                     {a}
                   </CommandItem>

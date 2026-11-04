@@ -13,5 +13,5 @@
 
 - Preparação/Anúncios module: pending status is computed on read in `src/lib/preparacao-anuncios.ts` from the latest import of each base (`prep_base_linhas`, replaced per base on import), so config changes apply instantly without recalculation jobs.
 - Module data access is enforced in RLS via `public.has_modulo(<module-id>)` (admins pass); Compras rows via `can_access_chamado` (creator, assignee, central_compras, admin). Why: users only see modules liberated to them.
-- Stock Matrix vehicle lists use `estoque-filtros.ts` for filtering and visible-result options, then the generic ordering helper without mandatory FIPE grouping; this keeps filter options consistent with the displayed rows.
+- Stock Matrix vehicle lists use `estoque-filtros.ts` for filtering and separate base-list option catalogs from current-result availability, then the generic ordering helper without mandatory FIPE grouping; unavailable options stay visible and selectable without changing filter semantics.
 - Exceptional Stock Matrix repricing uses `estoque-reprocessamento.ts` to rebuild from configured base rules while retaining the original price for audit; the ordinary pricing engine's same-band freeze remains unchanged.
