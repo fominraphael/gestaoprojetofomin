@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ordenarLista, type ValorOrdenavel } from "@/lib/ordenacao";
-import { estadoOpcoesFiltrosVeiculos, filtrarVeiculos } from "@/lib/estoque-filtros";
+import { opcoesVisiveisFiltrosVeiculos, filtrarVeiculos } from "@/lib/estoque-filtros";
 import { CodigoFipeFilter } from "@/components/estoque/CodigoFipeFilter";
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import {
@@ -367,17 +367,19 @@ export function VeiculosTable({
     }
   };
 
-  const filtrados = useMemo(() => {
-    const lista = filtrarVeiculos(veiculos, {
-      busca, regionais, anos: anosSel,
-      classificacao: classFiltro === TODOS ? null : classFiltro,
-      faixa: faixaFiltro === TODOS ? null : faixaFiltro,
-      codigoFipe: codigoFipeFiltro, valorImportadoZero,
-    });
-    return ordenarLista(lista, ordem.criterios, valorOrdenacao);
-  }, [veiculos, busca, classFiltro, faixaFiltro, regionais, anosSel, codigoFipeFiltro, valorImportadoZero, ordem.criterios, valorOrdenacao]);
-  const { todas: opcoesFiltros, disponiveis: opcoesDisponiveis } = useMemo(
-    () => estadoOpcoesFiltrosVeiculos(veiculos, filtrados), [veiculos, filtrados],
+  const filtrosAtuais = useMemo(() => ({
+    busca, regionais, anos: anosSel,
+    classificacao: classFiltro === TODOS ? null : classFiltro,
+    faixa: faixaFiltro === TODOS ? null : faixaFiltro,
+    codigoFipe: codigoFipeFiltro, valorImportadoZero,
+  }), [busca, classFiltro, faixaFiltro, regionais, anosSel, codigoFipeFiltro, valorImportadoZero]);
+  const filtrados = useMemo(
+    () => ordenarLista(filtrarVeiculos(veiculos, filtrosAtuais), ordem.criterios, valorOrdenacao),
+    [veiculos, filtrosAtuais, ordem.criterios, valorOrdenacao],
+  );
+  // Estilo Excel: só aparecem opções existentes considerando os demais filtros.
+  const opcoesFiltros = useMemo(
+    () => opcoesVisiveisFiltrosVeiculos(veiculos, filtrosAtuais), [veiculos, filtrosAtuais],
   );
 
   const nomeEmpresa = (v: Veiculo) =>
@@ -481,8 +483,8 @@ export function VeiculosTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <RegionalFilter opcoes={opcoesFiltros.regionais} disponiveis={opcoesDisponiveis.regionais} />
-        <AnoModeloFilter opcoes={opcoesFiltros.anos} disponiveis={opcoesDisponiveis.anos} />
+        <RegionalFilter opcoes={opcoesFiltros.regionais} />
+        <AnoModeloFilter opcoes={opcoesFiltros.anos} />
         <Input
           placeholder="Buscar por chassi, placa, modelo ou loja"
           value={busca}
@@ -496,10 +498,7 @@ export function VeiculosTable({
           <SelectContent>
             <SelectItem value={TODOS}>Classificação</SelectItem>
             {opcoesFiltros.classificacoes.map((c) => (
-              <SelectItem key={c} value={c}
-                data-disponivel={opcoesDisponiveis.classificacoes.includes(c)}
-                className={cn(opcoesDisponiveis.classificacoes.includes(c) ? "font-medium text-foreground" : "text-muted-foreground")}
-                title={!opcoesDisponiveis.classificacoes.includes(c) ? "Sem veículos na listagem atual" : undefined}>
+              <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
             ))}
@@ -512,21 +511,18 @@ export function VeiculosTable({
           <SelectContent>
             <SelectItem value={TODOS}>Todas as faixas</SelectItem>
             {faixas.filter((f) => opcoesFiltros.faixas.has(f.id)).map((f) => (
-              <SelectItem key={f.id} value={f.id}
-                data-disponivel={opcoesDisponiveis.faixas.has(f.id)}
-                className={cn(opcoesDisponiveis.faixas.has(f.id) ? "font-medium text-foreground" : "text-muted-foreground")}
-                title={!opcoesDisponiveis.faixas.has(f.id) ? "Sem veículos na listagem atual" : undefined}>
+              <SelectItem key={f.id} value={f.id}>
                 {f.nome}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <CodigoFipeFilter opcoes={opcoesFiltros.codigosFipe} disponiveis={opcoesDisponiveis.codigosFipe} valor={codigoFipeFiltro} onChange={setCodigoFipeFiltro} />
+        <CodigoFipeFilter opcoes={opcoesFiltros.codigosFipe} valor={codigoFipeFiltro} onChange={setCodigoFipeFiltro} />
         <label className="inline-flex items-center gap-2 text-sm px-2">
           <Checkbox
             checked={valorImportadoZero}
             onCheckedChange={(valor) => setValorImportadoZero(valor === true)}
-            disabled={!valorImportadoZero && !opcoesDisponiveis.temValorZero}
+            disabled={!valorImportadoZero && !opcoesFiltros.temValorZero}
           />
           Valor anúncio importado = 0
         </label>
