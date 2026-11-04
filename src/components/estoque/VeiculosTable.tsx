@@ -34,8 +34,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { type ValorOrdenavel } from "@/lib/ordenacao";
-import { ordenarVeiculosPorFipe } from "@/lib/estoque-agrupamento-fipe";
+import { ordenarLista, type ValorOrdenavel } from "@/lib/ordenacao";
+import { filtrarVeiculos, opcoesFiltrosVeiculos } from "@/lib/estoque-filtros";
+import { CodigoFipeFilter } from "@/components/estoque/CodigoFipeFilter";
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import {
   calcularValorAnuncio,
@@ -49,8 +50,8 @@ import {
   type VendaHistorica,
 } from "@/lib/estoque-motor";
 
-import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
-import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
+import { RegionalFilter, useRegionaisSelecionadas } from "@/components/estoque/RegionalFilter";
+import { AnoModeloFilter, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 import { EditarVeiculoDialog } from "@/components/estoque/EditarVeiculoDialog";
 import {
   CHAVE_PLANO_ACELERADO_WM,
@@ -227,16 +228,13 @@ export function VeiculosTable({
       toast.error(e instanceof Error ? e.message : "Falha ao atualizar a flag OLX");
     }
   };
-  const [origemFiltro, setOrigemFiltro] = useState(TODOS);
   const [classFiltro, setClassFiltro] = useState(TODOS);
   const [faixaFiltro, setFaixaFiltro] = useState(TODOS);
-  const [finalidadeFiltro, setFinalidadeFiltro] = useState(TODOS);
-  const [webmotorsFiltro, setWebmotorsFiltro] = useState<"todos" | "com" | "sem">("todos");
+  const [codigoFipeFiltro, setCodigoFipeFiltro] = useState<string | null>(null);
+  const [valorImportadoZero, setValorImportadoZero] = useState(false);
   const ordem = useOrdenacao(`veiculos-${modo}`);
   const [regionais] = useRegionaisSelecionadas();
   const [anosSel] = useAnosModeloSelecionados();
-  const opcoesAno = useMemo(() => listarAnosModelo(veiculos.map((v) => v.ano_mod)), [veiculos]);
-  const opcoesRegional = useMemo(() => listarRegionais(veiculos.map((v) => v.regional)), [veiculos]);
   const [detalhe, setDetalhe] = useState<Veiculo | null>(null);
   const [colunas, setColunas] = useState<ColunaKey[]>(COLUNAS_PADRAO);
 
@@ -317,11 +315,6 @@ export function VeiculosTable({
     return m;
   }, [anuncios]);
 
-  const finalidades = useMemo(
-    () => Array.from(new Set(veiculos.map((v) => v.finalidade_atual ?? v.finalidade).filter(Boolean))) as string[],
-    [veiculos],
-  );
-
   /** Valor bruto de cada coluna para ordenação (número/data reais, nunca o texto formatado). */
   const valorOrdenacao = (v: Veiculo, key: string): ValorOrdenavel => {
     const data = (d?: string | null) => (d ? new Date(d) : null);
@@ -375,27 +368,15 @@ export function VeiculosTable({
   };
 
   const filtrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    const lista = veiculos.filter((v) => {
-      if (!passaRegional(v.regional, regionais)) return false;
-      if (!passaAnoModelo(v.ano_mod, anosSel)) return false;
-      if (webmotorsFiltro === "com" && v.webmotors_valor == null) return false;
-      if (webmotorsFiltro === "sem" && v.webmotors_valor != null) return false;
-      if (origemFiltro !== TODOS && v.origem_id !== origemFiltro) return false;
-      if (classFiltro !== TODOS && (v.classificacao ?? "") !== classFiltro) return false;
-      if (faixaFiltro !== TODOS && (v.faixa_id_atual ?? "") !== faixaFiltro) return false;
-      if (
-        finalidadeFiltro !== TODOS &&
-        (v.finalidade_atual ?? v.finalidade ?? "") !== finalidadeFiltro
-      )
-        return false;
-      if (!termo) return true;
-      return [v.chassi, v.placa, v.modelo, v.loja].some((c) =>
-        (c ?? "").toLowerCase().includes(termo),
-      );
+    const lista = filtrarVeiculos(veiculos, {
+      busca, regionais, anos: anosSel,
+      classificacao: classFiltro === TODOS ? null : classFiltro,
+      faixa: faixaFiltro === TODOS ? null : faixaFiltro,
+      codigoFipe: codigoFipeFiltro, valorImportadoZero,
     });
-    return ordenarVeiculosPorFipe(lista, ordem.criterios, valorOrdenacao);
-  }, [veiculos, busca, origemFiltro, classFiltro, faixaFiltro, finalidadeFiltro, regionais, anosSel, webmotorsFiltro, ordem.criterios, valorOrdenacao]);
+    return ordenarLista(lista, ordem.criterios, valorOrdenacao);
+  }, [veiculos, busca, classFiltro, faixaFiltro, regionais, anosSel, codigoFipeFiltro, valorImportadoZero, ordem.criterios, valorOrdenacao]);
+  const opcoesFiltros = useMemo(() => opcoesFiltrosVeiculos(filtrados), [filtrados]);
 
   const nomeEmpresa = (v: Veiculo) =>
     empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;
@@ -498,34 +479,21 @@ export function VeiculosTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <RegionalFilter opcoes={opcoesRegional} />
-        <AnoModeloFilter opcoes={opcoesAno} />
+        <RegionalFilter opcoes={opcoesFiltros.regionais} />
+        <AnoModeloFilter opcoes={opcoesFiltros.anos} />
         <Input
           placeholder="Buscar por chassi, placa, modelo ou loja"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           className="w-full sm:max-w-xs"
         />
-        <Select value={origemFiltro} onValueChange={setOrigemFiltro}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Origem" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODOS}>Todas as origens</SelectItem>
-            {origens.map((o) => (
-              <SelectItem key={o.id} value={o.id}>
-                {o.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Select value={classFiltro} onValueChange={setClassFiltro}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px]" aria-label="Filtrar por classificação">
             <SelectValue placeholder="Classificação" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={TODOS}>Classificação</SelectItem>
-            {["A+", "A", "B", "C", "D"].map((c) => (
+            {opcoesFiltros.classificacoes.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -533,41 +501,27 @@ export function VeiculosTable({
           </SelectContent>
         </Select>
         <Select value={faixaFiltro} onValueChange={setFaixaFiltro}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px]" aria-label="Filtrar por faixa de dias">
             <SelectValue placeholder="Faixa de dias" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={TODOS}>Todas as faixas</SelectItem>
-            {faixas.map((f) => (
+            {faixas.filter((f) => opcoesFiltros.faixas.has(f.id)).map((f) => (
               <SelectItem key={f.id} value={f.id}>
                 {f.nome}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={finalidadeFiltro} onValueChange={setFinalidadeFiltro}>
-          <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Finalidade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={TODOS}>Todas as finalidades</SelectItem>
-            {finalidades.map((f) => (
-              <SelectItem key={f} value={f}>
-                {f}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={webmotorsFiltro} onValueChange={(v) => setWebmotorsFiltro(v as "todos" | "com" | "sem")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Webmotors" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Webmotors: todos</SelectItem>
-            <SelectItem value="com">Com valor Webmotors</SelectItem>
-            <SelectItem value="sem">Sem valor Webmotors</SelectItem>
-          </SelectContent>
-        </Select>
+        <CodigoFipeFilter opcoes={opcoesFiltros.codigosFipe} valor={codigoFipeFiltro} onChange={setCodigoFipeFiltro} />
+        <label className="inline-flex items-center gap-2 text-sm px-2">
+          <Checkbox
+            checked={valorImportadoZero}
+            onCheckedChange={(valor) => setValorImportadoZero(valor === true)}
+            disabled={!valorImportadoZero && !opcoesFiltros.temValorZero}
+          />
+          Valor anúncio importado = 0
+        </label>
         <Button variant="outline" className="ml-auto" onClick={() => abrirConfig(true)}>
           <Columns3 className="w-4 h-4" />
           Colunas ({visiveis.length})
