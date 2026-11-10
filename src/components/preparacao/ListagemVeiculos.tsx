@@ -116,7 +116,7 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         (regional === TODOS || v.regional === regional) &&
         (loja === TODOS || v.loja.final === loja) &&
         (responsavel === TODOS || v.responsavel === responsavel) &&
-        INDICADORES.every((i) => filtroInd[i.id] === TODOS || (v.indicadores[i.id]?.status === "pendente") === (filtroInd[i.id] === "sim")) &&
+        atendeFiltrosIndicadores(v.indicadores, filtroInd) &&
         (!p || v.placa.includes(p)),
     );
     return ordenarLista(lista, criterios, acessor);
