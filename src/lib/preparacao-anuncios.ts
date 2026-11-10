@@ -456,3 +456,15 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
     throw e;
   }
 }
+
+/** Filtro de indicadores da listagem: combina todos os indicadores selecionados com lógica E (AND). */
+export function atendeFiltrosIndicadores(
+  indicadores: Record<IndicadorId, ResultadoIndicador>,
+  filtros: Partial<Record<IndicadorId, "sim" | "nao" | string>>,
+): boolean {
+  return (Object.keys(filtros) as IndicadorId[]).every((id) => {
+    const f = filtros[id];
+    if (f !== "sim" && f !== "nao") return true; // indicador não selecionado não influencia
+    return (indicadores[id]?.status === "pendente") === (f === "sim");
+  });
+}
