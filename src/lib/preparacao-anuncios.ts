@@ -468,3 +468,8 @@ export function atendeFiltrosIndicadores(
     return (indicadores[id]?.status === "pendente") === (f === "sim");
   });
 }
+
+/** Filtro da listagem: veículo entra se tiver QUALQUER um dos indicadores selecionados pendente (OU). Lista vazia = sem filtro. */
+export function possuiAlgumaPendencia(indicadores: Record<IndicadorId, ResultadoIndicador>, selecionados: IndicadorId[]): boolean {
+  return !selecionados.length || selecionados.some((id) => indicadores[id]?.status === "pendente");
+}
