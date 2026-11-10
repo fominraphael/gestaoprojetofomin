@@ -2,7 +2,7 @@ import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { INDICADORES_DASH, resumirDashboard, type DimensaoDashboard } from "@/lib/prep-dashboard-calculo";
 import type { IndicadorId } from "@/lib/preparacao-anuncios";
-import { GraficoPendencias } from "./DashboardGraficos";
+import { GraficoLojasIndicadores } from "./GraficoLojasIndicadores";
 import { cn } from "@/lib/utils";
 
 export interface DashboardTVProps { linhas: DimensaoDashboard[]; indicadores: IndicadorId[] }
@@ -25,7 +25,7 @@ export function DashboardTV({ linhas, indicadores }: DashboardTVProps) {
     </Card>)}</div>
     <div className="grid grid-cols-5 gap-3">{INDICADORES_DASH.filter(i => indicadores.includes(i.id)).map(i => <Card key={i.id} className="p-3 text-center">
       <h2 className="text-lg text-muted-foreground">{i.label}</h2><div className="text-4xl font-bold text-destructive tabular-nums">{t[i.id]}</div></Card>)}</div>
-    <div className="flex-1 min-h-0 overflow-hidden"><GraficoPendencias titulo="Top 10 lojas com mais pendências" linhas={linhas} dimensao="loja" limite={10} grande /></div>
+    <div className="flex-1 min-h-0 overflow-hidden"><GraficoLojasIndicadores linhas={linhas} indicadores={indicadores} limite={10} /></div>
     <Card className="p-4 flex items-center gap-6 border-destructive bg-destructive/10">
       <AlertTriangle className="h-12 w-12 text-destructive shrink-0" />
       <div><div className="text-xl text-muted-foreground">Pendentes há mais de 60 dias</div><div className="text-5xl font-bold text-destructive tabular-nums">{criticos}</div></div>
