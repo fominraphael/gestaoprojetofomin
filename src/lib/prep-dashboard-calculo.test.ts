@@ -46,7 +46,6 @@ describe("Dashboard Preparação/Anúncios", () => {
     expect(sql).toContain("interval '3 months'"); expect(sql).toContain("cron.schedule('prep-dashboard-retencao'");
     expect(sql).toContain("public.has_modulo('preparacao-anuncios')");
   });
-  });
   it("filtro de indicador conta só os indicadores selecionados", () => {
     const linhas = agregarDashboard([v(10,["os"]),v(70,["foto","tcuv"])],[],[],["foto","tcuv"]);
     expect(resumirDashboard(linhas)).toMatchObject({ ativos:2, pendentes:1, os:0, foto:1, tcuv:1 });
