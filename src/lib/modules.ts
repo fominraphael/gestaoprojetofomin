@@ -259,6 +259,7 @@ export const MODULES: ModuleDef[] = [
     gradient: "from-emerald-500/15 to-teal-700/15",
     iconBg: "from-emerald-500 to-teal-700",
     navItems: [
+      { to: "/preparacao-anuncios/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/preparacao-anuncios", label: "Veículos", icon: Package },
       { to: "/preparacao-anuncios/inativos", label: "Inativos", icon: EyeOff },
       { to: "/preparacao-anuncios/importar", label: "Importação", icon: Upload },

@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TabelaMapeamento } from "@/components/preparacao/TabelaMapeamento";
+import { GestoresConfig } from "@/components/preparacao/GestoresConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { INDICADORES, carregarConfig, carregarUsuariosModulo, normTexto, type ConfigIndicador, type IndicadorId } from "@/lib/preparacao-anuncios";
 
@@ -88,12 +89,14 @@ function Configuracoes() {
     <div className="p-4 md:p-6 space-y-4">
       <h1 className="text-2xl font-semibold">Configurações</h1>
       <Tabs defaultValue="indicadores">
-        <TabsList>
+        <TabsList className="flex h-auto flex-wrap justify-start">
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="lojas">Lojas</TabsTrigger>
           <TabsTrigger value="responsaveis">Responsáveis</TabsTrigger>
+          <TabsTrigger value="gestores">Gestor Regional</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="gestores"><GestoresConfig /></TabsContent>
         <TabsContent value="indicadores" className="space-y-3">
           {cfg && INDICADORES.map((i) => (
             <Card key={i.id} className="p-4 space-y-3">

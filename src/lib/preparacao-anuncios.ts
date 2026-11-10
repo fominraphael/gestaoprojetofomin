@@ -3,6 +3,7 @@
  * Funções puras (testáveis) + acesso a dados. O cruzamento é sempre pela PLACA.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { agregarDashboard, dataReferencia, resumirDashboard } from "./prep-dashboard-calculo";
 
 export type TipoBase = "estoque" | "os" | "banco_fotos" | "gosystem" | "tcuv" | "auditoria";
 export type IndicadorId = "os" | "foto" | "tcuv" | "auditoria" | "anuncio";
@@ -394,6 +395,23 @@ export async function importarBase(tipo: TipoBase, arquivo: string, linhas: Reco
         if (error) throw error;
       }
       inativadas = inativar.length;
+      // Capture fresh computed values only after all stock writes and deactivations finish.
+      const [veiculos, lojas, gestores] = await Promise.all([
+        carregarVeiculosCalculados(true),
+        supabase.from("prep_lojas").select("loja, regional"),
+        supabase.from("prep_gestor_regional").select("loja, gestor"),
+      ]);
+      if (lojas.error) throw lojas.error;
+      if (gestores.error) throw gestores.error;
+      const dimensoes = agregarDashboard(veiculos, lojas.data ?? [], gestores.data ?? []);
+      const totais = resumirDashboard(dimensoes);
+      const { error: snapshotError } = await supabase.from("prep_dashboard_historico_diario").upsert({
+        data_referencia: dataReferencia(), importacao_id: importacaoId,
+        total_ativos: totais.ativos, total_pendentes: totais.pendentes,
+        indicadores: { os: totais.os, foto: totais.foto, tcuv: totais.tcuv, auditoria: totais.auditoria, anuncio: totais.anuncio },
+        dimensoes: JSON.parse(JSON.stringify(dimensoes)), updated_at: new Date().toISOString(),
+      }, { onConflict: "data_referencia" });
+      if (snapshotError) throw new Error("O estoque foi atualizado, mas não foi possível gravar o histórico do Dashboard. Importe novamente para concluir.");
     } else {
       const { error: delErr } = await supabase.from("prep_base_linhas").delete().eq("tipo", tipo);
       if (delErr) throw delErr;
