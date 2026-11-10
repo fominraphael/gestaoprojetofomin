@@ -37,7 +37,7 @@ export function DashboardPreparacao() {
   const inicio = periodo === "7" ? dataReferencia(new Date(Date.now()-6*86400000)) : inicioHistorico(Number(periodo));
   const evolucao = data.historico.filter(h => h.data >= inicio).map(h => ({ data: h.data, pendentes: resumirDashboard(filtrarDashboard(h.dimensoes,filtros)).pendentes }));
   return <div ref={painel} className="bg-background p-4 md:p-6 space-y-6 min-h-screen overflow-y-auto">
-    <header className="flex items-center justify-between gap-3"><h1 className="text-2xl font-semibold">Dashboard · Preparação/Anúncios</h1>
+    <header className="flex items-center justify-between gap-3 pr-12"><h1 className="text-2xl font-semibold">Dashboard · Preparação/Anúncios</h1>
       <Button variant="outline" size="icon" className="fixed right-5 top-5 z-40" title={telaCheia ? "Sair da tela cheia" : "Tela cheia"} aria-label={telaCheia ? "Sair da tela cheia" : "Tela cheia"} onClick={expandir}>{telaCheia ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}</Button>
     </header>
     <div className="flex flex-wrap gap-2 pr-10">

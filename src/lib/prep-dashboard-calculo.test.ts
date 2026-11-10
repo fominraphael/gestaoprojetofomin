@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest";
 import { agregarDashboard, faixaAging, filtrarDashboard, resumirDashboard, dataReferencia, inicioHistorico, type VeiculoDashboard } from "./prep-dashboard-calculo";
 import type { IndicadorId, ResultadoIndicador } from "./preparacao-anuncios";
 import { readFileSync } from "node:fs";
-const indicadores = (pendentes: IndicadorId[]): Record<IndicadorId, ResultadoIndicador> => Object.fromEntries(["os","foto","tcuv","auditoria","anuncio"].map(id => [id, { status: pendentes.includes(id as IndicadorId) ? "pendente" : "ok", motivo: "", dados: [] }])) as Record<IndicadorId, ResultadoIndicador>;
+const indicadores = (pendentes: IndicadorId[]): Record<IndicadorId, ResultadoIndicador> => {
+  const resultado = (id: IndicadorId): ResultadoIndicador => ({ status: pendentes.includes(id) ? "pendente" : "ok", motivo: "", dados: [] });
+  return { os: resultado("os"), foto: resultado("foto"), tcuv: resultado("tcuv"), auditoria: resultado("auditoria"), anuncio: resultado("anuncio") };
+};
 const v = (dias: number | null, pendentes: IndicadorId[], ativo = true): VeiculoDashboard => ({ ativo, loja: { final: "BYD VITÓRIA" }, regional: "ES", dias_em_estoque: dias, indicadores: indicadores(pendentes) });
 describe("Dashboard Preparação/Anúncios", () => {
   it("conta veículos ativos e pendentes únicos com abertura pelos cinco indicadores", () => {
