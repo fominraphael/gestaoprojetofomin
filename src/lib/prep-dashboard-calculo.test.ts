@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { agregarDashboard, faixaAging, filtrarDashboard, resumirDashboard, dataReferencia, inicioHistorico, type VeiculoDashboard } from "./prep-dashboard-calculo";
+import { agruparPor, expurgarSemPendencia, agregarDashboard, faixaAging, filtrarDashboard, resumirDashboard, dataReferencia, inicioHistorico, type VeiculoDashboard } from "./prep-dashboard-calculo";
 import type { IndicadorId, ResultadoIndicador } from "./preparacao-anuncios";
 import { readFileSync } from "node:fs";
 const indicadores = (pendentes: IndicadorId[]): Record<IndicadorId, ResultadoIndicador> => {
@@ -22,8 +22,8 @@ describe("Dashboard Preparação/Anúncios", () => {
   });
   it("combina Regional, Loja e Gestor em todos os totais", () => {
     const linhas = agregarDashboard([v(10,["os"])],[],[{loja:"BYD VITÓRIA",gestor:"Passon"}]);
-    expect(resumirDashboard(filtrarDashboard(linhas,{regional:"ES",loja:"BYD VITÓRIA",gestor:"Passon"})).pendentes).toBe(1);
-    expect(filtrarDashboard(linhas,{regional:"MG",loja:"BYD VITÓRIA",gestor:"Passon"})).toHaveLength(0);
+    expect(resumirDashboard(filtrarDashboard(linhas,{regional:["ES"],loja:["BYD VITÓRIA"],gestor:["Passon"]})).pendentes).toBe(1);
+    expect(filtrarDashboard(linhas,{regional:["MG","SP"],loja:[],gestor:[]})).toHaveLength(0);
   });
   it("separa aging em 0–15,16–30,31–60,60+ pelos dias em estoque e indicador", () => {
     expect([0,15,16,30,31,60,61,null].map(faixaAging)).toEqual(["0–15","0–15","16–30","16–30","31–60","31–60","60+","Sem informação"]);
@@ -45,5 +45,16 @@ describe("Dashboard Preparação/Anúncios", () => {
     expect(sql).toMatch(/data_referencia date NOT NULL UNIQUE/);
     expect(sql).toContain("interval '3 months'"); expect(sql).toContain("cron.schedule('prep-dashboard-retencao'");
     expect(sql).toContain("public.has_modulo('preparacao-anuncios')");
+  });
+  });
+  it("filtro de indicador conta só os indicadores selecionados", () => {
+    const linhas = agregarDashboard([v(10,["os"]),v(70,["foto","tcuv"])],[],[],["foto","tcuv"]);
+    expect(resumirDashboard(linhas)).toMatchObject({ ativos:2, pendentes:1, os:0, foto:1, tcuv:1 });
+    expect(linhas[0]?.aging_veiculos?.["60+"]).toBe(1);
+  });
+  it("expurga lojas e regionais sem pendência", () => {
+    const linhas = agregarDashboard([v(10,["os"])],[{loja:"A",regional:"R"}],[]);
+    expect(expurgarSemPendencia(linhas).map(l => l.loja)).toEqual(["BYD VITÓRIA"]);
+    expect(agruparPor(linhas,"regional").map(l => l.nome)).toEqual(["ES"]);
   });
 });
