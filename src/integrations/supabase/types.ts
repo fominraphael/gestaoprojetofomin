@@ -1628,6 +1628,74 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_dashboard_historico_diario: {
+        Row: {
+          created_at: string
+          data_referencia: string
+          dimensoes: Json
+          id: string
+          importacao_id: string | null
+          indicadores: Json
+          total_ativos: number
+          total_pendentes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_referencia?: string
+          dimensoes: Json
+          id?: string
+          importacao_id?: string | null
+          indicadores: Json
+          total_ativos: number
+          total_pendentes: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_referencia?: string
+          dimensoes?: Json
+          id?: string
+          importacao_id?: string | null
+          indicadores?: Json
+          total_ativos?: number
+          total_pendentes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_dashboard_historico_diario_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "prep_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_gestor_regional: {
+        Row: {
+          created_at: string
+          gestor: string
+          id: string
+          loja: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gestor: string
+          id?: string
+          loja: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gestor?: string
+          id?: string
+          loja?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prep_importacoes: {
         Row: {
           arquivo_nome: string | null
@@ -3256,6 +3324,7 @@ export type Database = {
         Returns: number
       }
       is_central_compras: { Args: never; Returns: boolean }
+      prep_dashboard_limpar_historico: { Args: never; Returns: undefined }
       purge_old_trash: { Args: never; Returns: undefined }
       user_has_setor: {
         Args: { p_setor_id: string; p_user_id?: string }
