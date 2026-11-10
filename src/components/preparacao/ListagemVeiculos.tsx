@@ -15,7 +15,8 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import { ordenarLista, type CriterioOrdem, type ValorOrdenavel } from "@/lib/ordenacao";
 import { IndicadorBadge } from "./IndicadorBadge";
-import { INDICADORES, atendeFiltrosIndicadores, campo, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
+import { MultiFiltro } from "./DashboardTabelas";
+import { INDICADORES, possuiAlgumaPendencia, campo, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
 
 const TODOS = "__todos__";
 const POR_PAGINA = 100;
@@ -78,7 +79,7 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
   const [regional, setRegional] = useState(TODOS);
   const [loja, setLoja] = useState(TODOS);
   const [responsavel, setResponsavel] = useState(TODOS);
-  const [filtroInd, setFiltroInd] = useState<Record<IndicadorId, string>>({ os: TODOS, foto: TODOS, tcuv: TODOS, auditoria: TODOS, anuncio: TODOS });
+  const [filtroInd, setFiltroInd] = useState<string[]>([]);
   const [placa, setPlaca] = useState("");
   const [pagina, setPagina] = useState(0);
 
@@ -116,7 +117,7 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         (regional === TODOS || v.regional === regional) &&
         (loja === TODOS || v.loja.final === loja) &&
         (responsavel === TODOS || v.responsavel === responsavel) &&
-        atendeFiltrosIndicadores(v.indicadores, filtroInd) &&
+        possuiAlgumaPendencia(v.indicadores, filtroInd as IndicadorId[]) &&
         (!p || v.placa.includes(p)),
     );
     return ordenarLista(lista, criterios, acessor);
@@ -154,9 +155,10 @@ export function ListagemVeiculos({ ativos }: { ativos: boolean }) {
         {filtroSelect("Regional", regional, setRegional, lista(opcoes.regionais))}
         {filtroSelect("Loja Pendência", loja, setLoja, lista(opcoes.lojas))}
         {filtroSelect("Responsável", responsavel, setResponsavel, lista(opcoes.responsaveis))}
-        {INDICADORES.map((i) => (
-          <div key={i.id}>{filtroSelect(`${i.label} pendente`, filtroInd[i.id], (x) => setFiltroInd((f) => ({ ...f, [i.id]: x })), [{ v: "sim", l: "Sim" }, { v: "nao", l: "Não" }])}</div>
-        ))}
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Pendente em (qualquer um)</Label>
+          <MultiFiltro label="Indicadores" valores={filtroInd} opcoes={INDICADORES.map((i) => ({ valor: i.id, label: i.label }))} alterar={(v) => { setFiltroInd(v); setPagina(0); }} />
+        </div>
         <div className="flex items-center gap-2 pb-2">
           <Switch id="so-pendentes" checked={somentePendentes} onCheckedChange={(v) => { setSomentePendentes(v); setPagina(0); }} />
           <Label htmlFor="so-pendentes">Somente pendentes</Label>
