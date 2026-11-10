@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { atendeFiltrosIndicadores, type IndicadorId, type ResultadoIndicador, type StatusIndicador } from "./preparacao-anuncios";
 
 const ind = (s: Partial<Record<IndicadorId, StatusIndicador>>) =>
-  Object.fromEntries((["os", "foto", "tcuv", "auditoria", "anuncio"] as IndicadorId[]).map((id) => [id, { status: s[id] ?? "ok", motivo: "", dados: [] }])) as Record<IndicadorId, ResultadoIndicador>;
+  Object.fromEntries((["os", "foto", "tcuv", "auditoria", "anuncio"] as IndicadorId[]).map((id) => [id, { status: s[id] ?? "ok", motivo: "", dados: [] }])) as unknown as Record<IndicadorId, ResultadoIndicador>;
 const f = { os: "sim", foto: "sim", tcuv: "todos", auditoria: "todos", anuncio: "todos" };
 
 describe("filtro de indicadores (AND)", () => {
