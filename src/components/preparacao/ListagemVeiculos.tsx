@@ -15,7 +15,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import { ordenarLista, type CriterioOrdem, type ValorOrdenavel } from "@/lib/ordenacao";
 import { IndicadorBadge } from "./IndicadorBadge";
-import { INDICADORES, campo, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
+import { INDICADORES, atendeFiltrosIndicadores, campo, carregarVeiculosCalculados, normPlaca, type IndicadorId, type StatusIndicador, type VeiculoCalculado } from "@/lib/preparacao-anuncios";
 
 const TODOS = "__todos__";
 const POR_PAGINA = 100;
