@@ -5,6 +5,10 @@
 - [x] Validar cálculos: 21 testes passaram; compilação sem erros e acesso anônimo redireciona ao login.
 - [ ] Validar Dashboard, tela cheia e gravação após importação com sessão real: bloqueado porque não há sessão disponível e a conta solicitante não foi localizada; precisa de login na prévia.
 
+## Dashboard v2 (anexo 1_9-2)
+- [x] Expurgo, gráficos lado a lado, tabelas Regional/Loja/Aging, filtro Indicador, multi-seleção e modo TV; 11 testes passaram.
+- [ ] Conferir na tela com login: bloqueado por falta de sessão.
+
 ## Ajustes da Matriz de Estoque
 - [x] Reprocessar preços: 1.145 aplicados e conferidos, 957 alterados; histórico registrado e estabilidade validada. Três veículos com regra de Repasse preservados, sem mudança de categoria.
 - [x] Retirar agrupamento FIPE e substituir filtros conforme anexo.

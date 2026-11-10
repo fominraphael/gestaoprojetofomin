@@ -26,7 +26,7 @@ export const dashboardQuery = queryOptions({
       supabase.from("prep_dashboard_historico_diario").select("data_referencia, dimensoes").gte("data_referencia", inicioHistorico(3)).order("data_referencia"),
     ]);
     if (historico.error) throw historico.error;
-    return { dimensoes: agregarDashboard(veiculos, cadastro.lojas, cadastro.gestores),
+    return { veiculos, cadastro, dimensoes: agregarDashboard(veiculos, cadastro.lojas, cadastro.gestores),
       historico: (historico.data ?? []).map(h => ({ data: h.data_referencia, dimensoes: lerDimensoes(h.dimensoes) })) };
   },
 });
