@@ -89,8 +89,8 @@ function AcoesMatriz() {
   const [aba, setAba] = useState<"pendentes" | "realizadas">("pendentes");
 
   const { data: veiculos = [] } = useQuery({
-    queryKey: ["estoque", "veiculos", "ativos"],
-    queryFn: () => getVeiculos({ repasse: false }),
+    queryKey: ["estoque", "veiculos", "principal"],
+    queryFn: () => getVeiculos({ incluirRepasse: true }),
   });
   const { data: regras = [] } = useQuery({ queryKey: ["estoque", "regras"], queryFn: getRegras });
   const { data: faixas = [] } = useQuery({ queryKey: ["estoque", "faixas"], queryFn: getFaixas });

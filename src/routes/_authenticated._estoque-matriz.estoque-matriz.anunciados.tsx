@@ -88,8 +88,8 @@ function AnunciadosPage() {
   });
 
   const { data: veiculosAtivos = [] } = useQuery({
-    queryKey: ["estoque", "veiculos", "ativos"],
-    queryFn: () => getVeiculos({ repasse: false }),
+    queryKey: ["estoque", "veiculos", "principal"],
+    queryFn: () => getVeiculos({ incluirRepasse: true }),
   });
   const regionalPorChassi = useMemo(() => {
     const m = new Map<string, string | null>();

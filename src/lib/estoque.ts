@@ -828,24 +828,30 @@ export async function recalcularTodos(
 
 
 
-    if (r.moverParaRepasse) {
+    const repasse = r.moverParaRepasse
+      ? { em_repasse: true, finalidade_atual: r.novaFinalidade }
+      : {};
+    if (r.moverParaRepasse && !v.em_repasse) resumo.repasse += 1;
+
+    // Só a marcação de repasse mudou (preço congelado na mesma faixa).
+    const precoMudou = r.valorNovo !== r.valorAnterior || (r.faixa?.id ?? null) !== v.faixa_id_atual;
+    if (!precoMudou || r.valorNovo == null) {
       const { error } = await supabase
         .from("estoque_veiculos")
         .update({
-          em_repasse: true,
-          finalidade_atual: r.novaFinalidade,
-          faixa_id_atual: r.faixa?.id ?? null,
+          ...repasse,
+          faixa_id_atual: r.faixa?.id ?? v.faixa_id_atual ?? null,
           ultimo_calculo_em: new Date().toISOString(),
         } as never)
         .eq("id", v.id);
       if (error) throw error;
-      resumo.repasse += 1;
       return;
     }
 
     const { error } = await supabase
       .from("estoque_veiculos")
       .update({
+        ...repasse,
         valor_anuncio_calculado: r.valorNovo,
         valor_motor: r.valorNovo,
         // O motor só atua na mudança de faixa: a trava manual é liberada.
@@ -1143,6 +1149,9 @@ export async function importarEstoque(
     const atual = vendaMaxPorChassi.get(v.chassi);
     if (!atual || v.data_venda > atual) vendaMaxPorChassi.set(v.chassi, v.data_venda);
   }
+  // Mantido só para referência: a importação de estoque não usa mais a venda
+  // para decidir se o carro está vendido (a planilha de estoque prevalece).
+  void vendaMaxPorChassi;
 
 
 
@@ -1277,9 +1286,6 @@ export async function importarEstoque(
     if (mesmoRegistro) {
       // Mesma compra já registrada nessa origem → atualiza e movimenta a categoria.
       // Uma venda só casa com esta compra se aconteceu depois da entrada no estoque.
-      const dataVenda = vendaMaxPorChassi.get(chassi);
-      const entradaDia = (mesmoRegistro.importado_em ?? "").slice(0, 10);
-      const vendeu = !!dataVenda && !!entradaDia && dataVenda >= entradaDia;
 
       const patch: Record<string, unknown> = { ...registro };
       // Preserva a data de entrada original: sobrescrevê-la faria a venda anterior
@@ -1293,8 +1299,10 @@ export async function importarEstoque(
       patch.inativo = false;
       patch.inativado_em = null;
       idsEncontrados.add(mesmoRegistro.id);
-      if (vendeu && !mesmoRegistro.em_vendido) patch.em_vendido = true;
-      else if (!vendeu && mesmoRegistro.em_vendido) patch.em_vendido = false;
+      // A planilha de estoque manda: se o carro veio nela, está em estoque,
+      // mesmo com venda anterior no histórico (devolução, recompra, cancelamento).
+      const vendeu = false;
+      if (mesmoRegistro.em_vendido) patch.em_vendido = false;
 
 
 

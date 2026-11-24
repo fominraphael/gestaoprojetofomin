@@ -158,6 +158,8 @@ export interface VendaHistorica {
 
 export interface VeiculoCalculo {
   id?: string;
+  /** Já marcado como repasse (mudança de finalidade aplicada). */
+  em_repasse?: boolean | null;
   codigo_fipe: string | null;
   ano_mod: string | null;
   km: number | null;
@@ -614,23 +616,13 @@ export function calcularValorAnuncio(
     fipe: veiculo.fipe,
   };
 
-  // Mudança de finalidade (ex.: Repasse)
-  if (regra.tipo_regra === "finalidade") {
-    const jaEstava = veiculo.faixa_id_atual === faixa.id;
-    return {
-      ...vazio,
-      alterou: !jaEstava,
-      faixa,
-      regra,
-      tipo: "finalidade",
-      moverParaRepasse: true,
-      novaFinalidade: regra.nova_finalidade || "Repasse",
-      geraTarefa: regra.gera_tarefa,
-      nomeTarefa: regra.nome_tarefa,
-      memoria,
-      motivo: `Mudança de finalidade para ${regra.nova_finalidade || "Repasse"}`,
-    };
-  }
+  // Mudança de finalidade (ex.: Repasse): o veículo é marcado como repasse,
+  // mas continua sendo precificado como os demais (faixa, valor, memória),
+  // pois também permanece na listagem principal.
+  const ehFinalidade = regra.tipo_regra === "finalidade";
+  const novaFinalidade = ehFinalidade ? regra.nova_finalidade || "Repasse" : null;
+  const precisaMarcarRepasse = ehFinalidade && veiculo.em_repasse !== true;
+  if (ehFinalidade) memoria["mudanca_finalidade"] = novaFinalidade;
 
   const valorRegistrado = veiculo.valor_anuncio_calculado ?? null;
   const mudouDeFaixa = veiculo.faixa_id_atual !== faixa.id;
@@ -641,6 +633,9 @@ export function calcularValorAnuncio(
   if (valorRegistrado != null && !mudouDeFaixa) {
     return {
       ...vazio,
+      alterou: precisaMarcarRepasse,
+      moverParaRepasse: ehFinalidade,
+      novaFinalidade,
       faixa,
       regra,
       memoria,
@@ -839,7 +834,7 @@ export function calcularValorAnuncio(
 
 
   return {
-    alterou: valorNovo !== valorRegistrado || mudouDeFaixa,
+    alterou: valorNovo !== valorRegistrado || mudouDeFaixa || precisaMarcarRepasse,
     valorAnterior: valorRegistrado,
 
     valorNovo,
@@ -847,13 +842,14 @@ export function calcularValorAnuncio(
     regra,
     percentual: percentualUsado,
     tipo,
-    moverParaRepasse: false,
-    novaFinalidade: null,
+    moverParaRepasse: ehFinalidade,
+    novaFinalidade,
     geraTarefa: regra.gera_tarefa,
     nomeTarefa: regra.nome_tarefa,
     memoria,
-    motivo:
-      tipo === "base"
+    motivo: ehFinalidade
+      ? `Mudança de finalidade para ${novaFinalidade}`
+      : tipo === "base"
         ? "Precificação base aplicada"
         : `Ajuste de ${percentualUsado}% sobre o valor anterior`,
   };
