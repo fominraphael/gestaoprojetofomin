@@ -21,3 +21,24 @@ Na prática, devem ser carros vendidos e depois devolvidos, recomprados ou com v
 - Revisar a rotina das linhas ~1500 a 1520 (marcação de vendidos pela importação de vendas) para marcar como vendido só carros que não estão na última importação de estoque.
 - Corrigir os 13 registros atuais (`em_vendido = false`).
 - Adicionar teste: carro presente na planilha de estoque com venda anterior continua ativo.
+
+---
+
+# Carros em repasse com os mesmos dados na lista principal
+
+## O que encontrei
+- Os 240 carros em repasse já cruzam com a base de anúncios pelo chassi (235 têm anúncio). Na lista principal, os canais e o valor importado aparecem igual aos demais.
+- A diferença está no cálculo: quando o carro entra na faixa de mudança de finalidade, o sistema só muda a finalidade e não atualiza faixa, valor sugerido, margem nem memória de cálculo. 20 carros em repasse estão sem valor sugerido e 19 sem faixa.
+- As telas **Anunciados** e **Ações/Leads** ainda usam só os carros fora do repasse. Por isso a Regional e as ações desses carros não aparecem lá.
+
+## Ajuste proposto
+- Ao entrar no repasse, o carro continua sendo precificado como os demais: faixa, valor sugerido (respeitando o congelamento por faixa), margem, histórico e memória de cálculo. Ele recebe também a marca de Repasse.
+- Anunciados e Ações/Leads passam a considerar os carros em repasse.
+- Rodar o recálculo para preencher os 20 carros sem valor e os 19 sem faixa.
+- A lista de Repasse continua igual.
+
+## Detalhes técnicos
+- `estoque-motor.ts`: a regra `finalidade` passa a calcular o preço pela regra de valor da faixa (ou a manter o preço atual, se não houver regra de valor) e devolve `moverParaRepasse: true` junto com `valorNovo`.
+- `estoque.ts` (`persistir`): aplicar `em_repasse`/`finalidade_atual` e também o patch de preço e histórico, sem `return` antecipado.
+- Anunciados e Ações/Leads: `getVeiculos({ incluirRepasse: true })`.
+- Teste: um carro na faixa de finalidade recebe faixa e valor e fica marcado como repasse.
