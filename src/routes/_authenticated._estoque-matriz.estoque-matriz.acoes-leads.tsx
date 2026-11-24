@@ -30,6 +30,7 @@ import { RegionalFilter, listarRegionais, passaRegional, useRegionaisSelecionada
 import { AnoModeloFilter, listarAnosModelo, passaAnoModelo, useAnosModeloSelecionados } from "@/components/estoque/AnoModeloFilter";
 import { ACOES_MATRIZ, veiculoFotografado, type TipoAcaoMatriz } from "@/lib/estoque-motor";
 import { estadoDestaqueOlx, portaisFaltantes } from "@/lib/estoque-acelerado";
+import { acaoConcluidaParaExibicao, faixaParaExibicao } from "@/lib/estoque-exibicao";
 
 /** Ações fora da matriz: flag manual do OLX e divergência de portais. */
 const ACOES_EXTRAS: { tipo: TipoAcaoMatriz; label: string }[] = [
@@ -125,10 +126,11 @@ function AcoesMatriz() {
     for (const v of veiculos) {
       if (!passaRegional(v.regional, regionaisSel)) continue;
       if (!passaAnoModelo(v.ano_mod, anosSel)) continue;
-      const regra = regras.find(
-        (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
-      );
-      const faixa = faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
+      const faixaAtual = faixaParaExibicao(v, faixas);
+      const regra = faixaAtual ? regras.find(
+        (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === faixaAtual.id,
+      ) : undefined;
+      const faixa = faixaAtual?.nome ?? "—";
       const base = {
         veiculoId: v.id,
         modelo: v.modelo ?? "—",
@@ -137,7 +139,7 @@ function AcoesMatriz() {
         loja: v.loja ?? "—",
         classificacao: v.classificacao ?? "—",
         faixa,
-        faixaId: v.faixa_id_atual ?? null,
+        faixaId: faixaAtual?.id ?? null,
       };
 
       // Destacar OLX: existe enquanto houver flag; após o check vale 30 dias e some sozinha.
@@ -172,7 +174,7 @@ function AcoesMatriz() {
           ...base,
           tipo: "anunciar_portal",
           acao: "Anunciar Portal",
-          concluido: !!reg?.concluido && (reg.faixaId ?? null) === (v.faixa_id_atual ?? null),
+          concluido: acaoConcluidaParaExibicao(reg, faixaAtual?.id ?? null, v.faixa_id_atual),
           portais: faltantes,
           observacao: `Falta: ${faltantes.join(", ")}`,
         });
@@ -185,8 +187,7 @@ function AcoesMatriz() {
         if (a.tipo === "repescagem" && (v.leads_60_dias ?? 0) <= 0) continue;
 
         const reg = registroPor.get(`${v.id}:${a.tipo}`);
-        const concluido =
-          !!reg?.concluido && (reg.faixaId ?? null) === (v.faixa_id_atual ?? null);
+        const concluido = acaoConcluidaParaExibicao(reg, faixaAtual?.id ?? null, v.faixa_id_atual);
 
         out.push({
           veiculoId: v.id,
@@ -196,7 +197,7 @@ function AcoesMatriz() {
           loja: v.loja ?? "—",
           classificacao: v.classificacao ?? "—",
           faixa,
-          faixaId: v.faixa_id_atual ?? null,
+          faixaId: faixaAtual?.id ?? null,
           tipo: a.tipo,
           acao: a.label,
           concluido,

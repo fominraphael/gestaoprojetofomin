@@ -10,6 +10,7 @@
 - [ ] Conferir na tela com login: bloqueado por falta de sessão.
 
 ## Ajustes da Matriz de Estoque
+- [x] Conferir faixas/canais: listagens compartilhadas, detalhes e Ações corrigidos; Anunciados, importação e motor conferidos; função Webmotors não usa faixas e não há job de estoque. Repasse/detalhes/Anunciados validados com login; Ações conferidas em código e testes, sem gravar conclusões reais. 28 testes passaram; preços e registros preservados.
 - [x] Corrigir canais e filtro de faixas pelos dias atuais sem modificar a faixa de precificação nem preços.
 - [x] Validar com conta temporária: BSB 61–75 mostra apenas TDY8I06 (74) e SSQ8D92 (61); SYH5J21 tem três canais verdes; XLSX confere; 18 testes passaram.
 - [x] Reprocessar preços: 1.145 aplicados e conferidos, 957 alterados; histórico registrado e estabilidade validada. Três veículos com regra de Repasse preservados, sem mudança de categoria.

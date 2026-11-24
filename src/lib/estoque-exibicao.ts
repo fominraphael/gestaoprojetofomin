@@ -33,6 +33,15 @@ export function faixaParaExibicao(
 const normalizarCanal = (s: string) => s.normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
+/** Compatibilidade: a correção de exibição não reabre conclusões do ciclo legado. */
+export function acaoConcluidaParaExibicao(
+  registro: { concluido: boolean; faixaId: string | null } | undefined,
+  faixaAtual: string | null, faixaPrecificacao: string | null,
+): boolean {
+  return registro?.concluido === true &&
+    (registro.faixaId === faixaAtual || registro.faixaId === faixaPrecificacao);
+}
+
 export function canaisParaExibicao(
   veiculo: VeiculoExibicao, anuncio: AnuncioCanais | undefined,
   faixas: FaixaDias[], regras: readonly RegraCanais[],

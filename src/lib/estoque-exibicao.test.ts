@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canaisParaExibicao, faixaParaExibicao } from "./estoque-exibicao";
+import { acaoConcluidaParaExibicao, canaisParaExibicao, faixaParaExibicao } from "./estoque-exibicao";
 import type { FaixaDias } from "./estoque-motor";
 
 export const faixas: FaixaDias[] = [
@@ -30,5 +30,18 @@ describe("canais da SYH5J21", () => {
   it("distingue canal obrigatório ausente de canal opcional", () => {
     const canais = canaisParaExibicao(veiculo, undefined, faixas, [{ ...regras[0], ativo: true, classificacao: "C", faixa_id: "f3", canais_exigidos: ["OLX"] }]);
     expect(canais.map((c) => c.estado)).toEqual(["opcional", "pendente", "opcional"]);
+  });
+});
+
+describe("ações da Matriz sem reabrir registros concluídos por correção visual", () => {
+  it("preserva a conclusão registrada na faixa de precificação legada", () => {
+    expect(acaoConcluidaParaExibicao({ concluido: true, faixaId: "f2" }, "f3", "f2")).toBe(true);
+  });
+  it("reconhece novas conclusões na faixa atual independente da faixa do preço", () => {
+    expect(acaoConcluidaParaExibicao({ concluido: true, faixaId: "f3" }, "f3", "f2")).toBe(true);
+  });
+  it("mantém pendente ação não concluída ou de ciclo que já foi superado", () => {
+    expect(acaoConcluidaParaExibicao({ concluido: false, faixaId: "f3" }, "f3", "f2")).toBe(false);
+    expect(acaoConcluidaParaExibicao({ concluido: true, faixaId: "f1" }, "f3", "f2")).toBe(false);
   });
 });

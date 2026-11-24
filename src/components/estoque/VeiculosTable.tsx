@@ -979,7 +979,7 @@ function DetalheCalculo({ veiculo, vendas, hist, faixas, faixasKm, regras }: Det
         <div>
           <span className="text-muted-foreground block">Faixa de dias</span>
           <span className="font-medium">
-            {faixas.find((f) => f.id === veiculo.faixa_id_atual)?.nome ?? "—"}
+            {faixaParaExibicao(veiculo, faixas)?.nome ?? "—"}
           </span>
         </div>
       </div>
