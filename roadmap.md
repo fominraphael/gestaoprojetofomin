@@ -10,6 +10,8 @@
 - [ ] Conferir na tela com login: bloqueado por falta de sessão.
 
 ## Ajustes da Matriz de Estoque
+- [ ] Corrigir canais e filtro de faixas pelos dias atuais sem modificar a faixa de precificação nem preços.
+- [ ] Testar faixa 61–75 na BSB e canais da SYH5J21 na tela autenticada.
 - [x] Reprocessar preços: 1.145 aplicados e conferidos, 957 alterados; histórico registrado e estabilidade validada. Três veículos com regra de Repasse preservados, sem mudança de categoria.
 - [x] Retirar agrupamento FIPE e substituir filtros conforme anexo.
 - [x] Filtros estilo Excel: todas as opções visíveis; destaque somente nas presentes no resultado atual, mantendo seleção e regras anteriores.

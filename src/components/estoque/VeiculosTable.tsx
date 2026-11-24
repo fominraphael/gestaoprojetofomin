@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ordenarLista, type ValorOrdenavel } from "@/lib/ordenacao";
 import { opcoesVisiveisFiltrosVeiculos, filtrarVeiculos } from "@/lib/estoque-filtros";
+import { canaisParaExibicao, faixaParaExibicao } from "@/lib/estoque-exibicao";
 import { CodigoFipeFilter } from "@/components/estoque/CodigoFipeFilter";
 import { CabecalhoOrdenavel, ResumoOrdenacao, useOrdenacao } from "@/components/OrdenacaoTabela";
 import {
@@ -166,14 +167,6 @@ const COLUNAS_PADRAO: ColunaKey[] = [
   "canais",
 ];
 
-
-/** Normaliza nome de canal para comparar com `canais_exigidos` da regra. */
-const normCanal = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
 
 const formatData = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString("pt-BR") : "—";
@@ -334,7 +327,7 @@ export function VeiculosTable({
       case "classificacao": return v.classificacao;
       case "dias": return v.dias_em_estoque;
       case "faixa": {
-        const f = faixas.find((x) => x.id === v.faixa_id_atual);
+        const f = faixaParaExibicao(v, faixas);
         return f ? f.dia_inicio : null;
       }
       case "leads": return v.leads_60_dias;
@@ -374,17 +367,17 @@ export function VeiculosTable({
     codigoFipe: codigoFipeFiltro, valorImportadoZero,
   }), [busca, classFiltro, faixaFiltro, regionais, anosSel, codigoFipeFiltro, valorImportadoZero]);
   const filtrados = useMemo(
-    () => ordenarLista(filtrarVeiculos(veiculos, filtrosAtuais), ordem.criterios, valorOrdenacao),
-    [veiculos, filtrosAtuais, ordem.criterios, valorOrdenacao],
+    () => ordenarLista(filtrarVeiculos(veiculos, filtrosAtuais, faixas), ordem.criterios, valorOrdenacao),
+    [veiculos, filtrosAtuais, faixas, ordem.criterios, valorOrdenacao],
   );
   // Estilo Excel: só aparecem opções existentes considerando os demais filtros.
   const opcoesFiltros = useMemo(
-    () => opcoesVisiveisFiltrosVeiculos(veiculos, filtrosAtuais), [veiculos, filtrosAtuais],
+    () => opcoesVisiveisFiltrosVeiculos(veiculos, filtrosAtuais, faixas), [veiculos, filtrosAtuais, faixas],
   );
 
   const nomeEmpresa = (v: Veiculo) =>
     empresas.find((e) => e.id === v.empresa_nbs_id)?.nome_exibicao ?? v.chassi_resumido;
-  const nomeFaixa = (v: Veiculo) => faixas.find((f) => f.id === v.faixa_id_atual)?.nome ?? "—";
+  const nomeFaixa = (v: Veiculo) => faixaParaExibicao(v, faixas)?.nome ?? "—";
   const percFipe = (v: Veiculo) =>
     v.fipe && v.valor_anuncio_calculado ? `${((v.valor_anuncio_calculado / v.fipe) * 100).toFixed(1)}%` : "—";
 
@@ -398,32 +391,7 @@ export function VeiculosTable({
     v: Veiculo,
     anuncio: Anuncio | undefined,
   ): { label: string; estado: "cumpriu" | "pendente" | "opcional"; titulo: string }[] {
-    const regra = regras.find(
-      (r) => r.ativo && r.classificacao === v.classificacao && r.faixa_id === v.faixa_id_atual,
-    );
-    const exigidos = new Set((regra?.canais_exigidos ?? []).map(normCanal));
-    const itens: [string, string, boolean | undefined][] = [
-      ["Site", "Site Próprio", anuncio?.canal_site_proprio],
-      ["OLX", "OLX", anuncio?.canal_olx],
-      ["WM", "WebMotors", anuncio?.canal_webmotors],
-    ];
-    return itens.map(([label, nomeCanal, publicado]) => {
-      const obrigatorio = exigidos.has(normCanal(nomeCanal));
-      if (!obrigatorio) {
-        return {
-          label,
-          estado: "opcional" as const,
-          titulo: `${nomeCanal}: não obrigatório para esta categoria`,
-        };
-      }
-      return publicado
-        ? { label, estado: "cumpriu" as const, titulo: `${nomeCanal}: obrigatório e publicado` }
-        : {
-            label,
-            estado: "pendente" as const,
-            titulo: `${nomeCanal}: obrigatório e ainda não publicado`,
-          };
-    });
+    return canaisParaExibicao(v, anuncio, faixas, regras);
   }
 
   /** Exporta em XLSX exatamente as linhas visíveis (respeita os filtros da tela). */

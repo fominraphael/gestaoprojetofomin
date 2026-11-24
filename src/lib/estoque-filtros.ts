@@ -1,5 +1,7 @@
 import { listarAnosModelo, passaAnoModelo } from "../components/estoque/AnoModeloFilter";
 import { listarRegionais, passaRegional } from "../components/estoque/RegionalFilter";
+import { faixaParaExibicao } from "./estoque-exibicao";
+import type { FaixaDias } from "./estoque-motor";
 
 export interface VeiculoFiltravel {
   chassi: string;
@@ -10,6 +12,7 @@ export interface VeiculoFiltravel {
   ano_mod: string | null;
   classificacao: string | null;
   faixa_id_atual: string | null;
+  dias_em_estoque: number;
   codigo_fipe: string | null;
   valor_anunciado_planilha: number | null;
 }
@@ -25,14 +28,14 @@ export interface FiltrosVeiculos {
 }
 
 export function filtrarVeiculos<T extends VeiculoFiltravel>(
-  veiculos: readonly T[], filtros: FiltrosVeiculos,
+  veiculos: readonly T[], filtros: FiltrosVeiculos, faixas: FaixaDias[],
 ): T[] {
   const termo = filtros.busca.trim().toLowerCase();
   return veiculos.filter((v) =>
     passaRegional(v.regional, filtros.regionais) &&
     passaAnoModelo(v.ano_mod, filtros.anos) &&
     (filtros.classificacao === null || v.classificacao === filtros.classificacao) &&
-    (filtros.faixa === null || v.faixa_id_atual === filtros.faixa) &&
+    (filtros.faixa === null || faixaParaExibicao(v, faixas)?.id === filtros.faixa) &&
     (filtros.codigoFipe === null || v.codigo_fipe?.trim() === filtros.codigoFipe) &&
     // Ausência de valor não é um anúncio de valor zero.
     (!filtros.valorImportadoZero || v.valor_anunciado_planilha === 0) &&
@@ -43,14 +46,14 @@ export function filtrarVeiculos<T extends VeiculoFiltravel>(
 }
 
 /** Extrai opções dos dados recebidos, mantendo a normalização dos filtros. */
-export function opcoesFiltrosVeiculos(veiculos: readonly VeiculoFiltravel[]) {
+export function opcoesFiltrosVeiculos(veiculos: readonly VeiculoFiltravel[], faixas: FaixaDias[]) {
   const textos = (valores: (string | null)[]) =>
     [...new Set(valores.map((v) => v?.trim()).filter((v): v is string => Boolean(v)))].sort();
   return {
     regionais: listarRegionais(veiculos.map((v) => v.regional)),
     anos: listarAnosModelo(veiculos.map((v) => v.ano_mod)),
     classificacoes: textos(veiculos.map((v) => v.classificacao)),
-    faixas: new Set(veiculos.map((v) => v.faixa_id_atual).filter(Boolean)),
+    faixas: new Set(veiculos.map((v) => faixaParaExibicao(v, faixas)?.id).filter((id): id is string => Boolean(id))),
     codigosFipe: textos(veiculos.map((v) => v.codigo_fipe)),
     temValorZero: veiculos.some((v) => v.valor_anunciado_planilha === 0),
   };
@@ -63,7 +66,7 @@ type ChaveFiltro = "regionais" | "anos" | "classificacao" | "faixa" | "codigoFip
  * passam pelos OUTROS filtros, mais as opções já selecionadas (para desmarcar).
  */
 export function opcoesVisiveisFiltrosVeiculos(
-  base: readonly VeiculoFiltravel[], filtros: FiltrosVeiculos,
+  base: readonly VeiculoFiltravel[], filtros: FiltrosVeiculos, faixasDias: FaixaDias[],
 ) {
   const de = (chave: ChaveFiltro) => opcoesFiltrosVeiculos(filtrarVeiculos(base, (() => {
     const f: FiltrosVeiculos = { ...filtros };
@@ -71,7 +74,7 @@ export function opcoesVisiveisFiltrosVeiculos(
     else if (chave === "valorImportadoZero") f.valorImportadoZero = false;
     else f[chave] = null;
     return f;
-  })()));
+  })(), faixasDias), faixasDias);
   const unir = (lista: string[], sel: string[]) => [...lista, ...sel.filter((s) => !lista.includes(s))];
   const regionais = unir(de("regionais").regionais, filtros.regionais.map((r) => r.trim().toUpperCase()).filter(Boolean));
   const anos = unir(de("anos").anos, filtros.anos);
