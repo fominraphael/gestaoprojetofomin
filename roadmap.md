@@ -10,13 +10,13 @@
 - [ ] Conferir na tela com login: bloqueado por falta de sessão.
 
 ## Ajustes da Matriz de Estoque
-- [ ] Corrigir canais e filtro de faixas pelos dias atuais sem modificar a faixa de precificação nem preços.
-- [ ] Testar faixa 61–75 na BSB e canais da SYH5J21 na tela autenticada.
+- [x] Corrigir canais e filtro de faixas pelos dias atuais sem modificar a faixa de precificação nem preços.
+- [x] Validar com conta temporária: BSB 61–75 mostra apenas TDY8I06 (74) e SSQ8D92 (61); SYH5J21 tem três canais verdes; XLSX confere; 18 testes passaram.
 - [x] Reprocessar preços: 1.145 aplicados e conferidos, 957 alterados; histórico registrado e estabilidade validada. Três veículos com regra de Repasse preservados, sem mudança de categoria.
 - [x] Retirar agrupamento FIPE e substituir filtros conforme anexo.
 - [x] Filtros estilo Excel: todas as opções visíveis; destaque somente nas presentes no resultado atual, mantendo seleção e regras anteriores.
 - [x] Validar regras e ordenação: dez testes passaram e compilação sem erros.
-- [ ] Conferir a tela autenticada: bloqueado por falta de sessão; o acesso redireciona para login.
+- [x] Conferir a tela autenticada da Matriz: 1.068 veículos, filtros e exportação validados com conta temporária autorizada.
 ## Dashboard v3 (anexo 1_10-2)
 - [x] Top 10 lojas da tela cheia em barras empilhadas por indicador, com legenda e total.
 - [ ] Conferir na tela com login: bloqueado por falta de sessão.
