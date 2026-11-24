@@ -341,6 +341,8 @@ export async function upsertRegra(
 export async function getVeiculos(opts: {
   lixeira?: boolean;
   repasse?: boolean;
+  /** Listagem principal: inclui também os veículos em repasse. */
+  incluirRepasse?: boolean;
   vendidos?: boolean;
   /** Somente veículos inativados automaticamente pela importação de estoque. */
   inativos?: boolean;
@@ -359,7 +361,8 @@ export async function getVeiculos(opts: {
       } else if (opts.vendidos) {
         q = q.eq("inativo", false).eq("em_vendido", true);
       } else {
-        q = q.eq("inativo", false).eq("em_vendido", false).eq("em_repasse", !!opts.repasse);
+        q = q.eq("inativo", false).eq("em_vendido", false);
+        if (!opts.incluirRepasse) q = q.eq("em_repasse", !!opts.repasse);
       }
     }
     return q as unknown as QueryPaginavel;

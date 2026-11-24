@@ -47,8 +47,8 @@ function EstoqueVeiculos() {
   const [recalculando, setRecalculando] = useState(false);
 
   const { data: veiculos = [] } = useQuery({
-    queryKey: ["estoque", "veiculos", "ativos"],
-    queryFn: () => getVeiculos({ repasse: false }),
+    queryKey: ["estoque", "veiculos", "principal"],
+    queryFn: () => getVeiculos({ incluirRepasse: true }),
   });
   const { data: origens = [] } = useQuery({ queryKey: ["estoque", "origens"], queryFn: getOrigens });
   const { data: empresas = [] } = useQuery({ queryKey: ["estoque", "nbs"], queryFn: getEmpresasNbs });
