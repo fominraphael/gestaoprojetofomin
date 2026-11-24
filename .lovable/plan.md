@@ -42,3 +42,18 @@ Na prática, devem ser carros vendidos e depois devolvidos, recomprados ou com v
 - `estoque.ts` (`persistir`): aplicar `em_repasse`/`finalidade_atual` e também o patch de preço e histórico, sem `return` antecipado.
 - Anunciados e Ações/Leads: `getVeiculos({ incluirRepasse: true })`.
 - Teste: um carro na faixa de finalidade recebe faixa e valor e fica marcado como repasse.
+
+---
+
+# Canais em cinza nos carros acima de 60/75 dias
+
+## Motivo
+O cinza significa "canal não obrigatório". As regras de **mudança de finalidade** (61 a 75 dias para A, A+, B e C, e 75+ para todas as classificações) estão cadastradas **sem canais exigidos**. Como nenhum canal é obrigatório, Site, OLX e WM ficam cinza, mesmo havendo anúncio na base. O cruzamento com a base de anúncios funciona. Só falta a regra dizer o que é obrigatório.
+
+## Ajuste proposto
+- Na tela **Regras**, o campo "Canais exigidos" passa a aparecer e ser salvo também nas regras de mudança de finalidade.
+- Enquanto uma regra de finalidade não tiver canais configurados, o carro herda os canais exigidos da última faixa anterior (46 a 60 dias): Site, OLX e WebMotors. Assim os canais ficam verdes quando publicados e vermelhos quando faltam.
+
+## Detalhes técnicos
+- `VeiculosTable.tsx` (`canaisDoVeiculo`): se a regra da faixa for `finalidade` com `canais_exigidos` vazio, usar os canais da regra ativa da mesma classificação na faixa com maior `dia_inicio` anterior.
+- Tela de regras: liberar o seletor de canais para `tipo_regra = 'finalidade'`.
